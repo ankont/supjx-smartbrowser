@@ -1,0 +1,379 @@
+.com-smartbrowser-editor .main-card {
+  position: relative;
+}
+
+.com-smartbrowser-editor joomla-tab[view="tabs"] > div[role="tablist"] {
+  flex: 0 0 auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding-inline: 38px;
+  background: #f3f5f7;
+}
+
+.com-smartbrowser-editor joomla-tab[view="tabs"] > div[role="tablist"]::-webkit-scrollbar {
+  display: none;
+  height: 0;
+}
+
+.com-smartbrowser-editor .smartbrowser-tab-scroll {
+  position: absolute !important;
+  top: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 49px;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  background: #f3f5f7;
+  color: #223548;
+  cursor: pointer;
+}
+
+.com-smartbrowser-editor .smartbrowser-tab-scroll[hidden] {
+  display: none;
+}
+
+.com-smartbrowser-editor .smartbrowser-tab-scroll-prev { left: 0; }
+.com-smartbrowser-editor .smartbrowser-tab-scroll-next { right: 0; }
+
+.com-smartbrowser-editor .smartbrowser-tab-scroll:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+dialog.com-smartbrowser-editor-picker {
+  position: fixed !important;
+  box-sizing: border-box;
+  width: min(1200px, calc(100vw - 32px)) !important;
+  height: min(820px, calc(100vh - 32px)) !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 0;
+  min-height: 0;
+  margin: auto;
+  padding: 40px 0 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+dialog.com-smartbrowser-editor-picker.is-menu-type {
+  padding: 0;
+}
+
+dialog.com-smartbrowser-editor-picker .smartbrowser-picker-heading {
+  display: none;
+}
+
+dialog.com-smartbrowser-editor-picker.is-menu-type .smartbrowser-picker-heading {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 48px 0 20px;
+  border-bottom: 1px solid #d4dce4;
+  color: #223548;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+dialog.com-smartbrowser-editor-picker.is-menu-type iframe {
+  height: calc(100% - 52px);
+}
+
+dialog.com-smartbrowser-editor-picker.is-menu-type .btn-close {
+  top: 16px;
+  right: 18px;
+}
+
+dialog.com-smartbrowser-editor-picker::backdrop {
+  background: rgb(18 30 44 / 55%);
+}
+
+dialog.com-smartbrowser-editor-picker iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+dialog.com-smartbrowser-editor-picker .btn-close {
+  position: absolute !important;
+  top: 8px;
+  right: 10px;
+  z-index: 2;
+  margin: 0;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-subfieldset,
+.com-smartbrowser-editor .smartbrowser-editor-media-grid .options-form,
+.com-smartbrowser-editor .smartbrowser-editor-fieldsets .options-form {
+  border: 1px solid #cbd5e1;
+  padding: 20px;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-subfieldset > legend,
+.com-smartbrowser-editor .smartbrowser-editor-media-grid .options-form > legend,
+.com-smartbrowser-editor .smartbrowser-editor-fieldsets .options-form > legend {
+  float: none;
+  width: auto;
+  padding: 0 12px;
+  margin: 0 0 12px;
+  border: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.com-smartbrowser-editor .control-group:has(.choices.is-open) {
+  position: relative;
+  z-index: 30;
+}
+
+.com-smartbrowser-editor .choices.is-open {
+  position: relative;
+  z-index: 31;
+}
+
+.com-smartbrowser-editor .choices.is-open .choices__list--dropdown {
+  z-index: 32;
+}
+
+.com-smartbrowser-editor .choices.is-flipped .choices__list--dropdown {
+  top: 100%;
+  bottom: auto;
+  max-height: min(300px, calc(100dvh - 170px));
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"] .choices__inner {
+  display: block;
+  position: relative;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"]::after {
+  content: none;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"] .choices__inner::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 18px;
+  width: 10px;
+  height: 10px;
+  border: solid #17212b;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-70%) rotate(45deg);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-menu-request .control-group:has(#jform_request_filter_tag) :is(.controls, joomla-field-fancy-select, .choices) {
+  width: 100% !important;
+  max-width: none;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-menu-link .controls > :is(input, select, textarea, .choices, joomla-field-fancy-select) {
+  width: 100% !important;
+  max-width: none;
+}
+
+@media (min-width: 781px) {
+  .com-smartbrowser-editor .smartbrowser-editor-menu-link > .control-group {
+    display: grid;
+    grid-template-columns: minmax(180px, 250px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+
+  .com-smartbrowser-editor .smartbrowser-editor-menu-link > .control-group > :is(.control-label, .controls) {
+    float: none;
+    width: 100% !important;
+    min-width: 0;
+    margin: 0 !important;
+  }
+}
+
+.com-smartbrowser-editor .js-modal-content-select-field [data-button-action="select"] {
+  border-start-end-radius: .25rem !important;
+  border-end-end-radius: .25rem !important;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-tab .field-calendar {
+  width: min(100%, 360px);
+}
+
+.com-smartbrowser-editor .field-calendar .input-group > .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.com-smartbrowser-editor .field-calendar :is(.input-group > .btn, .calendar-container .js-btn) {
+  transition: background-color .15s ease, border-color .15s ease;
+}
+
+.com-smartbrowser-editor .field-calendar :is(.input-group > .btn, .calendar-container .js-btn):hover {
+  background-color: #0064d2;
+  border-color: #0064d2;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-image-row,
+.com-smartbrowser-editor .smartbrowser-editor-link-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-link-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-image-row > .options-form,
+.com-smartbrowser-editor .smartbrowser-editor-link-row > .options-form {
+  min-width: 0;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-media-grid .options-form > .control-group {
+  display: block;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-media-grid .options-form > .control-group > :is(.control-label, .controls) {
+  width: 100% !important;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-media-grid .options-form .controls > :is(input, select, joomla-field-media) {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-title-alias .control-label {
+  padding-inline-start: 5px;
+}
+
+.com-smartbrowser-editor .switcher .toggle-outside {
+  border-radius: 5px;
+  border-color: #d4dce4;
+}
+
+.com-smartbrowser-editor .switcher:focus-within .toggle-outside {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 .25rem rgb(13 110 253 / 25%);
+}
+
+.com-smartbrowser-editor.container-fluid {
+  padding-top: 72px !important;
+}
+
+.com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) {
+  box-sizing: border-box;
+  height: 100dvh;
+  padding-bottom: 0 !important;
+  overflow: hidden;
+}
+
+.com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) #adminForm,
+.com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) .main-card {
+  height: 100%;
+  min-height: 0;
+}
+
+.com-smartbrowser-editor #smartbrowserEditorTabs[view="tabs"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.com-smartbrowser-editor #smartbrowserEditorTabs[view="tabs"] > :not([role="tablist"]) {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-actions {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 40;
+  box-sizing: border-box;
+  height: 72px;
+  align-items: center;
+  margin: 0 !important;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-actions > button[value="apply"]:hover {
+  color: #fff;
+  background: #198754;
+  border-color: #198754;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-actions > button[value="apply"]:hover .icon-check {
+  color: #fff;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-versions .btn {
+  color: #26394c;
+  background: #eef0f2;
+  border-color: #d9dee3;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-versions .btn:hover {
+  color: #fff;
+  background: #596b7b;
+  border-color: #596b7b;
+}
+
+.com-smartbrowser-editor .switcher .toggle-inside {
+  border-radius: 4px;
+}
+
+.com-smartbrowser-editor.is-page.container-fluid {
+  width: min(100%, 1280px);
+  max-width: 100%;
+  margin-inline: auto;
+  padding: 20px 16px 36px !important;
+  overflow: visible;
+}
+
+.com-smartbrowser-editor.is-page.container-fluid:has(#smartbrowserEditorTabs[view="tabs"]) {
+  height: auto;
+}
+
+.com-smartbrowser-editor.is-page:has(#smartbrowserEditorTabs[view="tabs"]) :is(#adminForm, .main-card, #smartbrowserEditorTabs[view="tabs"]) {
+  height: auto;
+  min-height: 0;
+}
+
+.com-smartbrowser-editor.is-page .smartbrowser-editor-actions {
+  position: static;
+  height: auto;
+  min-height: 0;
+  padding: 0 0 16px;
+  border: 0;
+  background: transparent;
+}
+
+.com-smartbrowser-editor.is-page #smartbrowserEditorTabs[view="tabs"] > :not([role="tablist"]) {
+  flex: 0 1 auto;
+  overflow: visible;
+}
+
+@media (max-width: 1000px) {
+  .com-smartbrowser-editor .smartbrowser-editor-link-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .com-smartbrowser-editor .smartbrowser-editor-image-row {
+    grid-template-columns: 1fr;
+  }
+}

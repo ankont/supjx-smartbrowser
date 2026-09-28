@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config addfieldprefix="SuperSoft\Component\Smartbrowser\Administrator\Field">
+    <fieldset name="preferences" label="COM_SMARTBROWSER_OPTIONS_PREFERENCES">
+        <fieldset name="preferences_editors" label="COM_SMARTBROWSER_OPTIONS_EDITORS">
+            <field name="editor_admin" type="list" default="modal" label="COM_SMARTBROWSER_EDITOR_ADMIN"><option value="modal">COM_SMARTBROWSER_EDITOR_MODAL</option><option value="page">COM_SMARTBROWSER_EDITOR_PAGE</option></field>
+            <field name="editor_site" type="list" default="modal" label="COM_SMARTBROWSER_EDITOR_SITE"><option value="modal">COM_SMARTBROWSER_EDITOR_MODAL</option><option value="page">COM_SMARTBROWSER_EDITOR_PAGE</option></field>
+        </fieldset>
+        <fieldset name="preferences_display" label="COM_SMARTBROWSER_OPTIONS_PREFERENCES">
+            <field name="preferences_reset_token" type="preferencesreset" label="COM_SMARTBROWSER_RESET_PREFERENCES" description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC" />
+        </fieldset>
+    </fieldset>
+    <fieldset name="context" label="COM_SMARTBROWSER_OPTIONS_CONTEXT">
+        <fieldset name="context_admin" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_ADMIN">
+            <field name="context_categories_admin" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_tags_admin" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_menus_admin" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+        <fieldset name="context_site" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_SITE">
+            <field name="context_categories_site" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_tags_site" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_menus_site" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+    </fieldset>
+    <fieldset name="integration" label="COM_SMARTBROWSER_OPTIONS_INTEGRATION">
+        <field name="replace_media_field" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_MEDIA_FIELD"><option value="0">JDISABLED</option><option value="1">JENABLED</option></field>
+        <field name="replace_articles" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_ARTICLES"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="replace_categories" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="replace_tags" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="replace_media" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_MEDIA"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="replace_menus" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="replace_users" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_USERS"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="hide_component_menu" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_HIDE_COMPONENT_MENU" description="COM_SMARTBROWSER_HIDE_COMPONENT_MENU_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+    <fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL">
+        <field
+            name="rules"
+            type="rules"
+            label="JCONFIG_PERMISSIONS_LABEL"
+            filter="rules"
+            validate="rules"
+            component="com_smartbrowser"
+            section="component"
+        />
+    </fieldset>
+</config>

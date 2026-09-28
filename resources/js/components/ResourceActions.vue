@@ -1,0 +1,105 @@
+<template>
+  <div class="resource-actions-area">
+  <div class="resource-actions">
+    <a v-if="dashboardUrl" class="btn resource-dashboard-link" :href="dashboardUrl" :title="t(integrated ? 'COM_SMARTBROWSER_DASHBOARD' : 'COM_SMARTBROWSER_BACK_TO_DASHBOARD')">
+      <span class="icon-arrow-left" aria-hidden="true" /> {{ t(integrated ? 'COM_SMARTBROWSER_DASHBOARD' : 'COM_SMARTBROWSER_BACK_TO_DASHBOARD') }}
+    </a>
+    <button v-if="selectionMode" type="button" class="btn btn-primary" :disabled="!canComplete" @click="$emit('complete')">
+      <span class="icon-check" aria-hidden="true" /> {{ t('COM_SMARTBROWSER_SELECT') }}
+    </button>
+    <button v-if="allowNoUser" type="button" class="btn btn-outline-secondary" @click="$emit('no-user')">
+      <span class="icon-user" aria-hidden="true" /> {{ t('JOPTION_NO_USER') }}
+    </button>
+    <button
+      v-for="action in directActions"
+      :key="action.id"
+      type="button"
+      class="btn btn-outline-secondary"
+      :class="`resource-action-${action.id}`"
+      :disabled="!available(action)"
+      @click="$emit('action', action)"
+    >
+      <span :class="action.icon" aria-hidden="true" />
+      {{ t(action.label) }}
+    </button>
+    <div v-if="menuActions.length" ref="actionMenu" class="resource-action-menu-wrap">
+      <button type="button" class="btn btn-outline-secondary resource-action-menu-toggle" :aria-expanded="showActions" :title="t('COM_SMARTBROWSER_ACTIONS')" @click="showActions = !showActions">
+        <span class="icon-ellipsis-h" aria-hidden="true" /> {{ t('COM_SMARTBROWSER_ACTIONS') }} <span class="icon-angle-down" aria-hidden="true" />
+      </button>
+      <div v-if="showActions" class="resource-action-menu" role="menu">
+        <div v-for="action in menuActions" :key="action.id" class="resource-action-menu-item" role="none">
+          <button type="button" role="menuitem" :class="`resource-action-${action.id}`" :disabled="!available(action)" @click="showActions = false; $emit('action', action)">
+            <span :class="action.icon" aria-hidden="true" /> {{ t(action.label) }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <button v-if="batchAvailable" type="button" class="btn btn-outline-secondary resource-batch-toggle" :disabled="!selection?.length" :title="t('COM_SMARTBROWSER_BATCH_ACTIONS')" @click="$emit('batch')">
+      <span class="fas fa-magic" aria-hidden="true" /> {{ t('COM_SMARTBROWSER_BATCH') }}
+    </button>
+    <div v-if="filters?.length" class="resource-filter-buttons">
+      <button type="button" class="btn resource-filter-toggle" :class="{ active: filtersOpen }" :aria-expanded="filtersOpen" @click="$emit('toggle-filters')">
+        <span class="icon-filter" aria-hidden="true" /> {{ t('COM_SMARTBROWSER_FILTER_OPTIONS') }}
+        <span v-if="activeFilterCount" class="badge bg-primary">{{ activeFilterCount }}</span>
+        <span class="icon-angle-down resource-filter-caret" :class="{ open: filtersOpen }" aria-hidden="true" />
+      </button>
+      <button type="button" class="btn resource-filter-clear" :disabled="!activeFilterCount" @click="$emit('clear-filters')">{{ t('JCLEAR') }}</button>
+    </div>
+    <button v-if="flatAvailable" type="button" class="btn resource-flat-toggle" :class="{ active: flatActive }" :title="t('COM_SMARTBROWSER_FLAT_VIEW')" :aria-label="t('COM_SMARTBROWSER_FLAT_VIEW')" :aria-pressed="flatActive" @click="$emit('toggle-flat')">
+      <span class="fas fa-layer-group" aria-hidden="true" />
+    </button>
+    <a v-if="managerUrl" class="btn resource-manager-link" :href="managerUrl" :target="managerNewTab ? '_blank' : undefined" :rel="managerNewTab ? 'noopener noreferrer' : undefined" :title="t('COM_SMARTBROWSER_OPEN_JOOMLA_MANAGER')" :aria-label="t('COM_SMARTBROWSER_OPEN_JOOMLA_MANAGER')">
+      <span class="icon-joomla" aria-hidden="true" />
+    </a>
+  </div>
+    <div v-if="filters?.length && filtersOpen" class="resource-action-filters">
+      <label v-for="filter in filters" :key="filter.id">
+        <span>{{ t(filter.label) }}</span>
+        <select
+          v-if="filter.type === 'select'"
+          class="form-select"
+          :value="filterValues[filter.id] ?? filter.default"
+          @change="$emit('filter', { id: filter.id, value: $event.target.value })"
+        >
+          <option v-for="option in filter.options" :key="option.value" :value="option.value">{{ optionLabel(filter, option) }}</option>
+        </select>
+      </label>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+
+const props = defineProps({ actions: Array, available: Function, selection: Array, batchAvailable: Boolean, flatAvailable: Boolean, flatActive: Boolean, filtersOpen: Boolean, filters: Array, filterValues: Object, managerUrl: String, managerNewTab: Boolean, dashboardUrl: String, integrated: Boolean, selectionMode: Boolean, allowNoUser: Boolean, canComplete: Boolean, t: Function });
+defineEmits(['action', 'batch', 'toggle-flat', 'toggle-filters', 'filter', 'clear-filters', 'complete', 'no-user']);
+const showActions = ref(false);
+const actionMenu = ref(null);
+const activeFilterCount = computed(() => (props.filters || []).filter((filter) => String(props.filterValues[filter.id] ?? filter.default ?? '') !== String(filter.default ?? '')).length);
+const optionLabel = (filter, option) => props.t(option.label);
+const visibleActions = computed(() => {
+  const renderedGroups = new Set();
+  const result = [];
+  props.actions.filter((action) => action.id !== 'checkin' || props.available(action)).forEach((action) => {
+    if (!action.exclusiveGroup) {
+      result.push(action);
+      return;
+    }
+    if (renderedGroups.has(action.exclusiveGroup)) return;
+    renderedGroups.add(action.exclusiveGroup);
+    const actions = props.actions.filter((candidate) => candidate.exclusiveGroup === action.exclusiveGroup);
+    const applicable = actions.filter((action) => props.available(action));
+    const overlayAction = props.selection?.length === 1
+      ? props.selection[0].overlays?.find((overlay) => actions.some((candidate) => candidate.id === overlay.action))?.action
+      : null;
+    result.push(...(applicable.length ? applicable : [actions.find((candidate) => candidate.id === overlayAction) || actions[0]]));
+  });
+  return result;
+});
+const directActions = computed(() => visibleActions.value.filter((action) => action.primary || ['upload', 'createNode', 'createChild', 'newArticle'].includes(action.id)));
+const menuActions = computed(() => visibleActions.value.filter((action) => !directActions.value.includes(action)));
+const closeActionMenu = (event) => { if (!actionMenu.value?.contains(event.target)) showActions.value = false; };
+const closeActionMenuOnEscape = (event) => { if (event.key === 'Escape') showActions.value = false; };
+onMounted(() => { document.addEventListener('click', closeActionMenu); document.addEventListener('keydown', closeActionMenuOnEscape); });
+onBeforeUnmount(() => { document.removeEventListener('click', closeActionMenu); document.removeEventListener('keydown', closeActionMenuOnEscape); });
+</script>

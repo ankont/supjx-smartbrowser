@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="component" method="upgrade">
+    <name>COM_SMARTBROWSER</name>
+    <version>1.0.0</version>
+    <creationDate>2026-09</creationDate>
+    <author>SuperSoft — Kontarinis Andreas</author>
+    <copyright>(C) 2026 SuperSoft. All rights reserved.</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <description>COM_SMARTBROWSER_XML_DESCRIPTION</description>
+    <namespace path="src">SuperSoft\Component\Smartbrowser</namespace>
+    <files folder="site">
+        <folder>src</folder>
+        <folder>tmpl</folder>
+    </files>
+    <administration>
+        <menu img="class:folder-open">COM_SMARTBROWSER_MENU</menu>
+        <files folder="admin">
+            <filename>access.xml</filename>
+            <filename>config.xml</filename>
+            <folder>services</folder>
+            <folder>src</folder>
+            <folder>tmpl</folder>
+        </files>
+        <languages folder="admin/language">
+            <language tag="en-GB">en-GB/com_smartbrowser.ini</language>
+            <language tag="en-GB">en-GB/com_smartbrowser.sys.ini</language>
+            <language tag="el-GR">el-GR/com_smartbrowser.ini</language>
+            <language tag="el-GR">el-GR/com_smartbrowser.sys.ini</language>
+        </languages>
+    </administration>
+    <media destination="com_smartbrowser" folder="media">
+        <filename>joomla.asset.json</filename>
+        <folder>css</folder>
+        <folder>js</folder>
+    </media>
+</extension>

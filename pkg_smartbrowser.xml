@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="package" method="upgrade">
+    <name>PKG_SMARTBROWSER</name>
+    <packagename>smartbrowser</packagename>
+    <version>1.0.0</version>
+    <creationDate>2026-09</creationDate>
+    <author>SuperSoft — Kontarinis Andreas</author>
+    <copyright>(C) 2026 SuperSoft. All rights reserved.</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <description>PKG_SMARTBROWSER_XML_DESCRIPTION</description>
+    <languages folder="language">
+        <language tag="en-GB">en-GB/pkg_smartbrowser.sys.ini</language>
+        <language tag="el-GR">el-GR/pkg_smartbrowser.sys.ini</language>
+    </languages>
+    <files folder="packages">
+        <file type="component" id="com_smartbrowser">com_smartbrowser.zip</file>
+        <file type="plugin" id="smartbrowserintegration" group="system">plg_system_smartbrowserintegration.zip</file>
+    </files>
+</extension>

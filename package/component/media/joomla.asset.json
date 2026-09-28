@@ -1,0 +1,62 @@
+{
+  "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+  "name": "com_smartbrowser",
+  "version": "1.0.0",
+  "description": "SuperSoftJx - SmartBrowser",
+  "license": "GPL-2.0-or-later",
+  "assets": [
+    {
+      "name": "com_smartbrowser.app",
+      "type": "style",
+      "uri": "com_smartbrowser/smartbrowser.css"
+    },
+    {
+      "name": "com_smartbrowser.editor",
+      "type": "style",
+      "uri": "com_smartbrowser/editor.css",
+      "dependencies": ["com_smartbrowser.app"]
+    },
+    {
+      "name": "com_smartbrowser.dialog-dismiss",
+      "type": "script",
+      "uri": "com_smartbrowser/dialog-dismiss.js",
+      "dependencies": ["core"],
+      "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.app",
+      "type": "script",
+      "uri": "com_smartbrowser/smartbrowser.js",
+      "dependencies": ["core", "messages", "com_smartbrowser.dialog-dismiss", "webcomponent.field-fancy-select"],
+      "attributes": {"type": "module"}
+    },
+    {
+      "name": "com_smartbrowser.picker",
+      "type": "script",
+      "uri": "com_smartbrowser/picker.js",
+      "dependencies": ["core", "com_smartbrowser.dialog-dismiss"],
+      "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.media-field",
+      "type": "script",
+      "uri": "com_smartbrowser/media-field.js",
+      "dependencies": ["com_smartbrowser.picker"],
+      "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.smartauthors-user-field",
+      "type": "script",
+      "uri": "com_smartbrowser/smartauthors-user-field.js",
+      "dependencies": ["com_smartbrowser.picker"],
+      "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.editor-fields",
+      "type": "script",
+      "uri": "com_smartbrowser/editor-fields.js",
+      "dependencies": ["core", "com_smartbrowser.dialog-dismiss"],
+      "attributes": {"defer": true}
+    }
+  ]
+}
