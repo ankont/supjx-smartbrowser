@@ -26,7 +26,44 @@ The package installs `com_smartbrowser` and an optional system integration plugi
 - Optional Media field picker integration and separate administrator/site editor-display settings.
 - English and Greek interface translations.
 
-Configure display, related-content, and integration settings in **SmartBrowser Options**. The integration plugin must be enabled for manager-link and picker integrations to take effect. SmartAuthors-specific user-field integration is used only when SmartAuthors is installed and enabled.
+Configure display, related-content, and integration settings in **SmartBrowser Options**. The integration plugin must be enabled for the built-in manager-link and field-picker replacements; third-party extensions can invoke the picker directly. SmartAuthors-specific user-field integration is used only when SmartAuthors is installed and enabled.
+
+## Use from another extension
+
+The `com_smartbrowser.picker` web asset exposes `window.SmartBrowserPicker.open(config)` to Joomla pages. Your extension can use this picker without enabling the optional manager-link integration plugin. Load the asset and supply a browser URL for the current Joomla application:
+
+```php
+use Joomla\CMS\Uri\Uri;
+
+$assets = $document->getWebAssetManager();
+$assets->getRegistry()->addExtensionRegistryFile('com_smartbrowser');
+$assets->useStyle('com_smartbrowser.app')->useScript('com_smartbrowser.picker');
+$document->addScriptOptions('com_smartbrowser.picker', [
+    'url' => Uri::base() . 'index.php?option=com_smartbrowser&view=browser',
+]);
+```
+
+Then open the picker from your own button or field handler:
+
+```js
+const article = await window.SmartBrowserPicker.open({
+  adapter: 'articles',
+  selectionTarget: 'item',
+  allowedResourceTypes: ['article'],
+  multiple: false,
+});
+
+if (article) {
+  // For example: set your field value to article.id.
+  console.log(article.id, article.title);
+}
+```
+
+`open()` resolves to one resource, an array when `multiple: true`, or `null` when the dialog is dismissed. Resources include `id`, `type`, `kind`, and `title`; adapter-specific data is in `metadata`. Use the resource ID as an opaque value unless your extension explicitly depends on that adapter's ID format.
+
+Common options are `adapter` (`media`, `articles`, `categories`, `tags`, `articles-by-tag`, `menus`, or `users`), `selectionTarget` (`item`, `node`, or `both`), `multiple`, `allowedResourceTypes`, `browseRoot`, and `defaultView` (`grid` or `details`). For example, `browseRoot: 'category:42'` constrains an article picker to a category subtree; a Media picker can use a provider path such as `local-images:/lessons`. The selected user must have the relevant Joomla permissions. The picker also accepts an explicit `url` if your hosting page needs a different site or administrator browser route.
+
+For a full-page browser, link to `index.php?option=com_smartbrowser&view=browser&adapter=articles&mode=select` in the appropriate Joomla application. If you host that page yourself, it dispatches `smartbrowser:select` with `event.detail` containing `{ adapter, mode, resources }`; the picker above handles that event and dialog lifecycle for you.
 
 ## Build and test
 
