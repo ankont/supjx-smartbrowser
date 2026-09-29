@@ -2,7 +2,7 @@
 <extension type="package" method="upgrade">
     <name>PKG_SMARTBROWSER</name>
     <packagename>smartbrowser</packagename>
-    <version>1.2.8</version>
+    <version>1.2.14</version>
     <creationDate>2026-09</creationDate>
     <author>SuperSoft — Kontarinis Andreas</author>
     <copyright>(C) 2026 SuperSoft. All rights reserved.</copyright>

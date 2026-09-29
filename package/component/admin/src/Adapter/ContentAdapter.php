@@ -472,6 +472,24 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         $canFeature = $identity->authorise('core.edit.state', 'com_content.article.' . $id);
         $state = (int) ($article->state ?? 0);
         $isFeatured = (bool) ($article->featured ?? false);
+        $featuredUp = (string) ($article->featured_up ?? '');
+        $featuredDown = (string) ($article->featured_down ?? '');
+        $now = Factory::getDate()->toUnix();
+        $featuredTiming = $isFeatured && $featuredUp !== '' && Factory::getDate($featuredUp, 'UTC')->toUnix() > $now ? 'pending' : '';
+        if ($isFeatured && $featuredDown !== '' && Factory::getDate($featuredDown, 'UTC')->toUnix() < $now) $featuredTiming = 'expired';
+        $statusPresentation = $this->statusPresentation($state);
+        if ($state === 1) {
+            $nullDate = Factory::getContainer()->get(DatabaseInterface::class)->getNullDate();
+            $publishUp = (string) ($article->publish_up ?? '');
+            $publishDown = (string) ($article->publish_down ?? '');
+            $publicationTiming = $publishUp !== '' && $publishUp !== $nullDate && Factory::getDate($publishUp, 'UTC')->toUnix() > $now ? 'pending' : '';
+            if ($publishDown !== '' && $publishDown !== $nullDate && Factory::getDate($publishDown, 'UTC')->toUnix() < $now) $publicationTiming = 'expired';
+            if ($publicationTiming !== '') $statusPresentation = [
+                'icon' => 'icon-' . $publicationTiming,
+                'label' => Text::_('JLIB_HTML_PUBLISHED_' . strtoupper($publicationTiming) . '_ITEM'),
+                'tone' => $publicationTiming,
+            ];
+        }
         $languageKey = $this->languageKey((string) $article->title);
         $categoryTitle = $this->title((string) ($article->category_title ?? ''));
         $cardSummary = $this->languageKeySummary($languageKey);
@@ -482,11 +500,12 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             || $canEdit
         );
         $statusOverlay = $this->statusOverlay($state);
+        $statusOverlay = array_replace($statusOverlay, $statusPresentation);
         if ($state === -2) $statusOverlay['action'] = 'restore';
         $overlays = [$statusOverlay, [
-            'id' => 'featured', 'icon' => $isFeatured ? 'icon-star' : 'icon-star-empty',
-            'label' => Text::_($isFeatured ? 'JFEATURED' : 'JUNFEATURED'),
-            'tone' => $isFeatured ? 'warning' : 'muted', 'action' => $isFeatured ? 'unfeature' : 'feature',
+            'id' => 'featured', 'icon' => $featuredTiming !== '' ? 'icon-' . $featuredTiming : ($isFeatured ? 'icon-star' : 'icon-star-empty'),
+            'label' => Text::_($featuredTiming !== '' ? 'JLIB_HTML_FEATURED_' . strtoupper($featuredTiming) . '_ITEM' : ($isFeatured ? 'JFEATURED' : 'JUNFEATURED')),
+            'tone' => $featuredTiming !== '' ? $featuredTiming : ($isFeatured ? 'warning' : 'muted'), 'action' => $isFeatured ? 'unfeature' : 'feature',
         ]];
         if ($checkedOut > 0) {
             $overlays[] = ['id' => 'checkedOut', 'icon' => 'icon-lock', 'label' => Text::sprintf('COM_SMARTBROWSER_CHECKED_OUT_BY', (string) ($article->editor ?? '')), 'tone' => 'warning', 'action' => 'checkin'];
@@ -496,7 +515,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'id' => 'article:' . $id, 'title' => $this->title((string) $article->title),
             'subtitle' => (string) ($article->alias ?? ''), 'parentId' => 'category:' . (int) $article->catid,
             'kind' => 'item', 'type' => 'article', 'icon' => 'icon-file-alt', 'image' => $this->imageUrl($storedImage),
-            'status' => $state, 'statusPresentation' => $this->statusPresentation($state), 'overlays' => $overlays,
+            'status' => $state, 'statusPresentation' => $statusPresentation, 'overlays' => $overlays,
             'selectable' => true, 'navigable' => false, 'hasChildren' => false,
             'capabilities' => [
                 'edit' => $canEdit, 'publish' => $canPublish && $state !== 1, 'unpublish' => $canUnpublish && $state === 1,
@@ -515,7 +534,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
                 ])),
                 'category' => $categoryTitle,
                 'categoryPath' => implode(' / ', $this->categoryPathTitles((int) $article->catid)),
-                'state' => $state, 'stateLabel' => $this->stateLabel($state),
+                'state' => $state, 'stateLabel' => $statusPresentation['label'],
                 'access' => $article->access_level ?? $article->access ?? '',
                 'accessId' => (int) ($article->access ?? 0),
                 'language' => $article->language_title ?? $article->language ?? '*',

@@ -290,8 +290,8 @@ $menuItemTypeTitleKey = match ($menuItemType) {
         <?php endif; ?>
 
         <?php if (!in_array($this->resourceType, ['article', 'category'], true) && $hasFieldset('item_associations')) : ?>
-            <?php echo HTMLHelper::_('uitab.addTab', 'smartbrowserEditorTabs', 'smartbrowser-associations', Text::_('JGLOBAL_FIELDSET_ASSOCIATIONS')); ?>
-            <fieldset class="options-form smartbrowser-editor-tab"><?php foreach ($fieldsetFields('item_associations') as $field) echo $field->renderField(); ?></fieldset>
+            <?php echo HTMLHelper::_('uitab.addTab', 'smartbrowserEditorTabs', 'associations', Text::_('JGLOBAL_FIELDSET_ASSOCIATIONS')); ?>
+            <fieldset id="fieldset-associations" class="options-form smartbrowser-editor-tab"><?php foreach ($fieldsetFields('item_associations') as $field) echo $field->renderField(); ?></fieldset>
             <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php endif; ?>
 

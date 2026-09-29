@@ -260,14 +260,20 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $aliasTarget = (string) $item->type === 'alias' ? (int) (json_decode((string) $item->params, true)['aliasoptions'] ?? 0) : 0;
         $overlays = [$this->statusOverlay($state)];
         $homeLabel = !empty($item->home) ? Text::_((string) $item->language === '*' ? 'COM_SMARTBROWSER_HOME_ALL_LANGUAGES' : 'COM_SMARTBROWSER_HOME_LANGUAGE') : '';
-        if ($homeLabel !== '') $overlays[] = ['id' => 'home', 'icon' => 'icon-home', 'label' => $homeLabel, 'tone' => 'info'];
+        if ($homeLabel !== '') $overlays[] = [
+            'id' => 'home', 'icon' => 'icon-home',
+            'image' => $this->languageImage((string) $item->language),
+            'label' => $homeLabel, 'tone' => 'info',
+        ];
         if ($aliasTarget) $overlays[] = ['id' => 'shortcut', 'icon' => 'icon-new-tab', 'label' => Text::_('COM_SMARTBROWSER_MENU_ITEM_ALIAS'), 'tone' => 'info'];
         if ((int) ($item->checked_out ?? 0) > 0) $overlays[] = ['id' => 'checkedOut', 'icon' => 'icon-lock', 'label' => Text::_('COM_SMARTBROWSER_CHECKED_OUT'), 'tone' => 'warning'];
         $typeLabel = $this->typeLabel($item);
         $isStatic = in_array((string) $item->type, ['separator', 'heading'], true);
+        $hasChildren = $this->hasChildren((int) $item->id, (string) $item->menutype);
+        $navigable = !$isStatic || ((string) $item->type === 'heading' && $hasChildren);
         $icon = match ((string) $item->type) {
             'separator' => 'icon-minus-2',
-            'heading' => 'fa-solid fa-bars',
+            'heading' => $navigable ? 'icon-folder' : 'icon-list',
             default => 'icon-folder',
         };
         $capabilities = $this->itemCapabilities($item);
@@ -281,7 +287,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             'kind' => 'node', 'type' => 'menu-item', 'icon' => $icon, 'image' => null,
             'status' => $state, 'statusPresentation' => $this->statusPresentation($state), 'overlays' => $overlays,
             'selectable' => true, 'bulkSelectable' => true, 'focusable' => true, 'actionable' => true,
-            'navigable' => !$isStatic, 'hasChildren' => !$isStatic && $this->hasChildren((int) $item->id, (string) $item->menutype),
+            'navigable' => $navigable, 'hasChildren' => $navigable && $hasChildren,
             'capabilities' => $capabilities,
             'metadata' => [
                 'id' => (int) $item->id, 'alias' => (string) $item->alias, 'menu' => (string) $this->menu((string) $item->menutype)->title,

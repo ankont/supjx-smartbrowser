@@ -4998,7 +4998,7 @@ var Gl = {
 ], pu = ["disabled", "onClick"], mu = ["src", "alt"], hu = ["hidden"], gu = {
 	key: 1,
 	class: "resource-item-overlays"
-}, _u = ["title", "onClick"], vu = ["title"], yu = ["title"], bu = ["title"], xu = { class: "resource-item-metadata-text" }, Su = {
+}, _u = ["title", "onClick"], vu = ["src"], yu = ["title"], bu = ["src"], xu = ["title"], Su = ["title"], Cu = { class: "resource-item-metadata-text" }, wu = {
 	__name: "ResourceGrid",
 	props: {
 		resources: Array,
@@ -5135,22 +5135,34 @@ var Gl = {
 					onClick: Q((n) => {
 						t.$emit("focus", u), t.$emit("action", s(e, u), u);
 					}, ["stop"])
-				}, [K("span", {
+				}, [e.image ? (W(), G("img", {
+					key: 0,
+					src: e.image,
+					alt: "",
+					"aria-hidden": "true"
+				}, null, 8, vu)) : (W(), G("span", {
+					key: 1,
 					class: M(e.icon),
 					"aria-hidden": "true"
-				}, null, 2)], 10, _u)) : (W(), G("span", {
+				}, null, 2))], 10, _u)) : (W(), G("span", {
 					key: 1,
 					class: M(["resource-overlay", [`overlay-${e.id}`, `tone-${e.tone || "neutral"}`]]),
 					title: e.label
-				}, [K("span", {
+				}, [e.image ? (W(), G("img", {
+					key: 0,
+					src: e.image,
+					alt: "",
+					"aria-hidden": "true"
+				}, null, 8, bu)) : (W(), G("span", {
+					key: 1,
 					class: M(e.icon),
 					"aria-hidden": "true"
-				}, null, 2)], 10, vu))], 64))), 128))])) : Y("", !0)
+				}, null, 2))], 10, yu))], 64))), 128))])) : Y("", !0)
 			], 2),
 			K("span", {
 				class: "resource-item-title",
 				title: `${e.t("COM_SMARTBROWSER_NAME")}: ${u.title}`
-			}, P(u.title), 9, yu),
+			}, P(u.title), 9, xu),
 			(W(!0), G(U, null, H(f(u), (t) => (W(), G("span", {
 				key: t.label,
 				class: M(["resource-item-metadata", { "resource-item-identifier": t.identifier }]),
@@ -5158,44 +5170,44 @@ var Gl = {
 			}, [K("span", {
 				class: M(t.icon),
 				"aria-hidden": "true"
-			}, null, 2), K("span", xu, P(t.value), 1)], 10, bu))), 128))
+			}, null, 2), K("span", Cu, P(t.value), 1)], 10, Su))), 128))
 		], 42, uu))), 128))], 2));
 	}
-}, Cu = { class: "table-responsive resource-details-view" }, wu = { class: "table table-hover" }, Tu = {
+}, Tu = { class: "table-responsive resource-details-view" }, Eu = { class: "table table-hover" }, Du = {
 	class: "resource-type-column resource-details-select-column",
 	scope: "col"
-}, Eu = { class: "resource-details-select-controls" }, Du = { class: "resource-details-select-all" }, Ou = ["checked", "aria-label"], ku = ["title"], Au = [
+}, Ou = { class: "resource-details-select-controls" }, ku = { class: "resource-details-select-all" }, Au = ["checked", "aria-label"], ju = ["title"], Mu = [
 	"title",
 	"aria-label",
 	"onClick"
-], ju = ["title"], Mu = [
+], Nu = ["title"], Pu = [
 	"tabindex",
 	"aria-current",
 	"onClick",
 	"onDblclick",
 	"onKeydown"
-], Nu = { class: "resource-type-column" }, Pu = ["src", "alt"], Fu = [
+], Fu = { class: "resource-type-column" }, Iu = ["src", "alt"], Lu = [
 	"checked",
 	"aria-label",
 	"onChange"
-], Iu = ["title"], Lu = { class: "resource-cell-ellipsis" }, Ru = ["title"], zu = ["title", "onClick"], Bu = { class: "visually-hidden" }, Vu = ["title"], Hu = { class: "visually-hidden" }, Uu = {
+], Ru = ["title"], zu = { class: "resource-cell-ellipsis" }, Bu = ["title"], Vu = ["title", "onClick"], Hu = { class: "visually-hidden" }, Uu = ["title"], Wu = { class: "visually-hidden" }, Gu = {
 	key: 1,
 	class: "resource-language"
-}, Wu = ["src"], Gu = {
+}, Ku = ["src"], qu = {
 	key: 1,
 	class: "resource-language-all fas fa-asterisk",
 	"aria-hidden": "true"
-}, Ku = { class: "resource-language-name" }, qu = {
+}, Ju = { class: "resource-language-name" }, Yu = {
 	key: 2,
 	class: "resource-cell-ellipsis"
-}, Ju = {
+}, Xu = {
 	key: 3,
 	class: "resource-row-overlays"
-}, Yu = ["title", "onClick"], Xu = ["title"], Zu = { class: "resource-row-actions" }, Qu = [
+}, Zu = ["title", "onClick"], Qu = ["src"], $u = ["title"], ed = ["src"], td = { class: "resource-row-actions" }, nd = [
 	"aria-expanded",
 	"title",
 	"onClick"
-], $u = ["disabled", "onClick"], ed = {
+], rd = ["disabled", "onClick"], id = {
 	__name: "ResourceDetails",
 	props: {
 		resources: Array,
@@ -5283,13 +5295,13 @@ var Gl = {
 		}, ee = (e) => ou(e) ? su(t.actions, e, t.actionAvailable) : [], T = (e, n) => ou(n) && n.interactiveOverlays !== !1 ? t.actions.find((r) => r.id === e.action && t.actionAvailable(r, [n])) : void 0, E = () => {
 			S.value = null;
 		};
-		return nr(() => document.addEventListener("click", E)), ar(() => document.removeEventListener("click", E)), (t, n) => (W(), G("div", Cu, [K("table", wu, [K("thead", null, [K("tr", null, [
-			K("th", Tu, [K("span", Eu, [K("label", Du, [K("input", {
+		return nr(() => document.addEventListener("click", E)), ar(() => document.removeEventListener("click", E)), (t, n) => (W(), G("div", Tu, [K("table", Eu, [K("thead", null, [K("tr", null, [
+			K("th", Du, [K("span", Ou, [K("label", ku, [K("input", {
 				type: "checkbox",
 				checked: e.allSelected,
 				"aria-label": e.t("COM_SMARTBROWSER_SELECT_ALL"),
 				onChange: n[0] ||= (e) => t.$emit("select-all")
-			}, null, 40, Ou)]), e.orderingField ? (W(), G("button", {
+			}, null, 40, Au)]), e.orderingField ? (W(), G("button", {
 				key: 0,
 				type: "button",
 				class: "resource-ordering-sort",
@@ -5298,7 +5310,7 @@ var Gl = {
 			}, [K("span", {
 				class: M(p(e.orderingField)),
 				"aria-hidden": "true"
-			}, null, 2)], 8, ku)) : Y("", !0)])]),
+			}, null, 2)], 8, ju)) : Y("", !0)])]),
 			(W(!0), G(U, null, H(a.value, (n) => (W(), G("th", {
 				key: n.id,
 				class: M(`resource-column-${n.id}`),
@@ -5322,7 +5334,7 @@ var Gl = {
 					class: M(p(u(n))),
 					"aria-hidden": "true"
 				}, null, 2)
-			], 8, Au)) : (W(), G("span", {
+			], 8, Mu)) : (W(), G("span", {
 				key: 1,
 				class: "resource-column-label",
 				title: d(n)
@@ -5330,7 +5342,7 @@ var Gl = {
 				key: 0,
 				class: M(l(n)),
 				"aria-hidden": "true"
-			}, null, 2)) : Y("", !0), K("span", { class: M(["resource-header-text", { "resource-header-primary": ["title", "name"].includes(n.id) }]) }, P(n.shortLabel ? e.t(n.shortLabel) : d(n)), 3)], 8, ju))], 6))), 128)),
+			}, null, 2)) : Y("", !0), K("span", { class: M(["resource-header-text", { "resource-header-primary": ["title", "name"].includes(n.id) }]) }, P(n.shortLabel ? e.t(n.shortLabel) : d(n)), 3)], 8, Nu))], 6))), 128)),
 			n[4] ||= K("th", {
 				class: "resource-row-actions",
 				scope: "col"
@@ -5351,7 +5363,7 @@ var Gl = {
 			onDblclick: Q((e) => r.navigable ? t.$emit("open", r.id) : r.activatable && t.$emit("activate", r), ["stop"]),
 			onKeydown: So(Q((e) => r.navigable ? t.$emit("open", r.id) : r.activatable ? t.$emit("activate", r) : t.$emit("focus", r), ["prevent"]), ["enter"])
 		}, [
-			K("td", Nu, [
+			K("td", Fu, [
 				!e.options.detailsThumbnails || !r.image ? (W(), G("span", {
 					key: 0,
 					class: M(r.icon),
@@ -5362,7 +5374,7 @@ var Gl = {
 					src: r.image,
 					alt: r.title,
 					onError: C
-				}, null, 40, Pu)),
+				}, null, 40, Iu)),
 				e.options.detailsThumbnails && r.image ? (W(), G("span", {
 					key: 2,
 					class: M(r.icon),
@@ -5378,13 +5390,13 @@ var Gl = {
 					checked: e.selectedIds.includes(r.id),
 					"aria-label": r.title,
 					onChange: (e) => t.$emit("select", r, !0)
-				}, null, 40, Fu)], 2)) : Y("", !0)
+				}, null, 40, Lu)], 2)) : Y("", !0)
 			]),
 			K("th", {
 				class: "resource-title-cell",
 				scope: "row",
 				title: r.title
-			}, [K("span", Lu, P(r.title), 1)], 8, Iu),
+			}, [K("span", zu, P(r.title), 1)], 8, Ru),
 			(W(!0), G(U, null, H(a.value.slice(1), (e) => (W(), G("td", {
 				key: e.id,
 				class: M(`resource-column-${e.id}`),
@@ -5401,18 +5413,18 @@ var Gl = {
 			}, [K("span", {
 				class: M(b(r).icon),
 				"aria-hidden": "true"
-			}, null, 2), K("span", Bu, P(b(r).label), 1)], 10, zu)) : (W(), G("span", {
+			}, null, 2), K("span", Hu, P(b(r).label), 1)], 10, Vu)) : (W(), G("span", {
 				key: 1,
 				class: M(["resource-status-icon", b(r).class]),
 				title: b(r).label
 			}, [K("span", {
 				class: M(b(r).icon),
 				"aria-hidden": "true"
-			}, null, 2), K("span", Hu, P(b(r).label), 1)], 10, Vu))], 64)) : e.format === "language" ? (W(), G("span", Uu, [r.metadata.languageImage ? (W(), G("img", {
+			}, null, 2), K("span", Wu, P(b(r).label), 1)], 10, Uu))], 64)) : e.format === "language" ? (W(), G("span", Gu, [r.metadata.languageImage ? (W(), G("img", {
 				key: 0,
 				src: r.metadata.languageImage,
 				alt: ""
-			}, null, 8, Wu)) : r.metadata.language === "*" ? (W(), G("span", Gu)) : Y("", !0), K("span", Ku, P(v(r, e)), 1)])) : (W(), G("span", qu, P(v(r, e)), 1)), e.overlays && r.overlays?.length ? (W(), G("span", Ju, [(W(!0), G(U, null, H(r.overlays.filter((e) => e.id !== "status"), (e) => (W(), G(U, { key: e.id }, [T(e, r) ? (W(), G("button", {
+			}, null, 8, Ku)) : r.metadata.language === "*" ? (W(), G("span", qu)) : Y("", !0), K("span", Ju, P(v(r, e)), 1)])) : (W(), G("span", Yu, P(v(r, e)), 1)), e.overlays && r.overlays?.length ? (W(), G("span", Xu, [(W(!0), G(U, null, H(r.overlays.filter((e) => e.id !== "status"), (e) => (W(), G(U, { key: e.id }, [T(e, r) ? (W(), G("button", {
 				key: 0,
 				type: "button",
 				class: M(["resource-overlay", [`overlay-${e.id}`, `tone-${e.tone || "neutral"}`]]),
@@ -5420,18 +5432,30 @@ var Gl = {
 				onClick: Q((n) => {
 					t.$emit("focus", r), t.$emit("action", T(e, r), r);
 				}, ["stop"])
-			}, [K("span", {
+			}, [e.image ? (W(), G("img", {
+				key: 0,
+				src: e.image,
+				alt: "",
+				"aria-hidden": "true"
+			}, null, 8, Qu)) : (W(), G("span", {
+				key: 1,
 				class: M(e.icon),
 				"aria-hidden": "true"
-			}, null, 2)], 10, Yu)) : (W(), G("span", {
+			}, null, 2))], 10, Zu)) : (W(), G("span", {
 				key: 1,
 				class: M(["resource-overlay", [`overlay-${e.id}`, `tone-${e.tone || "neutral"}`]]),
 				title: e.label
-			}, [K("span", {
+			}, [e.image ? (W(), G("img", {
+				key: 0,
+				src: e.image,
+				alt: "",
+				"aria-hidden": "true"
+			}, null, 8, ed)) : (W(), G("span", {
+				key: 1,
 				class: M(e.icon),
 				"aria-hidden": "true"
-			}, null, 2)], 10, Xu))], 64))), 128))])) : Y("", !0)], 2)], 14, Ru))), 128)),
-			K("td", Zu, [ee(r).length ? (W(), G("button", {
+			}, null, 2))], 10, $u))], 64))), 128))])) : Y("", !0)], 2)], 14, Bu))), 128)),
+			K("td", td, [ee(r).length ? (W(), G("button", {
 				key: 0,
 				type: "button",
 				class: "resource-row-menu-toggle",
@@ -5443,7 +5467,7 @@ var Gl = {
 			}, [...n[5] ||= [K("span", {
 				class: "icon-ellipsis-h",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, Qu)) : Y("", !0), S.value === r.id ? (W(), G("div", {
+			}, null, -1)]], 8, nd)) : Y("", !0), S.value === r.id ? (W(), G("div", {
 				key: 1,
 				class: "resource-item-menu resource-row-menu",
 				onClick: n[3] ||= Q(() => {}, ["stop"])
@@ -5458,14 +5482,14 @@ var Gl = {
 			}, [K("span", {
 				class: M(n.icon),
 				"aria-hidden": "true"
-			}, null, 2), J(" " + P(e.t(n.label)), 1)], 10, $u))), 128))])) : Y("", !0)])
-		], 42, Mu))), 128))])])]));
+			}, null, 2), J(" " + P(e.t(n.label)), 1)], 10, rd))), 128))])) : Y("", !0)])
+		], 42, Pu))), 128))])])]));
 	}
-}, td = (e, t = "") => window.prompt(e, t), nd = (e) => {
+}, ad = (e, t = "") => window.prompt(e, t), od = (e) => {
 	if (!e.metadata?.url) return null;
 	let t = (e.metadata.mimeType || "").toLowerCase();
 	return t.startsWith("image/") ? "image" : /^video\/(mp4|webm|ogg)$/.test(t) ? "video" : /^audio\/(mpeg|mp4|ogg|wav|webm)$/.test(t) ? "audio" : t === "application/pdf" ? "pdf" : null;
-}, rd = class {
+}, sd = class {
 	constructor(e, t, n, r, i = "modal", a = "administrator") {
 		this.api = e, this.state = t, this.reload = n, this.translate = r, this.editorMode = i, this.application = a;
 	}
@@ -5489,7 +5513,7 @@ var Gl = {
 		let n = e.exclusiveGroup ? t.filter((t) => t.capabilities?.[e.id] === !0) : t, r = n.map((e) => e.id);
 		if (e.id === "upload") return this.pickUpload();
 		if (e.id === "createNode") {
-			let t = td(this.translate("COM_SMARTBROWSER_NEW_FOLDER_NAME"));
+			let t = ad(this.translate("COM_SMARTBROWSER_NEW_FOLDER_NAME"));
 			t && await this.mutate(e.id, [], {
 				nodeId: this.state.selectedNode,
 				name: t
@@ -5502,7 +5526,7 @@ var Gl = {
 			return;
 		}
 		if (e.id === "rename") {
-			let n = td(this.translate("COM_SMARTBROWSER_RENAME_TO"), t[0].title);
+			let n = ad(this.translate("COM_SMARTBROWSER_RENAME_TO"), t[0].title);
 			n && n !== t[0].title && await this.mutate(e.id, r, { name: n });
 			return;
 		}
@@ -5625,7 +5649,7 @@ var Gl = {
 	preview(e) {
 		let t = e.metadata?.url, n = e, [r, i] = this.splitFilename(e.title), a = document.createElement("dialog");
 		a.className = "smartbrowser-preview";
-		let o = nd(e), s = o === "image" ? `<img data-preview-media src="${this.escapeAttribute(t)}" alt="${this.escapeAttribute(e.title)}">` : o === "video" ? `<video data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></video>` : o === "audio" ? `<audio data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></audio>` : o === "pdf" ? `<iframe data-preview-media src="${this.escapeAttribute(t)}" title="${this.escapeAttribute(e.title)}"></iframe>` : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(e.icon || "icon-file")}" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_PREVIEW_UNAVAILABLE"))}</span></div>`;
+		let o = od(e), s = o === "image" ? `<img data-preview-media src="${this.escapeAttribute(t)}" alt="${this.escapeAttribute(e.title)}">` : o === "video" ? `<video data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></video>` : o === "audio" ? `<audio data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></audio>` : o === "pdf" ? `<iframe data-preview-media src="${this.escapeAttribute(t)}" title="${this.escapeAttribute(e.title)}"></iframe>` : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(e.icon || "icon-file")}" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_PREVIEW_UNAVAILABLE"))}</span></div>`;
 		a.innerHTML = `<form class="smartbrowser-preview-form com-smartbrowser-editor" method="dialog">
       <div class="smartbrowser-preview-actions">
         <button type="button" class="btn btn-primary" data-action="save" ${e.capabilities?.rename ? "" : "disabled"}><span class="icon-save" aria-hidden="true"></span> ${this.escapeTranslated("JSAVE")}</button>
@@ -5740,11 +5764,11 @@ var Gl = {
 		let t = e.lastIndexOf(".");
 		return t > 0 && t < e.length - 1 ? [e.slice(0, t), e.slice(t + 1)] : [e, ""];
 	}
-}, id = (e, t) => (n, r) => {
+}, cd = (e, t) => (n, r) => {
 	let i = e === "title" ? n.title.toLocaleLowerCase() : e === "dimension" ? (n.metadata?.width || 0) * (n.metadata?.height || 0) : n.metadata?.[e], a = e === "title" ? r.title.toLocaleLowerCase() : e === "dimension" ? (r.metadata?.width || 0) * (r.metadata?.height || 0) : r.metadata?.[e], o = typeof i == "string" ? (i || "").localeCompare(a || "") : (i || 0) - (a || 0);
 	return t === "asc" ? o : -o;
 };
-function ad({ options: e, api: t, persistence: n, viewRegistry: r }) {
+function ld({ options: e, api: t, persistence: n, viewRegistry: r }) {
 	let i = new Set(e.allowedResourceTypes || []), a = (t) => e.mode === "readonly" || i.size && !i.has(t.type) ? {
 		...t,
 		selectable: !1,
@@ -5791,8 +5815,8 @@ function ad({ options: e, api: t, persistence: n, viewRegistry: r }) {
 			t.metadata?.alias
 		].some((t) => String(t || "").toLocaleLowerCase().includes(e)), n = c.nodes.map(eu).map(a).filter(t), r = c.items.map(eu).map(a).filter(t), i = c.contextItems.map(tu);
 		return c.sortBy ? [
-			...n.sort(id(c.sortBy, c.sortDirection)),
-			...r.sort(id(c.sortBy, c.sortDirection)),
+			...n.sort(cd(c.sortBy, c.sortDirection)),
+			...r.sort(cd(c.sortBy, c.sortDirection)),
 			...i
 		] : [
 			...n,
@@ -5872,7 +5896,7 @@ function ad({ options: e, api: t, persistence: n, viewRegistry: r }) {
 }
 //#endregion
 //#region resources/js/core/viewRegistry.js
-var od = () => {
+var ud = () => {
 	let e = /* @__PURE__ */ new Map();
 	return {
 		register(t) {
@@ -5894,7 +5918,7 @@ var od = () => {
 			return e.has(t);
 		}
 	};
-}, sd = class {
+}, dd = class {
 	constructor(e = window.sessionStorage, t = "supjx.smartbrowser.media") {
 		this.storage = e, this.key = t;
 	}
@@ -5922,26 +5946,26 @@ var od = () => {
 		};
 		this.storage.setItem(this.key, JSON.stringify(t));
 	}
-}, cd = "supjx.smartbrowser.preferencesResetToken";
-function ld(e, t) {
-	if (!t || e.getItem(cd) === t) return !1;
+}, fd = "supjx.smartbrowser.preferencesResetToken";
+function pd(e, t) {
+	if (!t || e.getItem(fd) === t) return !1;
 	let n = [];
 	for (let t = 0; t < e.length; t++) {
 		let r = e.key(t);
-		r?.startsWith("supjx.smartbrowser.") && r !== cd && r !== "supjx.smartbrowser.editorReturn" && n.push(r);
+		r?.startsWith("supjx.smartbrowser.") && r !== fd && r !== "supjx.smartbrowser.editorReturn" && n.push(r);
 	}
-	return n.forEach((t) => e.removeItem(t)), e.setItem(cd, t), !0;
+	return n.forEach((t) => e.removeItem(t)), e.setItem(fd, t), !0;
 }
 //#endregion
 //#region resources/js/core/resetSessionNavigation.js
-var ud = "supjx.smartbrowser.";
-function dd(e, t, n) {
+var md = "supjx.smartbrowser.";
+function hd(e, t, n) {
 	if (!n) return !1;
-	let r = `${ud}session.${t}`, i = e.getItem(r);
+	let r = `${md}session.${t}`, i = e.getItem(r);
 	if (e.setItem(r, n), !i || i === n) return !1;
 	for (let t = 0; t < e.length; t++) {
 		let n = e.key(t);
-		if (!(!n?.startsWith(ud) || n.startsWith(`${ud}ui.`) || n.startsWith(`${ud}session.`))) try {
+		if (!(!n?.startsWith(md) || n.startsWith(`${md}ui.`) || n.startsWith(`${md}session.`))) try {
 			let t = JSON.parse(e.getItem(n));
 			if (!t || typeof t != "object" || Array.isArray(t) || !("selectedNode" in t) && !("filters" in t)) continue;
 			delete t.selectedNode, delete t.filters, e.setItem(n, JSON.stringify(t));
@@ -5949,7 +5973,7 @@ function dd(e, t, n) {
 	}
 	return !0;
 }
-function fd(e) {
+function gd(e) {
 	let t = new URL(e);
 	if (t.searchParams.delete("node"), t.searchParams.has("flatFromAdapter")) {
 		let e = t.searchParams.get("flatFromBrowseRoot");
@@ -5959,11 +5983,11 @@ function fd(e) {
 }
 //#endregion
 //#region resources/js/services/ResourceApi.js
-function pd(e, t = 0, n = (e) => e) {
+function _d(e, t = 0, n = (e) => e) {
 	let r = e?.messages && typeof e.messages == "object" ? Object.values(e.messages).flat() : [], i = [...new Set([e?.message, ...r].filter((e) => typeof e == "string" && e.trim()).map((e) => e.trim()))];
 	return i.length ? i.join("; ") : t === 413 ? n("COM_SMARTBROWSER_ERROR_REQUEST_TOO_LARGE") : t ? n("COM_SMARTBROWSER_ERROR_REQUEST_HTTP").replace("%s", String(t)) : n("COM_SMARTBROWSER_ERROR_REQUEST_NETWORK");
 }
-var md = class {
+var vd = class {
 	constructor(e) {
 		this.options = e;
 	}
@@ -5994,7 +6018,7 @@ var md = class {
 					let t = JSON.parse(e);
 					if (t.data?.authenticationRequired) this.redirectToLogin(t.data.loginUrl), r(Error(t.message));
 					else if (t.success === !1) {
-						let e = Error(pd(t, Number(t.code) || 0, (e) => Joomla.Text?._(e, e) || e));
+						let e = Error(_d(t, Number(t.code) || 0, (e) => Joomla.Text?._(e, e) || e));
 						e.status = Number(t.code) || 0, r(e);
 					} else n(t.data);
 				},
@@ -6005,7 +6029,7 @@ var md = class {
 					} catch {
 						e.status === 401 && this.redirectToLogin();
 					}
-					let n = pd(t, Number(e.status) || 0, (e) => Joomla.Text?._(e, e) || e), i = Error(n);
+					let n = _d(t, Number(e.status) || 0, (e) => Joomla.Text?._(e, e) || e), i = Error(n);
 					i.status = Number(e.status) || 0, r(i);
 				}
 			});
@@ -6016,15 +6040,15 @@ var md = class {
 		t && window.top.location.assign(t);
 	}
 }, $ = Joomla.getOptions("com_smartbrowser", {});
-ld(window.sessionStorage, $.preferencesResetToken);
-var hd = dd(window.sessionStorage, $.application, $.csrfToken) ? fd(window.location.href) : window.location.href;
-if (hd !== window.location.href) window.location.replace(hd);
+pd(window.sessionStorage, $.preferencesResetToken);
+var yd = hd(window.sessionStorage, $.application, $.csrfToken) ? gd(window.location.href) : window.location.href;
+if (yd !== window.location.href) window.location.replace(yd);
 else {
-	let e = new md($), t = $.browseRoot ? `supjx.smartbrowser.${$.adapter}.${$.browseRoot}` : `supjx.smartbrowser.${$.adapter}`, n = new sd(window.sessionStorage, $.featuredOnly ? `${t}.featured` : t), r = od().register({
+	let e = new vd($), t = $.browseRoot ? `supjx.smartbrowser.${$.adapter}.${$.browseRoot}` : `supjx.smartbrowser.${$.adapter}`, n = new dd(window.sessionStorage, $.featuredOnly ? `${t}.featured` : t), r = ud().register({
 		id: "grid",
 		label: "COM_SMARTBROWSER_GRID",
 		icon: "icon-th",
-		component: Su,
+		component: wu,
 		supportsSize: !0,
 		controls: ["sort", "zoom"],
 		options: { gridSize: "md" }
@@ -6032,19 +6056,19 @@ else {
 		id: "details",
 		label: "COM_SMARTBROWSER_DETAILS",
 		icon: "icon-list",
-		component: ed,
+		component: id,
 		supportsSize: !1,
 		controls: ["thumbnails", "dateField"],
 		options: {
 			detailsThumbnails: !1,
 			detailsDateMode: "modified"
 		}
-	}), i = ad({
+	}), i = ld({
 		options: $,
 		api: e,
 		persistence: n,
 		viewRegistry: r
-	}), a = new rd(e, i.state, () => i.load(), (e) => Joomla.Text?._(e, e) || e, $.editorMode, $.application);
+	}), a = new sd(e, i.state, () => i.load(), (e) => Joomla.Text?._(e, e) || e, $.editorMode, $.application);
 	window.SmartBrowser = {
 		open(e = {}) {
 			let t = e.showContextResources ?? $.showContextResources ?? !1, n = e.browseRoot ? `&browseRoot=${encodeURIComponent(e.browseRoot)}` : "", r = e.defaultView ? `&defaultView=${encodeURIComponent(e.defaultView)}` : "", i = e.allowedResourceTypes?.length ? `&allowedResourceTypes=${encodeURIComponent(e.allowedResourceTypes.join(","))}` : "", a = e.showAdapterSwitcher ? "&showAdapterSwitcher=1" : "";

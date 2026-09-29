@@ -351,14 +351,15 @@ test('resource actions require an explicit capability and support generic URL co
   assert.match(driver, /resource\?\.command === 'copyText'/);
 });
 
-test('static Menu Items remain ordered tree nodes but cannot navigate', async () => {
+test('menu headings navigate only when they have children while separators stay static', async () => {
   const adapter = await readFile(new URL('../package/component/admin/src/Adapter/MenuAdapter.php', import.meta.url), 'utf8');
   const tree = await readFile(new URL('../resources/js/components/ResourceTree.vue', import.meta.url), 'utf8');
   assert.match(adapter, /\$isStatic = in_array\(\(string\) \$item->type, \['separator', 'heading'\]/);
   assert.match(adapter, /'kind' => 'node'/);
-  assert.match(adapter, /'navigable' => !\$isStatic/);
+  assert.match(adapter, /\$navigable = !\$isStatic \|\| \(\(string\) \$item->type === 'heading' && \$hasChildren\)/);
+  assert.match(adapter, /'navigable' => \$navigable, 'hasChildren' => \$navigable && \$hasChildren/);
   assert.match(adapter, /'separator' => 'icon-minus-2'/);
-  assert.match(adapter, /'heading' => 'fa-solid fa-bars'/);
+  assert.match(adapter, /'heading' => \$navigable \? 'icon-folder' : 'icon-list'/);
   assert.match(adapter, /'nodes' => \$children,[\s\S]*'items' => \[\]/);
   assert.match(tree, /node\.navigable !== false/);
   assert.match(tree, /resource-tree-static/);

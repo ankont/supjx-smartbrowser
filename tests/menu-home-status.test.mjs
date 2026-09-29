@@ -23,7 +23,8 @@ test('failed menu state action displays the server error', async () => {
 
 test('menu home status is visible and the protected default home returns an error', async () => {
   const source = await readFile(new URL('../package/component/admin/src/Adapter/MenuAdapter.php', import.meta.url), 'utf8');
-  assert.match(source, /\$overlays\[\] = \['id' => 'home', 'icon' => 'icon-home'/);
+  assert.match(source, /\$overlays\[\] = \[\s*'id' => 'home', 'icon' => 'icon-home'/);
+  assert.match(source, /'image' => \$this->languageImage\(\(string\) \$item->language\)/);
   assert.match(source, /'source' => 'metadata\.homeLabel'/);
   assert.match(source, /COM_SMARTBROWSER_ERROR_MENU_DEFAULT_HOME/);
 });

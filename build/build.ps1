@@ -9,7 +9,7 @@ $StageRoot = Join-Path $PSScriptRoot 'stage'
 $ComponentZip = Join-Path $StageRoot 'packages\com_smartbrowser.zip'
 $PluginRoot = Join-Path $ProjectRoot 'package\plugins\system\smartbrowserintegration'
 $PluginZip = Join-Path $StageRoot 'packages\plg_system_smartbrowserintegration.zip'
-$PackageZip = Join-Path $OutputDirectory 'pkg_smartbrowser-v1.2.8.zip'
+$PackageZip = Join-Path $OutputDirectory 'pkg_smartbrowser-v1.2.14.zip'
 $BuiltScript = Join-Path $ComponentRoot 'media\js\smartbrowser.js'
 
 function Reset-Directory {

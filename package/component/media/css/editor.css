@@ -233,6 +233,11 @@ dialog.com-smartbrowser-editor-picker .btn-close {
   border-color: #0064d2;
 }
 
+body .calendar-container table tbody td.day.selected {
+  color: #fff !important;
+  background: #0d6efd !important;
+}
+
 .com-smartbrowser-editor .smartbrowser-editor-image-row,
 .com-smartbrowser-editor .smartbrowser-editor-link-row {
   display: grid;

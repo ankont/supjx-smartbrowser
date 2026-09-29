@@ -37,10 +37,12 @@
         <span v-if="resource.overlays?.length" class="resource-item-overlays">
           <template v-for="overlay in resource.overlays" :key="overlay.id">
             <button v-if="overlayAction(overlay, resource)" type="button" class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlay.label" @click.stop="$emit('focus', resource); $emit('action', overlayAction(overlay, resource), resource)">
-              <span :class="overlay.icon" aria-hidden="true" />
+                <img v-if="overlay.image" :src="overlay.image" alt="" aria-hidden="true" />
+                <span v-else :class="overlay.icon" aria-hidden="true" />
             </button>
             <span v-else class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlay.label">
-              <span :class="overlay.icon" aria-hidden="true" />
+                <img v-if="overlay.image" :src="overlay.image" alt="" aria-hidden="true" />
+                <span v-else :class="overlay.icon" aria-hidden="true" />
             </span>
           </template>
         </span>

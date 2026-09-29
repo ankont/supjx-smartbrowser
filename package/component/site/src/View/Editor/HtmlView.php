@@ -3,6 +3,7 @@ namespace SuperSoft\Component\Smartbrowser\Site\View\Editor;
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Language\Text;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SiteAuthentication;
 use SuperSoft\Component\Smartbrowser\Site\Service\FrontendEditorService;
 defined('_JEXEC') or die;
@@ -37,6 +38,17 @@ final class HtmlView extends BaseHtmlView
                 if (is_array($failure['data'] ?? null)) $this->editorForm->bind($failure['data']);
             }
             $this->editorTitle = $service->title($this->resourceType, $this->resourceId);
+            if (!in_array($this->resourceType, ['article', 'category'], true) && $this->editorForm->getFieldset('item_associations')) {
+                Text::script('JGLOBAL_ASSOC_NOT_POSSIBLE');
+                Text::script('JGLOBAL_ASSOCIATIONS_RESET_WARNING');
+                $document = $this->getDocument();
+                $document->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_associations');
+                $document->getWebAssetManager()->useScript('com_smartbrowser.associations');
+                $document->addScriptOptions('system.associations.edit', [
+                    'formControl' => $this->editorForm->getFormControl(),
+                    'hidden' => (int) ($this->editorForm->getValue('language', null, '*') === '*'),
+                ]);
+            }
             if ($this->resourceType === 'menu-item') {
                 $selectedType = $app->getInput()->getBool('menuTypeSelected') ? $app->getInput()->getCmd('selectedType') : '';
                 $this->menuItemType = $selectedType !== '' ? $selectedType : $service->storedMenuItemType($this->resourceId);
