@@ -43,7 +43,7 @@ final class FrontendEditorService
 
     public function save(string $type, int $id, array $data, bool $copy = false): int
     {
-        if ($type === 'article') $data['id'] = $id;
+        $data['id'] = $id;
         if ($type === 'menu-item' && $id > 0 && empty($data['type'])) {
             $data['type'] = $this->storedMenuItemType($id);
         }
@@ -52,7 +52,7 @@ final class FrontendEditorService
         if (!$form) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
         $valid = $model->validate($form, $data);
         if ($valid === false) throw new \RuntimeException(implode("\n", array_map('strval', $model->getErrors())), 400);
-        if ($type === 'article') $valid['id'] = $id;
+        $valid['id'] = $id;
         if ($copy) {
             if ($type !== 'article' || $id <= 0) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
             $categoryId = (int) ($valid['catid'] ?? $this->articleCategoryId($id));
@@ -114,7 +114,7 @@ final class FrontendEditorService
         $this->assertAllowed($type, $id);
         $input = $this->app->getInput();
         $input->set('id', $id);
-        return match ($type) {
+        $model = match ($type) {
             'article' => $this->createSiteModel('com_content', 'Form', ['a_id' => $id]),
             'category' => $this->createModel('com_categories', 'Category', ['extension' => 'com_content']),
             'tag' => $this->createModel('com_tags', 'Tag'),
@@ -122,6 +122,11 @@ final class FrontendEditorService
             'user' => $this->createModel('com_users', 'User'),
             default => throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400),
         };
+        if ($type === 'menu-item' && $id > 0) {
+            $model->getState('item.id');
+            $model->setState('item.type', $this->storedMenuItemType($id));
+        }
+        return $model;
     }
 
     private function loadLanguages(string $type): void

@@ -285,19 +285,20 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_UPLOAD'), 400);
         }
 
-        $maxBytes = (float) ComponentHelper::getParams('com_media')->get('upload_maxsize', 10) * 1024 * 1024;
+        $maxSizeMb = (float) ComponentHelper::getParams('com_media')->get('upload_maxsize', 0);
+        $maxBytes = $maxSizeMb * 1024 * 1024;
 
         if ($maxBytes > 0 && strlen($content) > $maxBytes) {
-            throw new \RuntimeException(Text::_('COM_SMARTBROWSER_ERROR_UPLOAD_TOO_LARGE'), 413);
+            throw new \RuntimeException(Text::sprintf('COM_SMARTBROWSER_ERROR_UPLOAD_TOO_LARGE', $maxSizeMb), 413);
         }
 
-        $name = $this->apiModel->createFile(
+        $name = $this->withAllMediaTypes(fn () => $this->apiModel->createFile(
             $adapter,
             (string) ($payload['name'] ?? ''),
             $path,
             $content,
             (bool) ($payload['override'] ?? false)
-        );
+        ));
 
         return $this->getResource($adapter . ':' . rtrim($path, '/') . '/' . $name);
     }
@@ -330,7 +331,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             $name = $stem . '-copy' . ($extension === '' ? '' : '.' . $extension);
         }
         $parent = str_replace('\\', '/', dirname($path));
-        $created = $this->apiModel->createFile($adapter, $name, $parent, $content, false);
+        $created = $this->withAllMediaTypes(fn () => $this->apiModel->createFile($adapter, $name, $parent, $content, false));
         return $this->getResource($adapter . ':' . rtrim($parent, '/') . '/' . $created);
     }
 
@@ -340,7 +341,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
 
         foreach ($selection as $id) {
             [$adapter, $path] = $this->splitId((string) $id);
-            $this->apiModel->delete($adapter, $path);
+            $this->withAllMediaTypes(fn () => $this->apiModel->delete($adapter, $path));
         }
 
         return ['deleted' => array_values($selection)];

@@ -2,6 +2,15 @@
   const form = document.getElementById('adminForm');
   if (!form) return;
 
+  const busy = document.querySelector('.smartbrowser-editor-busy');
+  form.addEventListener('submit', (event) => {
+    if (event.defaultPrevented || !form.checkValidity() || !busy) return;
+    busy.hidden = false;
+    queueMicrotask(() => { if (event.defaultPrevented) busy.hidden = true; });
+  });
+  form.addEventListener('invalid', () => { if (busy) busy.hidden = true; }, true);
+  window.addEventListener('pageshow', () => { if (busy) busy.hidden = true; });
+
   const targets = {
     com_categories: { type: 'category', adapter: 'categories', selectionTarget: 'node' },
     com_tags: { type: 'tag', adapter: 'tags', selectionTarget: 'node' },

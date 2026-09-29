@@ -46,6 +46,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     selectedIds: [],
     search: '',
     loading: false,
+    busy: false,
     error: '',
   });
 

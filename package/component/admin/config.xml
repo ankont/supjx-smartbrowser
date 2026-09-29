@@ -5,6 +5,12 @@
             <field name="editor_admin" type="list" default="modal" label="COM_SMARTBROWSER_EDITOR_ADMIN"><option value="modal">COM_SMARTBROWSER_EDITOR_MODAL</option><option value="page">COM_SMARTBROWSER_EDITOR_PAGE</option></field>
             <field name="editor_site" type="list" default="modal" label="COM_SMARTBROWSER_EDITOR_SITE"><option value="modal">COM_SMARTBROWSER_EDITOR_MODAL</option><option value="page">COM_SMARTBROWSER_EDITOR_PAGE</option></field>
         </fieldset>
+        <fieldset name="preferences_grid" label="COM_SMARTBROWSER_GRID_SIZES">
+            <field name="grid_width_sm" type="gridwidth" parentclass="sb-grid-width-row" filter="integer" default="120" min="80" max="800" step="10" label="COM_SMARTBROWSER_GRID_SIZE_SMALL" description="COM_SMARTBROWSER_GRID_SIZE_DESC" />
+            <field name="grid_width_md" type="gridwidth" parentclass="sb-grid-width-row" filter="integer" default="180" min="80" max="800" step="10" label="COM_SMARTBROWSER_GRID_SIZE_MEDIUM" description="COM_SMARTBROWSER_GRID_SIZE_DESC" />
+            <field name="grid_width_lg" type="gridwidth" parentclass="sb-grid-width-row" filter="integer" default="280" min="80" max="800" step="10" label="COM_SMARTBROWSER_GRID_SIZE_LARGE" description="COM_SMARTBROWSER_GRID_SIZE_DESC" />
+            <field name="grid_width_xl" type="gridwidth" parentclass="sb-grid-width-row" filter="integer" default="420" min="80" max="800" step="10" label="COM_SMARTBROWSER_GRID_SIZE_EXTRA_LARGE" description="COM_SMARTBROWSER_GRID_SIZE_DESC" />
+        </fieldset>
         <fieldset name="preferences_display" label="COM_SMARTBROWSER_OPTIONS_PREFERENCES">
             <field name="preferences_reset_token" type="preferencesreset" label="COM_SMARTBROWSER_RESET_PREFERENCES" description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC" />
         </fieldset>

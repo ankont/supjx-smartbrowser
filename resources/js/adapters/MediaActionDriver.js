@@ -1,5 +1,15 @@
 const promptValue = (message, value = '') => window.prompt(message, value);
 
+export const previewKind = (resource) => {
+  if (!resource.metadata?.url) return null;
+  const mime = (resource.metadata.mimeType || '').toLowerCase();
+  if (mime.startsWith('image/')) return 'image';
+  if (/^video\/(mp4|webm|ogg)$/.test(mime)) return 'video';
+  if (/^audio\/(mpeg|mp4|ogg|wav|webm)$/.test(mime)) return 'audio';
+  if (mime === 'application/pdf') return 'pdf';
+  return null;
+};
+
 export default class MediaActionDriver {
   constructor(api, state, reload, translate, editorMode = 'modal', application = 'administrator') {
     this.api = api;
@@ -26,6 +36,18 @@ export default class MediaActionDriver {
   }
 
   async execute(action, selection) {
+    if (this.state.busy) return;
+    this.state.busy = true;
+    try {
+      return await this.executeUnchecked(action, selection);
+    } catch (error) {
+      Joomla.renderMessages({ error: [error.message] });
+    } finally {
+      this.state.busy = false;
+    }
+  }
+
+  async executeUnchecked(action, selection) {
     if (!this.available(action, selection)) return;
     const targets = action.exclusiveGroup
       ? selection.filter((resource) => resource.capabilities?.[action.id] === true)
@@ -107,11 +129,14 @@ export default class MediaActionDriver {
     }
     const dialog = document.createElement('dialog');
     dialog.className = 'smartbrowser-editor';
-    dialog.innerHTML = `<iframe src="${this.escape(url)}" title="Editor"></iframe><button type="button" class="btn-close" aria-label="Close"></button>`;
+    dialog.innerHTML = `<iframe src="${this.escape(url)}" title="Editor"></iframe><div class="smartbrowser-editor-loading" role="status"><span class="spinner-border" aria-hidden="true"></span><span>${this.escape(this.translate('COM_SMARTBROWSER_WORKING'))}</span></div><button type="button" class="btn-close" aria-label="Close"></button>`;
     const iframe = dialog.querySelector('iframe');
+    const loading = dialog.querySelector('.smartbrowser-editor-loading');
     let initialLoadComplete = false;
     let dirty = false;
     iframe.addEventListener('load', () => {
+      loading.hidden = true;
+      try { iframe.contentWindow.addEventListener('beforeunload', () => { loading.hidden = false; }, { once: true }); } catch {}
       dirty = false;
       window.SmartBrowserDialogDismiss.watchFrame(iframe, () => { dirty = true; });
       if (!initialLoadComplete) {
@@ -161,9 +186,34 @@ export default class MediaActionDriver {
   }
 
   async uploadFiles(files) {
-    for (const file of Array.from(files || [])) {
-      const content = await this.read(file);
-      await this.mutate('upload', [], { nodeId: this.state.selectedNode, name: file.name, content });
+    if (this.state.busy) return;
+    this.state.busy = true;
+    let uploaded = 0;
+    try {
+      for (const file of Array.from(files || [])) {
+        try {
+          const content = await this.read(file);
+          const payload = { nodeId: this.state.selectedNode, name: file.name, content };
+          try {
+            await this.api.execute('upload', [], payload);
+          } catch (error) {
+            if (error.status !== 409) throw error;
+            const question = this.translate('COM_MEDIA_FILE_EXISTS_AND_OVERRIDE').replace(/%[sS]/, file.name);
+            if (!window.confirm(question)) continue;
+            await this.api.execute('upload', [], { ...payload, override: true });
+          }
+          uploaded++;
+        } catch (error) {
+          const detail = error?.message || this.translate('COM_SMARTBROWSER_ERROR_UPLOAD_FAILED');
+          Joomla.renderMessages({ error: [`${file.name}: ${detail}`] });
+        }
+      }
+      if (uploaded) {
+        await this.reload();
+        Joomla.renderMessages({ success: [this.translate('COM_MEDIA_UPLOAD_SUCCESS')] });
+      }
+    } finally {
+      this.state.busy = false;
     }
   }
 
@@ -178,14 +228,20 @@ export default class MediaActionDriver {
 
   preview(resource) {
     const url = resource.metadata?.url;
-    if (!url) return;
     let currentResource = resource;
     const [initialName, initialExtension] = this.splitFilename(resource.title);
     const dialog = document.createElement('dialog');
     dialog.className = 'smartbrowser-preview';
-    const media = resource.type === 'image'
-      ? `<img src="${this.escapeAttribute(url)}" alt="${this.escapeAttribute(resource.title)}">`
-      : `<iframe src="${this.escapeAttribute(url)}" title="${this.escapeAttribute(resource.title)}"></iframe>`;
+    const kind = previewKind(resource);
+    const media = kind === 'image'
+      ? `<img data-preview-media src="${this.escapeAttribute(url)}" alt="${this.escapeAttribute(resource.title)}">`
+      : kind === 'video'
+        ? `<video data-preview-media src="${this.escapeAttribute(url)}" controls preload="metadata"></video>`
+        : kind === 'audio'
+          ? `<audio data-preview-media src="${this.escapeAttribute(url)}" controls preload="metadata"></audio>`
+          : kind === 'pdf'
+            ? `<iframe data-preview-media src="${this.escapeAttribute(url)}" title="${this.escapeAttribute(resource.title)}"></iframe>`
+            : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(resource.icon || 'icon-file')}" aria-hidden="true"></span><span>${this.escape(this.translate('COM_SMARTBROWSER_PREVIEW_UNAVAILABLE'))}</span></div>`;
     dialog.innerHTML = `<form class="smartbrowser-preview-form com-smartbrowser-editor" method="dialog">
       <div class="smartbrowser-preview-actions">
         <button type="button" class="btn btn-primary" data-action="save" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="icon-save" aria-hidden="true"></span> ${this.escapeTranslated('JSAVE')}</button>
@@ -241,7 +297,7 @@ export default class MediaActionDriver {
       try {
         if (name !== currentResource.title) {
           currentResource = await this.api.execute('rename', [currentResource.id], { name });
-          const preview = dialog.querySelector('.smartbrowser-preview-media img, .smartbrowser-preview-media iframe');
+          const preview = dialog.querySelector('[data-preview-media]');
           if (preview && currentResource.metadata?.url) preview.src = currentResource.metadata.url;
           [nameInput.value, extensionInput.value] = this.splitFilename(currentResource.title);
           await this.reload();

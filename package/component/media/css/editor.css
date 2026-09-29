@@ -1,3 +1,17 @@
+.com-smartbrowser-editor .smartbrowser-editor-busy {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: .75rem;
+  color: var(--body-color, #22262a);
+  background: rgba(255, 255, 255, .8);
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-busy[hidden] { display: none; }
+
 .com-smartbrowser-editor .main-card {
   position: relative;
 }

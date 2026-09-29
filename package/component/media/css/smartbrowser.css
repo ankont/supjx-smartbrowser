@@ -14,9 +14,22 @@
 }
 
 .smartbrowser-shell {
+  position: relative;
   display: flex;
   min-height: 620px;
   flex-direction: column;
+}
+
+.smartbrowser-busy {
+  position: absolute;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: .75rem;
+  color: var(--body-color, #22262a);
+  background: rgba(255, 255, 255, .72);
 }
 
 .resource-actions {
@@ -31,6 +44,8 @@
 }
 
 .resource-actions-area {
+  position: relative;
+  z-index: 40;
   background: var(--sb-sidebar);
   border-bottom: 1px solid var(--sb-border);
 }
@@ -816,10 +831,10 @@
   accent-color: var(--sb-accent);
 }
 
-.resource-browser-grid.size-sm { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
-.resource-browser-grid.size-md { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
-.resource-browser-grid.size-lg { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-.resource-browser-grid.size-xl { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); }
+.resource-browser-grid.size-sm { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--sb-grid-sm, 120px)), 1fr)); }
+.resource-browser-grid.size-md { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--sb-grid-md, 180px)), 1fr)); }
+.resource-browser-grid.size-lg { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--sb-grid-lg, 280px)), 1fr)); }
+.resource-browser-grid.size-xl { grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--sb-grid-xl, 420px)), 1fr)); }
 
 .resource-browser-item {
   position: relative;
@@ -1673,6 +1688,8 @@ dialog.smartbrowser-preview .smartbrowser-preview-actions .btn.smartbrowser-prev
 .smartbrowser-preview-tab[hidden] { display: none; }
 .smartbrowser-preview-name-fields { flex: none; }
 .smartbrowser-preview-media { display: flex; box-sizing: border-box; width: 100%; height: 0; min-height: 0; flex: 1 1 0; justify-content: center; align-items: center; padding: 16px; overflow: hidden; border: 1px solid var(--sb-border); background: #f5f7f9; }
+.smartbrowser-preview-unavailable { display: grid; justify-items: center; gap: .75rem; color: #596b7b; text-align: center; }
+.smartbrowser-preview-unavailable > [class^="icon-"] { font-size: 3rem; }
 .smartbrowser-preview-metadata { display: grid; gap: 14px; margin: 0; }
 .smartbrowser-preview-metadata > div { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 16px; border-bottom: 1px solid var(--sb-border-soft); padding-bottom: 12px; }
 .smartbrowser-preview-metadata dt { font-weight: 400; color: #596b7b; }
@@ -2193,3 +2210,15 @@ dialog.smartbrowser-preview .smartbrowser-preview-actions .btn.smartbrowser-prev
   font-display: block;
   src: url("../../vendor/fontawesome-free/webfonts/fa-solid-900.woff2") format("woff2");
 }
+.smartbrowser-editor-loading {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: .75rem;
+  background: rgba(255, 255, 255, .8);
+}
+
+.smartbrowser-editor-loading[hidden] { display: none; }

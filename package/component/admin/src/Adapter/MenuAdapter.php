@@ -161,7 +161,12 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 if (!str_starts_with((string) $selectedId, 'menu-item:')) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
                 $resource = $this->getResource((string) $selectedId);
                 if (empty($resource['capabilities'][$action])) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
-                $ids[] = $this->itemId((string) $selectedId);
+                $id = $this->itemId((string) $selectedId);
+                $item = $this->item($id);
+                if ($action !== 'publish' && !empty($item->home) && (string) $item->language === '*') {
+                    throw new \RuntimeException(Text::_('COM_SMARTBROWSER_ERROR_MENU_DEFAULT_HOME'), 400);
+                }
+                $ids[] = $id;
             }
             $model = $this->menuModel('Item');
             if (!$model->publish($ids, match ($action) { 'publish' => 1, 'unpublish' => 0, 'trash' => -2 })) {
@@ -254,6 +259,8 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $state = (int) $item->published;
         $aliasTarget = (string) $item->type === 'alias' ? (int) (json_decode((string) $item->params, true)['aliasoptions'] ?? 0) : 0;
         $overlays = [$this->statusOverlay($state)];
+        $homeLabel = !empty($item->home) ? Text::_((string) $item->language === '*' ? 'COM_SMARTBROWSER_HOME_ALL_LANGUAGES' : 'COM_SMARTBROWSER_HOME_LANGUAGE') : '';
+        if ($homeLabel !== '') $overlays[] = ['id' => 'home', 'icon' => 'icon-home', 'label' => $homeLabel, 'tone' => 'info'];
         if ($aliasTarget) $overlays[] = ['id' => 'shortcut', 'icon' => 'icon-new-tab', 'label' => Text::_('COM_SMARTBROWSER_MENU_ITEM_ALIAS'), 'tone' => 'info'];
         if ((int) ($item->checked_out ?? 0) > 0) $overlays[] = ['id' => 'checkedOut', 'icon' => 'icon-lock', 'label' => Text::_('COM_SMARTBROWSER_CHECKED_OUT'), 'tone' => 'warning'];
         $typeLabel = $this->typeLabel($item);
@@ -278,6 +285,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             'capabilities' => $capabilities,
             'metadata' => [
                 'id' => (int) $item->id, 'alias' => (string) $item->alias, 'menu' => (string) $this->menu((string) $item->menutype)->title,
+                'homeLabel' => $homeLabel,
                 'menutype' => (string) $item->menutype, 'parent' => (int) $item->parent_id > 1 ? (string) $this->item((int) $item->parent_id)->title : '',
                 'menuItemType' => $typeLabel, 'state' => $state, 'stateLabel' => $this->stateLabel($state),
                 'menuItemSummary' => $typeLabel,
@@ -337,6 +345,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             'infoFields' => [
                 ['label' => 'COM_SMARTBROWSER_ALIAS_LABEL', 'source' => 'metadata.alias'], ['label' => 'COM_SMARTBROWSER_MENU', 'source' => 'metadata.menu'],
                 ['label' => 'COM_SMARTBROWSER_PARENT', 'source' => 'metadata.parent'], ['label' => 'COM_SMARTBROWSER_MENU_ITEM_TYPE', 'source' => 'metadata.menuItemType'],
+                ['label' => 'COM_SMARTBROWSER_HOME_PAGE', 'source' => 'metadata.homeLabel', 'icon' => 'icon-home'],
                 ['label' => 'JSTATUS', 'source' => 'metadata.stateLabel'], ['label' => 'JFIELD_ACCESS_LABEL', 'source' => 'metadata.access'],
                 ['label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language'], ['label' => 'COM_SMARTBROWSER_URL', 'source' => 'metadata.url'],
                 ['label' => 'JGLOBAL_FIELD_ID_LABEL', 'source' => 'metadata.id'],

@@ -12,6 +12,8 @@ use SuperSoft\Component\Smartbrowser\Administrator\Adapter\ContextResourceProvid
 use SuperSoft\Component\Smartbrowser\Administrator\Adapter\ResourceAdapterInterface;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SiteAuthentication;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\ContextOptions;
+use Joomla\Component\Media\Administrator\Exception\FileExistsException;
+use Joomla\Component\Media\Administrator\Exception\InvalidPathException;
 
 defined('_JEXEC') or die;
 
@@ -95,6 +97,10 @@ class ApiController extends BaseController
 
     private function respond(callable $callback): void
     {
+        $language = $this->app->getLanguage();
+        $language->load('joomla', JPATH_ADMINISTRATOR, null, true);
+        $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
+        $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
         try {
             if ($this->app->isClient('site') && $this->app->getIdentity()->guest) {
                 $response = new JsonResponse([
@@ -107,6 +113,11 @@ class ApiController extends BaseController
                 $status   = 200;
             }
         } catch (\Throwable $error) {
+            if ($error instanceof FileExistsException) {
+                $error = new \RuntimeException(Text::_('COM_SMARTBROWSER_ERROR_FILE_EXISTS'), 409, $error);
+            } elseif ($error instanceof InvalidPathException) {
+                $error = new \InvalidArgumentException($error->getMessage() ?: Text::_('JLIB_MEDIA_ERROR_WARNFILETYPE'), 400, $error);
+            }
             $status   = $error->getCode() >= 400 && $error->getCode() < 600 ? $error->getCode() : 500;
             $response = new JsonResponse($error);
         }

@@ -14,6 +14,7 @@ final class HtmlView extends BaseHtmlView
     public $resourceId = 0;
     public string $menuItemType = '';
     public $editorComplete = false;
+    public string $editorError = '';
 
     public function display($tpl = null): void
     {
@@ -29,6 +30,12 @@ final class HtmlView extends BaseHtmlView
         if (!$this->editorComplete) {
             $service = new FrontendEditorService($app);
             $this->editorForm = $service->getForm($this->resourceType, $this->resourceId);
+            $failure = $app->getUserState('com_smartbrowser.editor.failure');
+            $app->setUserState('com_smartbrowser.editor.failure', null);
+            if (is_array($failure) && ($failure['type'] ?? '') === $this->resourceType && (int) ($failure['id'] ?? -1) === $this->resourceId) {
+                $this->editorError = (string) ($failure['message'] ?? '');
+                if (is_array($failure['data'] ?? null)) $this->editorForm->bind($failure['data']);
+            }
             $this->editorTitle = $service->title($this->resourceType, $this->resourceId);
             if ($this->resourceType === 'menu-item') {
                 $selectedType = $app->getInput()->getBool('menuTypeSelected') ? $app->getInput()->getCmd('selectedType') : '';

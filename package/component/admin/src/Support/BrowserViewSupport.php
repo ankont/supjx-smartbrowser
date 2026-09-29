@@ -23,7 +23,10 @@ final class BrowserViewSupport
         $language = $this->app->getLanguage();
         $language->load('joomla', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
+        $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
         foreach ($this->languageKeys() as $key) Text::script($key);
+        Text::script('COM_MEDIA_FILE_EXISTS_AND_OVERRIDE');
+        Text::script('COM_MEDIA_UPLOAD_SUCCESS');
 
         Text::script('JGLOBAL_SELECT_NO_RESULTS_MATCH');
         Text::script('JGLOBAL_SELECT_PRESS_TO_SELECT');
@@ -55,10 +58,16 @@ final class BrowserViewSupport
         }
         $selectionTarget = $input->getCmd('selectionTarget', $mode === 'manage' ? 'both' : 'item');
         if (!in_array($selectionTarget, ['item', 'node', 'both'], true)) $selectionTarget = 'item';
+        $params = ComponentHelper::getParams('com_smartbrowser');
+        $gridWidths = [];
+        foreach (['sm' => 120, 'md' => 180, 'lg' => 280, 'xl' => 420] as $size => $default) {
+            $gridWidths[$size] = max(80, min(800, (int) $params->get('grid_width_' . $size, $default)));
+        }
 
         $options = [
             'adapter' => $adapterId, 'adapters' => $adapterDescriptors,
             'featuredOnly' => $featuredOnly, 'initialFilters' => $featuredOnly ? ['featured' => '1'] : [],
+            'gridWidths' => $gridWidths,
             'flatRootNode' => $adapter instanceof FlatHierarchyAdapter ? $adapter->getFlatRootNode()
                 : (str_starts_with($adapterId, 'flat-')
                     ? ($input->getString('flatFromBrowseRoot') ?: ($input->getString('flatFromAdapter') ? 'content:root' : ($browseRoot ?: 'content:root')))
@@ -79,7 +88,7 @@ final class BrowserViewSupport
             'currentNode' => $input->getString('node') && $adapter instanceof BrowseRootAwareInterface
                 ? $adapter->getInitialNode($input->getString('node')) : $input->getString('node'),
             'roots' => $adapter->getRoots(), 'actions' => $mode === 'readonly' ? [] : $adapter->getActions([]),
-            'maxUploadSizeMb' => (float) ComponentHelper::getParams('com_media')->get('upload_maxsize', 10),
+            'maxUploadSizeMb' => (float) ComponentHelper::getParams('com_media')->get('upload_maxsize', 0),
             'returnUrl' => Route::_('index.php?option=com_smartbrowser&view=browser', false),
             'loginUrl' => $this->app->isClient('site') ? SiteAuthentication::loginUrl(Uri::getInstance()->toString()) : null,
             'managerUrl' => $mode === 'manage' ? ManagerUrlProvider::for($this->app, $adapterId, $featuredOnly) : null,
@@ -98,7 +107,8 @@ final class BrowserViewSupport
             'COM_SMARTBROWSER_FILTER_ACTIVE', 'COM_SMARTBROWSER_FILTER_STATE', 'COM_SMARTBROWSER_FILTER_OPTIONS', 'COM_SMARTBROWSER_FILTER_ANY', 'COM_SMARTBROWSER_ALL_FILES',
             'COM_SMARTBROWSER_IMAGES', 'COM_SMARTBROWSER_DOCUMENTS', 'COM_SMARTBROWSER_VIDEOS', 'COM_SMARTBROWSER_AUDIO', 'COM_SMARTBROWSER_FILE_TYPE',
             'COM_SMARTBROWSER_MIME_TYPE', 'COM_SMARTBROWSER_EXTENSION', 'COM_SMARTBROWSER_LANGUAGE_KEY', 'COM_SMARTBROWSER_ALL_LANGUAGES', 'COM_SMARTBROWSER_CHECKED_OUT', 'COM_SMARTBROWSER_NOT_CHECKED_OUT',
-            'COM_SMARTBROWSER_GRID', 'COM_SMARTBROWSER_NAME', 'COM_SMARTBROWSER_NEW_FOLDER_NAME', 'COM_SMARTBROWSER_NO_RESULTS', 'COM_SMARTBROWSER_RENAME',
+            'COM_SMARTBROWSER_GRID', 'COM_SMARTBROWSER_NAME', 'COM_SMARTBROWSER_NEW_FOLDER_NAME', 'COM_SMARTBROWSER_NO_RESULTS', 'COM_SMARTBROWSER_RENAME', 'COM_SMARTBROWSER_ERROR_UPLOAD_FAILED',
+            'COM_SMARTBROWSER_ERROR_REQUEST_TOO_LARGE', 'COM_SMARTBROWSER_ERROR_REQUEST_HTTP', 'COM_SMARTBROWSER_ERROR_REQUEST_NETWORK',
             'COM_SMARTBROWSER_CANCEL',
             'COM_SMARTBROWSER_BATCH', 'COM_SMARTBROWSER_BATCH_ACTIONS', 'COM_SMARTBROWSER_BATCH_SELECT_ACTIONS', 'COM_SMARTBROWSER_BATCH_ACTION',
             'COM_SMARTBROWSER_SELECT_BATCH_ACTION', 'COM_SMARTBROWSER_SELECTED_ITEMS', 'COM_SMARTBROWSER_SELECTED_ITEM_COUNT_ONE', 'COM_SMARTBROWSER_SELECTED_ITEM_COUNT_MANY', 'COM_SMARTBROWSER_BATCH_APPLY',
@@ -125,6 +135,8 @@ final class BrowserViewSupport
             'COM_SMARTBROWSER_CONTENT_TAB', 'COM_SMARTBROWSER_FILE_NAME',
             'JSAVE', 'JAPPLY', 'JSAVEASCOPY',
             'COM_SMARTBROWSER_METADATA_TAB',
+            'COM_SMARTBROWSER_WORKING',
+            'COM_SMARTBROWSER_PREVIEW_UNAVAILABLE',
             'COM_SMARTBROWSER_ACTIVATE_USER', 'COM_SMARTBROWSER_NEW_USER', 'COM_SMARTBROWSER_DELETE', 'COM_SMARTBROWSER_REMOVE_FROM_GROUP', 'COM_SMARTBROWSER_CONFIRM_REMOVE_FROM_GROUP', 'COM_SMARTBROWSER_FLAT_VIEW', 'COM_SMARTBROWSER_MAX_LEVELS', 'COM_SMARTBROWSER_TAGS_ROOT', 'COM_SMARTBROWSER_NEW_ARTICLE', 'COM_SMARTBROWSER_ALL_ARTICLES',
             'COM_SMARTBROWSER_ADAPTER_MEDIA', 'COM_SMARTBROWSER_ADAPTER_ARTICLES', 'COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES',
             'COM_SMARTBROWSER_ADAPTER_CATEGORIES', 'COM_SMARTBROWSER_ADAPTER_TAGS', 'COM_SMARTBROWSER_ADAPTER_ARTICLES_BY_TAG',

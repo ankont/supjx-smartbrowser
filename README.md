@@ -10,7 +10,7 @@ SmartBrowser is a Joomla resource browser for articles, categories, tags, menu i
 
 ## Installation
 
-1. Download the `pkg_smartbrowser-v1.0.0.zip` release package, or build it from source.
+1. Download the latest `pkg_smartbrowser-v*.zip` release package, or build it from source.
 2. In Joomla, go to **System > Extensions > Install** and upload the package ZIP. Install the outer `pkg_` ZIP, not one of its component or plugin ZIPs.
 3. Open **Components > SuperSoftJx - SmartBrowser** to use the standalone Dashboard.
 4. To replace native administrator manager links, enable the **System - SuperSoftJx - SmartBrowser Integration** plugin and select the desired replacements in **SmartBrowser Options > Integrations**. All replacements are off by default.
@@ -76,7 +76,7 @@ npm run build
 powershell -NoProfile -ExecutionPolicy Bypass -File .\build\build.ps1
 ```
 
-The installable package is written to `build/output/pkg_smartbrowser-v1.0.0.zip`. `npm run build` updates the bundled browser script in `package/component/media/js/`; run it before packaging. The packaging script replaces its own `build/stage/` and `build/output/` directories.
+The installable package is written to `build/output/pkg_smartbrowser-v*.zip`. `npm run build` updates the bundled browser script in `package/component/media/js/`; run it before packaging. The packaging script replaces its own `build/stage/` and `build/output/` directories.
 
 ## Source layout
 

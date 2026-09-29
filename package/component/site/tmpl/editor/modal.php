@@ -73,6 +73,8 @@ $menuItemTypeTitleKey = match ($menuItemType) {
 };
 ?>
 <div class="com-smartbrowser-editor container-fluid py-3<?php echo $input->getBool('sbpage') ? ' is-page' : ''; ?>" data-resource-type="<?php echo $this->escape($this->resourceType); ?>">
+    <div class="smartbrowser-editor-busy" role="status" aria-live="polite" hidden><span class="spinner-border" aria-hidden="true"></span><span><?php echo Text::_('COM_SMARTBROWSER_WORKING'); ?></span></div>
+    <?php if ($this->editorError !== '') : ?><div class="alert alert-danger smartbrowser-editor-error" role="alert"><?php echo nl2br($this->escape($this->editorError)); ?></div><?php endif; ?>
     <form action="<?php echo Route::_('index.php?option=com_smartbrowser&task=editor.save'); ?>" method="post" enctype="multipart/form-data" id="adminForm" class="form-validate form-vertical" data-browser-url="<?php echo $this->escape(Route::_('index.php?option=com_smartbrowser&view=browser&tmpl=component&Itemid=0', false)); ?>" data-editor-url="<?php echo $this->escape(Route::_('index.php?option=com_smartbrowser&view=editor&layout=modal&tmpl=component&Itemid=0', false)); ?>"<?php if ($menuItemType !== '') : ?> data-menu-item-type="<?php echo $this->escape($menuItemType); ?>"<?php endif; ?><?php if ($menuItemTypeTitleKey !== null) : ?> data-menu-item-type-title="<?php echo $this->escape(Text::_($menuItemTypeTitleKey)); ?>"<?php endif; ?>>
         <div class="smartbrowser-editor-actions d-flex gap-2 mb-3">
             <button type="submit" name="editorAction" value="save" class="btn btn-primary"><span class="icon-save" aria-hidden="true"></span> <?php echo Text::_('JSAVE'); ?></button>

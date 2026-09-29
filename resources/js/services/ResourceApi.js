@@ -1,3 +1,14 @@
+export function responseErrorMessage(response, status = 0, translate = (key) => key) {
+  const queued = response?.messages && typeof response.messages === 'object'
+    ? Object.values(response.messages).flat()
+    : [];
+  const details = [...new Set([response?.message, ...queued].filter((value) => typeof value === 'string' && value.trim()).map((value) => value.trim()))];
+  if (details.length) return details.join('; ');
+  if (status === 413) return translate('COM_SMARTBROWSER_ERROR_REQUEST_TOO_LARGE');
+  if (status) return translate('COM_SMARTBROWSER_ERROR_REQUEST_HTTP').replace('%s', String(status));
+  return translate('COM_SMARTBROWSER_ERROR_REQUEST_NETWORK');
+}
+
 export default class ResourceApi {
   constructor(options) {
     this.options = options;
@@ -47,23 +58,23 @@ export default class ResourceApi {
             this.redirectToLogin(response.data.loginUrl);
             reject(new Error(response.message));
           } else if (response.success === false) {
-            const error = new Error(response.message);
+            const error = new Error(responseErrorMessage(response, Number(response.code) || 0, (key) => Joomla.Text?._(key, key) || key));
             error.status = Number(response.code) || 0;
             reject(error);
           }
           else resolve(response.data);
         },
         onError: (xhr) => {
-          let message = 'Request failed';
+          let response = null;
           try {
-            const response = JSON.parse(xhr.responseText || xhr.response);
-            message = response.message || message;
+            response = JSON.parse(xhr.responseText || xhr.response);
             if (xhr.status === 401 || response.data?.authenticationRequired) this.redirectToLogin(response.data?.loginUrl);
           } catch (error) {
             if (xhr.status === 401) this.redirectToLogin();
           }
+          const message = responseErrorMessage(response, Number(xhr.status) || 0, (key) => Joomla.Text?._(key, key) || key);
           const error = new Error(message);
-          error.status = xhr.status;
+          error.status = Number(xhr.status) || 0;
           reject(error);
         },
       });

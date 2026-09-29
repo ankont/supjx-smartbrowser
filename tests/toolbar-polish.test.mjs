@@ -3,6 +3,14 @@ import test from 'node:test';
 import createBrowserState from '../resources/js/core/createBrowserState.js';
 import { readFile } from 'node:fs/promises';
 
+test('action menus stack above the browser toolbar in picker layouts', async () => {
+  const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
+  const actionsLayer = css.match(/\.resource-actions-area \{[^}]*\}/s)?.[0] || '';
+  const toolbarLayer = css.match(/\.resource-toolbar \{[^}]*\}/s)?.[0] || '';
+  assert.match(actionsLayer, /position: relative;/);
+  assert.ok(Number(actionsLayer.match(/z-index: (\d+);/)?.[1]) > Number(toolbarLayer.match(/z-index: (\d+);/)?.[1]));
+});
+
 test('invert selection toggles only visible selectable resources', () => {
   const browser = createBrowserState({
     options: { roots: [{ id: 'root' }], mode: 'manage' },

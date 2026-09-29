@@ -13,7 +13,6 @@ final class EditorController extends BaseController
 {
     public function save(): void
     {
-        if (!Session::checkToken()) throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
         $type = $this->input->getCmd('type');
         $id = $this->input->getInt('id');
         $apply = $this->input->post->getCmd('editorAction') === 'apply';
@@ -23,13 +22,19 @@ final class EditorController extends BaseController
             if (isset($data[$key])) $this->input->set($key, $data[$key]);
         }
         try {
+            if (!Session::checkToken()) throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
             $savedId = (new FrontendEditorService($this->app))->save($type, $id, $data, $copy);
             $url = ($apply || $copy)
                 ? $this->editorUrl($type, $savedId, $data)
                 : $this->completionUrl($type);
             $this->setRedirect($url, Text::_('COM_SMARTBROWSER_FRONTEND_EDITOR_SAVED'));
         } catch (\Throwable $error) {
-            $this->app->enqueueMessage($error->getMessage(), 'error');
+            $this->app->setUserState('com_smartbrowser.editor.failure', [
+                'type' => $type,
+                'id' => $id,
+                'message' => $error->getMessage() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'),
+                'data' => $data,
+            ]);
             $this->setRedirect($this->editorUrl($type, $id, $data));
         }
     }

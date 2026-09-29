@@ -1,5 +1,9 @@
 <template>
-  <div class="smartbrowser-shell">
+  <div class="smartbrowser-shell" :style="gridWidthStyle">
+    <div v-if="state.busy" class="smartbrowser-busy" role="status" aria-live="polite">
+      <span class="spinner-border" aria-hidden="true" />
+      <span>{{ t('COM_SMARTBROWSER_WORKING') }}</span>
+    </div>
     <ResourceActions
       :actions="state.actions"
       :available="(action) => driver.available(action, selection)"
@@ -147,6 +151,9 @@ const batchDialog = ref(null);
 const isMedia = computed(() => options.adapter === 'media');
 const flatAvailable = ['articles', 'categories', 'tags', 'articles-by-tag', 'menus', 'users', 'media'].includes(options.adapter.replace(/^flat-/, ''));
 const flatActive = options.adapter.startsWith('flat-');
+const gridWidthStyle = Object.fromEntries(
+  Object.entries(options.gridWidths || {}).map(([size, width]) => [`--sb-grid-${size}`, `${width}px`]),
+);
 const uiKey = flatUiStorageKey(options.adapter, options.browseRoot, window.location.href);
 let storedUi = (() => { try { return JSON.parse(window.sessionStorage.getItem(uiKey) || '{}'); } catch { return {}; } })();
 const filtersOpen = ref(storedUi.filtersOpen === true);
