@@ -21,18 +21,21 @@ export default class MediaActionDriver {
     this.editorMode = editorMode;
     this.application = application;
     this.dialogs = new Set();
+    this.dialogCleanups = new Map();
   }
 
   destroy() {
     this.destroyed = true;
-    for (const dialog of this.dialogs) dialog.remove();
+    for (const dialog of this.dialogs) { this.dialogCleanups.get(dialog)?.(); dialog.remove(); }
     this.dialogs.clear();
+    this.dialogCleanups.clear();
   }
 
-  ownDialog(dialog) {
-    if (this.destroyed) { dialog.remove(); return; }
+  ownDialog(dialog, cleanup = () => {}) {
+    if (this.destroyed) { cleanup(); dialog.remove(); return; }
     this.dialogs.add(dialog);
-    dialog.addEventListener('close', () => this.dialogs.delete(dialog), { once: true });
+    this.dialogCleanups.set(dialog, cleanup);
+    dialog.addEventListener('close', () => { cleanup(); this.dialogs.delete(dialog); this.dialogCleanups.delete(dialog); }, { once: true });
     document.body.appendChild(dialog);
   }
 
@@ -203,8 +206,8 @@ export default class MediaActionDriver {
     });
     dialog.querySelector('.btn-close').addEventListener('click', () => dialog.close());
     window.SmartBrowserDialogDismiss.install(dialog, () => dirty);
-    dialog.addEventListener('close', async () => { size.destroy(); dialog.remove(); await this.reload(); });
-    this.ownDialog(dialog);
+    dialog.addEventListener('close', async () => { size.destroy(); dialog.remove(); if (!this.destroyed) await this.reload(); });
+    this.ownDialog(dialog, () => size.destroy());
     dialog.showModal();
   }
 
@@ -387,7 +390,7 @@ export default class MediaActionDriver {
       } catch (error) { Joomla.renderMessages({ error: [error.message] }); }
     });
     dialog.addEventListener('close', () => { size.destroy(); dialog.remove(); });
-    this.ownDialog(dialog);
+    this.ownDialog(dialog, () => size.destroy());
     dialog.showModal();
   }
 

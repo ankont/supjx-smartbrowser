@@ -285,10 +285,17 @@ body .calendar-container table tbody td.day.selected {
 
 .com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) {
   box-sizing: border-box;
-  height: 100dvh;
+  height: var(--sb-editor-available-height, 100dvh);
   padding-bottom: 0 !important;
   overflow: hidden;
 }
+
+html.sb-editor-modal-document, html.sb-editor-modal-document body { overflow: hidden; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) { display: flex; flex-direction: column; height: var(--sb-editor-available-height, 100dvh); overflow: hidden; box-sizing: border-box; padding-bottom: 0 !important; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) > #adminForm { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; height: auto; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .main-card { flex: 1 1 0; min-height: 0; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrowser-editor-error { flex: none; }
+html.sb-editor-modal-document #smartbrowserEditorTabs:not([view="tabs"]) { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
 
 .com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) #adminForm,
 .com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) .main-card {

@@ -23,7 +23,7 @@ export default defineConfig({
     outDir: 'package/component/media/js',
     emptyOutDir: false,
     lib: {
-      entry: { smartbrowser: 'resources/js/main.js', 'visual-settings': 'resources/js/visual-settings.js', collection: 'resources/js/collection.js' },
+      entry: { smartbrowser: 'resources/js/main.js', 'visual-settings': 'resources/js/visual-settings.js', collection: 'resources/js/collection.js', 'picker-size': 'resources/js/picker-size.js' },
       formats: ['es'],
       fileName: (format, entryName) => `${entryName}.js`,
     },

@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_smartbrowser",
-  "version": "2.1.0",
+  "version": "2.1.4",
   "description": "SuperSoftJx - SmartBrowser",
   "license": "GPL-2.0-or-later",
   "assets": [
@@ -88,8 +88,22 @@
       "name": "com_smartbrowser.editor-fields",
       "type": "script",
       "uri": "com_smartbrowser/editor-fields.js",
-      "dependencies": ["core", "com_smartbrowser.dialog-dismiss", "com_smartbrowser.media-value"],
+      "dependencies": ["core", "com_smartbrowser.dialog-dismiss", "com_smartbrowser.media-value", "com_smartbrowser.editor-viewport"],
       "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.editor-viewport",
+      "type": "script",
+      "uri": "com_smartbrowser/editor-viewport.js",
+      "dependencies": ["core"],
+      "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.editor-buttons",
+      "type": "script",
+      "uri": "com_smartbrowser/editor-buttons.js",
+      "dependencies": ["core", "editors", "com_smartbrowser.picker", "messages"],
+      "attributes": {"type": "module"}
     },
     {
       "name": "com_smartbrowser.associations",

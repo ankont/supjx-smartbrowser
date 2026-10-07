@@ -10,6 +10,8 @@ use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Event\SubscriberInterface;
+use Joomla\Event\Priority;
+use Joomla\CMS\Session\Session;
 use Throwable;
 
 defined('_JEXEC') or die;
@@ -20,7 +22,34 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
 
     public static function getSubscribedEvents(): array
     {
-        return ['onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onAfterRoute' => 'returnFromMenuEditor', 'onContentPrepareData' => 'prefillArticleContext'];
+        return ['onEditorButtonsSetup' => ['replaceEditorButtons', Priority::LOW], 'onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onAfterRoute' => 'returnFromMenuEditor', 'onContentPrepareData' => 'prefillArticleContext'];
+    }
+
+    public function replaceEditorButtons($event): void
+    {
+        $params = ComponentHelper::getParams('com_smartbrowser');
+        $replacements = [];
+        if ($params->get('replace_media', 0) || $params->get('replace_media_field', 0)) $replacements['image'] = 'smartbrowser-media';
+        if ($params->get('replace_articles', 0)) $replacements['article'] = 'smartbrowser-article';
+        $buttons = array_filter($event->getButtonsRegistry()->getAll(), static fn ($button) => isset($replacements[$button->getButtonName()]));
+        if (!$buttons) return;
+        $app = $this->getApplication();
+        $document = $app->getDocument();
+        try {
+            $assets = $document->getWebAssetManager();
+            $assets->getRegistry()->addExtensionRegistryFile('com_smartbrowser');
+            $assets->useStyle('com_smartbrowser.app')->useScript('com_smartbrowser.editor-buttons');
+            $base = Uri::root() . ($app->isClient('administrator') ? 'administrator/' : '');
+            $document->addScriptOptions('com_smartbrowser.editor-buttons', [
+                'url' => $base . 'index.php?option=com_smartbrowser&view=browser',
+                'apiUrl' => $base . 'index.php?option=com_smartbrowser',
+                'siteUrl' => Uri::root(), 'csrfToken' => Session::getFormToken(),
+            ]);
+            // Replace only buttons already authorised by the native editor plugins.
+            foreach ($buttons as $button) $button->set('action', $replacements[$button->getButtonName()]);
+        } catch (Throwable $error) {
+            Log::add('SmartBrowser editor button integration could not be loaded: ' . $error->getMessage(), Log::ERROR, 'smartbrowser');
+        }
     }
 
     public function returnFromMenuEditor(): void

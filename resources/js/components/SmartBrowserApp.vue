@@ -32,6 +32,9 @@
       @no-user="completeSelection([{ id: 'user:0', type: 'user', title: '' }])"
     >
       <template #display-controls>
+        <button v-if="pickerContext?.toggleSize" type="button" class="resource-icon-button resource-display-toggle" :class="{ active: pickerMaximized }" :aria-pressed="pickerMaximized" :title="t(pickerMaximized ? 'COM_SMARTBROWSER_EDITOR_RESTORE' : 'COM_SMARTBROWSER_EDITOR_MAXIMIZE')" :aria-label="t(pickerMaximized ? 'COM_SMARTBROWSER_EDITOR_RESTORE' : 'COM_SMARTBROWSER_EDITOR_MAXIMIZE')" @click="pickerMaximized = pickerContext.toggleSize()">
+          <span :class="pickerMaximized ? 'fas fa-compress' : 'fas fa-expand'" aria-hidden="true" />
+        </button>
         <button v-if="displayEnabled" type="button" class="resource-icon-button resource-display-toggle" :class="{ active: displayMode !== 'normal' }" :aria-pressed="displayMode !== 'normal'" :title="t(displayLabel)" :aria-label="t(displayLabel)" @click="cycleDisplay">
           <span :class="displayMode === 'normal' ? 'fas fa-arrows-alt-h' : displayMode === 'wide' ? 'fas fa-expand' : 'fas fa-compress'" aria-hidden="true" />
         </button>
@@ -172,10 +175,11 @@ async function resolveUsageReference(reference, constraint = {}) {
 }
 const usage = createSelectionUsage({ profile: pickerContext?.selectionProfile || {}, initialUsage: pickerContext?.initialUsage || {}, editors: pickerContext?.editors || {}, resolveReference: resolveUsageReference });
 const usageVersion = ref(0);
+const pickerMaximized = ref(pickerContext?.isMaximized?.() || false);
 const usageRevision = ref(0);
 const usageErrors = ref({});
 const usageValidating = ref(false);
-const usageDefinitions = computed(() => usage.definitions(focusedResource.value));
+const usageDefinitions = computed(() => usage.definitions(focusedResource.value).filter(definition => definition.presentation !== 'hidden'));
 const usageValues = computed(() => { usageVersion.value; return usage.get(focusedResource.value); });
 const forceUsageInfo = computed(() => Boolean(pickerContext && usageDefinitions.value.length));
 const hasUsageProfile = Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length);
@@ -296,8 +300,11 @@ const completeSelection = async (selected) => {
   if (unmounted || version !== usageVersion.value) return;
   usageErrors.value = result.errors;
   if (!result.valid) {
-    state.focusedId = Object.keys(result.errors)[0];
-    usageRevision.value++;
+    if (Object.keys(result.profileErrors).length) {
+      Joomla.renderMessages({ error: [t('COM_SMARTBROWSER_USAGE_PROFILE_INVALID')] });
+    }
+    const editableError = Object.keys(result.errors).find(id => Object.keys(result.errors[id]).some(key => !result.profileErrors[id]?.[key]));
+    if (editableError) { state.focusedId = editableError; usageRevision.value++; }
     return;
   }
   const detail = { adapter: options.adapter.replace(/^flat-/, ''), mode: options.mode, resources: [...selected] };

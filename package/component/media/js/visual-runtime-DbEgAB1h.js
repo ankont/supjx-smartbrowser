@@ -1,6 +1,7 @@
 import { B as e, C as t, D as n, F as r, H as i, M as a, O as o, S as s, U as c, V as l, W as u, _ as d, b as f, g as p, h as m, j as h, k as g, m as _, t as v, v as y, x as b, z as x } from "./visual-runtime-BsRY_8Qs.js";
+import { t as S } from "./visual-runtime-CEVDGWRG.js";
 //#region resources/js/core/fieldIcons.js
-var S = {
+var C = {
 	title: null,
 	name: null,
 	alias: "fas fa-link",
@@ -38,15 +39,15 @@ var S = {
 	mimeType: "fas fa-file-alt",
 	extension: "fas fa-tag",
 	type: "fas fa-file-alt"
-}, C = (e) => e.icon || e.headerIcon || S[e.id || String(e.source || "").split(".").pop()] || (e.format === "date" ? "fas fa-calendar" : "fas fa-info"), w = { class: "resource-ordering-moves" }, T = [
+}, w = (e) => e.icon || e.headerIcon || C[e.id || String(e.source || "").split(".").pop()] || (e.format === "date" ? "fas fa-calendar" : "fas fa-info"), T = { class: "resource-ordering-moves" }, E = [
 	"disabled",
 	"title",
 	"aria-label"
-], E = [
+], D = [
 	"disabled",
 	"title",
 	"aria-label"
-], D = {
+], O = {
 	__name: "ResourceOrderingControls",
 	props: {
 		enabled: Boolean,
@@ -54,7 +55,7 @@ var S = {
 	},
 	emits: ["reorder"],
 	setup(e) {
-		return (t, n) => (h(), b("span", w, [y("button", {
+		return (t, n) => (h(), b("span", T, [y("button", {
 			type: "button",
 			disabled: !e.enabled,
 			title: e.t("COM_SMARTBROWSER_MOVE_UP"),
@@ -63,7 +64,7 @@ var S = {
 		}, [...n[2] ||= [y("span", {
 			class: "fas fa-arrow-up",
 			"aria-hidden": "true"
-		}, null, -1)]], 8, T), y("button", {
+		}, null, -1)]], 8, E), y("button", {
 			type: "button",
 			disabled: !e.enabled,
 			title: e.t("COM_SMARTBROWSER_MOVE_DOWN"),
@@ -72,9 +73,9 @@ var S = {
 		}, [...n[3] ||= [y("span", {
 			class: "fas fa-arrow-down",
 			"aria-hidden": "true"
-		}, null, -1)]], 8, E)]));
+		}, null, -1)]], 8, D)]));
 	}
-}, O = "contextual", k = (e, t) => ({
+}, k = "contextual", A = (e, t) => ({
 	...e,
 	focusable: e.focusable ?? t.focusable,
 	selectable: e.selectable ?? t.selectable,
@@ -82,7 +83,7 @@ var S = {
 	actionable: e.actionable ?? t.actionable,
 	navigable: e.navigable ?? t.navigable,
 	activatable: e.activatable ?? t.activatable
-}), A = (e) => k({
+}), j = (e) => A({
 	...e,
 	role: e.role || "primary"
 }, {
@@ -92,9 +93,9 @@ var S = {
 	actionable: !0,
 	navigable: !1,
 	activatable: !0
-}), j = (e) => ({
+}), M = (e) => ({
 	...e,
-	role: O,
+	role: k,
 	focusable: e.focusable ?? !0,
 	selectable: !1,
 	bulkSelectable: !1,
@@ -103,19 +104,19 @@ var S = {
 	activatable: !1,
 	interactiveOverlays: !1,
 	capabilities: {}
-}), M = (e) => e?.role === O, N = (e) => e?.focusable === !0, P = (e, t = "both") => e?.selectable === !0 && (t === "both" || e.kind === t), F = (e, t = "both") => P(e, t) && e?.bulkSelectable === !0, I = (e) => e?.actionable === !0, L = (e, t, n, r) => ["manage", "select"].includes(t) && I(e) && n.find((t) => t.id === "preview" && r(t, [e])) || null;
-function R(e, t, n, r, i = "both") {
+}), N = (e) => e?.role === k, P = (e) => e?.focusable === !0, F = (e, t = "both") => e?.selectable === !0 && (t === "both" || e.kind === t), I = (e, t = "both") => F(e, t) && e?.bulkSelectable === !0, L = (e) => e?.actionable === !0, R = (e, t, n, r) => ["manage", "select"].includes(t) && L(e) && n.find((t) => t.id === "preview" && r(t, [e])) || null;
+function ee(e, t, n, r, i = "both") {
 	return e?.navigable ? {
 		id: "browseOpen",
 		label: "COM_SMARTBROWSER_OPEN",
 		icon: "fas fa-folder-open",
 		local: !0
-	} : e?.activatable ? t === "select" ? P(e, i) ? {
+	} : e?.activatable ? t === "select" ? F(e, i) ? {
 		id: "pickerSelect",
 		label: "COM_SMARTBROWSER_SELECT",
 		icon: "fas fa-check",
 		local: !0
-	} : null : I(e) && n.find((n) => n.id === (t === "manage" ? "edit" : "preview") && r(n, [e])) || null : null;
+	} : null : L(e) && n.find((n) => n.id === (t === "manage" ? "edit" : "preview") && r(n, [e])) || null : null;
 }
 //#endregion
 //#region resources/js/services/ResourceApi.js
@@ -236,7 +237,7 @@ var B = class {
 ], q = ["disabled", "onClick"], J = { class: "resource-item-visual" }, Y = {
 	key: 0,
 	class: "resource-item-overlays"
-}, X = ["title", "onClick"], ee = ["src"], Z = ["title"], Q = ["src"], $ = ["title"], te = ["title"], ne = { class: "resource-item-metadata-text" }, re = {
+}, X = ["title", "onClick"], Z = ["src"], Q = ["title"], $ = ["src"], te = ["title"], ne = ["title"], re = { class: "resource-item-metadata-text" }, ie = {
 	__name: "ResourceGrid",
 	props: {
 		defaultAction: Function,
@@ -285,13 +286,13 @@ var B = class {
 			if (T.value = !1, E.value = i ? Math.max(0, Math.min(360, i.clientWidth - 8, window.innerWidth - 20)) : 0, w.value = e, await n(), w.value !== e || !i) return;
 			let a = r.querySelector(".resource-item-menu");
 			T.value = a?.getBoundingClientRect().left < i.getBoundingClientRect().left + 4;
-		}, O = (e) => V(x.actions, e, x.actionAvailable, x.defaultAction?.(e)), k = (e, t) => I(t) && t.interactiveOverlays !== !1 ? x.actions.find((n) => n.id === e.action && x.actionAvailable(n, [t])) : void 0, A = () => {
+		}, O = (e) => V(x.actions, e, x.actionAvailable, x.defaultAction?.(e)), k = (e, t) => L(t) && t.interactiveOverlays !== !1 ? x.actions.find((n) => n.id === e.action && x.actionAvailable(n, [t])) : void 0, A = () => {
 			w.value = null;
-		}, j = (e, t) => String(t || "").split(".").reduce((e, t) => e?.[t], e), F = (e) => {
+		}, j = (e, t) => String(t || "").split(".").reduce((e, t) => e?.[t], e), M = (e) => {
 			if (!e) return "";
 			let t = new Date(e), n = (e) => String(e).padStart(2, "0");
 			return `${t.getFullYear()}-${n(t.getMonth() + 1)}-${n(t.getDate())} ${n(t.getHours())}:${n(t.getMinutes())}`;
-		}, L = (e) => {
+		}, I = (e) => {
 			let t = e.metadata || {}, n = (e, t, n, r = !1) => t ? {
 				label: e,
 				value: t,
@@ -303,7 +304,7 @@ var B = class {
 				n("COM_SMARTBROWSER_MENU_ITEM_TYPE", t.menuItemType, "fas fa-file-alt"),
 				n("COM_SMARTBROWSER_LANGUAGE_KEY", t.languageKey, "fas fa-language"),
 				e.type === "article" && x.gridFields?.some((e) => e.source === "metadata.cardSummaryWithCategory") ? n("JCATEGORY", t.category, "fas fa-folder") : null
-			].filter(Boolean) : e.kind === "item" && t.mimeType ? [n("COM_SMARTBROWSER_MIME_TYPE", t.mimeType, "fas fa-file-alt"), e.type === "image" && t.width > 0 && t.height > 0 ? n("COM_SMARTBROWSER_DIMENSIONS", `${t.width} × ${t.height}`, "fas fa-expand") : null].filter(Boolean) : (x.gridFields || []).map((t) => n(t.label || "COM_SMARTBROWSER_DETAILS", t.format === "date" ? F(j(e, t.source)) : j(e, t.source), "fas fa-info")).filter(Boolean);
+			].filter(Boolean) : e.kind === "item" && t.mimeType ? [n("COM_SMARTBROWSER_MIME_TYPE", t.mimeType, "fas fa-file-alt"), e.type === "image" && t.width > 0 && t.height > 0 ? n("COM_SMARTBROWSER_DIMENSIONS", `${t.width} × ${t.height}`, "fas fa-expand") : null].filter(Boolean) : (x.gridFields || []).map((t) => n(t.label || "COM_SMARTBROWSER_DETAILS", t.format === "date" ? M(j(e, t.source)) : j(e, t.source), "fas fa-info")).filter(Boolean);
 		};
 		return g(() => document.addEventListener("click", A)), o(() => document.removeEventListener("click", A)), (e, n) => (h(), b("div", { class: i(["resource-browser-grid", `size-${r.options.gridSize}`]) }, [r.selectionControls ? (h(), b("div", {
 			key: 0,
@@ -319,11 +320,11 @@ var B = class {
 				selected: r.selectedIds.includes(o.id),
 				focused: r.focusedId === o.id,
 				active: w.value === o.id,
-				contextual: l(M)(o)
+				contextual: l(N)(o)
 			}]),
-			role: l(N)(o) ? "button" : void 0,
-			tabindex: l(N)(o) ? 0 : void 0,
-			"aria-pressed": l(P)(o) ? r.selectedIds.includes(o.id) : void 0,
+			role: l(P)(o) ? "button" : void 0,
+			tabindex: l(P)(o) ? 0 : void 0,
+			"aria-pressed": l(F)(o) ? r.selectedIds.includes(o.id) : void 0,
 			onClick: m((t) => {
 				w.value = null, e.$emit("select", o, t.ctrlKey || t.metaKey);
 			}, ["stop"]),
@@ -331,7 +332,7 @@ var B = class {
 			onKeydown: _(m((e) => C(o), ["prevent"]), ["enter"]),
 			onMouseleave: n[3] ||= (e) => w.value = null
 		}, [
-			l(P)(o) ? (h(), b("label", {
+			l(F)(o) ? (h(), b("label", {
 				key: 0,
 				class: i(["resource-item-select", { checked: r.selectedIds.includes(o.id) }]),
 				onClick: n[1] ||= m(() => {}, ["stop"])
@@ -384,7 +385,7 @@ var B = class {
 				src: t.image,
 				alt: "",
 				"aria-hidden": "true"
-			}, null, 8, ee)) : (h(), b("span", {
+			}, null, 8, Z)) : (h(), b("span", {
 				key: 1,
 				class: i(t.icon),
 				"aria-hidden": "true"
@@ -397,63 +398,63 @@ var B = class {
 				src: t.image,
 				alt: "",
 				"aria-hidden": "true"
-			}, null, 8, Q)) : (h(), b("span", {
+			}, null, 8, $)) : (h(), b("span", {
 				key: 1,
 				class: i(t.icon),
 				"aria-hidden": "true"
-			}, null, 2))], 10, Z))], 64))), 128))])) : f("", !0)]),
+			}, null, 2))], 10, Q))], 64))), 128))])) : f("", !0)]),
 			y("span", {
 				class: "resource-item-title",
 				title: `${r.t("COM_SMARTBROWSER_NAME")}: ${o.title}`
-			}, u(o.title), 9, $),
-			(h(!0), b(p, null, a(L(o), (e) => (h(), b("span", {
+			}, u(o.title), 9, te),
+			(h(!0), b(p, null, a(I(o), (e) => (h(), b("span", {
 				key: e.label,
 				class: i(["resource-item-metadata", { "resource-item-identifier": e.identifier }]),
 				title: `${r.t(e.label)}: ${e.value}`
 			}, [y("span", {
 				class: i(e.icon),
 				"aria-hidden": "true"
-			}, null, 2), y("span", ne, u(e.value), 1)], 10, te))), 128))
+			}, null, 2), y("span", re, u(e.value), 1)], 10, ne))), 128))
 		], 42, W))), 128))], 2));
 	}
-}, ie = { class: "table-responsive resource-details-view" }, ae = { class: "table table-hover" }, oe = {
+}, ae = { class: "table-responsive resource-details-view" }, oe = { class: "table table-hover" }, se = {
 	class: "resource-type-column resource-details-select-column",
 	scope: "col"
-}, se = { class: "resource-details-select-controls" }, ce = {
+}, ce = { class: "resource-details-select-controls" }, le = {
 	key: 0,
 	class: "resource-details-select-all"
-}, le = ["checked", "aria-label"], ue = ["title"], de = [
+}, ue = ["checked", "aria-label"], de = ["title"], fe = [
 	"title",
 	"aria-label",
 	"onClick"
-], fe = ["title"], pe = [
+], pe = ["title"], me = [
 	"tabindex",
 	"aria-current",
 	"onClick",
 	"onDblclick",
 	"onKeydown"
-], me = { class: "resource-type-column" }, he = [
+], he = { class: "resource-type-column" }, ge = [
 	"checked",
 	"aria-label",
 	"onChange"
-], ge = ["title"], _e = { class: "resource-cell-ellipsis" }, ve = ["title"], ye = ["title", "onClick"], be = { class: "visually-hidden" }, xe = ["title"], Se = { class: "visually-hidden" }, Ce = {
+], _e = ["title"], ve = { class: "resource-cell-ellipsis" }, ye = ["title"], be = ["title", "onClick"], xe = { class: "visually-hidden" }, Se = ["title"], Ce = { class: "visually-hidden" }, we = {
 	key: 1,
 	class: "resource-language"
-}, we = ["src"], Te = {
+}, Te = ["src"], Ee = {
 	key: 1,
 	class: "resource-language-all fas fa-asterisk",
 	"aria-hidden": "true"
-}, Ee = { class: "resource-language-name" }, De = {
+}, De = { class: "resource-language-name" }, Oe = {
 	key: 2,
 	class: "resource-cell-ellipsis"
-}, Oe = {
+}, ke = {
 	key: 3,
 	class: "resource-row-overlays"
-}, ke = ["title", "onClick"], Ae = ["src"], je = ["title"], Me = ["src"], Ne = { class: "resource-row-actions" }, Pe = [
+}, Ae = ["title", "onClick"], je = ["src"], Me = ["title"], Ne = ["src"], Pe = { class: "resource-row-actions" }, Fe = [
 	"aria-expanded",
 	"title",
 	"onClick"
-], Fe = ["disabled", "onClick"], Ie = {
+], Ie = ["disabled", "onClick"], Le = {
 	__name: "ResourceDetails",
 	props: {
 		defaultAction: Function,
@@ -486,18 +487,18 @@ var B = class {
 		"action"
 	],
 	setup(n, { emit: r }) {
-		let x = n, C = r, w = (e, t) => {
+		let x = n, S = r, w = (e, t) => {
 			if ((t?.ctrlKey || t?.metaKey) && x.previewAction) {
 				let t = x.previewAction(e);
 				if (t && x.actionAvailable(t, [e])) {
-					C("action", t, e);
+					S("action", t, e);
 					return;
 				}
 			}
 			if (x.defaultAction) {
 				let t = x.defaultAction(e);
-				t && x.actionAvailable(t, [e]) && C("action", t, e);
-			} else e.navigable ? C("open", e.id) : e.activatable ? C("activate", e) : C("focus", e);
+				t && x.actionAvailable(t, [e]) && S("action", t, e);
+			} else e.navigable ? S("open", e.id) : e.activatable ? S("activate", e) : S("focus", e);
 		}, T = [
 			{
 				id: "title",
@@ -533,78 +534,78 @@ var B = class {
 				width: `${t}px`,
 				minWidth: `${t}px`
 			};
-		}, F = (e) => e.headerIcon || (Object.hasOwn(S, e.id) ? S[e.id] : "fas fa-info"), L = (e) => e.sortField || e.id, R = (e) => x.t(e.label), z = (e) => (x.sortFields || T).some((t) => t.id === L(e)), B = (e) => x.sortBy === e ? x.sortDirection === "asc" ? "fas fa-caret-up ms-1" : "fas fa-caret-down ms-1" : "fas fa-sort ms-1", H = (e) => e ? `${(e / 1024).toFixed(2)}KB` : "", U = (e) => e.metadata.width && e.metadata.height ? `${e.metadata.width}px \u00d7 ${e.metadata.height}px` : "", W = (e) => {
+		}, M = (e) => e.headerIcon || (Object.hasOwn(C, e.id) ? C[e.id] : "fas fa-info"), I = (e) => e.sortField || e.id, R = (e) => x.t(e.label), ee = (e) => (x.sortFields || T).some((t) => t.id === I(e)), z = (e) => x.sortBy === e ? x.sortDirection === "asc" ? "fas fa-caret-up ms-1" : "fas fa-caret-down ms-1" : "fas fa-sort ms-1", B = (e) => e ? `${(e / 1024).toFixed(2)}KB` : "", H = (e) => e.metadata.width && e.metadata.height ? `${e.metadata.width}px \u00d7 ${e.metadata.height}px` : "", U = (e) => {
 			if (!e) return "";
 			let t = new Date(e), n = (e) => String(e).padStart(2, "0");
 			return `${t.getFullYear()}-${n(t.getMonth() + 1)}-${n(t.getDate())} ${n(t.getHours())}:${n(t.getMinutes())}`;
-		}, G = (e, t) => String(t || "").split(".").reduce((e, t) => e?.[t], e), K = (e, t) => {
-			if (t.id === "size") return e.kind === "node" ? "" : H(e.metadata.size);
-			if (t.id === "dimension") return U(e);
-			let n = t.source || `metadata.${t.id}`, r = G(e, n);
-			return t.format === "size" ? H(r) : t.format === "dimensions" ? U(e) : t.format === "date" || ["created", "modified"].includes(t.id) ? W(r) : t.format === "mediaType" ? x.t({
+		}, W = (e, t) => String(t || "").split(".").reduce((e, t) => e?.[t], e), G = (e, t) => {
+			if (t.id === "size") return e.kind === "node" ? "" : B(e.metadata.size);
+			if (t.id === "dimension") return H(e);
+			let n = t.source || `metadata.${t.id}`, r = W(e, n);
+			return t.format === "size" ? B(r) : t.format === "dimensions" ? H(e) : t.format === "date" || ["created", "modified"].includes(t.id) ? U(r) : t.format === "mediaType" ? x.t({
 				folder: "COM_SMARTBROWSER_FOLDER",
 				image: "COM_SMARTBROWSER_MEDIA_IMAGE",
 				document: "COM_SMARTBROWSER_MEDIA_DOCUMENT",
 				video: "COM_SMARTBROWSER_MEDIA_VIDEO",
 				audio: "COM_SMARTBROWSER_MEDIA_AUDIO"
 			}[r] || "COM_SMARTBROWSER_RESOURCE") : t.format === "language" && r === "*" ? x.t("COM_SMARTBROWSER_ALL_LANGUAGES") : r ?? "";
-		}, q = (e, t) => t.id === "location" ? String(e.metadata?.locationPath || K(e, t) || "") : t.format === "status" ? J(e).label : String(K(e, t) || ""), J = (e) => ({
+		}, K = (e, t) => t.id === "location" ? String(e.metadata?.locationPath || G(e, t) || "") : t.format === "status" ? q(e).label : String(G(e, t) || ""), q = (e) => ({
 			icon: e.statusPresentation?.icon || "fas fa-question-circle",
-			label: e.statusPresentation?.label || K(e, { source: "metadata.stateLabel" }),
+			label: e.statusPresentation?.label || G(e, { source: "metadata.stateLabel" }),
 			class: `status-${e.statusPresentation?.tone || "neutral"}`
-		}), Y = (e) => e.overlays?.find((e) => e.id === "status") || {}, X = e(null), ee = (e) => {
-			X.value = X.value === e ? null : e;
-		}, Z = (e) => V(x.actions, e, x.actionAvailable, x.defaultAction?.(e)), Q = (e, t) => I(t) && t.interactiveOverlays !== !1 ? x.actions.find((n) => n.id === e.action && x.actionAvailable(n, [t])) : void 0, $ = () => {
-			X.value = null;
+		}), J = (e) => e.overlays?.find((e) => e.id === "status") || {}, Y = e(null), X = (e) => {
+			Y.value = Y.value === e ? null : e;
+		}, Z = (e) => V(x.actions, e, x.actionAvailable, x.defaultAction?.(e)), Q = (e, t) => L(t) && t.interactiveOverlays !== !1 ? x.actions.find((n) => n.id === e.action && x.actionAvailable(n, [t])) : void 0, $ = () => {
+			Y.value = null;
 		};
-		return g(() => document.addEventListener("click", $)), o(() => document.removeEventListener("click", $)), (e, r) => (h(), b("div", ie, [y("table", ae, [y("thead", null, [y("tr", null, [
-			y("th", oe, [y("span", se, [n.selectionControls ? (h(), b("label", ce, [y("input", {
+		return g(() => document.addEventListener("click", $)), o(() => document.removeEventListener("click", $)), (e, r) => (h(), b("div", ae, [y("table", oe, [y("thead", null, [y("tr", null, [
+			y("th", se, [y("span", ce, [n.selectionControls ? (h(), b("label", le, [y("input", {
 				type: "checkbox",
 				checked: n.allSelected,
 				"aria-label": n.t("COM_SMARTBROWSER_SELECT_ALL"),
 				onChange: r[0] ||= (t) => e.$emit("select-all")
-			}, null, 40, le)])) : f("", !0), n.orderingField ? (h(), b("button", {
+			}, null, 40, ue)])) : f("", !0), n.orderingField ? (h(), b("button", {
 				key: 1,
 				type: "button",
 				class: "resource-ordering-sort",
 				title: n.t("JGRID_HEADING_ORDERING"),
 				onClick: r[1] ||= (t) => e.$emit("sort", n.orderingField)
 			}, [y("span", {
-				class: i(B(n.orderingField)),
+				class: i(z(n.orderingField)),
 				"aria-hidden": "true"
-			}, null, 2)], 8, ue)) : f("", !0)])]),
+			}, null, 2)], 8, de)) : f("", !0)])]),
 			(h(!0), b(p, null, a(O.value, (t) => (h(), b("th", {
 				key: t.id,
 				class: i(`resource-column-${t.id}`),
 				style: c(j(t)),
 				scope: "col"
-			}, [z(t) ? (h(), b("button", {
+			}, [ee(t) ? (h(), b("button", {
 				key: 0,
 				type: "button",
 				class: "btn btn-link",
 				title: R(t),
 				"aria-label": R(t),
-				onClick: (n) => e.$emit("sort", L(t))
+				onClick: (n) => e.$emit("sort", I(t))
 			}, [
-				F(t) ? (h(), b("span", {
+				M(t) ? (h(), b("span", {
 					key: 0,
-					class: i(F(t)),
+					class: i(M(t)),
 					"aria-hidden": "true"
 				}, null, 2)) : f("", !0),
 				y("span", { class: i(["resource-header-text", { "resource-header-primary": ["title", "name"].includes(t.id) }]) }, u(R(t)), 3),
 				y("span", {
-					class: i(B(L(t))),
+					class: i(z(I(t))),
 					"aria-hidden": "true"
 				}, null, 2)
-			], 8, de)) : (h(), b("span", {
+			], 8, fe)) : (h(), b("span", {
 				key: 1,
 				class: "resource-column-label",
 				title: R(t)
-			}, [F(t) ? (h(), b("span", {
+			}, [M(t) ? (h(), b("span", {
 				key: 0,
-				class: i(F(t)),
+				class: i(M(t)),
 				"aria-hidden": "true"
-			}, null, 2)) : f("", !0), y("span", { class: i(["resource-header-text", { "resource-header-primary": ["title", "name"].includes(t.id) }]) }, u(t.shortLabel ? n.t(t.shortLabel) : R(t)), 3)], 8, fe))], 6))), 128)),
+			}, null, 2)) : f("", !0), y("span", { class: i(["resource-header-text", { "resource-header-primary": ["title", "name"].includes(t.id) }]) }, u(t.shortLabel ? n.t(t.shortLabel) : R(t)), 3)], 8, pe))], 6))), 128)),
 			r[4] ||= y("th", {
 				class: "resource-row-actions",
 				scope: "col"
@@ -614,22 +615,22 @@ var B = class {
 			class: i({
 				selected: n.selectedIds.includes(o.id),
 				focused: n.focusedId === o.id,
-				focusable: l(N)(o),
-				contextual: l(M)(o)
+				focusable: l(P)(o),
+				contextual: l(N)(o)
 			}),
-			tabindex: l(N)(o) ? 0 : void 0,
+			tabindex: l(P)(o) ? 0 : void 0,
 			"aria-current": n.focusedId === o.id ? "true" : void 0,
 			onClick: m((t) => {
-				X.value = null, e.$emit("select", o, t.ctrlKey || t.metaKey);
+				Y.value = null, e.$emit("select", o, t.ctrlKey || t.metaKey);
 			}, ["stop"]),
 			onDblclick: m((e) => w(o, e), ["stop"]),
 			onKeydown: _(m((e) => w(o), ["prevent"]), ["enter"])
 		}, [
-			y("td", me, [t(v, {
+			y("td", he, [t(v, {
 				resource: o,
 				variant: "compact",
 				"allow-image": n.options.detailsThumbnails
-			}, null, 8, ["resource", "allow-image"]), l(P)(o) ? (h(), b("label", {
+			}, null, 8, ["resource", "allow-image"]), l(F)(o) ? (h(), b("label", {
 				key: 0,
 				class: i(["resource-row-select", { checked: n.selectedIds.includes(o.id) }]),
 				onClick: r[2] ||= m(() => {}, ["stop"])
@@ -638,40 +639,40 @@ var B = class {
 				checked: n.selectedIds.includes(o.id),
 				"aria-label": o.title,
 				onChange: (t) => e.$emit("select", o, !0)
-			}, null, 40, he)], 2)) : f("", !0)]),
+			}, null, 40, ge)], 2)) : f("", !0)]),
 			y("th", {
 				class: "resource-title-cell",
 				scope: "row",
 				title: o.title
-			}, [y("span", _e, u(o.title), 1)], 8, ge),
+			}, [y("span", ve, u(o.title), 1)], 8, _e),
 			(h(!0), b(p, null, a(O.value.slice(1), (t) => (h(), b("td", {
 				key: t.id,
 				class: i(`resource-column-${t.id}`),
 				style: c(j(t)),
-				title: q(o, t)
-			}, [y("span", { class: i(["resource-cell-content", { "resource-status-group": t.format === "status" }]) }, [t.format === "status" && o.statusPresentation ? (h(), b(p, { key: 0 }, [Q(Y(o), o) ? (h(), b("button", {
+				title: K(o, t)
+			}, [y("span", { class: i(["resource-cell-content", { "resource-status-group": t.format === "status" }]) }, [t.format === "status" && o.statusPresentation ? (h(), b(p, { key: 0 }, [Q(J(o), o) ? (h(), b("button", {
 				key: 0,
 				type: "button",
-				class: i(["resource-status-icon", J(o).class]),
-				title: J(o).label,
+				class: i(["resource-status-icon", q(o).class]),
+				title: q(o).label,
 				onClick: m((t) => {
-					e.$emit("focus", o), e.$emit("action", Q(Y(o), o), o);
+					e.$emit("focus", o), e.$emit("action", Q(J(o), o), o);
 				}, ["stop"])
 			}, [y("span", {
-				class: i(J(o).icon),
+				class: i(q(o).icon),
 				"aria-hidden": "true"
-			}, null, 2), y("span", be, u(J(o).label), 1)], 10, ye)) : (h(), b("span", {
+			}, null, 2), y("span", xe, u(q(o).label), 1)], 10, be)) : (h(), b("span", {
 				key: 1,
-				class: i(["resource-status-icon", J(o).class]),
-				title: J(o).label
+				class: i(["resource-status-icon", q(o).class]),
+				title: q(o).label
 			}, [y("span", {
-				class: i(J(o).icon),
+				class: i(q(o).icon),
 				"aria-hidden": "true"
-			}, null, 2), y("span", Se, u(J(o).label), 1)], 10, xe))], 64)) : t.format === "language" ? (h(), b("span", Ce, [o.metadata.languageImage ? (h(), b("img", {
+			}, null, 2), y("span", Ce, u(q(o).label), 1)], 10, Se))], 64)) : t.format === "language" ? (h(), b("span", we, [o.metadata.languageImage ? (h(), b("img", {
 				key: 0,
 				src: o.metadata.languageImage,
 				alt: ""
-			}, null, 8, we)) : o.metadata.language === "*" ? (h(), b("span", Te)) : f("", !0), y("span", Ee, u(K(o, t)), 1)])) : (h(), b("span", De, u(K(o, t)), 1)), t.overlays && o.overlays?.length ? (h(), b("span", Oe, [(h(!0), b(p, null, a(o.overlays.filter((e) => e.id !== "status"), (t) => (h(), b(p, { key: t.id }, [Q(t, o) ? (h(), b("button", {
+			}, null, 8, Te)) : o.metadata.language === "*" ? (h(), b("span", Ee)) : f("", !0), y("span", De, u(G(o, t)), 1)])) : (h(), b("span", Oe, u(G(o, t)), 1)), t.overlays && o.overlays?.length ? (h(), b("span", ke, [(h(!0), b(p, null, a(o.overlays.filter((e) => e.id !== "status"), (t) => (h(), b(p, { key: t.id }, [Q(t, o) ? (h(), b("button", {
 				key: 0,
 				type: "button",
 				class: i(["resource-overlay", [`overlay-${t.id}`, `tone-${t.tone || "neutral"}`]]),
@@ -684,11 +685,11 @@ var B = class {
 				src: t.image,
 				alt: "",
 				"aria-hidden": "true"
-			}, null, 8, Ae)) : (h(), b("span", {
+			}, null, 8, je)) : (h(), b("span", {
 				key: 1,
 				class: i(t.icon),
 				"aria-hidden": "true"
-			}, null, 2))], 10, ke)) : (h(), b("span", {
+			}, null, 2))], 10, Ae)) : (h(), b("span", {
 				key: 1,
 				class: i(["resource-overlay", [`overlay-${t.id}`, `tone-${t.tone || "neutral"}`]]),
 				title: t.label
@@ -697,24 +698,24 @@ var B = class {
 				src: t.image,
 				alt: "",
 				"aria-hidden": "true"
-			}, null, 8, Me)) : (h(), b("span", {
+			}, null, 8, Ne)) : (h(), b("span", {
 				key: 1,
 				class: i(t.icon),
 				"aria-hidden": "true"
-			}, null, 2))], 10, je))], 64))), 128))])) : f("", !0)], 2)], 14, ve))), 128)),
-			y("td", Ne, [Z(o).length ? (h(), b("button", {
+			}, null, 2))], 10, Me))], 64))), 128))])) : f("", !0)], 2)], 14, ye))), 128)),
+			y("td", Pe, [Z(o).length ? (h(), b("button", {
 				key: 0,
 				type: "button",
 				class: "resource-row-menu-toggle",
-				"aria-expanded": X.value === o.id,
+				"aria-expanded": Y.value === o.id,
 				title: n.t("COM_SMARTBROWSER_ACTIONS"),
 				onClick: m((t) => {
-					e.$emit("focus", o), ee(o.id);
+					e.$emit("focus", o), X(o.id);
 				}, ["stop"])
 			}, [...r[5] ||= [y("span", {
 				class: "fas fa-ellipsis-h",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, Pe)) : f("", !0), X.value === o.id ? (h(), b("div", {
+			}, null, -1)]], 8, Fe)) : f("", !0), Y.value === o.id ? (h(), b("div", {
 				key: 1,
 				class: "resource-item-menu resource-row-menu",
 				onClick: r[3] ||= m(() => {}, ["stop"])
@@ -724,61 +725,35 @@ var B = class {
 				class: i([`resource-action-${t.id}`, { "resource-default-action": t.isDefault }]),
 				disabled: !n.actionAvailable(t, [o]),
 				onClick: (n) => {
-					X.value = null, e.$emit("action", t, o);
+					Y.value = null, e.$emit("action", t, o);
 				}
 			}, [y("span", {
 				class: i(t.icon),
 				"aria-hidden": "true"
-			}, null, 2), s(" " + u(n.t(t.label)), 1)], 10, Fe))), 128))])) : f("", !0)])
-		], 42, pe))), 128))])])]));
+			}, null, 2), s(" " + u(n.t(t.label)), 1)], 10, Ie))), 128))])) : f("", !0)])
+		], 42, me))), 128))])])]));
 	}
-}, Le = "smartbrowser.editorMaximized";
-function Re(e, t, n) {
-	let r;
-	try {
-		r = e.ownerDocument.defaultView.localStorage;
-	} catch {}
-	let i = !1, a = (a, o = !0) => {
-		if (i = a, e.classList.toggle("is-maximized", a), !t) return;
-		t.setAttribute("aria-pressed", String(a));
-		let s = n(a ? "COM_SMARTBROWSER_EDITOR_RESTORE" : "COM_SMARTBROWSER_EDITOR_MAXIMIZE");
-		if (t.title = s, t.setAttribute("aria-label", s), t.querySelector("span").className = a ? "fas fa-compress" : "fas fa-expand", o) try {
-			r?.setItem(Le, String(a));
-		} catch {}
-	};
-	try {
-		i = r?.getItem(Le) === "true";
-	} catch {}
-	a(i, !1);
-	let o = () => a(!i);
-	return t?.addEventListener("click", o), {
-		bind(e) {
-			t?.removeEventListener("click", o), t = e, a(i, !1), t?.addEventListener("click", o);
-		},
-		destroy: () => t?.removeEventListener("click", o)
-	};
-}
-//#endregion
-//#region resources/js/adapters/MediaActionDriver.js
-var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
+}, Re = (e, t = "") => window.prompt(e, t), ze = (e) => {
 	if (!e.metadata?.url) return null;
 	let t = (e.metadata.mimeType || "").toLowerCase();
 	return t.startsWith("image/") ? "image" : /^video\/(mp4|webm|ogg)$/.test(t) ? "video" : /^audio\/(mpeg|mp4|ogg|wav|webm)$/.test(t) ? "audio" : t === "application/pdf" ? "pdf" : null;
-}, Ve = class {
+}, Be = class {
 	constructor(e, t, n, r, i = "modal", a = "administrator") {
-		this.api = e, this.state = t, this.reload = n, this.translate = r, this.editorMode = i, this.application = a, this.dialogs = /* @__PURE__ */ new Set();
+		this.api = e, this.state = t, this.reload = n, this.translate = r, this.editorMode = i, this.application = a, this.dialogs = /* @__PURE__ */ new Set(), this.dialogCleanups = /* @__PURE__ */ new Map();
 	}
 	destroy() {
 		this.destroyed = !0;
-		for (let e of this.dialogs) e.remove();
-		this.dialogs.clear();
+		for (let e of this.dialogs) this.dialogCleanups.get(e)?.(), e.remove();
+		this.dialogs.clear(), this.dialogCleanups.clear();
 	}
-	ownDialog(e) {
+	ownDialog(e, t = () => {}) {
 		if (this.destroyed) {
-			e.remove();
+			t(), e.remove();
 			return;
 		}
-		this.dialogs.add(e), e.addEventListener("close", () => this.dialogs.delete(e), { once: !0 }), document.body.appendChild(e);
+		this.dialogs.add(e), this.dialogCleanups.set(e, t), e.addEventListener("close", () => {
+			t(), this.dialogs.delete(e), this.dialogCleanups.delete(e);
+		}, { once: !0 }), document.body.appendChild(e);
 	}
 	available(e, t) {
 		return this.destroyed || e.currentNode && this.state.currentResource?.capabilities?.[e.id] === !1 || e.requiresSelection && t.length === 0 || e.single && t.length !== 1 || e.itemsOnly && t.some((e) => e.kind !== "item") || e.nodesOnly && t.some((e) => e.kind !== "node") ? !1 : e.exclusiveGroup && t.length ? t.some((t) => t.capabilities?.[e.id] === !0) : e.requiresSelection && t.length ? t.every((t) => t.capabilities?.[e.id] === !0) : !0;
@@ -800,7 +775,7 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 		let n = e.exclusiveGroup ? t.filter((t) => t.capabilities?.[e.id] === !0) : t, r = n.map((e) => e.id);
 		if (e.id === "upload") return this.pickUpload();
 		if (e.id === "createNode") {
-			let t = ze(this.translate("COM_SMARTBROWSER_NEW_FOLDER_NAME"));
+			let t = Re(this.translate("COM_SMARTBROWSER_NEW_FOLDER_NAME"));
 			t && await this.mutate(e.id, [], {
 				nodeId: this.state.selectedNode,
 				name: t
@@ -813,7 +788,7 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 			return;
 		}
 		if (e.id === "rename") {
-			let n = ze(this.translate("COM_SMARTBROWSER_RENAME_TO"), t[0].title);
+			let n = Re(this.translate("COM_SMARTBROWSER_RENAME_TO"), t[0].title);
 			n && n !== t[0].title && await this.mutate(e.id, r, { name: n });
 			return;
 		}
@@ -862,7 +837,7 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 		}
 		let t = document.createElement("dialog");
 		t.className = "smartbrowser-editor", t.innerHTML = `<iframe src="${this.escape(e)}" title="Editor"></iframe><div class="smartbrowser-editor-loading" role="status"><span class="spinner-border" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_WORKING"))}</span></div><button type="button" class="btn-close" aria-label="Close"></button>`;
-		let n = Re(t, null, this.translate), r = t.querySelector("iframe"), i = t.querySelector(".smartbrowser-editor-loading"), a = !1, o = !1;
+		let n = S(t, null, this.translate), r = t.querySelector("iframe"), i = t.querySelector(".smartbrowser-editor-loading"), a = !1, o = !1;
 		r.addEventListener("load", () => {
 			i.hidden = !0, n.bind(null);
 			try {
@@ -893,8 +868,8 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 				(!a || !o) && t.close();
 			} catch {}
 		}), t.querySelector(".btn-close").addEventListener("click", () => t.close()), window.SmartBrowserDialogDismiss.install(t, () => o), t.addEventListener("close", async () => {
-			n.destroy(), t.remove(), await this.reload();
-		}), this.ownDialog(t), t.showModal();
+			n.destroy(), t.remove(), this.destroyed || await this.reload();
+		}), this.ownDialog(t, () => n.destroy()), t.showModal();
 	}
 	async mutate(e, t, n = {}) {
 		try {
@@ -946,7 +921,7 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 		});
 	}
 	previewMedia(e) {
-		let t = e.metadata?.url, n = Be(e);
+		let t = e.metadata?.url, n = ze(e);
 		return n === "image" ? `<img data-preview-media src="${this.escapeAttribute(t)}" alt="${this.escapeAttribute(e.title)}">` : n === "video" ? `<video data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></video>` : n === "audio" ? `<audio data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></audio>` : n === "pdf" ? `<iframe data-preview-media src="${this.escapeAttribute(t)}" title="${this.escapeAttribute(e.title)}"></iframe>` : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(e.icon || "fas fa-file")}" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_PREVIEW_UNAVAILABLE"))}</span></div>`;
 	}
 	previewUrl(e, t) {
@@ -1004,7 +979,7 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
           </dl>
         </section>
       </div></form>`;
-		let o = Re(i, i.querySelector(".smartbrowser-editor-size"), this.translate);
+		let o = S(i, i.querySelector(".smartbrowser-editor-size"), this.translate);
 		i.querySelector("form").addEventListener("submit", (e) => e.preventDefault()), i.querySelectorAll("[data-tab]").forEach((e) => e.addEventListener("click", () => {
 			i.querySelectorAll("[data-tab]").forEach((t) => {
 				t.setAttribute("aria-selected", String(t === e));
@@ -1047,7 +1022,7 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 			}
 		}), i.addEventListener("close", () => {
 			o.destroy(), i.remove();
-		}), this.ownDialog(i), i.showModal();
+		}), this.ownDialog(i, () => o.destroy()), i.showModal();
 	}
 	async share(e) {
 		let t = e.metadata?.url;
@@ -1083,13 +1058,13 @@ var ze = (e, t = "") => window.prompt(e, t), Be = (e) => {
 		let t = e.lastIndexOf(".");
 		return t > 0 && t < e.length - 1 ? [e.slice(0, t), e.slice(t + 1)] : [e, ""];
 	}
-}, He = (e, t) => (n, r) => {
+}, Ve = (e, t) => (n, r) => {
 	let i = (t) => e === "title" ? String(t.title || "").toLocaleLowerCase() : e === "dimension" ? (t.metadata?.width || 0) * (t.metadata?.height || 0) : t.metadata?.[e], a = i(n), o = i(r), s = typeof a == "string" ? (a || "").localeCompare(o || "") : (a || 0) - (o || 0);
 	return t === "asc" ? s : -s;
 };
 //#endregion
 //#region resources/js/core/createBrowserState.js
-function Ue({ options: e, api: t, persistence: n, viewRegistry: i }) {
+function He({ options: e, api: t, persistence: n, viewRegistry: i }) {
 	let a = !!(e.pickerContext && (Object.keys(e.pickerContext.selectionProfile || {}).length || e.pickerContext.initialSelection?.length)), o = new Set(e.allowedResourceTypes || []), s = (t) => e.mode === "readonly" || o.size && !o.has(t.type) ? {
 		...t,
 		selectable: !1,
@@ -1135,10 +1110,10 @@ function Ue({ options: e, api: t, persistence: n, viewRegistry: i }) {
 			t.title,
 			t.subtitle,
 			t.metadata?.alias
-		].some((t) => String(t || "").toLocaleLowerCase().includes(e)), n = u.nodes.map(A).map(s).filter(t), r = u.items.map(A).map(s).filter(t), i = u.contextItems.map(j);
+		].some((t) => String(t || "").toLocaleLowerCase().includes(e)), n = u.nodes.map(j).map(s).filter(t), r = u.items.map(j).map(s).filter(t), i = u.contextItems.map(M);
 		return u.sortBy ? [
-			...n.sort(He(u.sortBy, u.sortDirection)),
-			...r.sort(He(u.sortBy, u.sortDirection)),
+			...n.sort(Ve(u.sortBy, u.sortDirection)),
+			...r.sort(Ve(u.sortBy, u.sortDirection)),
 			...i
 		] : [
 			...n,
@@ -1147,10 +1122,10 @@ function Ue({ options: e, api: t, persistence: n, viewRegistry: i }) {
 		];
 	}), p = d(() => {
 		let t = e.selectionTarget || "both";
-		return f.value.filter((e) => P(e, t));
+		return f.value.filter((e) => F(e, t));
 	}), m = d(() => {
 		let t = e.selectionTarget || "both";
-		return f.value.filter((e) => F(e, t));
+		return f.value.filter((e) => I(e, t));
 	}), h = d(() => a ? u.selectedIds.map((e) => f.value.find((t) => t.id === e) || u.selectedResources[e]).filter(Boolean) : f.value.filter((e) => u.selectedIds.includes(e.id))), g = d(() => f.value.find((e) => e.id === u.focusedId) || (a ? u.selectedResources[u.focusedId] : null) || null);
 	async function _(n = u.selectedNode) {
 		u.loading = !0, u.error = "", a || (u.selectedIds = []), u.focusedId = null;
@@ -1161,7 +1136,7 @@ function Ue({ options: e, api: t, persistence: n, viewRegistry: i }) {
 				sortDirection: u.sortDirection,
 				filters: u.filters
 			});
-			if (u.selectedNode = n, u.nodes = r.nodes, u.items = r.items, a) for (let e of [...r.nodes, ...r.items]) u.selectedIds.includes(e.id) && (u.selectedResources[e.id] = s(A(e)));
+			if (u.selectedNode = n, u.nodes = r.nodes, u.items = r.items, a) for (let e of [...r.nodes, ...r.items]) u.selectedIds.includes(e.id) && (u.selectedResources[e.id] = s(j(e)));
 			u.contextItems = r.contextItems || [], u.breadcrumb = r.breadcrumb, u.actions = e.mode === "readonly" ? [] : r.actions, u.presentation = r.presentation || u.presentation, u.sortBy && !(u.presentation.sortFields || []).some((e) => e.id === u.sortBy) && (u.sortBy = "", u.sortDirection = ""), (u.presentation.filters || []).forEach((e) => {
 				u.filters[e.id] === void 0 && (u.filters[e.id] = e.default);
 			}), u.currentResource = r.currentResource || null;
@@ -1178,13 +1153,13 @@ function Ue({ options: e, api: t, persistence: n, viewRegistry: i }) {
 		}
 	}
 	function v(t, n = !0) {
-		if (y(t), !P(t, e.selectionTarget || "both")) return;
+		if (y(t), !F(t, e.selectionTarget || "both")) return;
 		a && (u.selectedResources[t.id] = t);
 		let r = u.selectedIds.includes(t.id);
 		!e.multiple || !n ? u.selectedIds = r ? [] : [t.id] : u.selectedIds = r ? u.selectedIds.filter((e) => e !== t.id) : [...u.selectedIds, t.id];
 	}
 	function y(e) {
-		N(e) && (u.focusedId = e.id);
+		P(e) && (u.focusedId = e.id);
 	}
 	function b() {
 		a && m.value.forEach((e) => {
@@ -1226,7 +1201,7 @@ function Ue({ options: e, api: t, persistence: n, viewRegistry: i }) {
 }
 //#endregion
 //#region resources/js/core/viewRegistry.js
-var We = () => {
+var Ue = () => {
 	let e = /* @__PURE__ */ new Map();
 	return {
 		register(t) {
@@ -1250,4 +1225,4 @@ var We = () => {
 	};
 };
 //#endregion
-export { re as a, L as c, C as d, Ie as i, P as l, Ue as n, B as o, Ve as r, R as s, We as t, D as u };
+export { ie as a, R as c, w as d, Le as i, F as l, He as n, B as o, Be as r, ee as s, Ue as t, O as u };

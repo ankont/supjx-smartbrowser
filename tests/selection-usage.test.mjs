@@ -14,6 +14,49 @@ const pdf = id => ({ id, kind: 'item', type: 'document', selectionCapabilities: 
   { key: 'media.thumbnailOverride', type: 'resource', editor: 'resource', default: null, picker: { adapter: 'media', selectionTarget: 'item', allowedResourceTypes: ['image'] } },
 ] });
 
+test('hidden required options retain defaults and initial values in the usage result', async () => {
+  const resource = image('file:hidden');
+  const profile = { 'media.loading': { presentation: 'hidden', required: true, default: 'lazy' } };
+  const defaults = createSelectionUsage({ profile });
+  assert.equal(defaults.definitions(resource)[0].presentation, 'hidden');
+  const result = await defaults.validate([resource]);
+  assert.equal(result.valid, true);
+  assert.equal(result.usage[resource.id]['media.loading'], 'lazy');
+  assert.deepEqual(result.profileErrors, {});
+  const initial = createSelectionUsage({ profile, initialUsage: { [resource.id]: { 'media.loading': 'eager' } } });
+  assert.equal((await initial.validate([resource])).usage[resource.id]['media.loading'], 'eager');
+});
+
+test('missing or invalid hidden values are explicit profile errors, unlike visible field errors', async () => {
+  const resource = image('file:hidden');
+  for (const value of [null, 'unsupported']) {
+    const model = createSelectionUsage({ profile: { 'media.loading': { presentation: 'hidden', required: true, default: value }, 'media.alt': { required: true } } });
+    const result = await model.validate([resource]);
+    assert.equal(result.valid, false);
+    assert.ok(result.profileErrors[resource.id]['media.loading']);
+    assert.equal(result.profileErrors[resource.id]['media.alt'], undefined);
+    assert.ok(result.errors[resource.id]['media.alt']);
+  }
+});
+
+test('hidden custom values need no UI renderer but still run registered validators', async () => {
+  const resource = { id: 'article:1', selectionCapabilities: [{ key: 'example.hidden', type: 'number', editor: 'example.editor', default: 2 }] };
+  const profile = { 'example.hidden': { required: true, presentation: 'hidden' } };
+  assert.equal((await createSelectionUsage({ profile }).validate([resource])).valid, true);
+  const custom = createSelectionUsage({ profile, editors: { 'example.editor': { validate: () => 'Invalid' } } });
+  const result = await custom.validate([resource]);
+  assert.equal(result.valid, false);
+  assert.equal(result.profileErrors[resource.id]['example.hidden'], 'Invalid');
+});
+
+test('hidden resource references still require adapter/type validation', async () => {
+  const resource = pdf('file:pdf');
+  const model = createSelectionUsage({ profile: { 'media.thumbnailOverride': { presentation: 'hidden', default: { adapter: 'media', id: 'file:wrong' } } }, resolveReference: async () => ({ type: 'document', kind: 'item' }) });
+  const result = await model.validate([resource]);
+  assert.equal(result.valid, false);
+  assert.ok(result.profileErrors[resource.id]['media.thumbnailOverride']);
+});
+
 test('capabilities intersect the profile per resource, with no media-specific core cases', async () => {
   const resource = image('file:1');
   assert.deepEqual(applicableCapabilities(resource), []);

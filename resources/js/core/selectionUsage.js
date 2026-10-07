@@ -14,7 +14,7 @@ export function applicableCapabilities(resource, profile = {}) {
       || seen.has(key) || !own(profile, key) || profile[key] === false) return [];
     seen.add(key);
     const policy = profile[key] && typeof profile[key] === 'object' ? profile[key] : {};
-    return [{ ...definition, policy, presentation: policy.presentation === 'secondary' ? 'secondary' : 'primary',
+    return [{ ...definition, policy, presentation: ['secondary', 'hidden'].includes(policy.presentation) ? policy.presentation : 'primary',
       default: own(policy, 'default') ? policy.default : definition.default,
       required: policy.required === true,
     }];
@@ -71,6 +71,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
   }
   async function validate(resources) {
     const errors = {};
+    const profileErrors = {};
     const usage = {};
     for (const resource of resources) {
       const current = get(resource);
@@ -93,7 +94,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
           }
         }
         const editor = editors[definition.editor];
-        if (!builtinEditors.has(definition.editor) && !editor) error = 'COM_SMARTBROWSER_USAGE_EDITOR_UNAVAILABLE';
+        if (definition.presentation !== 'hidden' && !builtinEditors.has(definition.editor) && !editor) error = 'COM_SMARTBROWSER_USAGE_EDITOR_UNAVAILABLE';
         if (!error && editor?.validate) {
           try { error = await editor.validate(value, { definition, resource, values: current }) || null; }
           catch { error = 'COM_SMARTBROWSER_USAGE_INVALID'; }
@@ -101,12 +102,16 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
         if (error) {
           errors[resource.id] ||= {};
           errors[resource.id][definition.key] = error;
+          if (definition.presentation === 'hidden') {
+            profileErrors[resource.id] ||= {};
+            profileErrors[resource.id][definition.key] = error;
+          }
         }
         result[definition.key] = definition.type === 'resource' && !empty(value) ? normalizeReference(value) : value;
       }
       usage[resource.id] = result;
     }
-    return { valid: !Object.keys(errors).length, errors, usage };
+    return { valid: !Object.keys(errors).length, errors, profileErrors, usage };
   }
   return { definitions, get, set, validate };
 }

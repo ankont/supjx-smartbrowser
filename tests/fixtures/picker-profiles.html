@@ -13,6 +13,9 @@
   <button id="multiple" class="btn btn-primary">Multiple</button>
   <button id="legacy" class="btn btn-primary">Legacy</button>
   <button id="article" class="btn btn-primary">Article</button>
+  <button id="hidden" class="btn btn-primary">Hidden</button>
+  <button id="hidden-invalid" class="btn btn-primary">Invalid hidden</button>
+  <button id="hidden-mixed" class="btn btn-primary">Mixed hidden</button>
   <pre id="result"></pre>
 </div>
 <div id="smartbrowser-app" class="smartbrowser"></div>
@@ -23,6 +26,7 @@ const labels = {
   COM_SMARTBROWSER_USAGE_THUMBNAIL: 'Thumbnail', COM_SMARTBROWSER_USAGE_INFO: 'Information', COM_SMARTBROWSER_USAGE_OPTIONS: 'Usage options',
   COM_SMARTBROWSER_USAGE_MORE: 'More options', COM_SMARTBROWSER_USAGE_CUSTOM: 'Custom', COM_SMARTBROWSER_USAGE_PICK_RESOURCE: 'Choose image',
   COM_SMARTBROWSER_USAGE_CHOOSE: 'Choose', COM_SMARTBROWSER_USAGE_REQUIRED: 'A value is required.', COM_SMARTBROWSER_SELECT: 'Select',
+  COM_SMARTBROWSER_USAGE_PROFILE_INVALID: 'Hidden options configuration error',
 };
 const params = new URL(location.href).searchParams;
 const roots = [{ id: 'local-images:/', title: 'Library', icon: 'fas fa-folder', kind: 'node', type: 'folder', selectable: false, navigable: true }];
@@ -39,7 +43,7 @@ const resources = [
 ];
 window.fixtureOptions = { adapter: params.get('adapter') || 'media', application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
   allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
-window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages: console.error,
+window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; document.body.prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
   request(config) {
     const request = new URL(config.url);
     const body = config.data ? JSON.parse(config.data) : null;
@@ -67,6 +71,10 @@ if (params.get('view') === 'browser') {
   document.getElementById('pdf').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', initialSelection: ['local-images:/report.pdf'], initialUsage: { 'local-images:/report.pdf': { 'media.thumbnailOverride': { adapter: 'media', id: 'local-images:/b.png' } } } });
   document.getElementById('multiple').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', multiple: true, initialSelection: ['local-images:/b.png', 'local-images:/a.png'] });
   document.getElementById('legacy').onclick = () => open({});
+  const hidden = { required: true, default: 'lazy', presentation: 'hidden' };
+  document.getElementById('hidden').onclick = () => open({ resultFormat: 'usage', selectionProfile: { 'media.loading': hidden }, initialSelection: ['local-images:/a.png'] });
+  document.getElementById('hidden-invalid').onclick = () => open({ resultFormat: 'usage', selectionProfile: { 'media.loading': { ...hidden, default: 'invalid' } }, initialSelection: ['local-images:/a.png'] });
+  document.getElementById('hidden-mixed').onclick = () => open({ resultFormat: 'usage', selectionProfile: { 'media.alt': {}, 'media.loading': hidden }, initialSelection: ['local-images:/a.png'] });
   SmartBrowserPicker.registerUsageEditor('example.label', { mount(element, context) { const input = element.ownerDocument.createElement('input'); input.id = context.id; input.className = 'form-control'; input.value = context.value; input.oninput = () => context.setValue(input.value); element.append(input); return { update(values) { input.value = values.value; }, destroy() { input.remove(); } }; } });
   SmartBrowserPicker.registerPreviewAction({ id: 'example.preview', label: 'Preview action', applies: context => context.resource.type === 'article', run(context) { context.setValue('example.label', 'From preview'); } });
   document.getElementById('article').onclick = () => open({ adapter: 'articles', selectionProfile: { 'example.label': {} }, resultFormat: 'usage', initialSelection: ['article:1'] });

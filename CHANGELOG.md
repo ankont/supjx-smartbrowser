@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.1.4 - 2026-10-07
+
+- Put Usage options before Information, with a compact preview above the resource title; preserve the regular Information preview/title layout.
+- Move Picker maximize into the browser action toolbar using the dashboard button style.
+- Harden maximized dialog dimensions against template CSS overrides and preserve size preferences without an external button.
+
+## 2.1.3 - 2026-10-07
+
+- Keep the resource preview and provider preview actions in the Information view, leaving Usage options unobstructed.
+- Add Picker maximize/restore with an independent remembered preference and shared host-page scroll locking.
+
+## 2.1.2 - 2026-10-07
+
+- Fit frontend modal editors to their available viewport and keep scrolling inside editor content, including accordion layouts.
+- Lock same-origin host page scrolling while an editor modal is maximized; restore it on resize, close, or teardown.
+- Route authorised Joomla media/article editor buttons through SmartBrowser when their integrations are enabled. Media insertion consumes image usage options and PDF thumbnail references.
+
+## 2.1.1 - 2026-10-07
+
+- Added explicit `presentation: 'hidden'` selection-profile options, including required properties with initial/default values.
+- Hidden properties retain validation and result values without rendering editors or forcing an empty Info pane.
+- Invalid hidden values produce a visible integration/profile configuration error.
+
 ## 2.1.0 - 2026-10-07
 
 ### Selection Profiles

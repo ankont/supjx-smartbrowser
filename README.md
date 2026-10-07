@@ -120,12 +120,27 @@ picker retains selected resources and their usage across folder navigation.
 `selectionProfile` is a JSON-safe map keyed by capability ID. Only requested keys
 supported by the focused resource appear. An empty/missing profile produces no
 usage UI. Policies accept `required`, `default`, `presentation` (`primary`, the
-default, or `secondary`) and `constraints`. Constraints support `minLength`,
+default, `secondary` or `hidden`) and `constraints`. Constraints support `minLength`,
 `maxLength`, `pattern`, `min`, `max`, `integer` and `allowedValues`; they supplement,
 not weaken, the provider's validation. Unknown/inapplicable capabilities are
 ignored, including required ones. Defaults initialize values only; initial and
 edited values take precedence. Validation checks all selected resources, including
-ones outside the current folder, and focuses the first invalid resource.
+ones outside the current folder, and focuses the first resource with an invalid
+visible field.
+
+`presentation: 'hidden'` explicitly suppresses an option's editor, not its value
+or validation. Initial values still override profile/provider defaults, and hidden
+values are returned in usage. For example:
+
+```js
+'media.loading': { required: true, default: 'lazy', presentation: 'hidden' }
+```
+
+A profile with only hidden applicable options does not force the Info pane open or add
+a Usage options tab. Invalid hidden values (including missing required values)
+block completion with a visible profile-configuration error rather than an
+invisible field error. Hidden custom capabilities do not require a mounted editor;
+their generic validation and any registered custom validator still run.
 
 The existing Info pane shows Information / Usage options tabs when applicable,
 keeps its existing preview and collapses secondary fields. It edits the focused
@@ -461,3 +476,6 @@ Menu roots use diagram-next for the adapter, diagram-predecessor for ordinary
 nodes/items and diagram-successor for open nodes. Separator/heading defaults stay
 unchanged, with independent Icons-tab overrides for separators, plain headings,
 and closed/open headings with submenus.
+### Editor button integrations
+
+When `replace_media` or `replace_media_field` is enabled, the native Joomla Media editor button uses the existing SmartBrowser Picker with image alt/decorative/loading and PDF thumbnail usage options. `replace_articles` also routes the native Article button through SmartBrowser. Only buttons already exposed by the native plugins are replaced, preserving their permission checks. Editors using Joomla's editor action registry (including TinyMCE and JCE) share this integration. The integration inserts resource HTML into the editor; the generic Picker still returns normalized resources and usage values only.

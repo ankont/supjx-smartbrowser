@@ -1,15 +1,15 @@
 <template>
-  <aside class="resource-info-panel" :class="{ 'has-usage': usageDefinitions?.length }">
+  <aside class="resource-info-panel" :class="{ 'has-usage': usageDefinitions?.length, 'showing-usage': usageDefinitions?.length && tab === 'usage' }">
     <template v-if="resource">
+      <div v-if="usageDefinitions?.length" class="resource-info-tabs" role="tablist">
+        <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="tab = 'usage'">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
+        <button type="button" role="tab" :aria-selected="tab === 'info'" @click="tab = 'info'">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
+      </div>
       <div ref="previewElement" class="resource-info-preview">
         <ResourceVisual :resource="resource" />
       </div>
       <h3>{{ resource.title }}</h3>
-      <div v-if="usageDefinitions?.length" class="resource-info-tabs" role="tablist">
-        <button type="button" role="tab" :aria-selected="tab === 'info'" @click="tab = 'info'">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
-        <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="tab = 'usage'">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
-      </div>
-      <div v-if="previewActions?.length" class="resource-info-preview-actions">
+      <div v-if="previewActions?.length" v-show="!usageDefinitions?.length || tab === 'info'" class="resource-info-preview-actions">
         <button v-for="action in previewActions" :key="action.id" type="button" class="btn btn-outline-secondary" :disabled="actionBusy" :title="t(action.label)" @click="runPreviewAction(action)"><span :class="action.icon || 'fas fa-bolt'" aria-hidden="true" /> {{ t(action.label) }}</button>
       </div>
       <SelectionUsageEditor v-if="usageDefinitions?.length && tab === 'usage'" :key="resource.id" :definitions="usageDefinitions" :values="usageValues" :errors="usageErrors" :resource="resource" :t="t" :editors="usageEditors" :resolve-reference="resolveReference" @change="(key, value) => $emit('usage-change', key, value)" />

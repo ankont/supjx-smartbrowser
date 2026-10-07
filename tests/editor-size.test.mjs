@@ -12,6 +12,29 @@ function fixture(storage) {
   return { dialog, button, classes, attributes, icon, listeners };
 }
 
+test('picker size preference is independent from editor size preference', () => {
+  const values = new Map([['smartbrowser.editorMaximized', 'true']]);
+  const view = fixture({ getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) });
+  const size = createEditorSize(view.dialog, view.button, key => key, 'smartbrowser.pickerMaximized');
+  assert.equal(view.attributes['aria-pressed'], 'false');
+  view.listeners.get('click')();
+  assert.equal(values.get('smartbrowser.pickerMaximized'), 'true');
+  assert.equal(values.get('smartbrowser.editorMaximized'), 'true');
+  size.destroy();
+});
+
+test('toolbar API controls and persists modal size without an external button', () => {
+  const values = new Map();
+  const view = fixture({ getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) });
+  const size = createEditorSize(view.dialog, null, key => key, 'smartbrowser.pickerMaximized');
+  assert.equal(size.toggle(), true);
+  assert.equal(size.isMaximized(), true);
+  assert.ok(view.classes.has('is-maximized'));
+  assert.equal(values.get('smartbrowser.pickerMaximized'), 'true');
+  assert.equal(size.toggle(), false);
+  size.destroy();
+});
+
 test('editor size toggles, persists separately and restores on reopening', () => {
   const values = new Map([['smartbrowser.displayMode', 'wide']]);
   const storage = { getItem: key => values.get(key), setItem: (key, value) => values.set(key, value) };

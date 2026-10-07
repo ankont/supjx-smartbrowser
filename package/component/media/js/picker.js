@@ -1,4 +1,7 @@
 (function () {
+  const scriptUrl = document.currentScript?.src;
+  const sizeModule = scriptUrl ? import(new URL('picker-size.js', scriptUrl).href) : Promise.resolve(null);
+  sizeModule.catch(() => {});
   const instances = new Map();
   const editors = Object.create(null);
   const previewActions = new Map();
@@ -40,7 +43,7 @@
     context(id, source) {
       const instance = instances.get(id);
       if (!instance || instance.frame.contentWindow !== source) return null;
-      return { ...instance.context, editors: { ...editors }, previewActions: [...previewActions.values()] };
+      return { ...instance.context, editors: { ...editors }, previewActions: [...previewActions.values()], toggleSize: () => instance.size?.toggle() || false, isMaximized: () => instance.size?.isMaximized() || false };
     },
     open(config = {}) {
       return new Promise((resolve, reject) => {
@@ -54,9 +57,11 @@
         const frame = dialog.querySelector('iframe');
         const instanceId = `sb-picker-${Date.now()}-${++sequence}`;
         let closed = false;
+        let size;
         const close = (result = null) => {
           if (closed) return;
           closed = true;
+          size?.destroy();
           document.removeEventListener('smartbrowser:select', selected);
           instances.delete(instanceId);
           dialog.close();
@@ -88,6 +93,12 @@
         try {
           document.body.appendChild(dialog);
           dialog.showModal();
+          sizeModule.then(module => {
+            if (closed || !module) return;
+            const translate = key => Joomla.Text?._(key, key === 'COM_SMARTBROWSER_EDITOR_RESTORE' ? 'Restore' : 'Maximize') || (key === 'COM_SMARTBROWSER_EDITOR_RESTORE' ? 'Restore' : 'Maximize');
+            size = module.createEditorSize(dialog, null, translate, 'smartbrowser.pickerMaximized');
+            instances.get(instanceId).size = size;
+          }).catch(error => Joomla.renderMessages?.({ error: [error.message] }));
         } catch (error) {
           closed = true;
           document.removeEventListener('smartbrowser:select', selected);

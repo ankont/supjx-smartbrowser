@@ -13,7 +13,7 @@ import { computed } from 'vue';
 import SelectionUsageField from './SelectionUsageField.vue';
 const props = defineProps({ definitions: Array, values: Object, errors: Object, resource: Object, t: Function, editors: Object, resolveReference: Function });
 defineEmits(['change']);
-const primary = computed(() => props.definitions.filter(definition => definition.presentation !== 'secondary'));
+const primary = computed(() => props.definitions.filter(definition => definition.presentation === 'primary'));
 const secondary = computed(() => props.definitions.filter(definition => definition.presentation === 'secondary'));
 const fieldProps = definition => ({ definition, value: props.values[definition.key], values: props.values, error: props.errors?.[definition.key], resource: props.resource, t: props.t, editors: props.editors, resolveReference: props.resolveReference });
 </script>
