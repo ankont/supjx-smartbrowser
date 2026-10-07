@@ -5,7 +5,7 @@
       <div v-if="adapter.id !== activeAdapter || treeHasContent" class="resource-adapter-roots">
         <section v-for="root in adapter.id === activeAdapter ? roots : []" :key="root.id" class="resource-tree-root" :class="{ 'root-hidden': root.visible === false }">
           <button v-if="root.visible !== false" type="button" :class="{ active: selectedNode === root.id }" @click="$emit('open', root.id)">
-            <span :class="selectedNode.startsWith(root.id) ? 'icon-folder-open' : 'icon-folder'" aria-hidden="true" />
+            <span class="resource-tree-root-icon" :class="adapter.icon" aria-hidden="true" />
             <span>{{ root.title }}</span>
           </button>
           <div v-if="belongsTo(root)" class="resource-tree-branch">
@@ -17,16 +17,16 @@
               :style="treeIndent(root, branch(root).indexOf(crumb))"
               @click="$emit('open', crumb.id)"
             >
-              <span class="icon-folder" aria-hidden="true" />
+              <ResourceNodeVisual :resource="crumb" :open="true" />
               <span>{{ crumb.title }}</span>
             </button>
             <template v-for="node in nodes" :key="node.id">
               <button v-if="node.navigable !== false" type="button" class="resource-tree-entry" :style="treeIndent(root, branch(root).length)" @click="$emit('open', node.id)">
-                <span :class="node.icon" aria-hidden="true" />
+                <ResourceNodeVisual :resource="node" />
                 <span>{{ node.title }}</span>
               </button>
               <div v-else class="resource-tree-entry resource-tree-static" :style="treeIndent(root, branch(root).length)">
-                <span :class="node.icon" aria-hidden="true" />
+                <ResourceNodeVisual :resource="node" />
                 <span>{{ node.title }}</span>
               </div>
             </template>
@@ -39,6 +39,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import ResourceNodeVisual from './ResourceNodeVisual.vue';
 
 const props = defineProps({ adapters: Array, activeAdapter: String, roots: Array, nodes: Array, breadcrumb: Array, selectedNode: String, t: Function });
 const emit = defineEmits(['open', 'adapter']);

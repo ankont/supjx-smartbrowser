@@ -1,11 +1,19 @@
 <template>
-  <aside class="resource-info-panel">
+  <aside class="resource-info-panel" :class="{ 'has-usage': usageDefinitions?.length }">
     <template v-if="resource">
-      <div class="resource-info-preview" :class="{ 'image-background': resource.image }">
-        <img v-if="resource.image" :src="resource.image" :alt="resource.title" @error="imageFailed">
-        <span :class="resource.icon" :hidden="Boolean(resource.image)" aria-hidden="true" />
+      <div ref="previewElement" class="resource-info-preview">
+        <ResourceVisual :resource="resource" />
       </div>
       <h3>{{ resource.title }}</h3>
+      <div v-if="usageDefinitions?.length" class="resource-info-tabs" role="tablist">
+        <button type="button" role="tab" :aria-selected="tab === 'info'" @click="tab = 'info'">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
+        <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="tab = 'usage'">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
+      </div>
+      <div v-if="previewActions?.length" class="resource-info-preview-actions">
+        <button v-for="action in previewActions" :key="action.id" type="button" class="btn btn-outline-secondary" :disabled="actionBusy" :title="t(action.label)" @click="runPreviewAction(action)"><span :class="action.icon || 'fas fa-bolt'" aria-hidden="true" /> {{ t(action.label) }}</button>
+      </div>
+      <SelectionUsageEditor v-if="usageDefinitions?.length && tab === 'usage'" :key="resource.id" :definitions="usageDefinitions" :values="usageValues" :errors="usageErrors" :resource="resource" :t="t" :editors="usageEditors" :resolve-reference="resolveReference" @change="(key, value) => $emit('usage-change', key, value)" />
+      <template v-else>
       <dl v-if="fields?.length">
         <div v-for="field in visibleFields" :key="`${field.source}-${field.label}`" v-show="fieldValue(field) !== '' && fieldValue(field) !== null && fieldValue(field) !== undefined">
           <dt><span :class="fieldIcon(field)" aria-hidden="true" />{{ t(field.label) }}</dt>
@@ -20,53 +28,72 @@
       </dl>
       <dl v-else>
         <div v-if="resource.parentId">
-          <dt><span class="icon-folder" aria-hidden="true" />{{ t('COM_SMARTBROWSER_FOLDER') }}</dt>
+          <dt><span class="fas fa-folder" aria-hidden="true" />{{ t('COM_SMARTBROWSER_FOLDER') }}</dt>
           <dd>{{ resource.parentId }}</dd>
         </div>
         <div>
-          <dt><span class="icon-file-alt" aria-hidden="true" />{{ t('COM_SMARTBROWSER_TYPE') }}</dt>
+          <dt><span class="fas fa-file-alt" aria-hidden="true" />{{ t('COM_SMARTBROWSER_TYPE') }}</dt>
           <dd>{{ typeLabel }}</dd>
         </div>
         <div v-if="resource.metadata.created">
-          <dt><span class="icon-calendar" aria-hidden="true" />{{ t('COM_SMARTBROWSER_DATE_CREATED') }}</dt>
+          <dt><span class="fas fa-calendar" aria-hidden="true" />{{ t('COM_SMARTBROWSER_DATE_CREATED') }}</dt>
           <dd>{{ formatDate(resource.metadata.created) }}</dd>
           <small v-if="timezoneLabel(resource.metadata.created)" class="resource-info-timezone">{{ timezoneLabel(resource.metadata.created) }}</small>
         </div>
         <div v-if="resource.metadata.modified">
-          <dt><span class="icon-calendar" aria-hidden="true" />{{ t('COM_SMARTBROWSER_DATE_MODIFIED') }}</dt>
+          <dt><span class="fas fa-calendar" aria-hidden="true" />{{ t('COM_SMARTBROWSER_DATE_MODIFIED') }}</dt>
           <dd>{{ formatDate(resource.metadata.modified) }}</dd>
           <small v-if="timezoneLabel(resource.metadata.modified)" class="resource-info-timezone">{{ timezoneLabel(resource.metadata.modified) }}</small>
         </div>
         <div v-if="resource.metadata.width && resource.metadata.height">
-          <dt><span class="icon-expand" aria-hidden="true" />{{ t('COM_SMARTBROWSER_DIMENSIONS') }}</dt>
+          <dt><span class="fas fa-expand" aria-hidden="true" />{{ t('COM_SMARTBROWSER_DIMENSIONS') }}</dt>
           <dd>{{ resource.metadata.width }}px × {{ resource.metadata.height }}px</dd>
         </div>
         <div v-if="resource.metadata.size">
-          <dt><span class="icon-database" aria-hidden="true" />{{ t('COM_SMARTBROWSER_SIZE') }}</dt>
+          <dt><span class="fas fa-database" aria-hidden="true" />{{ t('COM_SMARTBROWSER_SIZE') }}</dt>
           <dd>{{ formatSize(resource.metadata.size) }}</dd>
         </div>
         <div v-if="resource.metadata.mimeType">
-          <dt><span class="icon-file-alt" aria-hidden="true" />{{ t('COM_SMARTBROWSER_MIME_TYPE') }}</dt>
+          <dt><span class="fas fa-file-alt" aria-hidden="true" />{{ t('COM_SMARTBROWSER_MIME_TYPE') }}</dt>
           <dd>{{ resource.metadata.mimeType }}</dd>
         </div>
         <div v-if="resource.metadata.extension">
-          <dt><span class="icon-file-alt" aria-hidden="true" />{{ t('COM_SMARTBROWSER_EXTENSION') }}</dt>
+          <dt><span class="fas fa-file-alt" aria-hidden="true" />{{ t('COM_SMARTBROWSER_EXTENSION') }}</dt>
           <dd>{{ resource.metadata.extension }}</dd>
         </div>
         <div>
-          <dt><span class="icon-key" aria-hidden="true" />{{ t('JGLOBAL_FIELD_ID_LABEL') }}</dt>
+          <dt><span class="fas fa-key" aria-hidden="true" />{{ t('JGLOBAL_FIELD_ID_LABEL') }}</dt>
           <dd>{{ resource.metadata.id ?? resource.id }}</dd>
         </div>
       </dl>
+      </template>
     </template>
   </aside>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { iconForField } from '../core/fieldIcons.js';
+import ResourceVisual from './ResourceVisual.vue';
+import SelectionUsageEditor from './SelectionUsageEditor.vue';
 
-const props = defineProps({ resource: Object, fields: Array, t: Function });
+const props = defineProps({ resource: Object, fields: Array, t: Function, usageDefinitions: Array, usageValues: Object, usageErrors: Object, usageEditors: Object, resolveReference: Function, previewActions: Array, previewContext: Object, usageRevision: Number });
+defineEmits(['usage-change']);
+const tab = ref('info');
+const actionBusy = ref(false);
+const previewElement = ref(null);
+let previewAbort;
+watch(() => props.resource?.id, () => previewAbort?.abort());
+onBeforeUnmount(() => previewAbort?.abort());
+watch(() => [props.resource?.id, props.usageDefinitions?.length, props.usageRevision], () => { tab.value = props.usageDefinitions?.length ? 'usage' : 'info'; }, { immediate: true });
+async function runPreviewAction(action) {
+  actionBusy.value = true;
+  previewAbort = new AbortController();
+  const signal = previewAbort.signal;
+  try { await action.run({ ...props.previewContext, previewElement: previewElement.value, signal }); }
+  catch (error) { if (!signal.aborted) Joomla.renderMessages({ error: [error.message || props.t('COM_SMARTBROWSER_USAGE_INVALID')] }); }
+  finally { actionBusy.value = false; }
+}
 const supplementalFields = [
   ['metadata.access', 'JFIELD_ACCESS_LABEL'],
   ['metadata.categoryPath', 'COM_SMARTBROWSER_CATEGORY_HIERARCHY'],
@@ -103,10 +130,6 @@ const formatDate = (value) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 const formatSize = (bytes) => `${(bytes / 1024).toFixed(2)} KB`;
-const imageFailed = (event) => {
-  event.target.hidden = true;
-  if (event.target.nextElementSibling) event.target.nextElementSibling.hidden = false;
-};
 const rawFieldValue = (field) => String(field.source || '').split('.').reduce((value, part) => value?.[part], props.resource);
 const fieldValue = (field) => {
   if ((field.format === 'language' || field.source === 'metadata.language') && rawFieldValue(field) === '*') return props.t('COM_SMARTBROWSER_ALL_LANGUAGES');

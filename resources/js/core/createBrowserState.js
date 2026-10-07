@@ -1,14 +1,10 @@
 import { computed, reactive, watch } from 'vue';
 import { asContextualResource, asPrimaryResource, canBulkSelectResource, canFocusResource, canSelectResource } from './resourcePolicy.js';
 
-const compare = (field, direction) => (left, right) => {
-  const a = field === 'title' ? left.title.toLocaleLowerCase() : field === 'dimension' ? (left.metadata?.width || 0) * (left.metadata?.height || 0) : left.metadata?.[field];
-  const b = field === 'title' ? right.title.toLocaleLowerCase() : field === 'dimension' ? (right.metadata?.width || 0) * (right.metadata?.height || 0) : right.metadata?.[field];
-  const result = typeof a === 'string' ? (a || '').localeCompare(b || '') : (a || 0) - (b || 0);
-  return direction === 'asc' ? result : -result;
-};
+import { compareResources as compare } from './resourceSort.js';
 
 export default function createBrowserState({ options, api, persistence, viewRegistry }) {
+  const preserveSelection = Boolean(options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
   const allowedTypes = new Set(options.allowedResourceTypes || []);
   const applySelectionConstraints = (resource) => options.mode === 'readonly' || (allowedTypes.size && !allowedTypes.has(resource.type))
     ? { ...resource, selectable: false, bulkSelectable: false }
@@ -19,8 +15,8 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     viewOptions: { gridSize: 'md', detailsThumbnails: false, detailsDateMode: 'modified' },
     hiddenColumns: [],
     shownColumns: [],
-    sortBy: '',
-    sortDirection: '',
+    sortBy: options.defaultSortBy || '',
+    sortDirection: options.defaultSortDirection || '',
     showInfo: false,
     filters: {},
   };
@@ -44,6 +40,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     currentResource: null,
     focusedId: null,
     selectedIds: [],
+    selectedResources: {},
     search: '',
     loading: false,
     busy: false,
@@ -72,13 +69,16 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     const target = options.selectionTarget || 'both';
     return resources.value.filter((resource) => canBulkSelectResource(resource, target));
   });
-  const selection = computed(() => resources.value.filter((resource) => state.selectedIds.includes(resource.id)));
-  const focusedResource = computed(() => resources.value.find((resource) => resource.id === state.focusedId) || null);
+  const selection = computed(() => preserveSelection
+    ? state.selectedIds.map(id => resources.value.find(resource => resource.id === id) || state.selectedResources[id]).filter(Boolean)
+    : resources.value.filter((resource) => state.selectedIds.includes(resource.id)));
+  const focusedResource = computed(() => resources.value.find((resource) => resource.id === state.focusedId)
+    || (preserveSelection ? state.selectedResources[state.focusedId] : null) || null);
 
   async function load(nodeId = state.selectedNode) {
     state.loading = true;
     state.error = '';
-    state.selectedIds = [];
+    if (!preserveSelection) state.selectedIds = [];
     state.focusedId = null;
     try {
       const data = await api.getResources(nodeId, {
@@ -90,6 +90,11 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       state.selectedNode = nodeId;
       state.nodes = data.nodes;
       state.items = data.items;
+      if (preserveSelection) {
+        for (const resource of [...data.nodes, ...data.items]) {
+          if (state.selectedIds.includes(resource.id)) state.selectedResources[resource.id] = applySelectionConstraints(asPrimaryResource(resource));
+        }
+      }
       state.contextItems = data.contextItems || [];
       state.breadcrumb = data.breadcrumb;
       state.actions = options.mode === 'readonly' ? [] : data.actions;
@@ -122,6 +127,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     focus(resource);
     const target = options.selectionTarget || 'both';
     if (!canSelectResource(resource, target)) return;
+    if (preserveSelection) state.selectedResources[resource.id] = resource;
     const exists = state.selectedIds.includes(resource.id);
     if (!options.multiple || !additive) state.selectedIds = exists ? [] : [resource.id];
     else state.selectedIds = exists ? state.selectedIds.filter((id) => id !== resource.id) : [...state.selectedIds, resource.id];
@@ -132,6 +138,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   }
 
   function selectAll() {
+    if (preserveSelection) bulkSelectableResources.value.forEach(resource => { state.selectedResources[resource.id] = resource; });
     const bulkIds = bulkSelectableResources.value.map((resource) => resource.id);
     const allSelected = bulkIds.length > 0 && bulkIds.every((id) => state.selectedIds.includes(id));
     state.selectedIds = allSelected
@@ -140,6 +147,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   }
 
   function invertSelection() {
+    if (preserveSelection) bulkSelectableResources.value.forEach(resource => { state.selectedResources[resource.id] = resource; });
     const visibleIds = bulkSelectableResources.value.map((resource) => resource.id);
     const selected = new Set(state.selectedIds);
     visibleIds.forEach((id) => selected.has(id) ? selected.delete(id) : selected.add(id));

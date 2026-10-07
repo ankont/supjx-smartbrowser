@@ -35,7 +35,7 @@ test('article featured period and menu home language flags reach both views', as
   const grid = await source('../resources/js/components/ResourceGrid.vue');
   const details = await source('../resources/js/components/ResourceDetails.vue');
   assert.match(content, /'JLIB_HTML_FEATURED_' \. strtoupper\(\$featuredTiming\) \. '_ITEM'/);
-  assert.match(content, /'icon-' \. \$featuredTiming/);
+  assert.match(content, /\$featuredTiming === 'pending' \? 'fas fa-clock' : 'fas fa-calendar-times'/);
   assert.match(grid, /<img v-if="overlay\.image"/);
   assert.match(details, /<img v-if="overlay\.image"/);
 });

@@ -37,8 +37,9 @@ final class BrowserViewSupport
         $registry = new AdapterRegistry($this->app);
         $requestedMode = $input->getCmd('mode', 'manage');
         $mode = in_array($requestedMode, ['manage', 'select', 'readonly'], true) ? $requestedMode : 'manage';
+        if ($mode === 'select') $document->getWebAssetManager()->useScript('com_smartbrowser.picker');
         $adapterId = $input->getCmd('adapter', 'media');
-        $featuredOnly = $adapterId === 'flat-articles' && $input->getBool('featuredOnly', false);
+        if ($adapterId === 'flat-articles' && $input->getBool('featuredOnly', false)) $adapterId = 'featured-articles';
         $browseRoot = $input->getString('browseRoot') ?: null;
         $allowedResourceTypes = array_values(array_filter(array_map('trim', explode(',', $input->getString('allowedResourceTypes')))));
         $defaultView = $input->getCmd('defaultView');
@@ -66,8 +67,10 @@ final class BrowserViewSupport
 
         $options = [
             'adapter' => $adapterId, 'adapters' => $adapterDescriptors,
-            'featuredOnly' => $featuredOnly, 'initialFilters' => $featuredOnly ? ['featured' => '1'] : [],
+            'initialFilters' => [],
             'gridWidths' => $gridWidths,
+            'visualSettings' => VisualOptions::forAdapter($adapterId, $params),
+            'imageBackground' => $params->get('image_background', 'auto'),
             'flatRootNode' => $adapter instanceof FlatHierarchyAdapter ? $adapter->getFlatRootNode()
                 : (str_starts_with($adapterId, 'flat-')
                     ? ($input->getString('flatFromBrowseRoot') ?: ($input->getString('flatFromAdapter') ? 'content:root' : ($browseRoot ?: 'content:root')))
@@ -78,29 +81,37 @@ final class BrowserViewSupport
             'integrated' => $input->getBool('integrated', false) && $mode === 'manage',
             'editorMode' => (string) ComponentHelper::getParams('com_smartbrowser')->get($this->app->isClient('site') ? 'editor_site' : 'editor_admin', 'modal'),
             'mode' => $mode, 'multiple' => $mode === 'manage' || $input->getBool('multiple', false),
+            'pickerInstance' => $mode === 'select' ? $input->getCmd('pickerInstance', '') : '',
             'selectionTarget' => $selectionTarget, 'allowNoUser' => $mode === 'select' && in_array($adapterId, ['users', 'flat-users'], true) && $input->getBool('allowNoUser', false),
             'showContextResources' => $input->getBool('showContextResources', ContextOptions::enabled($adapterId, $this->app->isClient('site'))), 'browseRoot' => $browseRoot, 'flatScope' => $flatScope,
             'allowedResourceTypes' => $allowedResourceTypes,
             'defaultView' => $defaultView,
+            'defaultSortBy' => $adapterId === 'featured-articles' ? 'ordering' : '',
+            'defaultSortDirection' => $adapterId === 'featured-articles' ? 'asc' : '',
             'apiBaseUrl' => Uri::base() . 'index.php?option=com_smartbrowser&format=json',
             'csrfToken' => Session::getFormToken(),
             'initialNode' => $adapter instanceof BrowseRootAwareInterface ? $adapter->getInitialNode() : ($adapter->getRoots()[0]['id'] ?? ''),
             'currentNode' => $input->getString('node') && $adapter instanceof BrowseRootAwareInterface
                 ? $adapter->getInitialNode($input->getString('node')) : $input->getString('node'),
+            'initialResource' => $adapterId === 'media' ? $input->getString('initialResource') : '',
             'roots' => $adapter->getRoots(), 'actions' => $mode === 'readonly' ? [] : $adapter->getActions([]),
             'maxUploadSizeMb' => (float) ComponentHelper::getParams('com_media')->get('upload_maxsize', 0),
             'returnUrl' => Route::_('index.php?option=com_smartbrowser&view=browser', false),
             'loginUrl' => $this->app->isClient('site') ? SiteAuthentication::loginUrl(Uri::getInstance()->toString()) : null,
-            'managerUrl' => $mode === 'manage' ? ManagerUrlProvider::for($this->app, $adapterId, $featuredOnly) : null,
-            'dashboardUrl' => $mode === 'manage' ? Route::_('index.php?option=com_smartbrowser&view=dashboard', false) : null,
+            'managerUrl' => $mode === 'manage' ? ManagerUrlProvider::for($this->app, $adapterId) : null,
+            'dashboardUrl' => $mode === 'manage' ? DashboardRoute::link($this->app, 'index.php?option=com_smartbrowser&view=dashboard') : null,
         ];
         $document->addScriptOptions('com_smartbrowser', $options);
         return $options;
     }
 
-    private function languageKeys(): array
+    public function languageKeys(): array
     {
         return [
+            'COM_SMARTBROWSER_USAGE_ALT', 'COM_SMARTBROWSER_USAGE_DECORATIVE', 'COM_SMARTBROWSER_USAGE_LOADING', 'COM_SMARTBROWSER_USAGE_AUTO',
+            'COM_SMARTBROWSER_USAGE_LAZY', 'COM_SMARTBROWSER_USAGE_EAGER', 'COM_SMARTBROWSER_USAGE_THUMBNAIL', 'COM_SMARTBROWSER_USAGE_INFO',
+            'COM_SMARTBROWSER_USAGE_OPTIONS', 'COM_SMARTBROWSER_USAGE_MORE', 'COM_SMARTBROWSER_USAGE_CUSTOM', 'COM_SMARTBROWSER_USAGE_PICK_RESOURCE', 'COM_SMARTBROWSER_USAGE_PICK_IMAGE',
+            'COM_SMARTBROWSER_USAGE_CLEAR', 'COM_SMARTBROWSER_USAGE_CHOOSE', 'COM_SMARTBROWSER_USAGE_REQUIRED', 'COM_SMARTBROWSER_USAGE_INVALID', 'COM_SMARTBROWSER_USAGE_EDITOR_UNAVAILABLE',
             'COM_SMARTBROWSER_ACTION_CREATE_FOLDER', 'COM_SMARTBROWSER_ACTION_DOWNLOAD', 'COM_SMARTBROWSER_ACTION_PREVIEW', 'COM_SMARTBROWSER_ACTION_SHARE', 'COM_SMARTBROWSER_ACTION_UPLOAD',
             'COM_SMARTBROWSER_ASCENDING', 'COM_SMARTBROWSER_CONFIRM_DELETE', 'COM_SMARTBROWSER_DATE_CREATED', 'COM_SMARTBROWSER_DATE_MODIFIED', 'COM_SMARTBROWSER_DATE',
             'COM_SMARTBROWSER_DETAILS', 'COM_SMARTBROWSER_COLUMNS', 'COM_SMARTBROWSER_DESCENDING', 'COM_SMARTBROWSER_DEFAULT_SORTING', 'COM_SMARTBROWSER_DIMENSIONS', 'COM_SMARTBROWSER_DROP_UPLOAD', 'COM_SMARTBROWSER_EMPTY_STATE',
@@ -120,7 +131,7 @@ final class BrowserViewSupport
             'COM_SMARTBROWSER_BATCH_TAGS', 'COM_SMARTBROWSER_BATCH_REMOVE_TAG', 'COM_SMARTBROWSER_BATCH_KEEP_TAGS', 'COM_SMARTBROWSER_BATCH_VIEW_NAMES',
             'COM_SMARTBROWSER_BATCH_PARENT_CATEGORY', 'COM_SMARTBROWSER_BATCH_FLIP_ORDERING', 'COM_SMARTBROWSER_BATCH_MENU_PLACEMENT', 'COM_SMARTBROWSER_BATCH_MENU_DESTINATION', 'COM_SMARTBROWSER_BATCH_MENU_ROOT',
             'COM_SMARTBROWSER_BATCH_USER_GROUPS', 'COM_SMARTBROWSER_BATCH_GROUP_ADD', 'COM_SMARTBROWSER_BATCH_GROUP_REMOVE', 'COM_SMARTBROWSER_BATCH_GROUP_SET', 'COM_SMARTBROWSER_BATCH_PASSWORD_RESET', 'JYES', 'JNO',
-            'COM_SMARTBROWSER_RENAME_TO', 'COM_SMARTBROWSER_SEARCH', 'COM_SMARTBROWSER_SELECT_ALL', 'COM_SMARTBROWSER_INVERT_SELECTION', 'COM_SMARTBROWSER_SELECT', 'COM_SMARTBROWSER_SELECT_CATEGORY',
+            'COM_SMARTBROWSER_RENAME_TO', 'COM_SMARTBROWSER_SEARCH', 'COM_SMARTBROWSER_SELECT_ALL', 'COM_SMARTBROWSER_INVERT_SELECTION', 'COM_SMARTBROWSER_MOVE_UP', 'COM_SMARTBROWSER_MOVE_DOWN', 'COM_SMARTBROWSER_SELECT', 'COM_SMARTBROWSER_SELECT_CATEGORY',
             'COM_SMARTBROWSER_SIZE', 'COM_SMARTBROWSER_SORT_BY', 'COM_SMARTBROWSER_SORT_DIRECTION', 'COM_SMARTBROWSER_TOGGLE_INFO', 'COM_SMARTBROWSER_VIEW', 'COM_SMARTBROWSER_HIDE_TREE', 'COM_SMARTBROWSER_SHOW_TREE',
             'COM_SMARTBROWSER_CONTENT_ROOT', 'COM_SMARTBROWSER_CREATE_CHILD_CATEGORY', 'COM_SMARTBROWSER_CREATE_CHILD_TAG', 'COM_SMARTBROWSER_CREATE_CHILD_MENU_ITEM',
             'COM_SMARTBROWSER_OPEN_LINK', 'COM_SMARTBROWSER_COPY_LINK', 'COM_SMARTBROWSER_MENU', 'COM_SMARTBROWSER_COMPONENT', 'COM_SMARTBROWSER_SELECT_MENU', 'COM_SMARTBROWSER_SELECT_COMPONENT', 'COM_SMARTBROWSER_PARENT', 'COM_SMARTBROWSER_PARENT_CATEGORY', 'COM_SMARTBROWSER_CATEGORY_HIERARCHY', 'COM_SMARTBROWSER_TAG_HIERARCHY', 'COM_SMARTBROWSER_LOCATION', 'COM_SMARTBROWSER_CATEGORY', 'COM_SMARTBROWSER_MENU_ITEM_TYPE',
@@ -149,7 +160,7 @@ final class BrowserViewSupport
             'COM_SMARTBROWSER_ACTION_TRASH', 'COM_SMARTBROWSER_ACTION_RESTORE', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'COM_SMARTBROWSER_ACTION_CHECKIN', 'COM_SMARTBROWSER_STATE_TRASHED',
             'COM_SMARTBROWSER_FILTER_FEATURED', 'COM_SMARTBROWSER_FILTER_UNFEATURED', 'COM_SMARTBROWSER_FILTER_CHECKED_OUT',
             'COM_SMARTBROWSER_FILTER_NOT_CHECKED_OUT',
-            'COM_SMARTBROWSER_OPEN_JOOMLA_MANAGER',
+            'COM_SMARTBROWSER_OPEN_JOOMLA_MANAGER', 'COM_SMARTBROWSER_OPEN', 'JCLOSE', 'COM_SMARTBROWSER_DISPLAY_WIDE', 'COM_SMARTBROWSER_DISPLAY_FOCUS', 'COM_SMARTBROWSER_DISPLAY_NORMAL', 'COM_SMARTBROWSER_EDITOR_MAXIMIZE', 'COM_SMARTBROWSER_EDITOR_RESTORE',
             'COM_SMARTBROWSER_BACK_TO_DASHBOARD', 'COM_SMARTBROWSER_DASHBOARD',
             'JAUTHOR', 'JCATEGORY', 'JFIELD_LANGUAGE_LABEL', 'JGRID_HEADING_ORDERING', 'JSTATUS', 'JTOOLBAR_PUBLISH',
             'JFEATURE', 'JUNFEATURE', 'JALL', 'JARCHIVED', 'JPUBLISHED', 'JUNPUBLISHED', 'JACTION_DELETE', 'JACTION_EDIT', 'JCLEAR', 'JOPTION_NO_USER',

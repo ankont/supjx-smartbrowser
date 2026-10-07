@@ -30,14 +30,18 @@
       adapter: 'media',
       multiple: false,
       selectionTarget: 'item',
-      browseRoot: resolveBrowseRoot(wrapper, input),
+      initialNode: resolveBrowseRoot(wrapper, input),
       allowedResourceTypes: /image/.test(accepted) ? ['image'] : [],
+      initialValue: input.value,
     });
-    const value = resource?.metadata?.url || resource?.id;
+    const value = resource && window.SmartBrowserMediaValue.format(resource, 'joomla');
     if (!value) return;
 
-    input.value = value;
+    if (typeof wrapper.setValue === 'function') wrapper.setValue(value);
+    else {
+      input.value = value;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
     input.dispatchEvent(new Event('input', { bubbles: true }));
-    input.dispatchEvent(new Event('change', { bubbles: true }));
   }, true);
 }());

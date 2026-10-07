@@ -24,7 +24,7 @@ final class GridwidthField extends NumberField
 
         return '<div class="sb-grid-width-control" data-sb-grid-width>'
             . '<div class="sb-grid-width-input">' . parent::getInput() . '<span aria-hidden="true">px</span></div>'
-            . '<div class="sb-grid-width-preview" aria-hidden="true"><span class="sb-grid-width-preview-tile"><span class="icon-folder"></span></span></div>'
+            . '<div class="sb-grid-width-preview" aria-hidden="true"><span class="sb-grid-width-preview-tile"><span class="fas fa-folder"></span></span></div>'
             . '</div>';
     }
 }

@@ -11,6 +11,10 @@ import { resetSessionNavigationIfNeeded, urlWithoutSessionNavigation } from './c
 import ResourceApi from './services/ResourceApi.js';
 
 const options = Joomla.getOptions('com_smartbrowser', {});
+let pickerContext = null;
+try { pickerContext = window.parent !== window && options.pickerInstance
+  ? window.parent.SmartBrowserPicker?.context(options.pickerInstance, window) : null; } catch {}
+options.pickerContext = pickerContext;
 resetPreferencesIfNeeded(window.sessionStorage, options.preferencesResetToken);
 const sessionChanged = resetSessionNavigationIfNeeded(window.sessionStorage, options.application, options.csrfToken);
 const resetUrl = sessionChanged ? urlWithoutSessionNavigation(window.location.href) : window.location.href;
@@ -20,14 +24,15 @@ const api = new ResourceApi(options);
 const persistenceKey = options.browseRoot
   ? `supjx.smartbrowser.${options.adapter}.${options.browseRoot}`
   : `supjx.smartbrowser.${options.adapter}`;
-const persistence = new PersistenceService(window.sessionStorage, options.featuredOnly ? `${persistenceKey}.featured` : persistenceKey);
+const persistence = new PersistenceService(window.sessionStorage, persistenceKey);
 const viewRegistry = createViewRegistry()
-  .register({ id: 'grid', label: 'COM_SMARTBROWSER_GRID', icon: 'icon-th', component: ResourceGrid, supportsSize: true, controls: ['sort', 'zoom'], options: { gridSize: 'md' } })
-  .register({ id: 'details', label: 'COM_SMARTBROWSER_DETAILS', icon: 'icon-list', component: ResourceDetails, supportsSize: false, controls: ['thumbnails', 'dateField'], options: { detailsThumbnails: false, detailsDateMode: 'modified' } });
+  .register({ id: 'grid', label: 'COM_SMARTBROWSER_GRID', icon: 'fas fa-th', component: ResourceGrid, supportsSize: true, controls: ['sort', 'zoom'], options: { gridSize: 'md' } })
+  .register({ id: 'details', label: 'COM_SMARTBROWSER_DETAILS', icon: 'fas fa-list', component: ResourceDetails, supportsSize: false, controls: ['thumbnails', 'dateField'], options: { detailsThumbnails: false, detailsDateMode: 'modified' } });
 const browser = createBrowserState({ options, api, persistence, viewRegistry });
 const actionDriver = new MediaActionDriver(api, browser.state, () => browser.load(), (key) => Joomla.Text?._(key, key) || key, options.editorMode, options.application);
 
 window.SmartBrowser = {
+  ...window.SmartBrowser,
   open(config = {}) {
     const showContextResources = config.showContextResources ?? options.showContextResources ?? false;
     const browseRoot = config.browseRoot ? `&browseRoot=${encodeURIComponent(config.browseRoot)}` : '';

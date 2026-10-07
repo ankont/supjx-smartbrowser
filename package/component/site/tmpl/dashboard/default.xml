@@ -5,30 +5,31 @@
     </layout>
     <fields name="params">
         <fieldset name="basic" label="COM_SMARTBROWSER_INVOCATION">
-            <field name="display_mode" type="list" default="dashboard" label="COM_SMARTBROWSER_DISPLAY_MODE">
+            <field name="display_mode" type="list" default="dashboard" label="COM_SMARTBROWSER_DISPLAY_MODE" description="COM_SMARTBROWSER_DISPLAY_MODE_DESC">
                 <option value="dashboard">COM_SMARTBROWSER_DASHBOARD</option>
                 <option value="browser">COM_SMARTBROWSER_BROWSER</option>
             </field>
-            <field name="adapter" type="list" default="articles" label="COM_SMARTBROWSER_ADAPTER">
+            <field name="adapter" type="list" default="articles" label="COM_SMARTBROWSER_ADAPTER" description="COM_SMARTBROWSER_ADAPTER_DESC">
                 <option value="media">COM_SMARTBROWSER_ADAPTER_MEDIA</option>
                 <option value="articles">COM_SMARTBROWSER_ADAPTER_ARTICLES</option>
                 <option value="flat-articles">COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES</option>
+                <option value="featured-articles">COM_SMARTBROWSER_ADAPTER_FEATURED_ARTICLES</option>
                 <option value="categories">COM_SMARTBROWSER_ADAPTER_CATEGORIES</option>
                 <option value="tags">COM_SMARTBROWSER_ADAPTER_TAGS</option>
                 <option value="articles-by-tag">COM_SMARTBROWSER_ADAPTER_ARTICLES_BY_TAG</option>
                 <option value="menus">COM_SMARTBROWSER_ADAPTER_MENUS</option>
                 <option value="users">COM_SMARTBROWSER_ADAPTER_USERS</option>
             </field>
-            <field name="mode" type="list" default="manage" label="COM_SMARTBROWSER_BROWSER_MODE">
+            <field name="mode" type="list" default="manage" label="COM_SMARTBROWSER_BROWSER_MODE" description="COM_SMARTBROWSER_BROWSER_MODE_DESC">
                 <option value="manage">COM_SMARTBROWSER_MODE_MANAGE</option>
                 <option value="select">COM_SMARTBROWSER_MODE_SELECT</option>
                 <option value="readonly">COM_SMARTBROWSER_MODE_READONLY</option>
             </field>
-            <field name="browseRoot" type="text" label="COM_SMARTBROWSER_BROWSE_ROOT" />
-            <field name="showContextResources" type="list" default="" label="COM_SMARTBROWSER_SHOW_CONTEXT_RESOURCES">
+            <field name="browseRoot" type="text" label="COM_SMARTBROWSER_BROWSE_ROOT" description="COM_SMARTBROWSER_BROWSE_ROOT_DESC" />
+            <field name="showContextResources" type="list" default="" label="COM_SMARTBROWSER_SHOW_CONTEXT_RESOURCES" description="COM_SMARTBROWSER_SHOW_CONTEXT_RESOURCES_DESC">
                 <option value="">COM_SMARTBROWSER_USE_GLOBAL</option><option value="0">JNO</option><option value="1">JYES</option>
             </field>
-            <field name="defaultView" type="list" default="grid" label="COM_SMARTBROWSER_DEFAULT_VIEW">
+            <field name="defaultView" type="list" default="grid" label="COM_SMARTBROWSER_DEFAULT_VIEW" description="COM_SMARTBROWSER_DEFAULT_VIEW_DESC">
                 <option value="grid">COM_SMARTBROWSER_GRID</option><option value="details">COM_SMARTBROWSER_DETAILS</option>
             </field>
             <field name="showAdapterSwitcher" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_SHOW_ADAPTER_SWITCHER" description="COM_SMARTBROWSER_SHOW_ADAPTER_SWITCHER_DESC">
@@ -37,7 +38,7 @@
         </fieldset>
         <fieldset name="dashboard" label="COM_SMARTBROWSER_DASHBOARD_TILES">
             <field name="show_articles" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="COM_SMARTBROWSER_ADAPTER_ARTICLES"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
-            <field name="show_flat_articles" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
+            <field name="show_featured_articles" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="COM_SMARTBROWSER_ADAPTER_FEATURED_ARTICLES"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="show_categories" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="show_tags" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>
             <field name="show_articles_by_tag" type="radio" layout="joomla.form.field.radio.switcher" default="1" label="COM_SMARTBROWSER_ADAPTER_ARTICLES_BY_TAG"><option value="0">JHIDE</option><option value="1">JSHOW</option></field>

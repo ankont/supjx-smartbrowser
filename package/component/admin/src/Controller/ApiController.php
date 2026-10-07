@@ -12,6 +12,7 @@ use SuperSoft\Component\Smartbrowser\Administrator\Adapter\ContextResourceProvid
 use SuperSoft\Component\Smartbrowser\Administrator\Adapter\ResourceAdapterInterface;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SiteAuthentication;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\ContextOptions;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceVisualDecorator;
 use Joomla\Component\Media\Administrator\Exception\FileExistsException;
 use Joomla\Component\Media\Administrator\Exception\InvalidPathException;
 
@@ -19,6 +20,31 @@ defined('_JEXEC') or die;
 
 class ApiController extends BaseController
 {
+    public function collection(): void
+    {
+        $this->respond(function (): array {
+            if (!Session::checkToken('json')) throw new \RuntimeException('Invalid token', 403);
+            $body = json_decode($this->input->json->getRaw(), true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($body['items'] ?? null)) throw new \InvalidArgumentException('Invalid collection.', 400);
+            $adapter = $this->getAdapter();
+            $ids = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::identifiers($adapter->getId(), $body['items']);
+            if (($body['operation'] ?? 'resolve') === 'reorder') {
+                if ($this->input->getCmd('mode') === 'readonly') throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+                $selected = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::identifiers($adapter->getId(), is_array($body['selection'] ?? null) ? $body['selection'] : []);
+                return ['items' => \SuperSoft\Component\Smartbrowser\Administrator\Support\OrderingSteps::orderedIds($ids, $selected, (string) ($body['direction'] ?? ''))];
+            }
+            if (($body['operation'] ?? 'resolve') !== 'resolve') throw new \InvalidArgumentException('Invalid collection operation.', 400);
+            $resources = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::resolve($adapter, $ids, $this->app->getIdentity(), $this->app->isClient('site'));
+            $params = \Joomla\CMS\Component\ComponentHelper::getParams('com_smartbrowser');
+            return (new ResourceVisualDecorator($this->app))->decorate([
+                'identifiers' => $ids, 'resources' => $resources,
+                'actions' => $this->input->getCmd('mode') === 'readonly' ? [] : $adapter->getActions([]),
+                'presentation' => method_exists($adapter, 'getCollectionPresentation') ? $adapter->getCollectionPresentation($resources) : [],
+                'visualSettings' => \SuperSoft\Component\Smartbrowser\Administrator\Support\VisualOptions::forAdapter($adapter->getId(), $params),
+                'imageBackground' => $params->get('image_background', 'auto'),
+            ], $adapter->getId());
+        });
+    }
     public function resources(): void
     {
         $this->respond(function (): array {
@@ -26,7 +52,10 @@ class ApiController extends BaseController
             $nodeId  = $this->input->getString('node');
 
             if ($nodeId === '') {
-                return ['roots' => $adapter->getRoots(), 'actions' => $this->input->getCmd('mode') === 'readonly' ? [] : $adapter->getActions([])];
+                return (new ResourceVisualDecorator($this->app))->decorate([
+                    'roots' => $adapter->getRoots(),
+                    'actions' => $this->input->getCmd('mode') === 'readonly' ? [] : $adapter->getActions([]),
+                ], $adapter->getId());
             }
 
             $filters = json_decode($this->input->getString('filters', '{}'), true);
@@ -56,7 +85,7 @@ class ApiController extends BaseController
                 'capabilities' => [],
             ], $contextItems);
 
-            return $result;
+            return (new ResourceVisualDecorator($this->app))->decorate($result, $adapter->getId());
         });
     }
 

@@ -12,6 +12,7 @@ export function responseErrorMessage(response, status = 0, translate = (key) => 
 export default class ResourceApi {
   constructor(options) {
     this.options = options;
+    this.pending = new Map();
   }
 
   async getResources(nodeId, options = {}) {
@@ -45,15 +46,25 @@ export default class ResourceApi {
     });
   }
 
+  collection(items, options = {}) {
+    const url = new URL(this.options.apiBaseUrl, window.location.href);
+    url.searchParams.set('task', 'api.collection');
+    url.searchParams.set('adapter', this.options.adapter);
+    url.searchParams.set('mode', this.options.mode || 'manage');
+    return this.request(url, { method: 'POST', body: JSON.stringify({ ...options, items, [this.options.csrfToken]: 1 }) });
+  }
+
   request(url, init = {}) {
-    return new Promise((resolve, reject) => {
-      Joomla.request({
+    let xhr;
+    const promise = new Promise((resolve, reject) => {
+      xhr = Joomla.request({
         url: url.toString(),
         method: init.method || 'GET',
         data: init.body,
         headers: { 'Content-Type': 'application/json' },
         onSuccess: (raw) => {
-          const response = JSON.parse(raw);
+          let response;
+          try { response = JSON.parse(raw); } catch (error) { reject(error); return; }
           if (response.data?.authenticationRequired) {
             this.redirectToLogin(response.data.loginUrl);
             reject(new Error(response.message));
@@ -78,7 +89,17 @@ export default class ResourceApi {
           reject(error);
         },
       });
+      if (xhr) this.pending.set(xhr, reject);
     });
+    return promise.finally(() => this.pending.delete(xhr));
+  }
+
+  destroy() {
+    for (const [xhr, reject] of this.pending) {
+      xhr.abort?.();
+      reject(new Error('SmartBrowser request cancelled.'));
+    }
+    this.pending.clear();
   }
 
   redirectToLogin(url = null) {

@@ -77,12 +77,12 @@ $menuItemTypeTitleKey = match ($menuItemType) {
     <?php if ($this->editorError !== '') : ?><div class="alert alert-danger smartbrowser-editor-error" role="alert"><?php echo nl2br($this->escape($this->editorError)); ?></div><?php endif; ?>
     <form action="<?php echo Route::_('index.php?option=com_smartbrowser&task=editor.save'); ?>" method="post" enctype="multipart/form-data" id="adminForm" class="form-validate form-vertical" data-browser-url="<?php echo $this->escape(Route::_('index.php?option=com_smartbrowser&view=browser&tmpl=component&Itemid=0', false)); ?>" data-editor-url="<?php echo $this->escape(Route::_('index.php?option=com_smartbrowser&view=editor&layout=modal&tmpl=component&Itemid=0', false)); ?>"<?php if ($menuItemType !== '') : ?> data-menu-item-type="<?php echo $this->escape($menuItemType); ?>"<?php endif; ?><?php if ($menuItemTypeTitleKey !== null) : ?> data-menu-item-type-title="<?php echo $this->escape(Text::_($menuItemTypeTitleKey)); ?>"<?php endif; ?>>
         <div class="smartbrowser-editor-actions d-flex gap-2 mb-3">
-            <button type="submit" name="editorAction" value="save" class="btn btn-primary"><span class="icon-save" aria-hidden="true"></span> <?php echo Text::_('JSAVE'); ?></button>
-            <button type="submit" name="editorAction" value="apply" class="btn btn-outline-primary"><span class="icon-check" aria-hidden="true"></span> <?php echo Text::_('JAPPLY'); ?></button>
+            <button type="submit" name="editorAction" value="save" class="btn btn-primary"><span class="fas fa-save" aria-hidden="true"></span> <?php echo Text::_('JSAVE'); ?></button>
+            <button type="submit" name="editorAction" value="apply" class="btn btn-outline-primary"><span class="fas fa-check" aria-hidden="true"></span> <?php echo Text::_('JAPPLY'); ?></button>
             <?php if ($showArticleTools) : ?>
-                <button type="submit" name="editorAction" value="copy" class="btn btn-outline-primary"><span class="icon-copy" aria-hidden="true"></span> <?php echo Text::_('JSAVEASCOPY'); ?></button>
+                <button type="submit" name="editorAction" value="copy" class="btn btn-outline-primary"><span class="fas fa-copy" aria-hidden="true"></span> <?php echo Text::_('JSAVEASCOPY'); ?></button>
             <?php endif; ?>
-            <button type="button" class="btn btn-danger" onclick="this.form.action=<?php echo htmlspecialchars(json_encode($cancelUrl), ENT_QUOTES, 'UTF-8'); ?>; this.form.submit();"><span class="icon-cancel" aria-hidden="true"></span> <?php echo Text::_('JCANCEL'); ?></button>
+            <button type="button" class="btn btn-danger" onclick="this.form.action=<?php echo htmlspecialchars(json_encode($cancelUrl), ENT_QUOTES, 'UTF-8'); ?>; this.form.submit();"><span class="fas fa-times" aria-hidden="true"></span> <?php echo Text::_('JCANCEL'); ?></button>
             <?php if ($showArticleTools && $saveHistory && ComponentHelper::isEnabled('com_contenthistory')) : ?>
                 <span class="smartbrowser-editor-versions"><?php echo $form->getInput('contenthistory'); ?></span>
             <?php endif; ?>
@@ -105,8 +105,14 @@ $menuItemTypeTitleKey = match ($menuItemType) {
                 <?php echo HTMLHelper::_('uitab.addTab', 'smartbrowserEditorTabs', 'smartbrowser-images-links', Text::_('COM_CONTENT_IMAGES_AND_URLS')); ?>
                 <div class="smartbrowser-editor-media-grid smartbrowser-editor-tab">
                     <div class="smartbrowser-editor-image-row">
-                        <fieldset class="options-form"><legend><?php echo Text::_('COM_CONTENT_FIELD_INTRO_LABEL'); ?></legend><?php foreach (['image_intro', 'image_intro_alt', 'image_intro_alt_empty', 'image_intro_caption', 'float_intro'] as $name) echo $renderField($name, 'images'); ?></fieldset>
-                        <fieldset class="options-form"><legend><?php echo Text::_('COM_CONTENT_FIELD_FULL_LABEL'); ?></legend><?php foreach (['image_fulltext', 'image_fulltext_alt', 'image_fulltext_alt_empty', 'image_fulltext_caption', 'float_fulltext'] as $name) echo $renderField($name, 'images'); ?></fieldset>
+                        <fieldset class="options-form"><legend><?php echo Text::_('COM_CONTENT_FIELD_INTRO_LABEL'); ?></legend>
+                            <?php foreach (['image_intro', 'image_intro_alt', 'image_intro_alt_empty', 'image_intro_caption', 'float_intro'] as $name) echo $renderField($name, 'images'); ?>
+                            <?php foreach ($fieldsetFields('image-intro') as $field) echo $field->renderField(); ?>
+                        </fieldset>
+                        <fieldset class="options-form"><legend><?php echo Text::_('COM_CONTENT_FIELD_FULL_LABEL'); ?></legend>
+                            <?php foreach (['image_fulltext', 'image_fulltext_alt', 'image_fulltext_alt_empty', 'image_fulltext_caption', 'float_fulltext'] as $name) echo $renderField($name, 'images'); ?>
+                            <?php foreach ($fieldsetFields('image-full') as $field) echo $field->renderField(); ?>
+                        </fieldset>
                     </div>
                     <div class="smartbrowser-editor-link-row">
                         <?php foreach ([['a', 'COM_CONTENT_FIELD_URLA_LABEL'], ['b', 'COM_CONTENT_FIELD_URLB_LABEL'], ['c', 'COM_CONTENT_FIELD_URLC_LABEL']] as [$suffix, $label]) : ?>
@@ -243,7 +249,6 @@ $menuItemTypeTitleKey = match ($menuItemType) {
                         <fieldset class="options-form smartbrowser-editor-subfieldset smartbrowser-editor-menu-link">
                             <legend><?php echo Text::_('COM_SMARTBROWSER_EDITOR_MENU_LINK'); ?></legend>
                             <?php foreach (['link', 'browserNav', 'template_style_id'] as $name) echo $renderField($name); ?>
-                            <div class="smartbrowser-editor-global-fields"><?php echo $renderField('menutype'); ?></div>
                         </fieldset>
                     </div>
                 </div>
@@ -285,7 +290,18 @@ $menuItemTypeTitleKey = match ($menuItemType) {
 
         <?php if ($this->resourceType === 'menu-item') : ?>
             <?php echo HTMLHelper::_('uitab.addTab', 'smartbrowserEditorTabs', 'smartbrowser-publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')); ?>
-            <fieldset class="options-form smartbrowser-editor-tab"><?php foreach (['parent_id', 'menuordering', 'published', 'home', 'publish_up', 'publish_down', 'access', 'language', 'note'] as $name) echo $renderField($name); ?></fieldset>
+            <fieldset class="options-form smartbrowser-editor-tab">
+                <?php echo $renderField('menutype'); ?>
+                <?php foreach (['parent_id', 'menuordering', 'published', 'home', 'publish_up', 'publish_down', 'access', 'language', 'note'] as $name) echo $renderField($name); ?>
+            </fieldset>
+            <?php echo HTMLHelper::_('uitab.endTab'); ?>
+        <?php endif; ?>
+
+        <?php if ($this->resourceType === 'user' && $this->resourceId === 0) : ?>
+            <?php echo HTMLHelper::_('uitab.addTab', 'smartbrowserEditorTabs', 'smartbrowser-groups', Text::_('COM_USERS_ASSIGNED_GROUPS')); ?>
+            <fieldset class="options-form smartbrowser-editor-tab">
+                <?php echo HTMLHelper::_('access.usergroups', 'jform[groups]', (array) $form->getValue('groups'), true); ?>
+            </fieldset>
             <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php endif; ?>
 

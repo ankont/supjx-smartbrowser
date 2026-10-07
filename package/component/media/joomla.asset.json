@@ -1,14 +1,40 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_smartbrowser",
-  "version": "1.2.14",
+  "version": "2.1.0",
   "description": "SuperSoftJx - SmartBrowser",
   "license": "GPL-2.0-or-later",
   "assets": [
     {
+      "name": "com_smartbrowser.icon-settings",
+      "type": "script",
+      "uri": "com_smartbrowser/icon-settings.js",
+      "dependencies": ["core"],
+      "attributes": {"defer": true}
+    },
+    {
+      "name": "com_smartbrowser.collection",
+      "type": "script",
+      "uri": "com_smartbrowser/collection.js",
+      "dependencies": ["core", "messages", "com_smartbrowser.dialog-dismiss"],
+      "attributes": {"type": "module"}
+    },
+    {
+      "name": "com_smartbrowser.visual-settings",
+      "type": "style",
+      "uri": "com_smartbrowser/visual-settings.css"
+    },
+    {
+      "name": "com_smartbrowser.visual-settings",
+      "type": "script",
+      "uri": "com_smartbrowser/visual-settings.js",
+      "attributes": {"type": "module"}
+    },
+    {
       "name": "com_smartbrowser.app",
       "type": "style",
-      "uri": "com_smartbrowser/smartbrowser.css"
+      "uri": "com_smartbrowser/smartbrowser.css",
+      "dependencies": ["fontawesome"]
     },
     {
       "name": "com_smartbrowser.editor",
@@ -31,10 +57,17 @@
       "attributes": {"type": "module"}
     },
     {
+      "name": "com_smartbrowser.media-value",
+      "type": "script",
+      "uri": "com_smartbrowser/media-value.js",
+      "dependencies": ["core"],
+      "attributes": {"defer": true}
+    },
+    {
       "name": "com_smartbrowser.picker",
       "type": "script",
       "uri": "com_smartbrowser/picker.js",
-      "dependencies": ["core", "com_smartbrowser.dialog-dismiss"],
+      "dependencies": ["core", "com_smartbrowser.dialog-dismiss", "com_smartbrowser.media-value"],
       "attributes": {"defer": true}
     },
     {
@@ -55,7 +88,7 @@
       "name": "com_smartbrowser.editor-fields",
       "type": "script",
       "uri": "com_smartbrowser/editor-fields.js",
-      "dependencies": ["core", "com_smartbrowser.dialog-dismiss"],
+      "dependencies": ["core", "com_smartbrowser.dialog-dismiss", "com_smartbrowser.media-value"],
       "attributes": {"defer": true}
     },
     {

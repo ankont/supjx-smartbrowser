@@ -21,7 +21,7 @@ final class FlatCategoryAdapter extends CategoryAdapter
         return [[
             'id' => static::ROOT_ID,
             'title' => $categoryId ? $this->title($this->getCategory($categoryId)->title) : Text::_('COM_SMARTBROWSER_ALL_CATEGORIES'),
-            'type' => 'root', 'kind' => 'node', 'icon' => 'icon-folder',
+            'type' => 'root', 'kind' => 'node', 'icon' => 'fas fa-box',
             'visible' => false, 'selectable' => false, 'navigable' => true, 'hasChildren' => false,
             'capabilities' => $this->categoryCapabilities($categoryId), 'metadata' => [],
         ]];
@@ -62,7 +62,7 @@ final class FlatCategoryAdapter extends CategoryAdapter
         $presentation['filters'][] = FlatLevels::filter();
         array_splice($presentation['columns'], 1, 0, [[
             'id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION', 'source' => 'metadata.location',
-            'headerIcon' => 'icon-folder-open',
+            'headerIcon' => 'fas fa-box-open',
         ]]);
         array_splice($presentation['sortFields'], 1, 0, [[
             'id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION',
@@ -80,7 +80,7 @@ final class FlatCategoryAdapter extends CategoryAdapter
     {
         return [[
             'id' => static::ROOT_ID, 'title' => $this->getRoots()[0]['title'],
-            'icon' => 'icon-folder', 'visible' => true,
+            'kind' => 'node', 'type' => 'root', 'icon' => 'fas fa-box', 'visible' => true,
         ]];
     }
 

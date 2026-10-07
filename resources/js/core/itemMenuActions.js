@@ -1,5 +1,5 @@
-export const itemMenuActions = (actions, resource, available) => {
-  if (!resource?.actionable) return [];
+export const itemMenuActions = (actions, resource, available, defaultAction = null) => {
+  if (!resource?.actionable) return defaultAction ? [{ ...defaultAction, isDefault: true }] : [];
 
   const selection = [resource];
   const result = [];
@@ -22,5 +22,5 @@ export const itemMenuActions = (actions, resource, available) => {
     result.push(enabled || group.find((candidate) => candidate.id === overlayAction) || group[0]);
   }
 
-  return result;
+  return defaultAction ? [{ ...defaultAction, isDefault: true }, ...result.filter(action => action.id !== defaultAction.id)] : result;
 };

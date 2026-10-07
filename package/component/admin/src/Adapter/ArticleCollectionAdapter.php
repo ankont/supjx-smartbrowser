@@ -4,6 +4,7 @@ namespace SuperSoft\Component\Smartbrowser\Administrator\Adapter;
 
 use Joomla\CMS\Language\Text;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\BatchRunner;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\OrderingService;
 
 defined('_JEXEC') or die;
 
@@ -17,21 +18,23 @@ abstract class ArticleCollectionAdapter extends ContentAdapter
     protected function articleActions(): array
     {
         return [
-            $this->action('edit', 'JACTION_EDIT', 'icon-edit', 'resource', false, true, true),
-            $this->action('checkin', 'COM_SMARTBROWSER_ACTION_CHECKIN', 'icon-unlock', 'selection', false, true),
-            $this->action('publish', 'JTOOLBAR_PUBLISH', 'icon-publish', 'selection', false, true, false, false, false, 'publication'),
-            $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'icon-unpublish', 'selection', false, true, false, false, false, 'publication'),
-            $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'icon-archive', 'selection', false, true, false, false, false, 'archiveState'),
-            $this->action('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'icon-archive', 'selection', false, true, false, false, false, 'archiveState'),
-            $this->action('feature', 'JFEATURE', 'icon-star', 'item', false, true, false, true, false, 'featured'),
-            $this->action('unfeature', 'JUNFEATURE', 'icon-star-empty', 'item', false, true, false, true, false, 'featured'),
-            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'icon-trash', 'selection', false, true, false, false, false, 'trashState'),
-            $this->action('restore', 'COM_SMARTBROWSER_ACTION_RESTORE', 'icon-undo', 'selection', false, true, false, false, false, 'trashState'),
+            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true),
+            $this->action('preview', 'COM_SMARTBROWSER_ACTION_PREVIEW', 'fas fa-eye', 'item', false, true, true, true),
+            $this->action('checkin', 'COM_SMARTBROWSER_ACTION_CHECKIN', 'fas fa-unlock', 'selection', false, true),
+            $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'selection', false, true, false, false, false, 'publication'),
+            $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'selection', false, true, false, false, false, 'publication'),
+            $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'fas fa-archive', 'selection', false, true, false, false, false, 'archiveState'),
+            $this->action('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'fas fa-archive', 'selection', false, true, false, false, false, 'archiveState'),
+            $this->action('feature', 'JFEATURE', 'fas fa-star', 'item', false, true, false, true, false, 'featured'),
+            $this->action('unfeature', 'JUNFEATURE', 'far fa-star', 'item', false, true, false, true, false, 'featured'),
+            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'selection', false, true, false, false, false, 'trashState'),
+            $this->action('restore', 'COM_SMARTBROWSER_ACTION_RESTORE', 'fas fa-undo', 'selection', false, true, false, false, false, 'trashState'),
         ];
     }
 
-    protected function executeArticleAction(string $action, array $selection, bool $articlesOnly = false): mixed
+    protected function executeArticleAction(string $action, array $selection, bool $articlesOnly = false, array $payload = []): mixed
     {
+        if ($action === 'reorder') return (new OrderingService($this->app))->move($this, $selection, (string) ($payload['direction'] ?? ''), $articlesOnly ? ['article'] : ['article', 'category']);
         if ($articlesOnly) {
             if ($selection === []) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
             foreach ($selection as $id) {
@@ -46,6 +49,7 @@ abstract class ArticleCollectionAdapter extends ContentAdapter
 
         return match ($action) {
             'edit' => $this->edit($this->requireOne($selection)),
+            'preview' => $this->contentPreview($this->requireOne($selection)),
             'checkin' => $this->checkinArticles($selection),
             'publish' => $this->setState($selection, 1),
             'unpublish' => $this->setState($selection, 0),
@@ -83,7 +87,7 @@ abstract class ArticleCollectionAdapter extends ContentAdapter
                 ['id' => 'created', 'label' => 'COM_SMARTBROWSER_DATE_CREATED', 'source' => 'metadata.created', 'format' => 'date'],
                 ['id' => 'modified', 'label' => 'COM_SMARTBROWSER_DATE_MODIFIED', 'source' => 'metadata.modified', 'format' => 'date'],
             ]],
-            ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language', 'format' => 'language', 'headerIcon' => 'icon-globe'],
+            ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language', 'format' => 'language', 'headerIcon' => 'fas fa-globe'],
             ['id' => 'id', 'label' => 'JGLOBAL_FIELD_ID_LABEL', 'source' => 'metadata.id'],
         );
 

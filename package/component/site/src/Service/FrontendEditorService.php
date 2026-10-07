@@ -6,20 +6,97 @@ use Joomla\CMS\Form\Form;
 use Joomla\CMS\Form\FormHelper;
 use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Registry\Registry;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SmartAuthorsAccess;
 defined('_JEXEC') or die;
 final class FrontendEditorService
 {
     public function __construct(private readonly CMSApplicationInterface $app) {}
 
+    public static function supportsArticleCreateDefaults(): bool { return true; }
+
+    private function articleCreateDefaults(string $type, int $id): array
+    {
+        $input = $this->app->getInput();
+        if ($type !== 'article' || $id !== 0 || $input->getMethod() !== 'GET'
+            || $this->app->getUserState('com_content.edit.article.data')) return [];
+        $failure = $this->app->getUserState('com_smartbrowser.editor.failure');
+        if (is_array($failure) && ($failure['type'] ?? '') === 'article' && (int) ($failure['id'] ?? -1) === 0) return [];
+        $json = $input->getString('sbCreateDefaults', '');
+        if ($json === '') return [];
+        $invalid = static fn() => new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_CREATE_DEFAULTS'), 400);
+        if (strlen($json) > 4096) throw $invalid();
+        try { $decoded = json_decode($json, false, 8, JSON_THROW_ON_ERROR); }
+        catch (\JsonException) { throw $invalid(); }
+        if (!$decoded instanceof \stdClass) throw $invalid();
+        $defaults = get_object_vars($decoded);
+        if (array_diff(array_keys($defaults), ['title', 'alias', 'catid', 'language'])) throw $invalid();
+        foreach (['title' => 255, 'alias' => 255, 'language' => 7] as $field => $limit) {
+            if (!array_key_exists($field, $defaults)) continue;
+            $value = $defaults[$field];
+            if (!is_string($value) || preg_match_all('/./us', $value) > $limit || preg_match('/[\x00-\x1f\x7f]/u', $value)) throw $invalid();
+        }
+        if (isset($defaults['language']) && $defaults['language'] !== '*'
+            && !preg_match('/^[a-z]{2,3}-[A-Za-z0-9]{2,3}$/D', $defaults['language'])) throw $invalid();
+        if (array_key_exists('catid', $defaults) && (!is_int($defaults['catid']) || $defaults['catid'] <= 0)) throw $invalid();
+        $requested = $input->getInt('catid');
+        $category = $defaults['catid'] ?? $requested;
+        if ($category <= 0 || $requested < 0 || ($requested > 0 && $requested !== $category)) throw $invalid();
+        if (!$this->app->getIdentity()->authorise('core.create', 'com_content.category.' . $category)) {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+        // The native model and its ACL checks must use the exact authorized category.
+        $input->set('catid', $category);
+        return $defaults;
+    }
+
     public function getForm(string $type, int $id): object
     {
+        if ($type === 'article' && $id === 0) {
+            $failure = $this->app->getUserState('com_smartbrowser.editor.failure');
+            $previous = is_array($failure) && ($failure['type'] ?? '') === 'article' && (int) ($failure['id'] ?? -1) === 0
+                ? ($failure['data'] ?? []) : $this->app->getUserState('com_content.edit.article.data', []);
+            $previous = (array) $previous;
+            if (isset($previous['catid']) && is_scalar($previous['catid']) && (int) $previous['catid'] > 0) {
+                $this->app->getInput()->set('catid', (int) $previous['catid']);
+            }
+        }
+        $createDefaults = $this->articleCreateDefaults($type, $id);
         if ($type === 'menu-item' && $id === 0 && !$this->app->getInput()->getBool('menuTypeSelected')) {
             foreach (['type', 'link', 'data'] as $key) $this->app->setUserState('com_menus.edit.item.' . $key, null);
         }
         $model = $this->model($type, $id);
         $form = $model->getForm([], true);
         if (!$form) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
+        if ($createDefaults && !(int) $form->getValue('id') && !$form->getValue('title')
+            && !$form->getValue('alias') && !$form->getValue('articletext')) {
+            if (isset($createDefaults['language'])) {
+                $language = $form->getField('language');
+                $options = $language ? ($language->options ?? []) : [];
+                if ($options && !in_array($createDefaults['language'], array_map(static fn($option) => (string) $option->value, $options), true)) {
+                    throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_CREATE_DEFAULTS'), 400);
+                }
+            }
+            foreach ($createDefaults as $name => $value) $form->setValue($name, null, $value);
+        }
+        if ($type === 'category') {
+            $form->setFieldAttribute('parent_id', 'parent', 'true');
+            $form->setFieldAttribute('parent_id', 'extension', 'com_content');
+        }
+        if ($type === 'article' && $id > 0) {
+            $form->bind($this->articleMediaGroups($model, $id));
+        }
+        if ($type === 'article' && $id === 0 && $this->app->getInput()->getInt('sbTagId') > 0 && !$form->getValue('tags')) {
+            $form->setValue('tags', null, [$this->app->getInput()->getInt('sbTagId')]);
+        }
+        if ($id === 0 && in_array($type, ['category', 'tag'], true)) {
+            $parentId = $this->app->getInput()->getInt('parent_id');
+            if ($parentId > 0) $form->setValue('parent_id', null, $parentId);
+        }
+        if ($type === 'user' && $id === 0) {
+            $groupId = $this->app->getInput()->getInt('sbGroupId');
+            if ($groupId > 0) $form->setValue('groups', null, [$groupId]);
+        }
         if ($this->app->getLanguage()->getTag() === 'el-GR') {
             $form->setFieldAttribute('alias', 'label', 'COM_SMARTBROWSER_ALIAS_LABEL');
             $form->setFieldAttribute('alias', 'description', 'COM_SMARTBROWSER_ALIAS_DESC');
@@ -44,6 +121,9 @@ final class FrontendEditorService
     public function save(string $type, int $id, array $data, bool $copy = false): int
     {
         $data['id'] = $id;
+        if ($type === 'article' && $id === 0 && isset($data['catid'])) {
+            $this->app->getInput()->set('catid', (int) $data['catid']);
+        }
         if ($type === 'menu-item' && $id > 0 && empty($data['type'])) {
             $data['type'] = $this->storedMenuItemType($id);
         }
@@ -53,6 +133,13 @@ final class FrontendEditorService
         $valid = $model->validate($form, $data);
         if ($valid === false) throw new \RuntimeException(implode("\n", array_map('strval', $model->getErrors())), 400);
         $valid['id'] = $id;
+        if ($type === 'article' && $id > 0) {
+            foreach ($this->articleMediaGroups($model, $id) as $group => $stored) {
+                if (isset($valid[$group]) && is_array($valid[$group])) {
+                    $valid[$group] = array_replace($stored, $valid[$group]);
+                }
+            }
+        }
         if ($copy) {
             if ($type !== 'article' || $id <= 0) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
             $categoryId = (int) ($valid['catid'] ?? $this->articleCategoryId($id));
@@ -83,6 +170,19 @@ final class FrontendEditorService
             ->from($db->quoteName('#__content'))
             ->where($db->quoteName('id') . ' = ' . $id);
         return (int) $db->setQuery($query)->loadResult();
+    }
+
+    private function articleMediaGroups(object $model, int $id): array
+    {
+        $article = $model->getItem($id);
+        if (!$article || empty($article->id)) return [];
+
+        $groups = [];
+        foreach (['images', 'urls'] as $group) {
+            $value = $article->{$group} ?? null;
+            $groups[$group] = is_array($value) ? $value : (new Registry((string) $value))->toArray();
+        }
+        return $groups;
     }
 
     public function title(string $type, int $id): string

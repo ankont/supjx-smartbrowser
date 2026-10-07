@@ -77,10 +77,10 @@ test('advanced action shell is manage-only and requires a selection', async () =
   assert.match(dialog, /@click="openSelection"/);
   assert.match(dialog, /items\.length === 1 \? 'COM_SMARTBROWSER_SELECTED_ITEM_COUNT_ONE' : 'COM_SMARTBROWSER_SELECTED_ITEM_COUNT_MANY'/);
   assert.match(dialog, /<strong>\{\{ t\('COM_SMARTBROWSER_SELECTED_ITEMS'\) \}\}<\/strong>/);
-  assert.match(dialog, /:class="item\.icon \|\| 'icon-file'"/);
+  assert.match(dialog, /:class="item\.icon \|\| 'fas fa-file'"/);
   assert.match(css, /\.resource-batch-selected-list \{[^}]*list-style: none;/);
   assert.match(dialog, /class="resource-batch-sequence-item"/);
-  assert.match(dialog, /v-if="index" class="icon-arrow-right resource-batch-sequence-arrow"/);
+  assert.match(dialog, /v-if="index" class="fas fa-arrow-right resource-batch-sequence-arrow"/);
   assert.match(dialog, /parameters: article\.tagAdd\.map/);
   assert.match(css, /\.resource-batch-summary \{ display: flex; flex-wrap: wrap;/);
   assert.match(css, /\.resource-batch-heading \{[^}]*padding-bottom: 3px;[^}]*border-bottom: 2px solid #aebdcc; font-size: 1\.083rem;/);

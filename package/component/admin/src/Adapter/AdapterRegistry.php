@@ -5,6 +5,7 @@ namespace SuperSoft\Component\Smartbrowser\Administrator\Adapter;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Language\Text;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SmartAuthorsAccess;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\IconOptions;
 
 defined('_JEXEC') or die;
 
@@ -24,6 +25,7 @@ final class AdapterRegistry
             'media'    => new MediaAdapter($this->app),
             'articles' => new ArticleAdapter($this->app),
             'flat-articles' => new FlatArticleAdapter($this->app),
+            'featured-articles' => new FeaturedArticleAdapter($this->app),
             'flat-categories' => new FlatCategoryAdapter($this->app),
             'categories' => new CategoryAdapter($this->app),
             'tags' => new TagAdapter($this->app),
@@ -46,30 +48,36 @@ final class AdapterRegistry
 
     public function descriptors(): array
     {
-        return array_values(array_filter([
-            $this->canUse('media') ? ['id' => 'media', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_MEDIA'), 'icon' => 'icon-images'] : null,
+        return array_map(static function (array $descriptor): array {
+            $icons = IconOptions::forAdapter($descriptor['id']);
+            return [...$descriptor, 'icon' => $icons['adapter'], 'nodeIcon' => $icons['node'], 'nodeOpenIcon' => $icons['open']];
+        }, array_values(array_filter([
+            $this->canUse('media') ? ['id' => 'media', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_MEDIA'), 'icon' => 'fas fa-photo-video'] : null,
             $this->canUse('articles')
-                ? ['id' => 'articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_ARTICLES'), 'icon' => 'icon-file-alt']
+                ? ['id' => 'articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_ARTICLES'), 'icon' => 'fas fa-book-open']
                 : null,
             $this->canUse('flat-articles')
-                ? ['id' => 'flat-articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES'), 'icon' => 'icon-list']
+                ? ['id' => 'flat-articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES'), 'icon' => 'fas fa-book-open']
+                : null,
+            $this->canUse('featured-articles')
+                ? ['id' => 'featured-articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_FEATURED_ARTICLES'), 'icon' => 'fas fa-star']
                 : null,
             $this->canUse('categories')
-                ? ['id' => 'categories', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_CATEGORIES'), 'icon' => 'icon-folder']
-                : null,
-            $this->canUse('tags')
-                ? ['id' => 'tags', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_TAGS'), 'icon' => 'icon-tags']
-                : null,
-            $this->canUse('articles-by-tag')
-                ? ['id' => 'articles-by-tag', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_ARTICLES_BY_TAG'), 'icon' => 'icon-tags']
+                ? ['id' => 'categories', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_CATEGORIES'), 'icon' => 'fas fa-boxes']
                 : null,
             $this->canUse('menus')
-                ? ['id' => 'menus', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_MENUS'), 'icon' => 'icon-list']
+                ? ['id' => 'menus', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_MENUS'), 'icon' => 'fas fa-diagram-next']
+                : null,
+            $this->canUse('tags')
+                ? ['id' => 'tags', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_TAGS'), 'icon' => 'fas fa-hashtag']
+                : null,
+            $this->canUse('articles-by-tag')
+                ? ['id' => 'articles-by-tag', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_ARTICLES_BY_TAG'), 'icon' => 'fas fa-hashtag']
                 : null,
             $this->canUse('users')
-                ? ['id' => 'users', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_USERS'), 'icon' => 'icon-users']
+                ? ['id' => 'users', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_USERS'), 'icon' => 'fas fa-users']
                 : null,
-        ]));
+        ])));
     }
 
     private function canUse(string $id): bool
@@ -79,7 +87,7 @@ final class AdapterRegistry
         if (!$this->app->isClient('site')) {
             return match ($id) {
                 'media', 'flat-media' => true,
-                'articles', 'flat-articles', 'categories', 'flat-categories' => $identity->authorise('core.manage', 'com_content'),
+                'articles', 'flat-articles', 'featured-articles', 'categories', 'flat-categories' => $identity->authorise('core.manage', 'com_content'),
                 'tags', 'flat-tags' => $identity->authorise('core.manage', 'com_tags'),
                 'articles-by-tag', 'flat-articles-by-tag' => $identity->authorise('core.manage', 'com_content') && $identity->authorise('core.manage', 'com_tags'),
                 'menus', 'flat-menus' => $identity->authorise('core.manage', 'com_menus'),
@@ -102,7 +110,7 @@ final class AdapterRegistry
         }
         return match ($id) {
             'media', 'flat-media' => true,
-            'articles', 'flat-articles', 'categories', 'flat-categories' => $content,
+            'articles', 'flat-articles', 'featured-articles', 'categories', 'flat-categories' => $content,
             'tags', 'flat-tags' => $allowed('com_tags', ['core.manage', 'core.create', 'core.edit', 'core.edit.state']),
             'articles-by-tag', 'flat-articles-by-tag' => $content && $allowed('com_tags', ['core.manage', 'core.create', 'core.edit']),
             'menus', 'flat-menus' => $allowed('com_menus', ['core.manage', 'core.create', 'core.edit', 'core.edit.state']),

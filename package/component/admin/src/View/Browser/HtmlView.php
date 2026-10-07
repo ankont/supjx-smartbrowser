@@ -22,7 +22,7 @@ final class HtmlView extends BaseHtmlView
         $adapter = $input->getCmd('adapter', '');
         $component = $integrated
             ? match ($adapter) {
-                'articles', 'flat-articles', 'categories', 'flat-categories', 'articles-by-tag', 'flat-articles-by-tag' => 'com_content',
+                'articles', 'flat-articles', 'featured-articles', 'categories', 'flat-categories', 'articles-by-tag', 'flat-articles-by-tag' => 'com_content',
                 'tags', 'flat-tags' => 'com_tags',
                 'menus', 'flat-menus' => 'com_menus',
                 'users', 'flat-users' => 'com_users',
@@ -34,6 +34,7 @@ final class HtmlView extends BaseHtmlView
         if ($adapter === 'categories' || $adapter === 'flat-categories') $app->getLanguage()->load('com_categories', JPATH_ADMINISTRATOR, null, true);
         [$title, $icon] = $integrated ? match ($adapter) {
             'articles', 'flat-articles', 'articles-by-tag', 'flat-articles-by-tag' => [Text::_('COM_CONTENT_ARTICLES_TITLE'), 'copy article'],
+            'featured-articles' => [Text::_('COM_SMARTBROWSER_ADAPTER_FEATURED_ARTICLES'), 'star'],
             'categories', 'flat-categories' => [Text::sprintf('COM_CATEGORIES_CATEGORIES_TITLE', Text::_('COM_CONTENT')), 'folder categories content-categories'],
             'tags', 'flat-tags' => [Text::_('COM_TAGS_MANAGER_TAGS'), 'tags'],
             'menus', 'flat-menus' => [$input->getString('nativeMenuTitle')

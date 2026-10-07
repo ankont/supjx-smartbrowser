@@ -3,6 +3,7 @@
 namespace SuperSoft\Plugin\System\Smartbrowserintegration\Extension;
 
 use Joomla\CMS\Event\Menu\PreprocessMenuItemsEvent;
+use Joomla\CMS\Event\Model\PrepareDataEvent;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Plugin\CMSPlugin;
@@ -19,7 +20,58 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
 
     public static function getSubscribedEvents(): array
     {
-        return ['onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers'];
+        return ['onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onAfterRoute' => 'returnFromMenuEditor', 'onContentPrepareData' => 'prefillArticleContext'];
+    }
+
+    public function returnFromMenuEditor(): void
+    {
+        $app = $this->getApplication();
+        if (!$app->isClient('administrator')) return;
+        $input = $app->getInput();
+        $stateKey = 'com_smartbrowser.menu_editor_return';
+        if ($input->getCmd('option') === 'com_smartbrowser') {
+            if ($input->getCmd('view') === 'browser' && !$input->getCmd('task') && $input->getCmd('tmpl') !== 'component') {
+                $app->setUserState($stateKey, null);
+            }
+            return;
+        }
+        if ($input->getCmd('option') !== 'com_menus') return;
+        if (in_array($input->getCmd('task'), ['item.save', 'item.cancel', 'item.apply', 'item.save2copy'], true) && $input->getMethod() === 'POST') {
+            $encoded = $input->post->getString('sbReturn');
+            $url = $encoded ? base64_decode($encoded, true) : false;
+            if ($url && Uri::isInternal($url)) {
+                parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+                if (($query['option'] ?? '') === 'com_smartbrowser' && ($query['view'] ?? '') === 'browser') {
+                    $app->setUserState($stateKey, $url);
+                }
+            }
+            return;
+        }
+        $url = $app->getUserState($stateKey);
+        if (!$url) return;
+        if ($input->getCmd('view', 'items') === 'items' && !$input->getCmd('task')) {
+            $app->setUserState($stateKey, null);
+            $app->redirect($url);
+        }
+    }
+
+    public function prefillArticleContext(PrepareDataEvent $event): void
+    {
+        $app = $this->getApplication();
+        if ($event->getArgument('context') !== 'com_content.article'
+            || $app->getInput()->getInt('sbTagId') <= 0
+            || $app->getInput()->getInt('id') > 0
+            || !in_array($app->getInput()->getCmd('option'), ['com_content', 'com_smartbrowser'], true)) return;
+
+        $data = $event->getData();
+        if (is_array($data)) {
+            if (!empty($data['id']) || !empty($data['tags'])) return;
+            $data['tags'] = [$app->getInput()->getInt('sbTagId')];
+        } else {
+            if (!empty($data->id) || !empty($data->tags)) return;
+            $data->tags = [$app->getInput()->getInt('sbTagId')];
+        }
+        $event->updateData($data);
     }
 
     public function replaceManagerLinks(PreprocessMenuItemsEvent $event): void
@@ -33,6 +85,20 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     public function preparePickers(): void
     {
         $app = $this->getApplication();
+        if ($app->isClient('administrator') && $app->getInput()->getCmd('option') === 'com_menus'
+            && $app->getInput()->getCmd('view') === 'item') {
+            $encoded = $app->getInput()->getString('return');
+            if (!$encoded && $app->getUserState('com_smartbrowser.menu_editor_return')) {
+                $encoded = base64_encode($app->getUserState('com_smartbrowser.menu_editor_return'));
+            }
+            $url = $encoded ? base64_decode($encoded, true) : false;
+            if ($url && Uri::isInternal($url)) {
+                parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+                if (($query['option'] ?? '') === 'com_smartbrowser' && ($query['view'] ?? '') === 'browser') {
+                    $app->getDocument()->addScriptDeclaration('document.addEventListener("DOMContentLoaded", function () { const form = document.getElementById("item-form") || document.getElementById("adminForm"); if (!form) return; const input = form.elements.sbReturn || document.createElement("input"); input.type = "hidden"; input.name = "sbReturn"; input.value = ' . json_encode($encoded) . '; if (!input.parentNode) form.append(input); });');
+                }
+            }
+        }
         $mediaPicker = (bool) ComponentHelper::getParams('com_smartbrowser')->get('replace_media_field', 0);
         $smartAuthorsUsers = $app->isClient('administrator')
             && $app->getInput()->getCmd('option') === 'com_categories'
@@ -45,11 +111,18 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         $document->addScriptOptions('com_smartbrowser.picker', ['url' => $base . 'index.php?option=com_smartbrowser&view=browser']);
         $assets = $document->getWebAssetManager();
         try {
+            $assets->getRegistry()->addExtensionRegistryFile('com_smartbrowser');
             if (!$assets->assetExists('style', 'com_smartbrowser.app')) {
                 $assets->registerStyle('com_smartbrowser.app', 'com_smartbrowser/smartbrowser.css');
             }
             if (!$assets->assetExists('script', 'com_smartbrowser.picker')) {
-                $assets->registerScript('com_smartbrowser.picker', 'com_smartbrowser/picker.js', [], ['defer' => true], ['core']);
+                if (!$assets->assetExists('script', 'com_smartbrowser.media-value')) {
+                    $assets->registerScript('com_smartbrowser.media-value', 'com_smartbrowser/media-value.js', [], ['defer' => true], ['core']);
+                }
+                if (!$assets->assetExists('script', 'com_smartbrowser.dialog-dismiss')) {
+                    $assets->registerScript('com_smartbrowser.dialog-dismiss', 'com_smartbrowser/dialog-dismiss.js', [], ['defer' => true], ['core']);
+                }
+                $assets->registerScript('com_smartbrowser.picker', 'com_smartbrowser/picker.js', [], ['defer' => true], ['core', 'com_smartbrowser.dialog-dismiss', 'com_smartbrowser.media-value']);
             }
             if ($mediaPicker && !$assets->assetExists('script', 'com_smartbrowser.media-field')) {
                 $assets->registerScript(
@@ -80,7 +153,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     private function rewrite(array &$items): void
     {
         $params = ComponentHelper::getParams('com_smartbrowser');
-        $replacements = ['replace_articles', 'replace_categories', 'replace_tags', 'replace_media', 'replace_menus', 'replace_users'];
+        $replacements = ['replace_articles', 'replace_featured_articles', 'replace_categories', 'replace_tags', 'replace_media', 'replace_menus', 'replace_users'];
         $integrated = (bool) array_filter($replacements, static fn (string $key): bool => (bool) $params->get($key, 0));
         foreach ($items as $item) {
             if ($integrated && $params->get('hide_component_menu', 0) && $this->isComponentMenu((string) ($item->link ?? ''))) {
@@ -97,7 +170,6 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
                         $item->link .= '&nativeMenuTitle=' . rawurlencode((string) $item->title);
                     }
                 }
-                if ($adapter === 'flat-articles') $item->link .= '&featuredOnly=1';
             }
             if (!empty($item->submenu) && is_array($item->submenu)) $this->rewrite($item->submenu);
         }
@@ -119,7 +191,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         $featured = ($query['option'] ?? '') === 'com_content'
             && (($query['view'] ?? '') === 'featured'
                 || (($query['view'] ?? '') === 'articles' && (string) ($query['filter']['featured'] ?? '') === '1'));
-        if ($featured) return ComponentHelper::getParams('com_smartbrowser')->get('replace_articles', 0) ? 'flat-articles' : null;
+        if ($featured) return ComponentHelper::getParams('com_smartbrowser')->get('replace_featured_articles', 0) ? 'featured-articles' : null;
         $map = [
             'com_content:articles' => ['articles', 'replace_articles'],
             'com_content:' => ['articles', 'replace_articles'],

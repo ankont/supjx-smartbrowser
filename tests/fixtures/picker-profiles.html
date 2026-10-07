@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/joomla/media/templates/administrator/atum/css/template.min.css">
+<link rel="stylesheet" href="/joomla/media/vendor/fontawesome-free/css/fontawesome.min.css">
+<link rel="stylesheet" href="/package/component/media/css/smartbrowser.css">
+<style>@font-face { font-family: "Font Awesome 6 Free"; font-style: normal; font-weight: 900; src: url('/joomla/media/vendor/fontawesome-free/webfonts/fa-solid-900.woff2') format('woff2'); }</style>
+<body>
+<div id="host" style="padding:24px">
+  <button id="images" class="btn btn-primary">Images</button>
+  <button id="pdf" class="btn btn-primary">PDF</button>
+  <button id="multiple" class="btn btn-primary">Multiple</button>
+  <button id="legacy" class="btn btn-primary">Legacy</button>
+  <button id="article" class="btn btn-primary">Article</button>
+  <pre id="result"></pre>
+</div>
+<div id="smartbrowser-app" class="smartbrowser"></div>
+<script>
+const labels = {
+  COM_SMARTBROWSER_USAGE_ALT: 'Alternative text', COM_SMARTBROWSER_USAGE_DECORATIVE: 'Decorative image', COM_SMARTBROWSER_USAGE_LOADING: 'Loading',
+  COM_SMARTBROWSER_USAGE_AUTO: 'Automatic', COM_SMARTBROWSER_USAGE_LAZY: 'Lazy', COM_SMARTBROWSER_USAGE_EAGER: 'Eager',
+  COM_SMARTBROWSER_USAGE_THUMBNAIL: 'Thumbnail', COM_SMARTBROWSER_USAGE_INFO: 'Information', COM_SMARTBROWSER_USAGE_OPTIONS: 'Usage options',
+  COM_SMARTBROWSER_USAGE_MORE: 'More options', COM_SMARTBROWSER_USAGE_CUSTOM: 'Custom', COM_SMARTBROWSER_USAGE_PICK_RESOURCE: 'Choose image',
+  COM_SMARTBROWSER_USAGE_CHOOSE: 'Choose', COM_SMARTBROWSER_USAGE_REQUIRED: 'A value is required.', COM_SMARTBROWSER_SELECT: 'Select',
+};
+const params = new URL(location.href).searchParams;
+const roots = [{ id: 'local-images:/', title: 'Library', icon: 'fas fa-folder', kind: 'node', type: 'folder', selectable: false, navigable: true }];
+const imageCapabilities = [
+  { key: 'media.alt', type: 'string', editor: 'text', label: 'COM_SMARTBROWSER_USAGE_ALT', default: '', validation: { maxLength: 2048 } },
+  { key: 'media.decorative', type: 'boolean', editor: 'boolean', label: 'COM_SMARTBROWSER_USAGE_DECORATIVE', default: false },
+  { key: 'media.loading', type: 'string', editor: 'select', label: 'COM_SMARTBROWSER_USAGE_LOADING', default: 'auto', options: [{ value: 'auto', label: 'COM_SMARTBROWSER_USAGE_AUTO' }, { value: 'lazy', label: 'COM_SMARTBROWSER_USAGE_LAZY' }, { value: 'eager', label: 'COM_SMARTBROWSER_USAGE_EAGER' }] },
+];
+const resources = [
+  { id: 'local-images:/a.png', title: 'First image', kind: 'item', type: 'image', image: '/resources/images/visual-example.svg', icon: 'fas fa-file-image', selectable: true, metadata: { mimeType: 'image/png' }, selectionCapabilities: imageCapabilities },
+  { id: 'local-images:/b.png', title: 'Second image', kind: 'item', type: 'image', image: '/resources/images/visual-example.svg', icon: 'fas fa-file-image', selectable: true, metadata: { mimeType: 'image/png' }, selectionCapabilities: imageCapabilities },
+  { id: 'local-images:/report.pdf', title: 'Report PDF', kind: 'item', type: 'document', icon: 'fas fa-file-pdf', selectable: true, metadata: { mimeType: 'application/pdf' }, selectionCapabilities: [{ key: 'media.thumbnailOverride', type: 'resource', editor: 'resource', label: 'COM_SMARTBROWSER_USAGE_THUMBNAIL', default: null, picker: { adapter: 'media', allowedResourceTypes: ['image'], selectionTarget: 'item' } }] },
+  { id: 'article:1', title: 'Article', kind: 'item', type: 'article', icon: 'fas fa-newspaper', selectable: true, metadata: {}, selectionCapabilities: [{ key: 'example.label', type: 'string', editor: 'example.label', label: 'Display label', default: '' }] },
+];
+window.fixtureOptions = { adapter: params.get('adapter') || 'media', application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
+  allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
+window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages: console.error,
+  request(config) {
+    const request = new URL(config.url);
+    const body = config.data ? JSON.parse(config.data) : null;
+    const items = resources.filter(resource => request.searchParams.get('adapter') === 'articles' ? resource.type === 'article' : resource.type !== 'article');
+    const response = request.searchParams.get('task') === 'api.collection'
+      ? { identifiers: body.items, resources: body.items.map(id => resources.find(resource => resource.id === id) || { id, unavailable: true }) }
+      : { nodes: [], items, breadcrumb: roots, actions: [] };
+    const timer = setTimeout(() => config.onSuccess(JSON.stringify({ success: true, data: response })), 10);
+    return { abort() { clearTimeout(timer); } };
+  },
+};
+</script>
+<script src="/package/component/media/js/dialog-dismiss.js"></script>
+<script src="/package/component/media/js/media-value.js"></script>
+<script src="/package/component/media/js/picker.js"></script>
+<script type="module">
+if (params.get('view') === 'browser') {
+  document.getElementById('host').remove();
+  await import('/package/component/media/js/smartbrowser.js');
+} else {
+  document.getElementById('smartbrowser-app').remove();
+  const profile = { 'media.alt': { required: true }, 'media.decorative': {}, 'media.loading': { presentation: 'secondary' }, 'media.thumbnailOverride': {} };
+  const open = async config => { document.getElementById('result').textContent = JSON.stringify(await SmartBrowserPicker.open(config), null, 2); };
+  document.getElementById('images').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', initialSelection: ['local-images:/a.png'] });
+  document.getElementById('pdf').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', initialSelection: ['local-images:/report.pdf'], initialUsage: { 'local-images:/report.pdf': { 'media.thumbnailOverride': { adapter: 'media', id: 'local-images:/b.png' } } } });
+  document.getElementById('multiple').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', multiple: true, initialSelection: ['local-images:/b.png', 'local-images:/a.png'] });
+  document.getElementById('legacy').onclick = () => open({});
+  SmartBrowserPicker.registerUsageEditor('example.label', { mount(element, context) { const input = element.ownerDocument.createElement('input'); input.id = context.id; input.className = 'form-control'; input.value = context.value; input.oninput = () => context.setValue(input.value); element.append(input); return { update(values) { input.value = values.value; }, destroy() { input.remove(); } }; } });
+  SmartBrowserPicker.registerPreviewAction({ id: 'example.preview', label: 'Preview action', applies: context => context.resource.type === 'article', run(context) { context.setValue('example.label', 'From preview'); } });
+  document.getElementById('article').onclick = () => open({ adapter: 'articles', selectionProfile: { 'example.label': {} }, resultFormat: 'usage', initialSelection: ['article:1'] });
+}
+</script>
+</body>
+</html>

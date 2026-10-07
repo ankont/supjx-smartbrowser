@@ -5,6 +5,7 @@ namespace SuperSoft\Component\Smartbrowser\Administrator\Adapter;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Media\Administrator\Model\ApiModel;
 use Joomla\Component\Media\Administrator\Model\MediaModel;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\MediaBatchRunner;
@@ -50,10 +51,10 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
                     'title'        => $adapterName,
                     'subtitle'     => $provider->displayName,
                     'type'         => 'root',
-                    'icon'         => 'icon-folder-open',
+                    'icon'         => 'fas fa-folder-open',
                     'hasChildren'  => true,
                     'capabilities' => $this->capabilities(true),
-                    'metadata'     => ['provider' => $provider->name],
+                    'metadata'     => ['provider' => $provider->name, 'filesystem' => $provider->name . '-' . $adapterName, 'filesystemPath' => '/'],
                 ];
             }
         }
@@ -125,13 +126,13 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         if ($this->browseRoot) [, $boundaryPath] = $this->splitId($this->browseRoot);
         $boundaryId = $adapter . ':' . $boundaryPath;
         $boundaryTitle = $boundaryPath === '/' ? $this->rootTitle($adapter) : basename($boundaryPath);
-        $crumbs = [['id' => $boundaryId, 'title' => $boundaryTitle]];
+        $crumbs = [['id' => $boundaryId, 'title' => $boundaryTitle, 'kind' => 'node', 'icon' => 'fas fa-folder']];
         $cursor = rtrim($boundaryPath, '/');
         $relativePath = $boundaryPath === '/' ? $path : substr($path, strlen(rtrim($boundaryPath, '/')));
 
         foreach (array_values(array_filter(explode('/', trim($relativePath, '/')))) as $part) {
             $cursor  .= '/' . $part;
-            $crumbs[] = ['id' => $adapter . ':' . $cursor, 'title' => $part];
+            $crumbs[] = ['id' => $adapter . ':' . $cursor, 'title' => $part, 'kind' => 'node', 'icon' => 'fas fa-folder'];
         }
 
         return $crumbs;
@@ -202,13 +203,14 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         $canDelete = $this->app->getIdentity()->authorise('core.delete', 'com_media');
 
         return array_values(array_filter([
-            $canCreate ? $this->action('upload', 'COM_SMARTBROWSER_ACTION_UPLOAD', 'icon-upload', 'node', true, false) : null,
-            $canCreate ? $this->action('createNode', 'COM_SMARTBROWSER_ACTION_CREATE_FOLDER', 'icon-folder-plus', 'node', false, false) : null,
-            $this->action('preview', 'COM_SMARTBROWSER_ACTION_PREVIEW', 'icon-eye', 'item', false, true, false, true),
+            $canCreate ? [...$this->action('upload', 'COM_SMARTBROWSER_ACTION_UPLOAD', 'fas fa-plus', 'node', true, false), 'creationRole' => 'item'] : null,
+            $canCreate ? [...$this->action('createNode', 'COM_SMARTBROWSER_ACTION_CREATE_FOLDER', 'fas fa-folder', 'node', false, false), 'creationRole' => 'node'] : null,
+            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'item', false, true, true, true),
+            $this->action('preview', 'COM_SMARTBROWSER_ACTION_PREVIEW', 'fas fa-eye', 'item', false, true, true, true),
             $canEdit ? $this->action('rename', 'COM_SMARTBROWSER_RENAME', 'fa fa-i-cursor', 'resource', false, true, true) : null,
-            $canDelete ? $this->action('delete', 'JACTION_DELETE', 'icon-trash', 'selection', false, true) : null,
-            $this->action('download', 'COM_SMARTBROWSER_ACTION_DOWNLOAD', 'icon-download', 'item', false, true, false, true),
-            $this->action('share', 'COM_SMARTBROWSER_ACTION_SHARE', 'icon-share-alt', 'item', false, true, false, true),
+            $canDelete ? $this->action('delete', 'JACTION_DELETE', 'fas fa-trash', 'selection', false, true) : null,
+            $this->action('download', 'COM_SMARTBROWSER_ACTION_DOWNLOAD', 'fas fa-download', 'item', false, true, false, true),
+            $this->action('share', 'COM_SMARTBROWSER_ACTION_SHARE', 'fas fa-share-alt', 'item', false, true, false, true),
         ]));
     }
 
@@ -222,7 +224,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             'rename'     => $this->rename($selection, $payload),
             'copy'       => $this->copy($selection, $payload),
             'delete'     => $this->delete($selection),
-            'preview', 'share' => $this->getResource($this->requireOne($selection), ['url' => true]),
+            'edit', 'preview', 'share' => $this->getResource($this->requireOne($selection), ['url' => true]),
             'download'   => $this->getResource($this->requireOne($selection), ['url' => true, 'content' => true]),
             default      => throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_UNKNOWN_ACTION'), 400),
         };
@@ -352,6 +354,12 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         $isNode = $resource->type === 'dir';
         $mime   = (string) ($resource->mime_type ?? '');
         $image  = !$isNode && str_starts_with($mime, 'image/') ? (string) ($resource->url ?? $resource->thumb ?? '') : null;
+        [$filesystem, $filesystemPath] = $this->splitId((string) $resource->path);
+        $url = (string) ($resource->url ?? '');
+        $rootUrl = Uri::root();
+        $relativePath = $url !== '' && str_starts_with($url, $rootUrl)
+            ? ltrim(substr($url, strlen($rootUrl)), '/')
+            : ($url !== '' && !preg_match('#^[a-z][a-z0-9+.-]*://#i', $url) ? ltrim($url, '/') : null);
 
         return [
             'id'           => (string) $resource->path,
@@ -360,15 +368,19 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             'parentId'     => $this->parentId((string) $resource->path),
             'kind'         => $isNode ? 'node' : 'item',
             'type'         => $isNode ? 'folder' : $this->mediaType($mime),
-            'icon'         => $isNode ? 'icon-folder' : $this->icon($mime),
+            'icon'         => $isNode ? 'fas fa-folder' : $this->icon($mime, strtolower(pathinfo((string) $resource->name, PATHINFO_EXTENSION))),
             'image'        => $image,
             'status'       => null,
             'selectable'   => true,
             'navigable'    => $isNode,
             'hasChildren'  => $isNode,
             'capabilities' => $this->capabilities($isNode),
+            'selectionCapabilities' => \SuperSoft\Component\Smartbrowser\Administrator\Support\MediaSelectionCapabilities::forResource($isNode, $mime),
             'metadata'     => [
                 'id'           => (string) $resource->path,
+                'filesystem'   => $filesystem,
+                'filesystemPath' => $filesystemPath,
+                'relativePath' => $relativePath,
                 'parentPath' => (string) $this->parentId((string) $resource->path),
                 'size'         => (int) ($resource->size ?? 0),
                 'width'        => (int) ($resource->width ?? 0),
@@ -390,6 +402,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
 
         return [
             'open'       => $isNode,
+            'edit'       => !$isNode,
             'preview'    => !$isNode,
             'upload'     => $isNode && $identity->authorise('core.create', 'com_media'),
             'createNode' => $isNode && $identity->authorise('core.create', 'com_media'),
@@ -415,14 +428,14 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             ],
             'columns' => [
                 ['id' => 'title', 'label' => 'COM_SMARTBROWSER_NAME', 'source' => 'title'],
-                ['id' => 'type', 'label' => 'COM_SMARTBROWSER_FILE_TYPE', 'source' => 'type', 'format' => 'mediaType', 'headerIcon' => 'icon-file-alt'],
+                ['id' => 'type', 'label' => 'COM_SMARTBROWSER_FILE_TYPE', 'source' => 'type', 'format' => 'mediaType', 'headerIcon' => 'fas fa-file-alt'],
                 ['id' => 'size', 'label' => 'COM_SMARTBROWSER_SIZE'],
                 ['id' => 'dimension', 'label' => 'COM_SMARTBROWSER_DIMENSIONS'],
                 ['id' => 'dates', 'dateGroup' => true, 'fields' => [
                     ['id' => 'created', 'label' => 'COM_SMARTBROWSER_DATE_CREATED', 'source' => 'metadata.created', 'format' => 'date'],
                     ['id' => 'modified', 'label' => 'COM_SMARTBROWSER_DATE_MODIFIED', 'source' => 'metadata.modified', 'format' => 'date'],
                 ]],
-                ['id' => 'extension', 'label' => 'COM_SMARTBROWSER_EXTENSION', 'source' => 'metadata.extension', 'headerIcon' => 'icon-tag'],
+                ['id' => 'extension', 'label' => 'COM_SMARTBROWSER_EXTENSION', 'source' => 'metadata.extension', 'headerIcon' => 'fas fa-tag'],
             ],
             'infoFields' => [
                 ['label' => 'COM_SMARTBROWSER_DATE_CREATED', 'source' => 'metadata.created', 'format' => 'date'],
@@ -471,6 +484,8 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             ]],
         ];
     }
+
+    public function getCollectionPresentation(array $resources = []): array { return $this->presentation($resources); }
 
     public static function facetOptions(array $resources, string $field, string $placeholder): array
     {
@@ -608,8 +623,30 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         };
     }
 
-    private function icon(string $mime): string
+    private function icon(string $mime, string $extension = ''): string
     {
+        if ($mime === '' || $mime === 'application/octet-stream') {
+            $mime = match ($extension) {
+                'pdf' => 'application/pdf',
+                'doc', 'docx', 'odt' => 'application/msword',
+                'xls', 'xlsx', 'ods', 'csv' => 'application/vnd.ms-excel',
+                'ppt', 'pptx', 'odp' => 'application/vnd.ms-powerpoint',
+                'zip', '7z', 'rar', 'gz', 'tar' => 'application/zip',
+                'html', 'htm', 'css', 'js', 'json', 'xml', 'php', 'py', 'sql' => 'application/javascript',
+                'txt', 'md', 'log' => 'text/plain',
+                default => $mime,
+            };
+        }
+        $document = match ($mime) {
+            'application/pdf' => 'file-pdf',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.oasis.opendocument.text' => 'file-word',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.oasis.opendocument.spreadsheet', 'text/csv' => 'file-excel',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.oasis.opendocument.presentation' => 'file-powerpoint',
+            'application/zip', 'application/x-7z-compressed', 'application/x-rar-compressed', 'application/vnd.rar', 'application/gzip', 'application/x-tar' => 'file-archive',
+            'text/html', 'text/css', 'text/javascript', 'application/javascript', 'application/json', 'application/xml', 'text/xml', 'application/x-httpd-php' => 'file-code',
+            default => str_starts_with($mime, 'text/') ? 'file-alt' : null,
+        };
+        if ($document !== null) return 'fas fa-' . $document;
         return match ($this->mediaType($mime)) {
             'image' => 'fas fa-file-image',
             'video' => 'fas fa-file-video',

@@ -75,6 +75,13 @@
     url.searchParams.set('mode', 'select');
     url.searchParams.set('selectionTarget', target.selectionTarget);
     url.searchParams.set('showAdapterSwitcher', '0');
+    if (target.type === 'media') {
+      const selected = window.SmartBrowserMediaValue.selectionLocation(field.querySelector('.field-media-input')?.value);
+      if (selected.node) {
+        url.searchParams.set('node', selected.node);
+        url.searchParams.set('initialResource', selected.resourceId);
+      }
+    }
     open(url, { kind: 'select', target, field });
   };
 
@@ -156,11 +163,10 @@
     const resource = event.detail?.resources?.[0];
     if (!resource || event.detail.adapter !== active.target.adapter) return;
     if (active.target.type === 'media') {
-      const mediaUrl = resource.metadata?.url;
-      if (!mediaUrl || typeof active.field.setValue !== 'function') return;
-      const resolved = new URL(mediaUrl, window.location.href);
-      active.field.setValue(resolved.origin === window.location.origin
-        ? resolved.pathname.replace(/^\/+/, '') : resolved.toString());
+      if (typeof active.field.setValue !== 'function') return;
+      const value = window.SmartBrowserMediaValue.format(resource, 'joomla');
+      if (!value) return;
+      active.field.setValue(value);
     } else if (!setSelection(active.field, resource)) return;
     dialog.close();
   });
@@ -187,7 +193,7 @@
         button.title = direction === 'prev' ? 'Previous tabs' : 'Next tabs';
         button.setAttribute('aria-label', button.title);
         const icon = document.createElement('span');
-        icon.className = direction === 'prev' ? 'icon-chevron-left' : 'icon-chevron-right';
+        icon.className = direction === 'prev' ? 'fas fa-chevron-left' : 'fas fa-chevron-right';
         icon.setAttribute('aria-hidden', 'true');
         button.append(icon);
         button.addEventListener('click', () => list.scrollBy({ left: direction === 'prev' ? -260 : 260, behavior: 'smooth' }));

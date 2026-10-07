@@ -18,5 +18,6 @@ interface ResourceAdapterInterface
 
     public function getActions(array $selection = []): array;
 
+
     public function executeAction(string $action, array $selection, array $payload = []): mixed;
 }

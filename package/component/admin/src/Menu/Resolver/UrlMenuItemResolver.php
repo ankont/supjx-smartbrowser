@@ -12,7 +12,7 @@ final class UrlMenuItemResolver implements MenuItemResolverInterface
         $url = $context->frontendUrl((string) $menuItem->link);
         return ['resources' => [[
             'id' => 'menu-link:' . (int) $menuItem->id, 'title' => (string) $menuItem->title,
-            'subtitle' => $url, 'kind' => 'item', 'type' => 'link', 'icon' => 'icon-link', 'image' => null,
+            'subtitle' => $url, 'kind' => 'item', 'type' => 'link', 'icon' => 'fas fa-link', 'image' => null,
             'role' => 'contextual', 'focusable' => true, 'selectable' => false, 'bulkSelectable' => false,
             'actionable' => $url !== '', 'navigable' => false, 'capabilities' => $url !== '' ? ['openLink' => true, 'copyLink' => true] : [],
             'metadata' => ['url' => $url, 'menuItemId' => (int) $menuItem->id, 'typeLabel' => (string) ($menuItem->type_label ?? 'URL')],

@@ -4,7 +4,6 @@ namespace SuperSoft\Component\Smartbrowser\Administrator\Support;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Language\Text;
-use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
 use SuperSoft\Component\Smartbrowser\Administrator\Adapter\AdapterRegistry;
 
@@ -30,7 +29,7 @@ final class DashboardProvider
                 'mode' => 'manage',
                 'browseRoot' => null,
                 'visible' => true,
-                'url' => Route::_('index.php?option=com_smartbrowser&view=browser&adapter=' . rawurlencode($id) . '&mode=manage&fromDashboard=1', false),
+                'url' => DashboardRoute::link($this->app, 'index.php?option=com_smartbrowser&view=browser&adapter=' . rawurlencode($id) . '&mode=manage&fromDashboard=1'),
             ];
         }
 

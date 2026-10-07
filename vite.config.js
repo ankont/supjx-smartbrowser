@@ -1,8 +1,18 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
+import { readdirSync, unlinkSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
-  plugins: [vue({ template: { compilerOptions: { isCustomElement: (tag) => tag === 'joomla-field-fancy-select' } } })],
+  plugins: [vue({ template: { compilerOptions: { isCustomElement: (tag) => tag === 'joomla-field-fancy-select' } } }), {
+    name: 'clean-visual-runtime', apply: 'build',
+    buildStart() {
+      const directory = new URL('./package/component/media/js/', import.meta.url);
+      for (const name of readdirSync(directory)) {
+        if (/^visual-runtime(?:-[\w-]+)?\.js$/.test(name)) unlinkSync(fileURLToPath(new URL(name, directory)));
+      }
+    },
+  }],
   define: {
     'process.env.NODE_ENV': JSON.stringify('production'),
     __VUE_OPTIONS_API__: true,
@@ -13,13 +23,14 @@ export default defineConfig({
     outDir: 'package/component/media/js',
     emptyOutDir: false,
     lib: {
-      entry: 'resources/js/main.js',
+      entry: { smartbrowser: 'resources/js/main.js', 'visual-settings': 'resources/js/visual-settings.js', collection: 'resources/js/collection.js' },
       formats: ['es'],
-      fileName: () => 'smartbrowser.js',
+      fileName: (format, entryName) => `${entryName}.js`,
     },
     rollupOptions: {
       output: {
-        assetFileNames: 'smartbrowser.[ext]',
+        assetFileNames: '[name].[ext]',
+        chunkFileNames: 'visual-runtime-[hash].js',
       },
     },
   },

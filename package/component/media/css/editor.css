@@ -102,9 +102,6 @@ dialog.com-smartbrowser-editor-picker.is-menu-type .btn-close {
   right: 18px;
 }
 
-dialog.com-smartbrowser-editor-picker::backdrop {
-  background: rgb(18 30 44 / 55%);
-}
 
 dialog.com-smartbrowser-editor-picker iframe {
   display: block;

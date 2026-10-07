@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="component" method="upgrade">
     <name>COM_SMARTBROWSER</name>
-    <version>1.2.14</version>
+    <version>2.1.0</version>
     <creationDate>2026-09</creationDate>
     <author>SuperSoft — Kontarinis Andreas</author>
     <copyright>(C) 2026 SuperSoft. All rights reserved.</copyright>
     <license>GNU General Public License version 2 or later</license>
     <description>COM_SMARTBROWSER_XML_DESCRIPTION</description>
     <namespace path="src">SuperSoft\Component\Smartbrowser</namespace>
+    <scriptfile>script.php</scriptfile>
     <files folder="site">
         <folder>src</folder>
         <folder>tmpl</folder>

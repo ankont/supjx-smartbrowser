@@ -16,6 +16,9 @@ test('component Options group editors, grid sizes, then reset in one display tab
     assert.equal((config.match(new RegExp(`name="${name}"`, 'g')) || []).length, 1);
   }
   assert.ok(config.indexOf('name="preferences"') < config.indexOf('name="context"'));
+  assert.ok(config.indexOf('name="preferences"') < config.indexOf('name="visuals"'));
+  assert.ok(config.indexOf('name="visuals"') < config.indexOf('name="context"'));
+  assert.match(config, /name="context_hint" type="note" label="COM_SMARTBROWSER_CONTEXT_HINT" description="COM_SMARTBROWSER_OPTIONS_CONTEXT_DESC"/);
   assert.ok(config.indexOf('name="context"') < config.indexOf('name="integration"'));
   assert.ok(config.indexOf('name="integration"') < config.indexOf('name="permissions"'));
 });
@@ -29,7 +32,9 @@ test('grid width options reach each zoom level without overriding saved zoom', a
   ]);
   assert.match(support, /'gridWidths' => \$gridWidths/);
   assert.match(app, /--sb-grid-\$\{size\}/);
-  for (const size of ['sm', 'md', 'lg', 'xl']) assert.match(css, new RegExp(`\\.resource-browser-grid\\.size-${size} \\{[^}]*--sb-grid-${size}`));
+  for (const size of ['sm', 'md', 'lg', 'xl']) {
+    assert.match(css, new RegExp(`\\.resource-browser-grid\\.size-${size} \\{ grid-template-columns: repeat\\(auto-fill, min\\(100%, var\\(--sb-grid-${size}, \\d+px\\)\\)\\); \\}`));
+  }
   assert.match(state, /viewOptions: \{ gridSize: 'md'/);
 });
 

@@ -38,7 +38,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'title' => Text::_('COM_SMARTBROWSER_CONTENT_ROOT'),
             'type' => 'root',
             'kind' => 'node',
-            'icon' => 'icon-folder-open',
+            'icon' => 'fas fa-box-open',
             'visible' => false,
             'selectable' => false,
             'navigable' => true,
@@ -69,7 +69,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
     public function getBreadcrumb(string $nodeId): array
     {
         $this->assertBrowseScope([$nodeId]);
-        $crumbs = [['id' => static::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_CONTENT_ROOT'), 'visible' => false]];
+        $crumbs = [['id' => static::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_CONTENT_ROOT'), 'kind' => 'node', 'type' => 'root', 'icon' => 'fas fa-box', 'visible' => false]];
         $categoryId = $this->categoryId($nodeId);
         if (!$categoryId) return $crumbs;
 
@@ -77,10 +77,15 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             $node = $this->getCategory((int) $pathId);
             if ((int) $node->id > 1) {
                 if ($this->browseRoot && (int) $node->id === $this->browseRootNumericId()) $crumbs = [];
-                $crumbs[] = ['id' => 'category:' . $node->id, 'title' => $this->title($node->title), 'visible' => true];
+                $crumbs[] = ['id' => 'category:' . $node->id, 'title' => $this->title($node->title), 'kind' => 'node', 'type' => 'category', 'icon' => 'fas fa-box', 'visible' => true];
             }
         }
         return $crumbs;
+    }
+
+    public function getCollectionPresentation(array $resources = []): array
+    {
+        return $this->articlePresentation(false, false);
     }
 
     public function configureBrowseRoot(?string $browseRoot): void
@@ -228,7 +233,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         return [
             'id' => static::ROOT_ID,
             'title' => Text::_('COM_SMARTBROWSER_TAGS_ROOT'),
-            'type' => 'root', 'kind' => 'node', 'icon' => 'icon-tags',
+            'type' => 'root', 'kind' => 'node', 'icon' => 'fas fa-tags',
             'visible' => false, 'selectable' => false, 'navigable' => true, 'hasChildren' => true,
             'capabilities' => $managed ? $this->tagCapabilities(null) : ['open' => true],
             'metadata' => [],
@@ -238,14 +243,14 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
     protected function getTagBreadcrumb(string $nodeId): array
     {
         $this->assertBrowseScope([$nodeId]);
-        $crumbs = [['id' => static::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_TAGS_ROOT'), 'visible' => false]];
+        $crumbs = [['id' => static::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_TAGS_ROOT'), 'kind' => 'node', 'type' => 'root', 'icon' => 'fas fa-tags', 'visible' => false]];
         $tagId = $this->tagId($nodeId);
         if (!$tagId) return $crumbs;
 
         foreach ($this->tagTable()->getPath($tagId) as $tag) {
             if ((int) $tag->id !== $this->tagRootId() && $this->canViewTag($tag)) {
                 if ($this->browseRoot && (int) $tag->id === $this->browseRootNumericId()) $crumbs = [];
-                $crumbs[] = ['id' => 'tag:' . $tag->id, 'title' => $this->title((string) $tag->title), 'visible' => true];
+                $crumbs[] = ['id' => 'tag:' . $tag->id, 'title' => $this->title((string) $tag->title), 'kind' => 'node', 'type' => 'tag', 'icon' => 'fas fa-tag', 'visible' => true];
             }
         }
         return $crumbs;
@@ -285,7 +290,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         return [
             'id' => 'tag:' . $id, 'title' => $this->title((string) $tag->title), 'subtitle' => Text::_('JTAG'),
             'parentId' => $this->browseRoot === 'tag:' . $id ? null : ((int) $tag->parent_id === $this->tagRootId() ? static::ROOT_ID : 'tag:' . (int) $tag->parent_id),
-            'kind' => 'node', 'type' => 'tag', 'icon' => 'icon-tag', 'image' => null,
+            'kind' => 'node', 'type' => 'tag', 'icon' => 'fas fa-tag', 'image' => null,
             'status' => $state, 'statusPresentation' => $this->statusPresentation($state),
             'overlays' => [$this->statusOverlay($state)],
             'selectable' => $managed, 'navigable' => true, 'hasChildren' => $this->tagHasChildren($id, $tree),
@@ -296,6 +301,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
                 'cardSummary' => $this->languageKeySummary($languageKey), 'state' => $state,
                 'stateLabel' => $this->stateLabel($state), 'language' => $tag->language ?? '*',
                 'languageImage' => $this->languageImageForCode((string) ($tag->language ?? '*')),
+                'accessId' => (int) ($tag->access ?? 0),
                 'access' => $this->accessName((int) ($tag->access ?? 0)), 'created' => $tag->created_time ?? null,
                 'modified' => $tag->modified_time ?? null, 'ordering' => (int) ($tag->lft ?? 0),
             ],
@@ -307,12 +313,15 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         $asset = $id ? 'com_tags.tag.' . $id : 'com_tags';
         $identity = $this->app->getIdentity();
         return [
+            'preview' => $id !== null,
             'open' => true, 'edit' => $id !== null && $identity->authorise('core.edit', $asset),
+            'reorder' => $id !== null && $identity->authorise('core.edit.state', $asset),
             'publish' => $id !== null && $state !== 1 && $identity->authorise('core.edit.state', $asset),
             'unpublish' => $id !== null && $state === 1 && $identity->authorise('core.edit.state', $asset),
             'archive' => $id !== null && in_array($state, [0, 1], true) && $identity->authorise('core.edit.state', $asset),
             'unarchive' => $id !== null && $state === 2 && $identity->authorise('core.edit.state', $asset),
             'createChild' => $identity->authorise('core.create', $asset),
+            'newArticle' => $id !== null && $this->canCreateArticle(),
             'trash' => $id !== null && $identity->authorise('core.delete', $asset),
         ];
     }
@@ -437,7 +446,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'title' => $this->title($category->title),
             'subtitle' => Text::_('JCATEGORY'),
             'parentId' => $this->browseRoot === 'category:' . (int) $category->id ? null : ((int) $category->parent_id > 1 ? 'category:' . $category->parent_id : static::ROOT_ID),
-            'kind' => 'node', 'type' => 'category', 'icon' => 'icon-folder', 'image' => null,
+            'kind' => 'node', 'type' => 'category', 'icon' => 'fas fa-box', 'image' => null,
             'status' => (int) $category->published,
             'statusPresentation' => $this->statusPresentation((int) $category->published),
             'overlays' => [$this->statusOverlay((int) $category->published)],
@@ -485,7 +494,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             $publicationTiming = $publishUp !== '' && $publishUp !== $nullDate && Factory::getDate($publishUp, 'UTC')->toUnix() > $now ? 'pending' : '';
             if ($publishDown !== '' && $publishDown !== $nullDate && Factory::getDate($publishDown, 'UTC')->toUnix() < $now) $publicationTiming = 'expired';
             if ($publicationTiming !== '') $statusPresentation = [
-                'icon' => 'icon-' . $publicationTiming,
+                'icon' => $publicationTiming === 'pending' ? 'fas fa-clock' : 'fas fa-calendar-times',
                 'label' => Text::_('JLIB_HTML_PUBLISHED_' . strtoupper($publicationTiming) . '_ITEM'),
                 'tone' => $publicationTiming,
             ];
@@ -503,22 +512,23 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         $statusOverlay = array_replace($statusOverlay, $statusPresentation);
         if ($state === -2) $statusOverlay['action'] = 'restore';
         $overlays = [$statusOverlay, [
-            'id' => 'featured', 'icon' => $featuredTiming !== '' ? 'icon-' . $featuredTiming : ($isFeatured ? 'icon-star' : 'icon-star-empty'),
+            'id' => 'featured', 'icon' => $featuredTiming !== '' ? ($featuredTiming === 'pending' ? 'fas fa-clock' : 'fas fa-calendar-times') : ($isFeatured ? 'fas fa-star' : 'far fa-star'),
             'label' => Text::_($featuredTiming !== '' ? 'JLIB_HTML_FEATURED_' . strtoupper($featuredTiming) . '_ITEM' : ($isFeatured ? 'JFEATURED' : 'JUNFEATURED')),
             'tone' => $featuredTiming !== '' ? $featuredTiming : ($isFeatured ? 'warning' : 'muted'), 'action' => $isFeatured ? 'unfeature' : 'feature',
         ]];
         if ($checkedOut > 0) {
-            $overlays[] = ['id' => 'checkedOut', 'icon' => 'icon-lock', 'label' => Text::sprintf('COM_SMARTBROWSER_CHECKED_OUT_BY', (string) ($article->editor ?? '')), 'tone' => 'warning', 'action' => 'checkin'];
+            $overlays[] = ['id' => 'checkedOut', 'icon' => 'fas fa-lock', 'label' => Text::sprintf('COM_SMARTBROWSER_CHECKED_OUT_BY', (string) ($article->editor ?? '')), 'tone' => 'warning', 'action' => 'checkin'];
         }
 
         return [
             'id' => 'article:' . $id, 'title' => $this->title((string) $article->title),
             'subtitle' => (string) ($article->alias ?? ''), 'parentId' => 'category:' . (int) $article->catid,
-            'kind' => 'item', 'type' => 'article', 'icon' => 'icon-file-alt', 'image' => $this->imageUrl($storedImage),
+            'kind' => 'item', 'type' => 'article', 'icon' => 'fas fa-newspaper', 'image' => $this->imageUrl($storedImage),
             'status' => $state, 'statusPresentation' => $statusPresentation, 'overlays' => $overlays,
             'selectable' => true, 'navigable' => false, 'hasChildren' => false,
             'capabilities' => [
-                'edit' => $canEdit, 'publish' => $canPublish && $state !== 1, 'unpublish' => $canUnpublish && $state === 1,
+                'preview' => true,
+                'edit' => $canEdit, 'reorder' => $canFeature, 'publish' => $canPublish && $state !== 1, 'unpublish' => $canUnpublish && $state === 1,
                 'archive' => $canArchive && in_array($state, [0, 1], true),
                 'unarchive' => $canUnpublish && $state === 2,
                 'feature' => $canFeature && !$isFeatured, 'unfeature' => $canFeature && $isFeatured,
@@ -547,6 +557,14 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         ];
     }
 
+    protected function canCreateArticle(): bool
+    {
+        $identity = $this->app->getIdentity();
+        if ($identity->authorise('core.create', 'com_content')) return true;
+        $service = SmartAuthorsAccess::service($this->app);
+        return $service !== null && $service->canCreateInAnyCategory((int) $identity->id);
+    }
+
     protected function categoryCapabilities(?int $id, ?int $state = null): array
     {
         $asset = $id ? 'com_content.category.' . $id : 'com_content';
@@ -558,6 +576,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         }
         return [
             'open' => true, 'edit' => $id !== null && $identity->authorise('core.edit', $asset),
+            'reorder' => $id !== null && $identity->authorise('core.edit.state', $asset),
             'publish' => $id !== null && $state !== 1 && $identity->authorise('core.edit.state', $asset),
             'unpublish' => $id !== null && $state === 1 && $identity->authorise('core.edit.state', $asset),
             'archive' => $id !== null && in_array($state, [0, 1], true) && $identity->authorise('core.edit.state', $asset),
@@ -617,6 +636,19 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         $model = $this->app->bootComponent('com_content')->getMVCFactory()->createModel('Form', 'Site', ['ignore_request' => true]);
         foreach ($ids as $id) $this->assertModelResult($model, 'checkin', [$id]);
         return ['updated' => array_values($selection)];
+    }
+
+    protected function contentPreview(string $id): array
+    {
+        $resource = $this->getResource($id);
+        if (empty($resource['capabilities']['preview'])) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        $access = (int) ($resource['metadata']['accessId'] ?? 0);
+        if ($access && !in_array($access, $this->app->getIdentity()->getAuthorisedViewLevels(), true)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        $query = str_starts_with($id, 'article:')
+            ? 'option=com_content&view=article&id=' . (int) substr($id, 8)
+            : (str_starts_with($id, 'tag:') ? 'option=com_tags&view=tag&id=' . (int) substr($id, 4) : null);
+        if ($query === null) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+        return ['command' => 'previewUrl', 'url' => Uri::root() . 'index.php?' . $query . '&tmpl=component&Itemid=0', 'title' => $resource['title']];
     }
 
     protected function edit(string $id): array
@@ -756,7 +788,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         if (!$model->{$method}(...$arguments)) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
     }
     protected function stateLabel(int $state): string { return match ($state) { 1 => Text::_('JPUBLISHED'), 0 => Text::_('JUNPUBLISHED'), -2 => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 2 => Text::_('JARCHIVED'), default => (string) $state }; }
-    protected function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'icon-publish', 'label' => Text::_('JPUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'icon-unpublish', 'label' => Text::_('JUNPUBLISHED'), 'tone' => 'muted'], 2 => ['icon' => 'icon-archive', 'label' => Text::_('JARCHIVED'), 'tone' => 'info'], -2 => ['icon' => 'icon-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'icon-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
+    protected function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'fas fa-check', 'label' => Text::_('JPUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'fas fa-times', 'label' => Text::_('JUNPUBLISHED'), 'tone' => 'muted'], 2 => ['icon' => 'fas fa-archive', 'label' => Text::_('JARCHIVED'), 'tone' => 'info'], -2 => ['icon' => 'fas fa-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'fas fa-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
     protected function statusOverlay(int $state): array { return ['id' => 'status', ...$this->statusPresentation($state), 'action' => match ($state) { 1 => 'unpublish', 0 => 'publish', 2 => 'unarchive', default => null }]; }
     protected function languageImage(string $image): ?string { return $image === '' ? null : Uri::root() . 'media/mod_languages/images/' . rawurlencode($image) . '.gif'; }
 
@@ -789,6 +821,8 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         if ($image === '') return null;
         $clean = HTMLHelper::_('cleanImageURL', $image);
         $url = (string) ($clean->url ?? $image);
+        $fragment = strstr($image, '#joomlaImage://');
+        if ($fragment !== false && !str_contains($url, '#')) $url .= $fragment;
         return preg_match('#^(?:https?:)?//#', $url) ? $url : Uri::root() . ltrim($url, '/');
     }
     protected function splitSelection(array $selection): array

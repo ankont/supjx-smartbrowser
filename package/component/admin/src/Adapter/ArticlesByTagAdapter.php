@@ -50,16 +50,25 @@ final class ArticlesByTagAdapter extends ArticleCollectionAdapter
         return $this->getTagBreadcrumb($nodeId);
     }
 
+    public function getCollectionPresentation(array $resources = []): array { return $this->articlePresentation(true, true, false, false); }
+
     public function getActions(array $selection = []): array
     {
         $tagActions = (new TagAdapter($this->app))->getActions();
-        return [$tagActions[0], ...$this->articleActions()];
+        $nodeAction = [...$tagActions[0], 'icon' => 'fas fa-tag', 'creationRole' => 'node'];
+        $articleAction = array_values(array_filter($tagActions, static fn (array $item): bool => $item['id'] === 'newArticle'))[0] ?? null;
+        if ($articleAction !== null) $articleAction = [...$articleAction, 'icon' => 'fas fa-plus', 'creationRole' => 'item'];
+        return [...array_values(array_filter([$articleAction, $nodeAction])), ...array_map(
+            static fn (array $action): array => $action['id'] === 'preview' ? [...$action, 'itemsOnly' => false] : $action,
+            $this->articleActions()
+        )];
     }
 
     public function executeAction(string $action, array $selection, array $payload = []): mixed
     {
         if ($action === 'batch') return $this->executeArticleBatch($selection, $payload);
-        if ($action === 'createChild') {
+        if (in_array($action, ['createChild', 'newArticle'], true)) {
+            if (($payload['nodeId'] ?? '') === static::ROOT_ID) $payload['nodeId'] = 'tags:root';
             return $this->tagAdapter()->executeAction($action, [], $payload);
         }
 

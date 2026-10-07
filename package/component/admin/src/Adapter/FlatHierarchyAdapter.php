@@ -78,7 +78,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
         }
         return [[
             'id' => $this->rootId(), 'title' => $title, 'type' => 'root',
-            'kind' => 'node', 'icon' => $scope['icon'] ?? 'icon-folder',
+            'kind' => 'node', 'icon' => $scope['icon'] ?? 'fas fa-folder',
             'visible' => false, 'selectable' => false, 'navigable' => true,
             'hasChildren' => false, 'capabilities' => $scope['capabilities'] ?? [], 'metadata' => [],
         ]];
@@ -181,7 +181,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
         $presentation['filters'][] = FlatLevels::filter();
         $presentation['columns'] = array_values(array_filter($presentation['columns'], static fn (array $column): bool => !in_array($column['id'], ['menu', 'parent'], true)));
         array_splice($presentation['columns'], 1, 0, [[
-            'id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION', 'source' => 'metadata.location', 'headerIcon' => 'icon-folder-open',
+            'id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION', 'source' => 'metadata.location', 'headerIcon' => 'fas fa-folder-open',
         ]]);
         $presentation['sortFields'][] = ['id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION'];
         return [
@@ -256,10 +256,12 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
     public function getBreadcrumb(string $nodeId): array
     {
         return [['id' => $this->rootId(), 'title' => $this->getRoots()[0]['title'],
-            'icon' => $this->getRoots()[0]['icon'], 'visible' => true]];
+            'kind' => 'node', 'type' => 'root', 'icon' => $this->getRoots()[0]['icon'], 'visible' => true]];
     }
 
     public function getActions(array $selection = []): array { return $this->source->getActions($selection); }
+
+    public function getCollectionPresentation(array $resources = []): array { return $this->source->getCollectionPresentation($resources); }
 
     public function executeAction(string $action, array $selection, array $payload = []): mixed
     {

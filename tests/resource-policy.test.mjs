@@ -80,7 +80,7 @@ test('FlatArticleAdapter has one flat root and reusable category-aware Article p
   assert.match(flat, /'newArticle'.*'COM_SMARTBROWSER_NEW_ARTICLE'/);
   assert.match(flat, /authorise\('core\.create', 'com_content'\)/);
   assert.match(flat, /task=article\.add/);
-  assert.match(flat, /executeArticleAction\(\$action, \$selection, true\)/);
+  assert.match(flat, /executeArticleAction\(\$action, \$selection, true, \$payload\)/);
   assert.match(collection, /\['id' => 'category', 'label' => 'COM_SMARTBROWSER_CATEGORY', 'source' => 'metadata\.category'\]/);
   assert.match(collection, /'id' => 'category', 'label' => 'COM_SMARTBROWSER_CATEGORY', 'type' => 'select'/);
   assert.match(registry, /'flat-articles' => new FlatArticleAdapter/);
@@ -98,6 +98,7 @@ test('ArticlesByTagAdapter reuses Tag hierarchy and loads direct-tag Articles as
   assert.match(adapter, /executeArticleAction\(\$action, \$articleSelection, true\)/);
   assert.match(adapter, /tagRootResource\(\)/);
   assert.match(adapter, /tagAdapter\(\)->executeAction/);
+  assert.match(adapter, /\(\$payload\['nodeId'\] \?\? ''\) === static::ROOT_ID\) \$payload\['nodeId'\] = 'tags:root'/);
   assert.doesNotMatch(adapter, /ContextResourceProviderInterface|contextItems|includeChildren|contentitem_tag_map/);
   assert.match(content, /\$options\['filters'\]\['tag'\] = \(string\) \$tagId/);
   assert.match(registry, /'articles-by-tag' => new ArticlesByTagAdapter/);
@@ -309,6 +310,14 @@ test('MenuAdapter keeps hierarchy separate from lazily resolved contextual conte
   assert.match(adapters, /'menus' => new MenuAdapter/);
 });
 
+test('menu resources keep native images and icon classes as separate metadata', async () => {
+  const adapter = await readFile(new URL('../package/component/admin/src/Adapter/MenuAdapter.php', import.meta.url), 'utf8');
+  assert.match(adapter, /\$params\['menu_image'\]/);
+  assert.match(adapter, /HTMLHelper::_\('cleanImageURL', \$menuImage\)/);
+  assert.match(adapter, /'image' => \$menuImage \?: null/);
+  assert.match(adapter, /'menuIcon' => trim\(\(string\) \(\$params\['menu_icon_css'\]/);
+});
+
 test('Menu item resolvers cover core types without a MenuAdapter conditional chain', async () => {
   const menu = await readFile(new URL('../package/component/admin/src/Adapter/MenuAdapter.php', import.meta.url), 'utf8');
   const resolverFiles = [
@@ -358,8 +367,8 @@ test('menu headings navigate only when they have children while separators stay 
   assert.match(adapter, /'kind' => 'node'/);
   assert.match(adapter, /\$navigable = !\$isStatic \|\| \(\(string\) \$item->type === 'heading' && \$hasChildren\)/);
   assert.match(adapter, /'navigable' => \$navigable, 'hasChildren' => \$navigable && \$hasChildren/);
-  assert.match(adapter, /'separator' => 'icon-minus-2'/);
-  assert.match(adapter, /'heading' => \$navigable \? 'icon-folder' : 'icon-list'/);
+  assert.match(adapter, /'separator' => 'fas fa-minus'/);
+  assert.match(adapter, /'heading' => \$navigable \? 'fas fa-diagram-predecessor' : 'fas fa-list'/);
   assert.match(adapter, /'nodes' => \$children,[\s\S]*'items' => \[\]/);
   assert.match(tree, /node\.navigable !== false/);
   assert.match(tree, /resource-tree-static/);
@@ -373,7 +382,7 @@ test('menu cards show Joomla menu type titles and alias on separate lines', asyn
   assert.match(adapter, /MenusHelper::getLinkKey\(\$option->request\)/);
   assert.match(adapter, /'menuItemSummary' => \$typeLabel/);
   assert.match(adapter, /'gridFields' => \[\['source' => 'metadata.menuItemSummary'\]\]/);
-  assert.match(grid, /line\('COM_SMARTBROWSER_MENU_ITEM_TYPE', metadata.menuItemType, 'icon-file-alt'\)/);
+  assert.match(grid, /line\('COM_SMARTBROWSER_MENU_ITEM_TYPE', metadata.menuItemType, 'fas fa-file-alt'\)/);
   assert.match(css, /\.resource-item-identifier \{ font-style: italic; font-weight: 600; \}/);
 });
 
@@ -421,7 +430,7 @@ test('contextual state overlays remain passive with no item menu', async () => {
 
 test('Menu actions and static menu entries use mapped Joomla icon names', async () => {
   const adapter = await readFile(new URL('../package/component/admin/src/Adapter/MenuAdapter.php', import.meta.url), 'utf8');
-  assert.match(adapter, /'openLink'.*'icon-new-tab'/);
+  assert.match(adapter, /'openLink'.*'fas fa-external-link-alt'/);
   assert.doesNotMatch(adapter, /icon-external-link|icon-header|icon-paragraph-center/);
 });
 
@@ -487,11 +496,11 @@ test('resource cards show aliases, available language keys, flat article categor
   assert.match(grid, /class="resource-item-metadata" :class="\{ 'resource-item-identifier': line.identifier \}"/);
   assert.match(grid, /:class="line.icon" aria-hidden="true"/);
   assert.match(grid, /:title="`\$\{t\(line.label\)\}: \$\{line.value\}`"/);
-  assert.match(grid, /line\('COM_SMARTBROWSER_USERNAME', metadata.username, 'icon-user', true\)/);
-  assert.match(grid, /line\('JGLOBAL_EMAIL', metadata.email, 'icon-envelope'\)/);
-  assert.match(grid, /line\('COM_SMARTBROWSER_MIME_TYPE', metadata.mimeType, 'icon-file-alt'\)/);
-  assert.match(grid, /line\('COM_SMARTBROWSER_LANGUAGE_KEY', metadata.languageKey, 'icon-language'\)/);
-  assert.match(grid, /line\('COM_SMARTBROWSER_DIMENSIONS', `\$\{metadata.width\} × \$\{metadata.height\}`, 'icon-expand'\)/);
+  assert.match(grid, /line\('COM_SMARTBROWSER_USERNAME', metadata.username, 'fas fa-user', true\)/);
+  assert.match(grid, /line\('JGLOBAL_EMAIL', metadata.email, 'fas fa-envelope'\)/);
+  assert.match(grid, /line\('COM_SMARTBROWSER_MIME_TYPE', metadata.mimeType, 'fas fa-file-alt'\)/);
+  assert.match(grid, /line\('COM_SMARTBROWSER_LANGUAGE_KEY', metadata.languageKey, 'fas fa-language'\)/);
+  assert.match(grid, /line\('COM_SMARTBROWSER_DIMENSIONS', `\$\{metadata.width\} × \$\{metadata.height\}`, 'fas fa-expand'\)/);
 });
 
 test('UsersAdapter delegates state mutations to Joomla UserModel with ACL capabilities', async () => {
@@ -623,8 +632,8 @@ test('Media folders declare generic navigation semantics for double click and En
   const grid = await readFile(new URL('../resources/js/components/ResourceGrid.vue', import.meta.url), 'utf8');
   const details = await readFile(new URL('../resources/js/components/ResourceDetails.vue', import.meta.url), 'utf8');
   assert.match(media, /'navigable'\s*=>\s*\$isNode/);
-  assert.match(grid, /@dblclick\.stop="resource\.navigable \? \$emit\('open'/);
-  assert.match(details, /@dblclick\.stop="resource\.navigable \? \$emit\('open'/);
+  assert.match(grid, /@dblclick\.stop="performDefault\(resource, \$event\)"/);
+  assert.match(details, /@dblclick\.stop="performDefault\(resource, \$event\)"/);
 });
 
 test('shared shell options preserve frontend browseRoot, select mode, and adapter-scoped API routes', async () => {
@@ -719,8 +728,11 @@ test('administrator and site expose a shared ACL-filtered Dashboard model', asyn
 
 test('Dashboard links retain browser invocation parameters without double escaping', async () => {
   const provider = await readFile(new URL('../package/component/admin/src/Support/DashboardProvider.php', import.meta.url), 'utf8');
+  const route = await readFile(new URL('../package/component/admin/src/Support/DashboardRoute.php', import.meta.url), 'utf8');
   const template = await readFile(new URL('../package/component/admin/tmpl/dashboard/default.php', import.meta.url), 'utf8');
-  assert.match(provider, /Route::_\([^;]+, false\)/s);
+  assert.match(provider, /DashboardRoute::link\(\$this->app,/);
+  assert.match(route, /\$url \.= '&Itemid=' \. \(int\) \$item->id/);
+  assert.match(route, /return Route::_\(\$url, false\)/);
   assert.match(template, /htmlspecialchars\(\$item\['url'\]/);
   assert.doesNotMatch(provider, /&amp;/);
   assert.match(provider, /fromDashboard=1/);
@@ -729,7 +741,7 @@ test('Dashboard links retain browser invocation parameters without double escapi
 test('browser launched from Dashboard exposes a shared return action', async () => {
   const support = await readFile(new URL('../package/component/admin/src/Support/BrowserViewSupport.php', import.meta.url), 'utf8');
   const actions = await readFile(new URL('../resources/js/components/ResourceActions.vue', import.meta.url), 'utf8');
-  assert.match(support, /'dashboardUrl' => \$mode === 'manage'/);
+  assert.match(support, /'dashboardUrl' => \$mode === 'manage' \? DashboardRoute::link/);
   assert.match(actions, /resource-dashboard-link/);
   assert.match(actions, /COM_SMARTBROWSER_BACK_TO_DASHBOARD/);
 });
@@ -742,15 +754,15 @@ test('browser action bar groups secondary actions and guards backend navigation'
   assert.match(actions, /v-for="action in menuActions"/);
   assert.match(actions, /resource-filter-clear" :disabled="!activeFilterCount"/);
   assert.match(actions, /resource-manager-link" :href="managerUrl" :target="managerNewTab \? '_blank' : undefined" :rel="managerNewTab \? 'noopener noreferrer' : undefined" :title=/);
-  assert.match(actions, /<span class="icon-ellipsis-h"/);
-  assert.match(actions, /<span class="icon-joomla"/);
+  assert.match(actions, /<span class="fas fa-ellipsis-h"/);
+  assert.match(actions, /<span class="fab fa-joomla"/);
   assert.doesNotMatch(actions, /icon-external-link/);
   assert.match(actions, /class="resource-action-menu-item" role="none"/);
   assert.match(css, /resource-action-menu-item:not\(:last-child\) \{ border-bottom: 1px solid #c8d1da/);
   assert.match(css, /resource-action-createChild[^}]+background: #277a53/s);
   assert.match(css, /resource-filter-toggle[^}]+background: #f8f9f3/s);
   assert.doesNotMatch(actions, /btn btn-outline-secondary resource-filter-toggle/);
-  assert.match(css, /\.resource-actions \.resource-manager-link > \.icon-joomla[^}]+margin-right: 0;[^}]+margin-inline-end: 0;/s);
+  assert.match(css, /\.resource-actions \.resource-manager-link > \.fa-joomla[^}]+margin-right: 0;[^}]+margin-inline-end: 0;/s);
   assert.match(provider, /authorise\('core.login.admin'\)/);
   assert.match(provider, /authorise\('core.manage', \$component\)/);
 });
@@ -770,14 +782,12 @@ test('trash actions and trashed state use distinct SmartBrowser labels', async (
   for (const adapter of adapters) assert.doesNotMatch(adapter, /JTOOLBAR_TRASH|JTOOLBAR_UNPUBLISH|JTRASHED/);
 });
 
-test('frontend editor stacks global fields below the editor with responsive control rows', async () => {
+test('frontend editor keeps responsive control rows', async () => {
   const layout = await readFile(new URL('../package/component/site/tmpl/editor/modal.php', import.meta.url), 'utf8');
   const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
   assert.match(layout, /smartbrowser-editor-description/);
-  assert.match(layout, /smartbrowser-editor-global-fields/);
-  assert.match(css, /smartbrowser-editor-global-fields[^}]+grid-template-columns: minmax\(0, 1fr\)/s);
-  assert.match(css, /smartbrowser-editor-global-fields \.control-group[^}]+grid-template-columns: minmax\(180px, 250px\) minmax\(0, 1fr\)/s);
-  assert.match(css, /smartbrowser-editor-global-fields :is\(\.control-label, \.controls\)[^}]+float: none[^}]+margin-inline: 0 !important/s);
+  assert.match(css, /\.com-smartbrowser-editor \.smartbrowser-editor-tab \.control-group \{[^}]*display: block/s);
+  assert.match(css, /\.com-smartbrowser-editor \.smartbrowser-editor-tab :is\(\.control-label, \.controls\) \{[^}]*float: none;[^}]*width: 100% !important/s);
 });
 
 test('frontend menu item editor is responsive and uses a site-side Joomla menu type chooser', async () => {
@@ -785,7 +795,7 @@ test('frontend menu item editor is responsive and uses a site-side Joomla menu t
   const controller = await readFile(new URL('../package/component/site/src/Controller/EditorController.php', import.meta.url), 'utf8');
   const chooser = await readFile(new URL('../package/component/site/src/View/Menutypes/HtmlView.php', import.meta.url), 'utf8');
   const chooserLayout = await readFile(new URL('../package/component/site/tmpl/menutypes/default.php', import.meta.url), 'utf8');
-  assert.match(layout, /resourceType === 'menu-item'[\s\S]*smartbrowser-editor-primary[\s\S]*smartbrowser-editor-global-fields/);
+  assert.match(layout, /resourceType === 'menu-item'[\s\S]*smartbrowser-editor-primary[\s\S]*smartbrowser-editor-menu-link/);
   assert.match(layout, /view=menutypes/);
   assert.match(chooser, /createModel\('Menutypes', 'Administrator'/);
   assert.match(chooserLayout, /data-content-type="com_menus\.menutype"/);
@@ -895,10 +905,11 @@ test('frontend editor cancel bypasses required-field validation', async () => {
 });
 
 test('editor dialog has one scroll surface and fixed form actions', async () => {
-  const js = await readFile(new URL('../package/component/media/js/smartbrowser.js', import.meta.url), 'utf8');
+  const js = await readFile(new URL('../resources/js/adapters/MediaActionDriver.js', import.meta.url), 'utf8');
   const editorCss = await readFile(new URL('../package/component/media/css/editor.css', import.meta.url), 'utf8');
   const browserCss = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
-  assert.match(js, /className = "smartbrowser-editor", t\.innerHTML = `<iframe/);
+  assert.match(js, /dialog.className = 'smartbrowser-editor';/);
+  assert.match(js, /dialog.innerHTML = `<iframe/);
   assert.doesNotMatch(js, /smartbrowser-editor-toolbar/);
   assert.match(browserCss, /\.smartbrowser-editor \{[^}]*border-radius: 8px;[^}]*overflow: hidden;/s);
   assert.match(editorCss, /\.smartbrowser-editor-actions \{[^}]*position: fixed;/s);
@@ -956,17 +967,29 @@ test('readonly invocation removes actions and is enforced by the API', async () 
 
 test('optional integration plugin defaults every replacement to disabled', async () => {
   const manifest = await readFile(new URL('../package/component/admin/config.xml', import.meta.url), 'utf8');
-  for (const name of ['replace_media_field', 'replace_articles', 'replace_categories', 'replace_tags', 'replace_media', 'replace_menus', 'replace_users']) {
+  for (const name of ['replace_media_field', 'replace_articles', 'replace_featured_articles', 'replace_categories', 'replace_tags', 'replace_media', 'replace_menus', 'replace_users']) {
     assert.match(manifest, new RegExp(`name="${name}"[^>]*default="0"`));
   }
 });
 
-test('package installs the optional integration plugin without enabling core replacements', async () => {
+test('fresh install enables the integration plugin but leaves core replacements opt-in', async () => {
   const pkg = await readFile(new URL('../pkg_smartbrowser.xml', import.meta.url), 'utf8');
   const build = await readFile(new URL('../build/build.ps1', import.meta.url), 'utf8');
+  const plugin = await readFile(new URL('../package/plugins/system/smartbrowserintegration/smartbrowserintegration.xml', import.meta.url), 'utf8');
+  const installer = await readFile(new URL('../package/plugins/system/smartbrowserintegration/script.php', import.meta.url), 'utf8');
   assert.match(pkg, /type="plugin" id="smartbrowserintegration" group="system"/);
   assert.match(build, /plg_system_smartbrowserintegration\.zip/);
   assert.doesNotMatch(pkg, /<scriptfile>/);
+  assert.match(plugin, /<scriptfile>script\.php<\/scriptfile>/);
+  assert.match(plugin, /<filename>script\.php<\/filename>/);
+  assert.match(installer, /return new class implements InstallerScriptInterface/);
+  assert.match(installer, /function install\(InstallerAdapter \$adapter\): bool/);
+  assert.match(installer, /function update\(InstallerAdapter \$adapter\): bool \{ return true; \}/);
+  assert.match(installer, /function postflight\(string \$type, InstallerAdapter \$adapter\): bool \{ return true; \}/);
+  assert.match(installer, /quoteName\('enabled'\) \. ' = 1'/);
+  for (const value of ['plugin', 'system', 'smartbrowserintegration']) {
+    assert.match(installer, new RegExp(`\\$db->quote\\('${value}'\\)`));
+  }
 });
 
 test('integration plugin English and Greek catalogues stay in parity', async () => {
@@ -986,7 +1009,8 @@ test('administrator manager replacement is runtime-only and preserves forms and 
   assert.match(menus, /str_starts_with\(\$this->browseRoot, 'menu:'\)/);
   assert.match(menus, /return \[\$this->normalizeMenu\(\$this->menu\(substr\(\$this->browseRoot, 5\)\)\)\]/);
   assert.match(plugin, /!empty\(\$query\['task'\]\) \|\| !empty\(\$query\['layout'\]\)/);
-  assert.doesNotMatch(plugin, /redirect\(|#__menu|UPDATE\s+/i);
+  const menuRewrite = plugin.split('private function rewrite(')[1]?.split('private function isComponentMenu(')[0] || '';
+  assert.doesNotMatch(menuRewrite, /redirect\(|#__menu|UPDATE\s+/i);
 });
 
 test('media field integration maps directory and accepted images into picker constraints', async () => {

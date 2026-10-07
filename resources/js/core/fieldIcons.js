@@ -1,14 +1,14 @@
 export const fieldIcons = {
-  title: null, name: null, alias: 'icon-link', status: 'icon-check-circle', stateLabel: 'icon-check-circle',
-  author: 'icon-user', category: 'icon-folder', categoryPath: 'icon-folder', parent: 'icon-folder', parentPath: 'icon-folder', location: 'icon-folder', locationPath: 'icon-folder', tagPaths: 'icon-tags',
-  created: 'icon-calendar', modified: 'icon-calendar', registered: 'icon-calendar', lastVisit: 'icon-clock',
-  language: 'icon-globe', languageKey: 'icon-language', id: 'icon-key', access: 'icon-lock',
-  size: 'icon-database', dimension: 'icon-expand', width: 'icon-expand', ordering: 'icon-sort',
-  menu: 'icon-menu', menuItemType: 'icon-file-alt', shortcut: 'icon-link', url: 'icon-link', link: 'icon-link',
-  username: 'icon-user', email: 'icon-envelope', groups: 'icon-users', tags: 'icon-tags',
-  mimeType: 'icon-file-alt', extension: 'icon-tag', type: 'icon-file-alt',
+  title: null, name: null, alias: 'fas fa-link', status: 'fas fa-check-circle', stateLabel: 'fas fa-check-circle',
+  author: 'fas fa-user', category: 'fas fa-folder', categoryPath: 'fas fa-folder', parent: 'fas fa-folder', parentPath: 'fas fa-folder', location: 'fas fa-folder', locationPath: 'fas fa-folder', tagPaths: 'fas fa-tags',
+  created: 'fas fa-calendar', modified: 'fas fa-calendar', registered: 'fas fa-calendar', lastVisit: 'fas fa-clock',
+  language: 'fas fa-globe', languageKey: 'fas fa-language', id: 'fas fa-key', access: 'fas fa-lock',
+  size: 'fas fa-database', dimension: 'fas fa-expand', width: 'fas fa-expand', ordering: 'fas fa-sort',
+  menu: 'fas fa-bars', menuItemType: 'fas fa-file-alt', shortcut: 'fas fa-link', url: 'fas fa-link', link: 'fas fa-link',
+  username: 'fas fa-user', email: 'fas fa-envelope', groups: 'fas fa-users', tags: 'fas fa-tags',
+  mimeType: 'fas fa-file-alt', extension: 'fas fa-tag', type: 'fas fa-file-alt',
 };
 
 export const iconForField = (field) => field.icon || field.headerIcon
   || fieldIcons[field.id || String(field.source || '').split('.').pop()]
-  || (field.format === 'date' ? 'icon-calendar' : 'icon-info');
+  || (field.format === 'date' ? 'fas fa-calendar' : 'fas fa-info');

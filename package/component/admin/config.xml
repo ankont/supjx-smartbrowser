@@ -12,24 +12,42 @@
             <field name="grid_width_xl" type="gridwidth" parentclass="sb-grid-width-row" filter="integer" default="420" min="80" max="800" step="10" label="COM_SMARTBROWSER_GRID_SIZE_EXTRA_LARGE" description="COM_SMARTBROWSER_GRID_SIZE_DESC" />
         </fieldset>
         <fieldset name="preferences_display" label="COM_SMARTBROWSER_OPTIONS_PREFERENCES">
+            <field name="image_background" type="list" default="auto" label="COM_SMARTBROWSER_VISUAL_BACKGROUND"><option value="auto">COM_SMARTBROWSER_VISUAL_AUTO</option><option value="transparent">COM_SMARTBROWSER_VISUAL_TRANSPARENT</option><option value="checkerboard">COM_SMARTBROWSER_VISUAL_CHECKERBOARD</option></field>
             <field name="preferences_reset_token" type="preferencesreset" label="COM_SMARTBROWSER_RESET_PREFERENCES" description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC" />
         </fieldset>
     </fieldset>
+    <fieldset name="visuals" label="COM_SMARTBROWSER_OPTIONS_VISUALS">
+        <field name="visual_global" type="visualappearance" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_VISUAL_GLOBAL" description="COM_SMARTBROWSER_VISUAL_GLOBAL_DESC" />
+        <field name="visual_media" type="visualappearance" adapter="media" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_MEDIA" />
+        <field name="visual_articles" type="visualappearance" adapter="articles" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_ARTICLES" />
+        <field name="visual_featured_articles" type="visualappearance" adapter="featured_articles" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_FEATURED_ARTICLES" />
+        <field name="visual_categories" type="visualappearance" adapter="categories" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES" />
+        <field name="visual_menus" type="visualappearance" adapter="menus" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_MENUS" />
+        <field name="visual_tags" type="visualappearance" adapter="tags" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_TAGS" />
+        <field name="visual_articles_by_tag" type="visualappearance" adapter="articles_by_tag" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_ARTICLES_BY_TAG" />
+        <field name="visual_users" type="visualappearance" adapter="users" parentclass="sb-appearance-field" filter="raw" label="COM_SMARTBROWSER_ADAPTER_USERS" />
+    </fieldset>
+    <fieldset name="icons" label="COM_SMARTBROWSER_OPTIONS_ICONS">
+        <field name="icons_hint" type="note" description="COM_SMARTBROWSER_OPTIONS_ICONS_DESC" class="alert alert-info" />
+        <field name="icon_profiles" type="iconprofiles" filter="raw" label="COM_SMARTBROWSER_OPTIONS_ICONS" />
+    </fieldset>
     <fieldset name="context" label="COM_SMARTBROWSER_OPTIONS_CONTEXT">
+        <field name="context_hint" type="note" label="COM_SMARTBROWSER_CONTEXT_HINT" description="COM_SMARTBROWSER_OPTIONS_CONTEXT_DESC" class="alert alert-info" />
         <fieldset name="context_admin" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_ADMIN">
-            <field name="context_categories_admin" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
-            <field name="context_tags_admin" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
-            <field name="context_menus_admin" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_categories_admin" description="COM_SMARTBROWSER_CONTEXT_CATEGORIES_DESC" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_tags_admin" description="COM_SMARTBROWSER_CONTEXT_TAGS_DESC" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_menus_admin" description="COM_SMARTBROWSER_CONTEXT_MENUS_DESC" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
         <fieldset name="context_site" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_SITE">
-            <field name="context_categories_site" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
-            <field name="context_tags_site" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
-            <field name="context_menus_site" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_categories_site" description="COM_SMARTBROWSER_CONTEXT_CATEGORIES_DESC" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_tags_site" description="COM_SMARTBROWSER_CONTEXT_TAGS_DESC" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="context_menus_site" description="COM_SMARTBROWSER_CONTEXT_MENUS_DESC" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_ADAPTER_MENUS"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
     </fieldset>
     <fieldset name="integration" label="COM_SMARTBROWSER_OPTIONS_INTEGRATION">
         <field name="replace_media_field" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_MEDIA_FIELD"><option value="0">JDISABLED</option><option value="1">JENABLED</option></field>
         <field name="replace_articles" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_ARTICLES"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="replace_featured_articles" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_FEATURED_ARTICLES"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="replace_categories" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_CATEGORIES"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="replace_tags" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_TAGS"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="replace_media" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="COM_SMARTBROWSER_OPTION_REPLACE_MEDIA"><option value="0">JNO</option><option value="1">JYES</option></field>

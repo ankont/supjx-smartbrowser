@@ -14,7 +14,7 @@ test('column visibility is saved with the other browser preferences', () => {
 
 test('info icons cover column metadata rather than falling back to info', () => {
   for (const source of ['stateLabel', 'access', 'languageKey', 'tags', 'author', 'locationPath', 'url', 'id', 'width', 'size', 'mimeType', 'extension']) {
-    assert.notEqual(iconForField({ source: `metadata.${source}` }), 'icon-info', source);
+    assert.notEqual(iconForField({ source: `metadata.${source}` }), 'fas fa-info', source);
   }
 });
 

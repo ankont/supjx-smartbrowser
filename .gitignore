@@ -1,4 +1,6 @@
 node_modules/
 build/stage/
 build/output/
+build/releases/
+.playwright-mcp/
 build/test-install-*/

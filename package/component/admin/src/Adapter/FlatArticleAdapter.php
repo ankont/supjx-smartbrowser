@@ -6,7 +6,7 @@ use Joomla\CMS\Language\Text;
 
 defined('_JEXEC') or die;
 
-final class FlatArticleAdapter extends ArticleCollectionAdapter
+class FlatArticleAdapter extends ArticleCollectionAdapter
 {
     protected const ROOT_ID = 'flat-articles:root';
 
@@ -23,7 +23,7 @@ final class FlatArticleAdapter extends ArticleCollectionAdapter
             : $this->app->getIdentity()->authorise('core.create', 'com_content');
         return [[
             'id' => static::ROOT_ID, 'title' => $categoryId ? $this->title($this->getCategory($categoryId)->title) : Text::_('COM_SMARTBROWSER_ALL_ARTICLES'),
-            'type' => 'root', 'kind' => 'node', 'icon' => 'icon-file-alt',
+            'type' => 'root', 'kind' => 'node', 'icon' => 'fas fa-newspaper',
             'visible' => false, 'selectable' => false, 'navigable' => true, 'hasChildren' => false,
             'capabilities' => ['newArticle' => $canCreate], 'metadata' => [],
         ]];
@@ -63,7 +63,7 @@ final class FlatArticleAdapter extends ArticleCollectionAdapter
 
         $presentation['columns'] = array_values(array_filter($presentation['columns'], static fn (array $column): bool => $column['id'] !== 'category'));
         array_splice($presentation['columns'], 1, 0, [[
-            'id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION', 'source' => 'metadata.location', 'headerIcon' => 'icon-folder-open',
+            'id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION', 'source' => 'metadata.location', 'headerIcon' => 'fas fa-box-open',
         ]]);
         $presentation['sortFields'][] = ['id' => 'location', 'label' => 'COM_SMARTBROWSER_LOCATION'];
         $presentation['infoFields'] = array_values(array_filter($presentation['infoFields'], static fn (array $field): bool => $field['source'] !== 'metadata.category'));
@@ -94,7 +94,8 @@ final class FlatArticleAdapter extends ArticleCollectionAdapter
         return [[
             'id' => static::ROOT_ID,
             'title' => $this->getRoots()[0]['title'],
-            'icon' => $this->browseRoot ? 'icon-folder' : 'icon-file-alt',
+            'icon' => $this->browseRoot ? 'fas fa-box' : 'fas fa-newspaper',
+            'kind' => 'node', 'type' => 'root',
             'visible' => true,
         ]];
     }
@@ -103,7 +104,7 @@ final class FlatArticleAdapter extends ArticleCollectionAdapter
     {
         return array_values(array_filter([
             $this->getRoots()[0]['capabilities']['newArticle']
-                ? $this->action('newArticle', 'COM_SMARTBROWSER_NEW_ARTICLE', 'icon-file-add', 'node', true, false, false, false, true)
+                ? [...$this->action('newArticle', 'COM_SMARTBROWSER_NEW_ARTICLE', 'fas fa-plus', 'node', true, false, false, false, true), 'creationRole' => 'item']
                 : null,
             ...$this->articleActions(),
         ]));
@@ -119,7 +120,7 @@ final class FlatArticleAdapter extends ArticleCollectionAdapter
             return $this->editorResponse('index.php?option=com_content&task=article.add'
                 . ($this->browseRoot ? '&catid=' . $this->browseRootNumericId() : ''));
         }
-        return $this->executeArticleAction($action, $selection, true);
+        return $this->executeArticleAction($action, $selection, true, $payload);
     }
 
     protected function hasVisibleBrowseHierarchy(): bool

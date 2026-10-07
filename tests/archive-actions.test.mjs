@@ -10,8 +10,8 @@ test('archive action follows publish state through article, category, and tag ad
     adapter('ArticlesByTagAdapter'), adapter('ContentAdapter'),
   ]);
   for (const source of [articles, categories, tags]) {
-    assert.match(source, /action\('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'icon-archive'/);
-    assert.match(source, /action\('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'icon-archive'/);
+    assert.match(source, /action\('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'fas fa-archive'/);
+    assert.match(source, /action\('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'fas fa-archive'/);
     assert.match(source, /'archive' => (?:\$this->setState\(\$selection, 2\)|2)/);
     assert.match(source, /'unarchive' => (?:\$this->setState\(\$selection, 0\)|0)/);
   }

@@ -9,7 +9,8 @@ $StageRoot = Join-Path $PSScriptRoot 'stage'
 $ComponentZip = Join-Path $StageRoot 'packages\com_smartbrowser.zip'
 $PluginRoot = Join-Path $ProjectRoot 'package\plugins\system\smartbrowserintegration'
 $PluginZip = Join-Path $StageRoot 'packages\plg_system_smartbrowserintegration.zip'
-$PackageZip = Join-Path $OutputDirectory 'pkg_smartbrowser-v1.2.14.zip'
+$Version = ([xml](Get-Content -LiteralPath $PackageManifest -Raw)).extension.version
+$PackageZip = Join-Path $OutputDirectory "pkg_smartbrowser-v$Version.zip"
 $BuiltScript = Join-Path $ComponentRoot 'media\js\smartbrowser.js'
 
 function Reset-Directory {
@@ -86,6 +87,11 @@ New-Item -ItemType Directory -Path (Split-Path -Parent $ComponentZip) | Out-Null
 
 if ((Get-Content -LiteralPath $BuiltScript -Raw).Contains('process.env')) {
     throw 'The browser bundle contains an unresolved process.env reference.'
+}
+
+& node --check $BuiltScript
+if ($LASTEXITCODE -ne 0) {
+    throw 'The browser bundle has invalid JavaScript syntax.'
 }
 
 New-PortableZip -SourceDirectory $ComponentRoot -DestinationZip $ComponentZip

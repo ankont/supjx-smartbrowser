@@ -4,6 +4,7 @@ namespace SuperSoft\Component\Smartbrowser\Administrator\Adapter;
 
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Component\Menus\Administrator\Helper\MenusHelper;
@@ -11,6 +12,7 @@ use Joomla\Database\DatabaseInterface;
 use SuperSoft\Component\Smartbrowser\Administrator\Menu\Resolver\MenuItemResolverRegistry;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\EditorRoute;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\BatchRunner;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\OrderingService;
 
 defined('_JEXEC') or die;
 
@@ -113,16 +115,16 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $this->assertBrowseScope([$nodeId]);
         if (str_starts_with($nodeId, 'menu:')) {
             $menu = $this->menu(substr($nodeId, 5));
-            return [['id' => 'menu:' . $menu->menutype, 'title' => (string) $menu->title, 'visible' => true]];
+            return [['id' => 'menu:' . $menu->menutype, 'title' => (string) $menu->title, 'kind' => 'node', 'type' => 'menu', 'icon' => 'fas fa-diagram-predecessor', 'visible' => true]];
         }
 
         $chain = [];
         $item = $this->item($this->itemId($nodeId));
         while ((int) $item->id > 1) {
-            array_unshift($chain, ['id' => 'menu-item:' . $item->id, 'title' => (string) $item->title, 'visible' => true]);
+            array_unshift($chain, [...$this->normalizeItem($item), 'visible' => true]);
             if ($this->browseRoot === 'menu-item:' . $item->id) break;
             if ((int) $item->parent_id <= 1) {
-                array_unshift($chain, ['id' => 'menu:' . $item->menutype, 'title' => (string) $this->menu((string) $item->menutype)->title, 'visible' => true]);
+                array_unshift($chain, ['id' => 'menu:' . $item->menutype, 'title' => (string) $this->menu((string) $item->menutype)->title, 'kind' => 'node', 'type' => 'menu', 'icon' => 'fas fa-diagram-predecessor', 'visible' => true]);
                 break;
             }
             $item = $this->item((int) $item->parent_id);
@@ -133,18 +135,19 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
     public function getActions(array $selection = []): array
     {
         return [
-            $this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_MENU_ITEM', 'icon-plus', 'node', true, false, false, false, true),
-            $this->action('edit', 'JACTION_EDIT', 'icon-edit', 'resource', false, true, true),
-            $this->action('openLink', 'COM_SMARTBROWSER_OPEN_LINK', 'icon-new-tab', 'resource', false, true, true),
-            $this->action('copyLink', 'COM_SMARTBROWSER_COPY_LINK', 'icon-copy', 'resource', false, true, true),
-            $this->action('publish', 'JTOOLBAR_PUBLISH', 'icon-publish', 'node', false, true, false, false, false, 'publication'),
-            $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'icon-unpublish', 'node', false, true, false, false, false, 'publication'),
-            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'icon-trash', 'node', false, true),
+            [...$this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_MENU_ITEM', 'fas fa-plus', 'node', true, false, false, false, true), 'creationRole' => 'item'],
+            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true),
+            $this->action('openLink', 'COM_SMARTBROWSER_OPEN_LINK', 'fas fa-external-link-alt', 'resource', false, true, true),
+            $this->action('copyLink', 'COM_SMARTBROWSER_COPY_LINK', 'fas fa-copy', 'resource', false, true, true),
+            $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'node', false, true, false, false, false, 'publication'),
+            $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),
+            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true),
         ];
     }
 
     public function executeAction(string $action, array $selection, array $payload = []): mixed
     {
+        if ($action === 'reorder') return (new OrderingService($this->app))->move($this, $selection, (string) ($payload['direction'] ?? ''), ['menu-item']);
         if ($action === 'batch') return (new BatchRunner($this->app))->run($this, 'menus', $selection, $payload);
         if ($action === 'createChild') {
             $nodeId = (string) ($payload['nodeId'] ?? '');
@@ -247,7 +250,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $id = 'menu:' . $menu->menutype;
         return [
             'id' => $id, 'title' => (string) $menu->title, 'subtitle' => (string) $menu->menutype,
-            'parentId' => null, 'kind' => 'node', 'type' => 'menu', 'icon' => 'icon-list', 'image' => null,
+            'parentId' => null, 'kind' => 'node', 'type' => 'menu', 'icon' => 'fas fa-diagram-predecessor', 'image' => null,
             'visible' => true, 'selectable' => false, 'navigable' => true, 'hasChildren' => $this->hasChildren(1, (string) $menu->menutype),
             'capabilities' => ['open' => true, 'createChild' => $this->canCreate((string) $menu->menutype)],
             'metadata' => ['menu' => (string) $menu->title, 'menutype' => (string) $menu->menutype, 'description' => (string) ($menu->description ?? '')],
@@ -257,24 +260,32 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
     private function normalizeItem(object $item): array
     {
         $state = (int) $item->published;
-        $aliasTarget = (string) $item->type === 'alias' ? (int) (json_decode((string) $item->params, true)['aliasoptions'] ?? 0) : 0;
+        $params = json_decode((string) $item->params, true) ?: [];
+        $aliasTarget = (string) $item->type === 'alias' ? (int) ($params['aliasoptions'] ?? 0) : 0;
+        $menuImage = (string) ($params['menu_image'] ?? '');
+        if ($menuImage !== '') {
+            $menuImage = (string) (HTMLHelper::_('cleanImageURL', $menuImage)->url ?? '');
+            if ($menuImage !== '' && !preg_match('#^(?:[a-z][a-z0-9+.-]*:)?//#i', $menuImage) && !str_starts_with($menuImage, 'data:')) {
+                $menuImage = Uri::root() . ltrim($menuImage, '/');
+            }
+        }
         $overlays = [$this->statusOverlay($state)];
         $homeLabel = !empty($item->home) ? Text::_((string) $item->language === '*' ? 'COM_SMARTBROWSER_HOME_ALL_LANGUAGES' : 'COM_SMARTBROWSER_HOME_LANGUAGE') : '';
         if ($homeLabel !== '') $overlays[] = [
-            'id' => 'home', 'icon' => 'icon-home',
+            'id' => 'home', 'icon' => 'fas fa-home',
             'image' => $this->languageImage((string) $item->language),
             'label' => $homeLabel, 'tone' => 'info',
         ];
-        if ($aliasTarget) $overlays[] = ['id' => 'shortcut', 'icon' => 'icon-new-tab', 'label' => Text::_('COM_SMARTBROWSER_MENU_ITEM_ALIAS'), 'tone' => 'info'];
-        if ((int) ($item->checked_out ?? 0) > 0) $overlays[] = ['id' => 'checkedOut', 'icon' => 'icon-lock', 'label' => Text::_('COM_SMARTBROWSER_CHECKED_OUT'), 'tone' => 'warning'];
+        if ($aliasTarget) $overlays[] = ['id' => 'shortcut', 'icon' => 'fas fa-external-link-alt', 'label' => Text::_('COM_SMARTBROWSER_MENU_ITEM_ALIAS'), 'tone' => 'info'];
+        if ((int) ($item->checked_out ?? 0) > 0) $overlays[] = ['id' => 'checkedOut', 'icon' => 'fas fa-lock', 'label' => Text::_('COM_SMARTBROWSER_CHECKED_OUT'), 'tone' => 'warning'];
         $typeLabel = $this->typeLabel($item);
         $isStatic = in_array((string) $item->type, ['separator', 'heading'], true);
         $hasChildren = $this->hasChildren((int) $item->id, (string) $item->menutype);
         $navigable = !$isStatic || ((string) $item->type === 'heading' && $hasChildren);
         $icon = match ((string) $item->type) {
-            'separator' => 'icon-minus-2',
-            'heading' => $navigable ? 'icon-folder' : 'icon-list',
-            default => 'icon-folder',
+            'separator' => 'fas fa-minus',
+            'heading' => $navigable ? 'fas fa-diagram-predecessor' : 'fas fa-list',
+            default => 'fas fa-diagram-predecessor',
         };
         $capabilities = $this->itemCapabilities($item);
         if ($isStatic) {
@@ -284,7 +295,8 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         return [
             'id' => 'menu-item:' . $item->id, 'title' => (string) $item->title, 'subtitle' => $typeLabel,
             'parentId' => $this->browseRoot === 'menu-item:' . $item->id ? null : ((int) $item->parent_id > 1 ? 'menu-item:' . $item->parent_id : 'menu:' . $item->menutype),
-            'kind' => 'node', 'type' => 'menu-item', 'icon' => $icon, 'image' => null,
+            'kind' => 'node', 'type' => 'menu-item', 'icon' => $icon, 'image' => $menuImage ?: null,
+              'badgeIcon' => trim((string) ($params['menu_icon_css'] ?? '')),
             'status' => $state, 'statusPresentation' => $this->statusPresentation($state), 'overlays' => $overlays,
             'selectable' => true, 'bulkSelectable' => true, 'focusable' => true, 'actionable' => true,
             'navigable' => $navigable, 'hasChildren' => $navigable && $hasChildren,
@@ -293,7 +305,8 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 'id' => (int) $item->id, 'alias' => (string) $item->alias, 'menu' => (string) $this->menu((string) $item->menutype)->title,
                 'homeLabel' => $homeLabel,
                 'menutype' => (string) $item->menutype, 'parent' => (int) $item->parent_id > 1 ? (string) $this->item((int) $item->parent_id)->title : '',
-                'menuItemType' => $typeLabel, 'state' => $state, 'stateLabel' => $this->stateLabel($state),
+                'menuItemType' => $typeLabel, 'menuItemKind' => (string) $item->type, 'state' => $state, 'stateLabel' => $this->stateLabel($state),
+                'menuIcon' => trim((string) ($params['menu_icon_css'] ?? '')),
                 'menuItemSummary' => $typeLabel,
                 'access' => $this->accessLevels()[(int) $item->access] ?? (string) $item->access,
                 'accessId' => (int) $item->access, 'language' => (string) $item->language,
@@ -310,7 +323,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $identity = $this->app->getIdentity();
         $state = (int) $item->published;
         return [
-            'open' => true, 'edit' => $identity->authorise('core.edit', $asset),
+            'open' => true, 'edit' => $identity->authorise('core.edit', $asset), 'reorder' => $identity->authorise('core.edit.state', $asset),
             'publish' => $state !== 1 && $identity->authorise('core.edit.state', $asset),
             'unpublish' => $state === 1 && $identity->authorise('core.edit.state', $asset),
             'createChild' => $identity->authorise('core.create', $asset),
@@ -333,7 +346,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 ['id' => 'menuItemType', 'label' => 'COM_SMARTBROWSER_MENU_ITEM_TYPE', 'source' => 'metadata.menuItemType'],
                 ['id' => 'status', 'label' => 'JSTATUS', 'source' => 'metadata.stateLabel', 'format' => 'status', 'overlays' => true, 'sortField' => 'state'],
                 ['id' => 'access', 'label' => 'JFIELD_ACCESS_LABEL', 'source' => 'metadata.access'],
-                ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language', 'format' => 'language', 'headerIcon' => 'icon-globe'],
+                ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language', 'format' => 'language', 'headerIcon' => 'fas fa-globe'],
                 ['id' => 'id', 'label' => 'JGLOBAL_FIELD_ID_LABEL', 'source' => 'metadata.id'],
             ],
             'gridFields' => [['source' => 'metadata.menuItemSummary']],
@@ -351,7 +364,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             'infoFields' => [
                 ['label' => 'COM_SMARTBROWSER_ALIAS_LABEL', 'source' => 'metadata.alias'], ['label' => 'COM_SMARTBROWSER_MENU', 'source' => 'metadata.menu'],
                 ['label' => 'COM_SMARTBROWSER_PARENT', 'source' => 'metadata.parent'], ['label' => 'COM_SMARTBROWSER_MENU_ITEM_TYPE', 'source' => 'metadata.menuItemType'],
-                ['label' => 'COM_SMARTBROWSER_HOME_PAGE', 'source' => 'metadata.homeLabel', 'icon' => 'icon-home'],
+                ['label' => 'COM_SMARTBROWSER_HOME_PAGE', 'source' => 'metadata.homeLabel', 'icon' => 'fas fa-home'],
                 ['label' => 'JSTATUS', 'source' => 'metadata.stateLabel'], ['label' => 'JFIELD_ACCESS_LABEL', 'source' => 'metadata.access'],
                 ['label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language'], ['label' => 'COM_SMARTBROWSER_URL', 'source' => 'metadata.url'],
                 ['label' => 'JGLOBAL_FIELD_ID_LABEL', 'source' => 'metadata.id'],
@@ -380,6 +393,8 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             ]],
         ];
     }
+
+    public function getCollectionPresentation(array $resources = []): array { return $this->presentation(); }
 
     private function selectOptions(array $values, string $placeholder): array
     {
@@ -522,7 +537,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
     private function editorResponse(string $url): array { return ['command' => 'openEditor', 'url' => EditorRoute::link($this->app, $url)]; }
     private function action(string $id, string $label, string $icon, string $scope, bool $primary = false, bool $requiresSelection = false, bool $single = false, bool $itemsOnly = false, bool $currentNode = false, ?string $exclusiveGroup = null): array { return compact('id', 'label', 'icon', 'scope', 'primary', 'requiresSelection', 'single', 'itemsOnly', 'currentNode', 'exclusiveGroup'); }
     private function stateLabel(int $state): string { return match ($state) { 1 => Text::_('JPUBLISHED'), 0 => Text::_('JUNPUBLISHED'), -2 => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), default => (string) $state }; }
-    private function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'icon-publish', 'label' => Text::_('JPUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'icon-unpublish', 'label' => Text::_('JUNPUBLISHED'), 'tone' => 'muted'], -2 => ['icon' => 'icon-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'icon-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
+    private function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'fas fa-check', 'label' => Text::_('JPUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'fas fa-times', 'label' => Text::_('JUNPUBLISHED'), 'tone' => 'muted'], -2 => ['icon' => 'fas fa-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'fas fa-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
     private function statusOverlay(int $state): array { return ['id' => 'status', ...$this->statusPresentation($state), 'action' => match ($state) { 1 => 'unpublish', 0 => 'publish', default => null }]; }
     private function sortResources(array $resources, string $field, string $direction): array
     {

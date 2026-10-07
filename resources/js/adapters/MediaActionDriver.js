@@ -1,3 +1,5 @@
+import { createEditorSize } from '../core/editorSize.js';
+
 const promptValue = (message, value = '') => window.prompt(message, value);
 
 export const previewKind = (resource) => {
@@ -18,9 +20,24 @@ export default class MediaActionDriver {
     this.translate = translate;
     this.editorMode = editorMode;
     this.application = application;
+    this.dialogs = new Set();
+  }
+
+  destroy() {
+    this.destroyed = true;
+    for (const dialog of this.dialogs) dialog.remove();
+    this.dialogs.clear();
+  }
+
+  ownDialog(dialog) {
+    if (this.destroyed) { dialog.remove(); return; }
+    this.dialogs.add(dialog);
+    dialog.addEventListener('close', () => this.dialogs.delete(dialog), { once: true });
+    document.body.appendChild(dialog);
   }
 
   available(action, selection) {
+    if (this.destroyed) return false;
     if (action.currentNode && this.state.currentResource?.capabilities?.[action.id] === false) return false;
     if (action.requiresSelection && selection.length === 0) return false;
     if (action.single && selection.length !== 1) return false;
@@ -85,6 +102,10 @@ export default class MediaActionDriver {
     }
 
     const resource = await this.api.execute(action.id, ids);
+    if (resource?.command === 'previewUrl') {
+      this.previewUrl(resource.url, resource.title);
+      return;
+    }
     if (resource?.command === 'openEditor') {
       this.openEditor(resource.url);
       return;
@@ -107,12 +128,14 @@ export default class MediaActionDriver {
       return;
     }
     if (action.id === 'preview') this.preview(resource);
+    if (action.id === 'edit' && resource?.metadata?.mimeType) this.editMedia(resource);
     if (action.id === 'share') this.share(resource);
     if (action.id === 'download') this.download(resource);
     if (resource?.updated || resource?.deleted) await this.reload();
   }
 
   openEditor(url) {
+    if (this.destroyed) return;
     if (this.editorMode === 'page') {
       const destination = new URL(url, window.location.href);
       if (this.application === 'site') {
@@ -120,7 +143,11 @@ export default class MediaActionDriver {
         destination.searchParams.set('sbpage', '1');
         destination.searchParams.delete('tmpl');
       } else {
-        destination.searchParams.delete('layout');
+        if (destination.searchParams.has('view') && !destination.searchParams.has('task')) {
+          destination.searchParams.set('layout', 'edit');
+        } else {
+          destination.searchParams.delete('layout');
+        }
         destination.searchParams.delete('tmpl');
         destination.searchParams.set('return', window.btoa(window.location.href));
       }
@@ -130,12 +157,25 @@ export default class MediaActionDriver {
     const dialog = document.createElement('dialog');
     dialog.className = 'smartbrowser-editor';
     dialog.innerHTML = `<iframe src="${this.escape(url)}" title="Editor"></iframe><div class="smartbrowser-editor-loading" role="status"><span class="spinner-border" aria-hidden="true"></span><span>${this.escape(this.translate('COM_SMARTBROWSER_WORKING'))}</span></div><button type="button" class="btn-close" aria-label="Close"></button>`;
+    const size = createEditorSize(dialog, null, this.translate);
     const iframe = dialog.querySelector('iframe');
     const loading = dialog.querySelector('.smartbrowser-editor-loading');
     let initialLoadComplete = false;
     let dirty = false;
     iframe.addEventListener('load', () => {
       loading.hidden = true;
+      size.bind(null);
+      try {
+        const toolbar = iframe.contentDocument?.querySelector('.smartbrowser-editor-actions, #toolbar');
+        if (toolbar) {
+          const button = iframe.contentDocument.createElement('button');
+          button.type = 'button';
+          button.className = 'btn btn-outline-secondary ms-auto smartbrowser-editor-size';
+          button.innerHTML = '<span class="fas fa-expand" aria-hidden="true"></span>';
+          toolbar.append(button);
+          size.bind(button);
+        }
+      } catch {}
       try { iframe.contentWindow.addEventListener('beforeunload', () => { loading.hidden = false; }, { once: true }); } catch {}
       dirty = false;
       window.SmartBrowserDialogDismiss.watchFrame(iframe, () => { dirty = true; });
@@ -155,16 +195,16 @@ export default class MediaActionDriver {
         const task = frameUrl.searchParams.get('task') || '';
         const layout = frameUrl.searchParams.get('layout') || '';
         const isEditLocation = /\.(?:edit|add)$/.test(task) || layout === 'edit' || layout === 'modal';
-        const hasEditorForm = Boolean(iframe.contentDocument?.querySelector('form#adminForm'));
+          const hasEditorForm = Boolean(iframe.contentDocument?.querySelector('form#adminForm, form#item-form'));
         if (!isEditLocation || !hasEditorForm) dialog.close();
       } catch (error) {
         // Cross-origin navigations cannot be inspected and must remain user-closeable.
       }
     });
-    dialog.querySelector('button').addEventListener('click', () => dialog.close());
+    dialog.querySelector('.btn-close').addEventListener('click', () => dialog.close());
     window.SmartBrowserDialogDismiss.install(dialog, () => dirty);
-    dialog.addEventListener('close', async () => { dialog.remove(); await this.reload(); });
-    document.body.appendChild(dialog);
+    dialog.addEventListener('close', async () => { size.destroy(); dialog.remove(); await this.reload(); });
+    this.ownDialog(dialog);
     dialog.showModal();
   }
 
@@ -226,14 +266,10 @@ export default class MediaActionDriver {
     });
   }
 
-  preview(resource) {
+  previewMedia(resource) {
     const url = resource.metadata?.url;
-    let currentResource = resource;
-    const [initialName, initialExtension] = this.splitFilename(resource.title);
-    const dialog = document.createElement('dialog');
-    dialog.className = 'smartbrowser-preview';
     const kind = previewKind(resource);
-    const media = kind === 'image'
+    return kind === 'image'
       ? `<img data-preview-media src="${this.escapeAttribute(url)}" alt="${this.escapeAttribute(resource.title)}">`
       : kind === 'video'
         ? `<video data-preview-media src="${this.escapeAttribute(url)}" controls preload="metadata"></video>`
@@ -241,14 +277,48 @@ export default class MediaActionDriver {
           ? `<audio data-preview-media src="${this.escapeAttribute(url)}" controls preload="metadata"></audio>`
           : kind === 'pdf'
             ? `<iframe data-preview-media src="${this.escapeAttribute(url)}" title="${this.escapeAttribute(resource.title)}"></iframe>`
-            : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(resource.icon || 'icon-file')}" aria-hidden="true"></span><span>${this.escape(this.translate('COM_SMARTBROWSER_PREVIEW_UNAVAILABLE'))}</span></div>`;
+            : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(resource.icon || 'fas fa-file')}" aria-hidden="true"></span><span>${this.escape(this.translate('COM_SMARTBROWSER_PREVIEW_UNAVAILABLE'))}</span></div>`;
+  }
+
+  previewUrl(url, title) {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'smartbrowser-preview smartbrowser-content-preview';
+    dialog.setAttribute('aria-label', title || this.translate('COM_SMARTBROWSER_ACTION_PREVIEW'));
+    dialog.innerHTML = `<button type="button" class="btn-close" aria-label="${this.escapeAttribute(this.translate('JCLOSE'))}"></button><div class="smartbrowser-preview-media"><iframe src="${this.escapeAttribute(url)}" title="${this.escapeAttribute(title || '')}"></iframe></div>`;
+    this.showContentPreview(dialog);
+  }
+
+  preview(resource) {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'smartbrowser-preview smartbrowser-content-preview';
+    dialog.setAttribute('aria-label', resource.title);
+    dialog.innerHTML = `<button type="button" class="btn-close" aria-label="${this.escapeAttribute(this.translate('JCLOSE'))}"></button><div class="smartbrowser-preview-media">${this.previewMedia(resource)}</div>`;
+    this.showContentPreview(dialog);
+  }
+
+  showContentPreview(dialog) {
+    if (this.destroyed) return;
+    dialog.querySelector('.btn-close').addEventListener('click', () => dialog.close());
+    window.SmartBrowserDialogDismiss.install(dialog);
+    dialog.addEventListener('close', () => dialog.remove());
+    this.ownDialog(dialog);
+    dialog.showModal();
+  }
+
+  editMedia(resource) {
+    let currentResource = resource;
+    const [initialName, initialExtension] = this.splitFilename(resource.title);
+    const dialog = document.createElement('dialog');
+    dialog.className = 'smartbrowser-preview';
+    const media = this.previewMedia(resource);
     dialog.innerHTML = `<form class="smartbrowser-preview-form com-smartbrowser-editor" method="dialog">
       <div class="smartbrowser-preview-actions">
-        <button type="button" class="btn btn-primary" data-action="save" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="icon-save" aria-hidden="true"></span> ${this.escapeTranslated('JSAVE')}</button>
-        <button type="button" class="btn btn-outline-primary" data-action="apply" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="icon-check" aria-hidden="true"></span> ${this.escapeTranslated('JAPPLY')}</button>
-        <button type="button" class="btn btn-outline-primary" data-action="copy" ${resource.capabilities?.copy ? '' : 'disabled'}><span class="icon-copy" aria-hidden="true"></span> ${this.escapeTranslated('JSAVEASCOPY')}</button>
-        <button type="button" class="btn btn-danger" data-action="cancel"><span class="icon-cancel" aria-hidden="true"></span> ${this.escape(this.translate('COM_SMARTBROWSER_CANCEL'))}</button>
-        <button type="button" class="btn btn-outline-secondary smartbrowser-preview-download" data-action="download"><span class="icon-download" aria-hidden="true"></span> ${this.escape(this.translate('COM_SMARTBROWSER_ACTION_DOWNLOAD'))}</button>
+        <button type="button" class="btn btn-primary" data-action="save" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="fas fa-save" aria-hidden="true"></span> ${this.escapeTranslated('JSAVE')}</button>
+        <button type="button" class="btn btn-outline-primary" data-action="apply" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="fas fa-check" aria-hidden="true"></span> ${this.escapeTranslated('JAPPLY')}</button>
+        <button type="button" class="btn btn-outline-primary" data-action="copy" ${resource.capabilities?.copy ? '' : 'disabled'}><span class="fas fa-copy" aria-hidden="true"></span> ${this.escapeTranslated('JSAVEASCOPY')}</button>
+        <button type="button" class="btn btn-danger" data-action="cancel"><span class="fas fa-times" aria-hidden="true"></span> ${this.escape(this.translate('COM_SMARTBROWSER_CANCEL'))}</button>
+        <button type="button" class="btn btn-outline-secondary smartbrowser-preview-download" data-action="download"><span class="fas fa-download" aria-hidden="true"></span> ${this.escape(this.translate('COM_SMARTBROWSER_ACTION_DOWNLOAD'))}</button>
+        <button type="button" class="btn btn-outline-secondary ms-auto smartbrowser-editor-size"><span class="fas fa-expand" aria-hidden="true"></span></button>
       </div>
       <div class="smartbrowser-preview-card">
         <div class="smartbrowser-preview-tabs" role="tablist">
@@ -276,6 +346,7 @@ export default class MediaActionDriver {
           </dl>
         </section>
       </div></form>`;
+    const size = createEditorSize(dialog, dialog.querySelector('.smartbrowser-editor-size'), this.translate);
     dialog.querySelector('form').addEventListener('submit', (event) => event.preventDefault());
     dialog.querySelectorAll('[data-tab]').forEach((tab) => tab.addEventListener('click', () => {
       dialog.querySelectorAll('[data-tab]').forEach((button) => { button.setAttribute('aria-selected', String(button === tab)); });
@@ -315,8 +386,8 @@ export default class MediaActionDriver {
         await this.reload();
       } catch (error) { Joomla.renderMessages({ error: [error.message] }); }
     });
-    dialog.addEventListener('close', () => dialog.remove());
-    document.body.appendChild(dialog);
+    dialog.addEventListener('close', () => { size.destroy(); dialog.remove(); });
+    this.ownDialog(dialog);
     dialog.showModal();
   }
 

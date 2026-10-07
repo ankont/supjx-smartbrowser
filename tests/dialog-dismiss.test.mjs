@@ -39,7 +39,7 @@ test('every dialog creator installs the shared dismissal rule', async () => {
     '../package/component/media/js/editor-fields.js',
   ];
   const contents = await Promise.all(files.map((file) => readFile(new URL(file, import.meta.url), 'utf8')));
-  assert.equal((contents[0].match(/SmartBrowserDialogDismiss\.install/g) || []).length, 2);
+  assert.equal((contents[0].match(/SmartBrowserDialogDismiss\.install/g) || []).length, 3);
   assert.match(contents[1], /SmartBrowserDialogDismiss\.install/);
   assert.match(contents[2], /SmartBrowserDialogDismiss\.install/);
 });

@@ -2,6 +2,22 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { previewKind } from '../resources/js/adapters/MediaActionDriver.js';
+import MediaActionDriver from '../resources/js/adapters/MediaActionDriver.js';
+
+test('file edit and preview dispatch to distinct dialogs; component previews use a popup', async () => {
+  let result = { metadata: { mimeType: 'image/png' } };
+  const driver = new MediaActionDriver({ execute: async () => result }, {}, async () => {}, key => key);
+  driver.available = () => true;
+  const calls = [];
+  driver.editMedia = resource => calls.push(['edit', resource]);
+  driver.preview = resource => calls.push(['preview', resource]);
+  driver.previewUrl = (url, title) => calls.push(['url', url, title]);
+  await driver.executeUnchecked({ id: 'edit' }, [{ id: 'file' }]);
+  await driver.executeUnchecked({ id: 'preview' }, [{ id: 'file' }]);
+  result = { command: 'previewUrl', url: '/index.php?tmpl=component', title: 'Article' };
+  await driver.executeUnchecked({ id: 'preview' }, [{ id: 'article:1' }]);
+  assert.deepEqual(calls.map(call => call[0]), ['edit', 'preview', 'url']);
+});
 
 test('only browser-viewable media gets an embedded preview', () => {
   const file = (mimeType) => ({ metadata: { mimeType, url: '/media/example' } });

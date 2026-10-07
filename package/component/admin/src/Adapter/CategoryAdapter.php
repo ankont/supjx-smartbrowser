@@ -4,6 +4,7 @@ namespace SuperSoft\Component\Smartbrowser\Administrator\Adapter;
 
 use Joomla\CMS\Language\Text;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\BatchRunner;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\OrderingService;
 
 defined('_JEXEC') or die;
 
@@ -59,20 +60,29 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
 
     public function getActions(array $selection = []): array
     {
-        return [
-            $this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_CATEGORY', 'icon-folder-plus', 'node', true, false, false, false, true),
-            $this->action('edit', 'JACTION_EDIT', 'icon-edit', 'resource', false, true, true, false, false),
-            $this->action('publish', 'JTOOLBAR_PUBLISH', 'icon-publish', 'node', false, true, false, false, false, 'publication'),
-            $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'icon-unpublish', 'node', false, true, false, false, false, 'publication'),
-            $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'icon-archive', 'node', false, true, false, false, false, 'archiveState'),
-            $this->action('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'icon-archive', 'node', false, true, false, false, false, 'archiveState'),
-            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'icon-trash', 'node', false, true),
-        ];
+        return array_values(array_filter([
+            [...$this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_CATEGORY', 'fas fa-plus', 'node', true, false, false, false, true), 'creationRole' => 'item'],
+            $this->canCreateArticle() ? [...$this->action('newArticle', 'COM_SMARTBROWSER_NEW_ARTICLE', 'fas fa-newspaper', 'node', false, false, false, false, true), 'creationRole' => 'contextual'] : null,
+            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true, false, false),
+            $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'node', false, true, false, false, false, 'publication'),
+            $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),
+            $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),
+            $this->action('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),
+            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true),
+        ]));
     }
 
     public function executeAction(string $action, array $selection, array $payload = []): mixed
     {
+        if ($action === 'reorder') return (new OrderingService($this->app))->move($this, $selection, (string) ($payload['direction'] ?? ''), ['category']);
         if ($action === 'batch') return (new BatchRunner($this->app))->run($this, 'categories', $selection, $payload);
+        if ($action === 'newArticle') {
+            $categoryId = $this->categoryId((string) ($payload['nodeId'] ?? ''));
+            if (empty($this->categoryCapabilities($categoryId ?: null)['newArticle'])) {
+                throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+            }
+            return $this->editorResponse('index.php?option=com_content&task=article.add&catid=' . $categoryId);
+        }
         if ($action === 'createChild') {
             $categoryId = $this->categoryId((string) ($payload['nodeId'] ?? ''));
             if (empty($this->categoryCapabilities($categoryId ?: null)['createChild'])) {
@@ -181,7 +191,7 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
                     ['id' => 'created', 'label' => 'COM_SMARTBROWSER_DATE_CREATED', 'source' => 'metadata.created', 'format' => 'date'],
                     ['id' => 'modified', 'label' => 'COM_SMARTBROWSER_DATE_MODIFIED', 'source' => 'metadata.modified', 'format' => 'date'],
                 ]],
-                ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language', 'format' => 'language', 'headerIcon' => 'icon-globe'],
+                ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL', 'source' => 'metadata.language', 'format' => 'language', 'headerIcon' => 'fas fa-globe'],
                 ['id' => 'id', 'label' => 'JGLOBAL_FIELD_ID_LABEL', 'source' => 'metadata.id'],
             ],
             'gridFields' => [['source' => 'metadata.cardSummary']],
@@ -221,4 +231,6 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
             ]],
         ];
     }
+
+    public function getCollectionPresentation(array $resources = []): array { return $this->presentation(); }
 }

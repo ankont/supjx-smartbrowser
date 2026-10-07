@@ -100,7 +100,7 @@
         <div v-if="activeSteps.length" class="resource-batch-summary">
           <template v-for="(step, index) in activeSteps" :key="step.id">
             <div class="resource-batch-sequence-item">
-              <span v-if="index" class="icon-arrow-right resource-batch-sequence-arrow" aria-hidden="true" />
+              <span v-if="index" class="fas fa-arrow-right resource-batch-sequence-arrow" aria-hidden="true" />
               <div class="resource-batch-summary-step">
                 <div class="resource-batch-summary-step-heading" role="heading" aria-level="4">{{ step.title }}</div>
                 <div v-if="step.parameters.length || step.preview" class="resource-batch-summary-params">
@@ -124,11 +124,11 @@
   </dialog>
   <dialog ref="previewDialog" class="resource-batch-preview-dialog" :aria-label="t('COM_SMARTBROWSER_BATCH_VIEW_NAMES')">
     <div class="resource-batch-preview-dialog-head"><strong>{{ t('COM_SMARTBROWSER_BATCH_VIEW_NAMES') }} ({{ previewRows.length }})</strong><button type="button" class="btn-close" :aria-label="t('COM_SMARTBROWSER_CANCEL')" @click="closePreview" /></div>
-    <div class="resource-batch-preview-list"><div v-for="row in previewRows" :key="row.id" class="resource-batch-preview-row"><span :title="row.before">{{ row.before }}</span><span class="icon-arrow-right" aria-hidden="true" /><strong :title="row.after">{{ row.after }}</strong></div></div>
+    <div class="resource-batch-preview-list"><div v-for="row in previewRows" :key="row.id" class="resource-batch-preview-row"><span :title="row.before">{{ row.before }}</span><span class="fas fa-arrow-right" aria-hidden="true" /><strong :title="row.after">{{ row.after }}</strong></div></div>
   </dialog>
   <dialog ref="selectionDialog" class="resource-batch-preview-dialog" :aria-label="t('COM_SMARTBROWSER_SELECTED_ITEMS')">
     <div class="resource-batch-preview-dialog-head"><strong>{{ t('COM_SMARTBROWSER_SELECTED_ITEMS') }}</strong><button type="button" class="btn-close" :aria-label="t('COM_SMARTBROWSER_CANCEL')" @click="closeSelection" /></div>
-    <ul class="resource-batch-selected-list"><li v-for="item in items" :key="item.id"><span :class="item.icon || 'icon-file'" aria-hidden="true" /><span>{{ item.title }}</span></li></ul>
+    <ul class="resource-batch-selected-list"><li v-for="item in items" :key="item.id"><span :class="item.icon || 'fas fa-file'" aria-hidden="true" /><span>{{ item.title }}</span></li></ul>
   </dialog>
 </template>
 

@@ -39,7 +39,7 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
 
         return [[
             'id' => self::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_USERS_ROOT'), 'subtitle' => '',
-            'parentId' => null, 'kind' => 'node', 'type' => 'root', 'icon' => 'icon-users', 'image' => null,
+            'parentId' => null, 'kind' => 'node', 'type' => 'root', 'icon' => 'fas fa-users', 'image' => null,
             'visible' => false, 'selectable' => false, 'bulkSelectable' => false, 'focusable' => false,
             'actionable' => false, 'navigable' => true, 'hasChildren' => $this->hasGroupChildren(0),
             'capabilities' => ['open' => true], 'metadata' => [],
@@ -86,7 +86,7 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
     {
         $this->assertBrowseScope([$nodeId]);
         if ($nodeId === self::ROOT_ID) {
-            return [['id' => self::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_USERS_ROOT'), 'visible' => false]];
+            return [['id' => self::ROOT_ID, 'title' => Text::_('COM_SMARTBROWSER_USERS_ROOT'), 'kind' => 'node', 'type' => 'root', 'icon' => 'fas fa-users', 'visible' => false]];
         }
 
         $group = $this->group($this->groupId($nodeId));
@@ -94,12 +94,13 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         $crumbs = $root ? [] : [[
             'id' => self::ROOT_ID,
             'title' => Text::_('COM_SMARTBROWSER_USERS_ROOT'),
+            'kind' => 'node', 'type' => 'root', 'icon' => 'fas fa-users',
             'visible' => false,
         ]];
         foreach ($this->groups() as $candidate) {
             if ((int) $candidate->lft > (int) $group->lft || (int) $candidate->rgt < (int) $group->rgt) continue;
             if ($root && ((int) $candidate->lft < (int) $root->lft || (int) $candidate->rgt > (int) $root->rgt)) continue;
-            $crumbs[] = ['id' => 'user-group:' . $candidate->id, 'title' => (string) $candidate->title, 'visible' => true];
+            $crumbs[] = ['id' => 'user-group:' . $candidate->id, 'title' => (string) $candidate->title, 'kind' => 'node', 'type' => 'user-group', 'icon' => 'fas fa-users-rectangle', 'visible' => true];
         }
 
         return $crumbs;
@@ -109,16 +110,16 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
     {
         $actions = [
             $this->app->getIdentity()->authorise('core.create', 'com_users')
-                ? ['id' => 'newUser', 'label' => 'COM_SMARTBROWSER_NEW_USER', 'icon' => 'icon-plus', 'scope' => 'node', 'primary' => true, 'requiresSelection' => false, 'single' => false, 'itemsOnly' => false, 'currentNode' => false]
+                ? ['id' => 'newUser', 'label' => 'COM_SMARTBROWSER_NEW_USER', 'icon' => 'fas fa-plus', 'scope' => 'node', 'primary' => true, 'requiresSelection' => false, 'single' => false, 'itemsOnly' => false, 'currentNode' => true, 'creationRole' => 'item']
                 : null,
-            $this->action('edit', 'COM_SMARTBROWSER_EDIT_USER', 'icon-edit', true, true),
-            $this->action('block', 'COM_SMARTBROWSER_BLOCK_USER', 'icon-lock', true, false, 'account-state'),
-            $this->action('unblock', 'COM_SMARTBROWSER_UNBLOCK_USER', 'icon-unlock', true, false, 'account-state'),
-            $this->action('activate', 'COM_SMARTBROWSER_ACTIVATE_USER', 'icon-publish', true, false, 'activation'),
+            $this->action('edit', 'COM_SMARTBROWSER_EDIT_USER', 'fas fa-edit', true, true),
+            $this->action('block', 'COM_SMARTBROWSER_BLOCK_USER', 'fas fa-lock', true, false, 'account-state'),
+            $this->action('unblock', 'COM_SMARTBROWSER_UNBLOCK_USER', 'fas fa-unlock', true, false, 'account-state'),
+            $this->action('activate', 'COM_SMARTBROWSER_ACTIVATE_USER', 'fas fa-check', true, false, 'activation'),
             $this->app->getIdentity()->authorise('core.admin') && $this->app->getIdentity()->authorise('core.edit', 'com_users')
-                ? $this->action('removeFromGroup', 'COM_SMARTBROWSER_REMOVE_FROM_GROUP', 'icon-minus', true, false) : null,
+                ? $this->action('removeFromGroup', 'COM_SMARTBROWSER_REMOVE_FROM_GROUP', 'fas fa-minus', true, false) : null,
             $this->app->getIdentity()->authorise('core.admin') && $this->app->getIdentity()->authorise('core.delete', 'com_users')
-                ? $this->action('delete', 'COM_SMARTBROWSER_DELETE', 'icon-trash', true, false) : null,
+                ? $this->action('delete', 'COM_SMARTBROWSER_DELETE', 'fas fa-trash', true, false) : null,
         ];
         return array_values(array_filter($actions));
     }
@@ -128,7 +129,13 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         if ($action === 'batch') return (new BatchRunner($this->app))->run($this, 'users', $selection, $payload);
         if ($action === 'newUser') {
             if (!$this->app->getIdentity()->authorise('core.create', 'com_users')) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+            $nodeId = (string) ($payload['nodeId'] ?? self::ROOT_ID);
+            $this->assertBrowseScope([$nodeId]);
+            $groupId = $this->groupId($nodeId);
+            if ($nodeId !== self::ROOT_ID && $groupId < 1) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+            if ($groupId > 0) $this->group($groupId);
             $url = 'index.php?option=com_users&task=user.add';
+            if ($groupId > 0) $url .= '&sbGroupId=' . $groupId;
             return ['command' => 'openEditor', 'url' => EditorRoute::link($this->app, $url)];
         }
         if (!in_array($action, ['edit', 'block', 'unblock', 'activate', 'removeFromGroup', 'delete'], true)) {
@@ -268,7 +275,7 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         return [
             'id' => 'user-group:' . $id, 'title' => (string) $group->title, 'subtitle' => Text::_('COM_SMARTBROWSER_USER_GROUP'),
             'parentId' => $this->browseRoot === 'user-group:' . $id ? null : ((int) $group->parent_id > 0 ? 'user-group:' . $group->parent_id : self::ROOT_ID),
-            'kind' => 'node', 'type' => 'user-group', 'icon' => 'icon-folder', 'image' => null,
+            'kind' => 'node', 'type' => 'user-group', 'icon' => 'fas fa-users-rectangle', 'image' => null,
             'selectable' => false, 'bulkSelectable' => false, 'focusable' => true, 'actionable' => false,
             'navigable' => true, 'hasChildren' => $this->hasGroupChildren($id),
             'capabilities' => ['open' => true],
@@ -287,11 +294,11 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
 
         return [
             'id' => 'user:' . $id, 'title' => (string) $user->name, 'subtitle' => (string) $user->username,
-            'parentId' => null, 'kind' => 'item', 'type' => 'user', 'icon' => 'icon-user', 'image' => null,
+            'parentId' => null, 'kind' => 'item', 'type' => 'user', 'icon' => 'fas fa-user', 'image' => null,
             'status' => $blocked ? 0 : 1,
-            'statusPresentation' => ['icon' => $blocked ? 'icon-lock' : 'icon-publish', 'label' => $statusLabel, 'tone' => $blocked ? 'muted' : ($pending ? 'warning' : 'success')],
+            'statusPresentation' => ['icon' => $blocked ? 'fas fa-lock' : 'fas fa-check', 'label' => $statusLabel, 'tone' => $blocked ? 'muted' : ($pending ? 'warning' : 'success')],
             'overlays' => [[
-                'id' => 'status', 'icon' => $blocked ? 'icon-lock' : 'icon-publish', 'label' => $statusLabel,
+                'id' => 'status', 'icon' => $blocked ? 'fas fa-lock' : 'fas fa-check', 'label' => $statusLabel,
                 'tone' => $blocked ? 'muted' : ($pending ? 'warning' : 'success'),
                 'action' => $blocked ? 'unblock' : 'block',
             ]],
@@ -374,6 +381,8 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             ]],
         ];
     }
+
+    public function getCollectionPresentation(array $resources = []): array { return $this->presentation(); }
 
     private function groupOptions(): array
     {

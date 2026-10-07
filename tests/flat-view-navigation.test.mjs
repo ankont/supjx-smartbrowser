@@ -120,6 +120,8 @@ test('flat articles stays available without a dashboard tile', async () => {
   const dashboard = await readFile(new URL('../package/component/admin/src/Support/DashboardProvider.php', import.meta.url), 'utf8');
   const registry = await readFile(new URL('../package/component/admin/src/Adapter/AdapterRegistry.php', import.meta.url), 'utf8');
   assert.match(dashboard, /if \(\$id === 'flat-articles'\) continue/);
+  const menuOptions = await readFile(new URL('../package/component/site/tmpl/dashboard/default.xml', import.meta.url), 'utf8');
+  assert.doesNotMatch(menuOptions, /show_flat_articles/);
   assert.match(registry, /'flat-articles' => new FlatArticleAdapter/);
 });
 
@@ -131,8 +133,8 @@ test('flat view control follows filters and uses a labelled local icon', async (
   assert.match(actions, /resource-filter-buttons[\s\S]*resource-flat-toggle[\s\S]*resource-manager-link/);
   assert.match(actions, /resource-flat-toggle[^>]*:title="t\('COM_SMARTBROWSER_FLAT_VIEW'\)"[^>]*:aria-label="t\('COM_SMARTBROWSER_FLAT_VIEW'\)"/);
   assert.match(actions, /fas fa-layer-group/);
-  assert.match(adapter, /'icon' => \$this->browseRoot \? 'icon-folder' : 'icon-file-alt'/);
-  assert.match(breadcrumb, /v-if="crumb.icon"/);
+  assert.match(adapter, /'icon' => \$this->browseRoot \? 'fas fa-box' : 'fas fa-newspaper'/);
+  assert.match(breadcrumb, /v-if="index === 0" :class="rootIcon"/);
   assert.match(css, /\.resource-actions \.resource-flat-toggle \{[^}]*background: #e8f2fb;/s);
 });
 

@@ -4,7 +4,7 @@
       <thead><tr>
         <th class="resource-type-column resource-details-select-column" scope="col">
           <span class="resource-details-select-controls">
-            <label class="resource-details-select-all">
+            <label v-if="selectionControls" class="resource-details-select-all">
               <input type="checkbox" :checked="allSelected" :aria-label="t('COM_SMARTBROWSER_SELECT_ALL')" @change="$emit('select-all')">
             </label>
             <button v-if="orderingField" type="button" class="resource-ordering-sort" :title="t('JGRID_HEADING_ORDERING')" @click="$emit('sort', orderingField)">
@@ -33,13 +33,11 @@
           :tabindex="canFocusResource(resource) ? 0 : undefined"
           :aria-current="focusedId === resource.id ? 'true' : undefined"
           @click.stop="openMenu = null; $emit('select', resource, $event.ctrlKey || $event.metaKey)"
-          @dblclick.stop="resource.navigable ? $emit('open', resource.id) : resource.activatable && $emit('activate', resource)"
-          @keydown.enter.prevent="resource.navigable ? $emit('open', resource.id) : resource.activatable ? $emit('activate', resource) : $emit('focus', resource)"
+      @dblclick.stop="performDefault(resource, $event)"
+      @keydown.enter.prevent="performDefault(resource)"
         >
           <td class="resource-type-column">
-            <span v-if="!options.detailsThumbnails || !resource.image" :class="resource.icon" aria-hidden="true" />
-            <img v-else class="resource-row-thumbnail" :src="resource.image" :alt="resource.title" @error="imageFailed">
-            <span v-if="options.detailsThumbnails && resource.image" :class="resource.icon" hidden aria-hidden="true" />
+            <ResourceVisual :resource="resource" variant="compact" :allow-image="options.detailsThumbnails" />
             <label v-if="canSelectResource(resource)" class="resource-row-select" :class="{ checked: selectedIds.includes(resource.id) }" @click.stop>
               <input type="checkbox" :checked="selectedIds.includes(resource.id)" :aria-label="resource.title" @change="$emit('select', resource, true)">
             </label>
@@ -81,11 +79,11 @@
           </td>
           <td class="resource-row-actions">
             <button v-if="itemActions(resource).length" type="button" class="resource-row-menu-toggle" :aria-expanded="openMenu === resource.id" :title="t('COM_SMARTBROWSER_ACTIONS')" @click.stop="$emit('focus', resource); toggleMenu(resource.id)">
-              <span class="icon-ellipsis-h" aria-hidden="true" />
+              <span class="fas fa-ellipsis-h" aria-hidden="true" />
             </button>
             <div v-if="openMenu === resource.id" class="resource-item-menu resource-row-menu" @click.stop>
               <strong>{{ resource.title }}</strong>
-              <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="`resource-action-${action.id}`" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
+              <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="[`resource-action-${action.id}`, { 'resource-default-action': action.isDefault }]" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
                 <span :class="action.icon" aria-hidden="true" />
                 {{ t(action.label) }}
               </button>
@@ -102,9 +100,22 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { canActOnResource, canFocusResource, canSelectResource, isContextualResource } from '../core/resourcePolicy.js';
 import { itemMenuActions } from '../core/itemMenuActions.js';
 import { fieldIcons } from '../core/fieldIcons.js';
+import ResourceVisual from './ResourceVisual.vue';
 
-const props = defineProps({ resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, columns: Array, t: Function });
-defineEmits(['select', 'select-all', 'focus', 'open', 'activate', 'sort', 'action']);
+const props = defineProps({ defaultAction: Function, previewAction: Function, selectionControls: { type: Boolean, default: true }, resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, columns: Array, t: Function });
+const emit = defineEmits(['select', 'select-all', 'focus', 'open', 'activate', 'sort', 'action']);
+const performDefault = (resource, event) => {
+  if ((event?.ctrlKey || event?.metaKey) && props.previewAction) {
+    const preview = props.previewAction(resource);
+    if (preview && props.actionAvailable(preview, [resource])) { emit('action', preview, resource); return; }
+  }
+  if (props.defaultAction) {
+    const action = props.defaultAction(resource);
+    if (action && props.actionAvailable(action, [resource])) emit('action', action, resource);
+  } else if (resource.navigable) emit('open', resource.id);
+  else if (resource.activatable) emit('activate', resource);
+  else emit('focus', resource);
+};
 const mediaColumns = [
   { id: 'title', label: 'COM_SMARTBROWSER_NAME' },
   { id: 'size', label: 'COM_SMARTBROWSER_SIZE' },
@@ -126,11 +137,11 @@ const statusColumnStyle = (column) => {
   const width = column.id === 'status' && column.overlays ? statusWidth.value : column.id === 'id' ? idWidth.value : null;
   return width === null ? null : { width: `${width}px`, minWidth: `${width}px` };
 };
-const headerIcon = (column) => column.headerIcon || (Object.hasOwn(fieldIcons, column.id) ? fieldIcons[column.id] : 'icon-info');
+const headerIcon = (column) => column.headerIcon || (Object.hasOwn(fieldIcons, column.id) ? fieldIcons[column.id] : 'fas fa-info');
 const sortField = (column) => column.sortField || column.id;
 const columnLabel = (column) => props.t(column.label);
 const isSortable = (column) => (props.sortFields || mediaColumns).some((field) => field.id === sortField(column));
-const sortIcon = (field) => props.sortBy !== field ? 'icon-sort ms-1' : props.sortDirection === 'asc' ? 'icon-caret-up ms-1' : 'icon-caret-down ms-1';
+const sortIcon = (field) => props.sortBy !== field ? 'fas fa-sort ms-1' : props.sortDirection === 'asc' ? 'fas fa-caret-up ms-1' : 'fas fa-caret-down ms-1';
 const formatSize = (bytes) => !bytes ? '' : `${(bytes / 1024).toFixed(2)}KB`;
 const dimensions = (resource) => resource.metadata.width && resource.metadata.height ? `${resource.metadata.width}px \u00d7 ${resource.metadata.height}px` : '';
 const formatDate = (value) => {
@@ -156,20 +167,14 @@ const cellTitle = (resource, column) => column.id === 'location'
   ? String(resource.metadata?.locationPath || cell(resource, column) || '')
   : column.format === 'status' ? status(resource).label : String(cell(resource, column) || '');
 const status = (resource) => ({
-  icon: resource.statusPresentation?.icon || 'icon-question-circle',
+  icon: resource.statusPresentation?.icon || 'fas fa-question-circle',
   label: resource.statusPresentation?.label || cell(resource, { source: 'metadata.stateLabel' }),
   class: `status-${resource.statusPresentation?.tone || 'neutral'}`,
 });
 const statusOverlay = (resource) => resource.overlays?.find((overlay) => overlay.id === 'status') || {};
 const openMenu = ref(null);
-const imageFailed = (event) => {
-  event.target.hidden = true;
-  if (event.target.nextElementSibling) event.target.nextElementSibling.hidden = false;
-};
 const toggleMenu = (id) => { openMenu.value = openMenu.value === id ? null : id; };
-const itemActions = (resource) => canActOnResource(resource)
-  ? itemMenuActions(props.actions, resource, props.actionAvailable)
-  : [];
+const itemActions = resource => itemMenuActions(props.actions, resource, props.actionAvailable, props.defaultAction?.(resource));
 const overlayAction = (overlay, resource) => canActOnResource(resource)
   && resource.interactiveOverlays !== false
   ? props.actions.find((action) => action.id === overlay.action && props.actionAvailable(action, [resource]))

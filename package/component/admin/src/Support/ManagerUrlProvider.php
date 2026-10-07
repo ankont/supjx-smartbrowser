@@ -13,6 +13,7 @@ final class ManagerUrlProvider
         'flat-media' => 'index.php?option=com_media',
         'articles' => 'index.php?option=com_content&view=articles',
         'flat-articles' => 'index.php?option=com_content&view=articles',
+        'featured-articles' => 'index.php?option=com_content&view=featured',
         'categories' => 'index.php?option=com_categories&view=categories&extension=com_content',
         'flat-categories' => 'index.php?option=com_categories&view=categories&extension=com_content',
         'tags' => 'index.php?option=com_tags&view=tags',
@@ -25,12 +26,12 @@ final class ManagerUrlProvider
         'flat-users' => 'index.php?option=com_users&view=users',
     ];
 
-    public static function for(CMSApplicationInterface $app, string $adapter, bool $featuredOnly = false): ?string
+    public static function for(CMSApplicationInterface $app, string $adapter): ?string
     {
         if (!isset(self::LINKS[$adapter])) return null;
         $component = match ($adapter) {
             'media', 'flat-media' => 'com_media',
-            'articles', 'flat-articles', 'articles-by-tag', 'flat-articles-by-tag' => 'com_content',
+            'articles', 'flat-articles', 'featured-articles', 'articles-by-tag', 'flat-articles-by-tag' => 'com_content',
             'categories', 'flat-categories' => 'com_categories',
             'tags', 'flat-tags' => 'com_tags',
             'menus', 'flat-menus' => 'com_menus',
@@ -38,9 +39,6 @@ final class ManagerUrlProvider
         };
         $identity = $app->getIdentity();
         if (!$identity->authorise('core.login.admin') || !$identity->authorise('core.manage', $component)) return null;
-        $url = $adapter === 'flat-articles' && $featuredOnly
-            ? 'index.php?option=com_content&view=articles&filter[featured]=1'
-            : self::LINKS[$adapter];
-        return AdministratorRoute::link($app, $url);
+        return AdministratorRoute::link($app, self::LINKS[$adapter]);
     }
 }
