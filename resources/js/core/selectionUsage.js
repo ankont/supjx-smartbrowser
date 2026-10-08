@@ -4,6 +4,8 @@ const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringif
 const empty = value => value === null || value === undefined || typeof value === 'string' && !value.trim();
 const builtinEditors = new Set(['text', 'textarea', 'boolean', 'select', 'number', 'resource']);
 
+export const capabilityDisabled = (definition, values) => Boolean(definition.disabledWhen && own(values || {}, definition.disabledWhen.key) && values[definition.disabledWhen.key] === definition.disabledWhen.equals);
+
 export function applicableCapabilities(resource, profile = {}) {
   if (!resource || resource.unavailable || !profile || typeof profile !== 'object') return [];
   const definitions = Array.isArray(resource.selectionCapabilities) ? resource.selectionCapabilities : [];
@@ -62,12 +64,16 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
       if (!own(state, definition.key)) state[definition.key] = copy(own(initialUsage[resource.id] || {}, definition.key)
         ? initialUsage[resource.id][definition.key] : definition.default ?? null);
     }
+    for (const definition of definitions(resource)) {
+      if (capabilityDisabled(definition, state)) state[definition.key] = copy(definition.inactiveValue ?? null);
+    }
     return copy(state);
   }
   function set(resource, key, value) {
     if (!definitions(resource).some(definition => definition.key === key)) return;
     get(resource);
     values.get(resource.id)[key] = copy(value);
+    get(resource);
   }
   async function validate(resources) {
     const errors = {};
@@ -78,7 +84,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
       const result = {};
       for (const definition of definitions(resource)) {
         const value = current[definition.key];
-        let error = valueError(definition, value);
+        let error = valueError(capabilityDisabled(definition, current) ? { ...definition, required: false } : definition, value);
         if (!error && definition.type === 'resource' && !empty(value)) {
           const reference = normalizeReference(value);
           const picker = definition.picker || {};

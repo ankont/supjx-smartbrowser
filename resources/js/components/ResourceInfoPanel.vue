@@ -2,17 +2,16 @@
   <aside class="resource-info-panel" :class="{ 'has-usage': usageDefinitions?.length, 'showing-usage': usageDefinitions?.length && tab === 'usage' }">
     <template v-if="resource">
       <div v-if="usageDefinitions?.length" class="resource-info-tabs" role="tablist">
-        <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="tab = 'usage'">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
-        <button type="button" role="tab" :aria-selected="tab === 'info'" @click="tab = 'info'">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
+        <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="selectTab('usage')">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
+        <button type="button" role="tab" :aria-selected="tab === 'info'" @click="selectTab('info')">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
       </div>
-      <div ref="previewElement" class="resource-info-preview">
-        <ResourceVisual :resource="resource" />
-      </div>
+      <LightweightResourceVisual ref="previewElement" :resource="resource" :definitions="usageDefinitions" :values="usageValues" :errors="usageErrors" :resolve-reference="resolveReference" :can-preview="canPreview" :editable="tab === 'usage'" :t="t" @preview="$emit('preview')" @change="(key, value) => $emit('usage-change', key, value)">
+        <template #actions>
+          <button v-for="action in previewActions" :key="action.id" type="button" :disabled="actionBusy" :title="t(action.label)" :aria-label="t(action.label)" @click="runPreviewAction(action)"><span :class="action.icon || 'fas fa-bolt'" aria-hidden="true" /></button>
+        </template>
+      </LightweightResourceVisual>
       <h3>{{ resource.title }}</h3>
-      <div v-if="previewActions?.length" v-show="!usageDefinitions?.length || tab === 'info'" class="resource-info-preview-actions">
-        <button v-for="action in previewActions" :key="action.id" type="button" class="btn btn-outline-secondary" :disabled="actionBusy" :title="t(action.label)" @click="runPreviewAction(action)"><span :class="action.icon || 'fas fa-bolt'" aria-hidden="true" /> {{ t(action.label) }}</button>
-      </div>
-      <SelectionUsageEditor v-if="usageDefinitions?.length && tab === 'usage'" :key="resource.id" :definitions="usageDefinitions" :values="usageValues" :errors="usageErrors" :resource="resource" :t="t" :editors="usageEditors" :resolve-reference="resolveReference" @change="(key, value) => $emit('usage-change', key, value)" />
+      <SelectionUsageEditor v-if="usageDefinitions?.length && tab === 'usage'" :key="resource.id" :definitions="formDefinitions" :values="usageValues" :errors="usageErrors" :resource="resource" :t="t" :editors="usageEditors" :resolve-reference="resolveReference" @change="(key, value) => $emit('usage-change', key, value)" />
       <template v-else>
       <dl v-if="fields?.length">
         <div v-for="field in visibleFields" :key="`${field.source}-${field.label}`" v-show="fieldValue(field) !== '' && fieldValue(field) !== null && fieldValue(field) !== undefined">
@@ -74,23 +73,28 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { iconForField } from '../core/fieldIcons.js';
-import ResourceVisual from './ResourceVisual.vue';
+import LightweightResourceVisual from './LightweightResourceVisual.vue';
+import { thumbnailCapabilities } from '../core/lightweightVisual.js';
 import SelectionUsageEditor from './SelectionUsageEditor.vue';
 
-const props = defineProps({ resource: Object, fields: Array, t: Function, usageDefinitions: Array, usageValues: Object, usageErrors: Object, usageEditors: Object, resolveReference: Function, previewActions: Array, previewContext: Object, usageRevision: Number });
-defineEmits(['usage-change']);
+const props = defineProps({ resource: Object, fields: Array, t: Function, usageDefinitions: Array, usageValues: Object, usageErrors: Object, usageEditors: Object, resolveReference: Function, previewActions: Array, previewContext: Object, usageRevision: Number, canPreview: Boolean });
+defineEmits(['usage-change', 'preview']);
+const formDefinitions = computed(() => (props.usageDefinitions || []).filter(definition => !thumbnailCapabilities([definition]).length));
 const tab = ref('info');
+const preferredTab = ref('usage');
+const selectTab = value => { preferredTab.value = value; tab.value = value; };
 const actionBusy = ref(false);
 const previewElement = ref(null);
 let previewAbort;
 watch(() => props.resource?.id, () => previewAbort?.abort());
 onBeforeUnmount(() => previewAbort?.abort());
-watch(() => [props.resource?.id, props.usageDefinitions?.length, props.usageRevision], () => { tab.value = props.usageDefinitions?.length ? 'usage' : 'info'; }, { immediate: true });
+watch(() => Boolean(props.usageDefinitions?.length), available => { tab.value = available ? preferredTab.value : 'info'; }, { immediate: true });
+watch(() => props.usageRevision, () => { if (props.usageDefinitions?.length) tab.value = 'usage'; });
 async function runPreviewAction(action) {
   actionBusy.value = true;
   previewAbort = new AbortController();
   const signal = previewAbort.signal;
-  try { await action.run({ ...props.previewContext, previewElement: previewElement.value, signal }); }
+  try { await action.run({ ...props.previewContext, previewElement: previewElement.value?.element, signal }); }
   catch (error) { if (!signal.aborted) Joomla.renderMessages({ error: [error.message || props.t('COM_SMARTBROWSER_USAGE_INVALID')] }); }
   finally { actionBusy.value = false; }
 }

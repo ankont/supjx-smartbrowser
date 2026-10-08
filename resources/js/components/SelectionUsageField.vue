@@ -1,7 +1,7 @@
 <template>
   <div class="resource-usage-field">
     <label v-if="definition.editor !== 'boolean'" :for="fieldId">{{ t(definition.label) }}<span v-if="definition.required" aria-hidden="true"> *</span></label>
-    <input v-if="definition.editor === 'text'" :id="fieldId" class="form-control" type="text" :value="value ?? ''" :required="definition.required" :aria-invalid="Boolean(error)" @input="change($event.target.value)">
+    <input v-if="definition.editor === 'text'" :id="fieldId" class="form-control" type="text" :value="value ?? ''" :disabled="inactive" :required="definition.required && !inactive" :aria-invalid="Boolean(error)" @input="change($event.target.value)">
     <textarea v-else-if="definition.editor === 'textarea'" :id="fieldId" class="form-control" rows="3" :value="value ?? ''" :required="definition.required" :aria-invalid="Boolean(error)" @input="change($event.target.value)" />
     <label v-else-if="definition.editor === 'boolean'" class="resource-usage-check">
       <input :id="fieldId" class="form-check-input" type="checkbox" :checked="value === true" @change="change($event.target.checked)">{{ t(definition.label) }}
@@ -31,7 +31,7 @@
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import { normalizeReference } from '../core/selectionUsage.js';
+import { capabilityDisabled, normalizeReference } from '../core/selectionUsage.js';
 const props = defineProps({ definition: Object, resource: Object, value: null, values: Object, error: String, t: Function, editors: Object, resolveReference: Function });
 const emit = defineEmits(['change']);
 const fieldId = `sb-usage-${Math.random().toString(36).slice(2)}`;
@@ -41,6 +41,7 @@ const picking = ref(false);
 const localError = ref('');
 const customContainer = ref(null);
 const customEditor = computed(() => props.editors?.[props.definition.editor]);
+const inactive = computed(() => capabilityDisabled(props.definition, props.values));
 let editorInstance, abort, generation = 0, disposed = false;
 const change = value => { localError.value = ''; emit('change', value); };
 const clear = () => { referenceMode.value = 'auto'; change(null); };

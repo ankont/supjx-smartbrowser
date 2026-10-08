@@ -479,3 +479,9 @@ and closed/open headings with submenus.
 ### Editor button integrations
 
 When `replace_media` or `replace_media_field` is enabled, the native Joomla Media editor button uses the existing SmartBrowser Picker with image alt/decorative/loading and PDF thumbnail usage options. `replace_articles` also routes the native Article button through SmartBrowser. Only buttons already exposed by the native plugins are replaced, preserving their permission checks. Editors using Joomla's editor action registry (including TinyMCE and JCE) share this integration. The integration inserts resource HTML into the editor; the generic Picker still returns normalized resources and usage values only.
+### Lightweight Information / Usage Visual
+
+The pane renders a constrained image or clean icon, independently of browser-card badges, overlays and status decorations. Full Preview uses the existing resource action/modal and always targets the original selected resource.
+
+Resource-reference capabilities may declare `visualRole: 'thumbnail'`. Applicable capabilities use compact add/change/remove actions instead of generic form fields, retaining profile defaults, validation and normalized `{ adapter, id }` values. Explicit references are resolved for the pane visual only; natural thumbnails/posters/images and finally icons provide fallback. Existing `registerPreviewAction` providers appear as contextual visual actions in both pane tabs, with the lightweight DOM surface supplied as `previewElement`.
+Image and PDF resources both expose the optional `media.thumbnailOverride` capability. It changes only the lightweight pane representation; image insertion and full Preview still use the original resource. Information visuals use available width and 150px height; Usage visuals remain compact, and both preserve image transparency.

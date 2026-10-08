@@ -137,6 +137,10 @@ export default class MediaActionDriver {
     if (resource?.updated || resource?.deleted) await this.reload();
   }
 
+  canPreview(resource) {
+    return !resource?.metadata?.mimeType || Boolean(previewKind(resource));
+  }
+
   openEditor(url) {
     if (this.destroyed) return;
     if (this.editorMode === 'page') {

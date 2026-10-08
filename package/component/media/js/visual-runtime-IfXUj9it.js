@@ -828,6 +828,9 @@ var B = class {
 		}
 		e.id === "preview" && this.preview(i), e.id === "edit" && i?.metadata?.mimeType && this.editMedia(i), e.id === "share" && this.share(i), e.id === "download" && this.download(i), (i?.updated || i?.deleted) && await this.reload();
 	}
+	canPreview(e) {
+		return !e?.metadata?.mimeType || !!ze(e);
+	}
 	openEditor(e) {
 		if (this.destroyed) return;
 		if (this.editorMode === "page") {

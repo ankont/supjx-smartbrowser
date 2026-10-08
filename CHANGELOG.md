@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.1.7 - 2026-10-08
+
+- Restrict thumbnail editing actions to Usage options, preserving the effective visual in Information.
+- Keep the chosen pane tab across resource changes, temporarily falling back to Information when Usage options are unavailable.
+- Anchor contextual buttons to the pane visual area's outer edge without extra padding or image margins; overlap is allowed. Preview remains available in both tabs.
+- Separate Preview on the leading edge from editing actions on the trailing edge, with 4px edge spacing.
+- Link decorative-image usage to alternative text: decorative selection clears and disables alt text, including initial and returned usage values.
+
+## 2.1.6 - 2026-10-08
+
+- Expand the Information visual to available width and 150px height while retaining compact Usage dimensions and transparent backgrounds.
+- Use an eye icon for full-resource Preview, distinct from image zoom.
+- Offer the existing thumbnail override capability for image resources as well as PDFs; the original image remains the full Preview and insertion target.
+
+## 2.1.5 - 2026-10-08
+
+- Separate compact Information/Usage visuals from composite browser cards and full Preview modals.
+- Reuse the existing Preview dispatcher from contextual visual actions; unsupported file previews are omitted.
+- Present thumbnail reference capabilities with `visualRole: 'thumbnail'` as compact add/change/remove actions, resolving overrides without changing selected-resource identity.
+- Reuse registered provider preview actions on the lightweight visual in both pane tabs.
+
 ## 2.1.4 - 2026-10-07
 
 - Put Usage options before Information, with a compact preview above the resource title; preserve the regular Information preview/title layout.

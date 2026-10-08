@@ -128,7 +128,7 @@
           <ResourceInfoPanel v-if="showInfo" :resource="focusedResource" :fields="state.presentation.infoFields" :t="t"
             :usage-definitions="usageDefinitions" :usage-values="usageValues" :usage-errors="usageErrors[focusedResource?.id] || {}"
             :usage-editors="pickerContext?.editors" :resolve-reference="resolveUsageReference" :usage-revision="usageRevision"
-            :preview-actions="previewActions" :preview-context="previewContext" @usage-change="setUsage" />
+            :preview-actions="previewActions" :preview-context="previewContext" :can-preview="Boolean(resourcePreview(focusedResource)) && driver.canPreview(focusedResource) && !state.busy" @preview="runItemAction(resourcePreview(focusedResource), focusedResource)" @usage-change="setUsage" />
         </div>
       </main>
     </div>
@@ -322,6 +322,7 @@ const resourcePreview = resource => resourcePreviewAction(resource, options.mode
 const itemActionAvailable = (action, target) => !state.busy && (action.local ? target.every(resource => resourceDefault(resource)?.id === action.id) : driver.available(action, target));
 const activate = resource => { const action = resourceDefault(resource); if (action) runItemAction(action, resource); };
 const runItemAction = (action, resource) => {
+  if (!action || !resource) return;
   if (!itemActionAvailable(action, [resource])) return;
   if (action.id === 'browseOpen') return load(resource.id);
   if (action.id === 'pickerSelect') return completeSelection([resource]);

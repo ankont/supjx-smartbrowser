@@ -2283,6 +2283,18 @@ dialog:is(.smartbrowser-editor, .smartbrowser-preview, .smartbrowser-picker, .co
 html body dialog.smartbrowser-picker.is-maximized { position: fixed !important; width: 100vw !important; height: 100dvh !important; max-width: none !important; max-height: none !important; margin: 0 !important; inset: 0 !important; transform: none !important; border-radius: 0; box-sizing: border-box; }
 .resource-info-panel.showing-usage .resource-info-preview { width: 96px; min-height: 0; margin: 10px auto 14px; }
 .resource-info-panel.showing-usage h3 { text-align: center; }
+.resource-lightweight-visual { position: relative; display: grid; place-items: center; height: 150px; max-width: 100%; border: 1px solid var(--sb-border-soft); border-radius: 4px; background: transparent; }
+.resource-info-panel.showing-usage .resource-lightweight-visual { width: 144px; height: 112px; margin-inline: auto; }
+.resource-lightweight-visual img { width: 100%; height: 100%; object-fit: contain; min-height: 0; }
+.resource-lightweight-icon { font-size: 48px; color: hsl(var(--hue, 210), 20%, 58%); }
+.resource-lightweight-area { position: relative; min-width: 0; }
+.resource-lightweight-actions { position: absolute; top: 0; inset-inline-end: 4px; display: flex; gap: 3px; flex-wrap: wrap; max-width: calc(100% - 38px); }
+.resource-lightweight-preview-action { inset-inline-start: 4px; inset-inline-end: auto; }
+.resource-lightweight-actions button { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 1px solid #8c969f; border-radius: 4px; background: #26323dcc; color: #fff; font-size: 13px; }
+.resource-lightweight-actions button:hover, .resource-lightweight-actions button:focus-visible { background: var(--sb-primary, #386ca1); }
+.resource-lightweight-actions button.selected { background: #198754cc; }
+.resource-lightweight-actions button.selected:hover { background: #198754; }
+.resource-lightweight-actions button:disabled { opacity: .5; }
 
 @media (max-width: 1100px) {
   .smartbrowser-layout { grid-template-columns: minmax(190px, 230px) 14px minmax(0, 1fr); }
