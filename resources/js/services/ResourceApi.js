@@ -49,8 +49,10 @@ export default class ResourceApi {
   collection(items, options = {}) {
     const url = new URL(this.options.apiBaseUrl, window.location.href);
     url.searchParams.set('task', 'api.collection');
-    url.searchParams.set('adapter', this.options.adapter);
+    if (this.options.adapter) url.searchParams.set('adapter', this.options.adapter);
     url.searchParams.set('mode', this.options.mode || 'manage');
+    if (this.options.browseRoot) url.searchParams.set('browseRoot', this.options.browseRoot);
+    if (this.options.flatScope) url.searchParams.set('flatScope', this.options.flatScope);
     return this.request(url, { method: 'POST', body: JSON.stringify({ ...options, items, [this.options.csrfToken]: 1 }) });
   }
 

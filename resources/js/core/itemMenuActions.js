@@ -1,4 +1,4 @@
-export const itemMenuActions = (actions, resource, available, defaultAction = null) => {
+export const itemMenuActions = (actions, resource, available, defaultAction = null, modifiedAction = null) => {
   if (!resource?.actionable) return defaultAction ? [{ ...defaultAction, isDefault: true }] : [];
 
   const selection = [resource];
@@ -6,6 +6,7 @@ export const itemMenuActions = (actions, resource, available, defaultAction = nu
   const renderedGroups = new Set();
 
   for (const action of actions || []) {
+    if (resource.collectionActions && !action.collectionCommand && !resource.collectionActions.some(candidate => candidate.id === action.id)) continue;
     if (!action.requiresSelection) continue;
     if (action.id === 'checkin' && !available(action, selection)) continue;
     if (action.id === 'removeFromGroup' && !available(action, selection)) continue;
@@ -22,5 +23,7 @@ export const itemMenuActions = (actions, resource, available, defaultAction = nu
     result.push(enabled || group.find((candidate) => candidate.id === overlayAction) || group[0]);
   }
 
-  return defaultAction ? [{ ...defaultAction, isDefault: true }, ...result.filter(action => action.id !== defaultAction.id)] : result;
+  if (modifiedAction && !result.some(action => action.id === modifiedAction.id) && modifiedAction.id !== defaultAction?.id) result.push(modifiedAction);
+  const entries = defaultAction ? [{ ...defaultAction, isDefault: true }, ...result.filter(action => action.id !== defaultAction.id)] : result;
+  return entries.map(action => !action.isDefault && action.id === modifiedAction?.id ? { ...action, isModified: true } : action);
 };

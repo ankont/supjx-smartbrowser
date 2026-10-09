@@ -12,7 +12,7 @@ use SuperSoft\Component\Smartbrowser\Administrator\Support\MediaBatchRunner;
 
 defined('_JEXEC') or die;
 
-final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface
+final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface, ReadableResourceAdapterInterface
 {
     private ApiModel $apiModel;
     private MediaModel $mediaModel;
@@ -116,6 +116,21 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             'url'     => (bool) ($options['url'] ?? true),
             'content' => (bool) ($options['content'] ?? false),
         ])));
+    }
+
+    public function getReadableResource(string $resourceId): array
+    {
+        $this->assertBrowseScope([$resourceId]);
+        [$adapter, $path] = $this->splitId($resourceId);
+        $provider = $this->apiModel->getAdapter($adapter);
+        $file = $this->withAllMediaTypes(fn () => $this->apiModel->getFile($adapter, $path, ['url' => false, 'content' => false]));
+        $file->url = MediaReadVisibility::assertPublic($provider, $path, $file);
+        $resource = $this->normalize($file);
+        $resource['capabilities'] = [];
+        $resource['metadata'] = array_intersect_key($resource['metadata'], array_flip([
+            'id', 'filesystem', 'filesystemPath', 'relativePath', 'parentPath', 'mimeType', 'type', 'url', 'size', 'width', 'height', 'extension', 'created', 'modified',
+        ]));
+        return $resource;
     }
 
     public function getBreadcrumb(string $nodeId): array

@@ -149,7 +149,7 @@ test('breadcrumb keeps its root as an icon and tree handle stays outside flat vi
   assert.match(breadcrumb, /index === 0 && iconOnlyRoot \? crumb\.title/);
   assert.match(breadcrumb, /v-if="index !== 0 \|\| !iconOnlyRoot" class="resource-breadcrumb-title"/);
   assert.match(app, /:icon-only-root="!flatActive && state\.breadcrumb\.length > 1"/);
-  assert.match(app, /v-if="!flatActive" type="button" class="resource-sidebar-handle"/);
+  assert.match(app, /v-if="!flatActive \|\| collectionMode" type="button" class="resource-sidebar-handle"/);
   assert.match(app, /treeCollapsed = !treeCollapsed/);
   assert.match(css, /\.smartbrowser-layout\.tree-collapsed \{ grid-template-columns: 0 14px minmax\(0, 1fr\); \}/);
   for (const key of ['COM_SMARTBROWSER_HIDE_TREE', 'COM_SMARTBROWSER_SHOW_TREE']) assert.match(browser, new RegExp(`'${key}'`));

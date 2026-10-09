@@ -26,6 +26,34 @@ class ApiController extends BaseController
             if (!Session::checkToken('json')) throw new \RuntimeException('Invalid token', 403);
             $body = json_decode($this->input->json->getRaw(), true, 512, JSON_THROW_ON_ERROR);
             if (!is_array($body['items'] ?? null)) throw new \InvalidArgumentException('Invalid collection.', 400);
+            if (!empty($body['referenceItems'])) {
+                $collection = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::class;
+                $entries = $collection::entries($body['items'], ['homogeneous' => !empty($body['homogeneous'])]);
+                if (($body['operation'] ?? 'resolve') === 'reorder') {
+                    if ($this->input->getCmd('mode') === 'readonly') throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+                    $keys = array_map(static fn ($entry) => $collection::key($entry['selection']), $entries);
+                    $selection = $body['selection'] ?? [];
+                    if (!is_array($selection) || array_diff($selection, $keys)) throw new \InvalidArgumentException('Invalid ordering selection.', 400);
+                    $ordered = \SuperSoft\Component\Smartbrowser\Administrator\Support\OrderingSteps::orderedIds($keys, $selection, (string) ($body['direction'] ?? ''));
+                    $byKey = array_combine($keys, $entries);
+                    return ['items' => $collection::jsonEntries(array_map(static fn ($key) => $byKey[$key], $ordered))];
+                }
+                if (($body['operation'] ?? 'resolve') !== 'resolve') throw new \InvalidArgumentException('Invalid collection operation.', 400);
+                $resources = $collection::resolveEntries($entries, function ($id, $ids) use ($collection) {
+                    $root = $id === preg_replace('/^flat-/', '', $this->input->getCmd('adapter')) ? $this->input->getString('browseRoot') : '';
+                    $adapter = (new AdapterRegistry($this->app))->get($id, $root ?: null);
+                    $params = \Joomla\CMS\Component\ComponentHelper::getParams('com_smartbrowser');
+                    $resources = $collection::resolve($adapter, $ids, $this->app->getIdentity(), $this->app->isClient('site'));
+                    return (new ResourceVisualDecorator($this->app))->decorate([
+                        'resources' => $resources,
+                        'actions' => $this->input->getCmd('mode') === 'readonly' ? [] : $adapter->getActions([]),
+                        'presentation' => method_exists($adapter, 'getCollectionPresentation') ? $adapter->getCollectionPresentation($resources) : [],
+                        'visualSettings' => \SuperSoft\Component\Smartbrowser\Administrator\Support\VisualOptions::forAdapter($id, $params),
+                        'imageBackground' => $params->get('image_background', 'auto'),
+                    ], $id);
+                });
+                return ['items' => $collection::jsonEntries($entries), 'resources' => $resources, 'actions' => [], 'presentation' => ['columns' => [['id' => 'title', 'label' => 'COM_SMARTBROWSER_NAME']]]];
+            }
             $adapter = $this->getAdapter();
             $ids = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::identifiers($adapter->getId(), $body['items']);
             if (($body['operation'] ?? 'resolve') === 'reorder') {

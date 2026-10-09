@@ -7,7 +7,7 @@ use Joomla\CMS\Factory;
 
 defined('_JEXEC') or die;
 
-final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface
+final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface, StoredSelectionReadableAdapterInterface
 {
     private const SOURCES = ['tags', 'articles-by-tag', 'menus', 'users', 'media'];
     private ?string $browseRoot = null;
@@ -251,6 +251,19 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
     {
         if ($resourceId === $this->rootId()) return $this->getRoots()[0];
         return $this->source->getResource($resourceId, $options);
+    }
+
+    public function getReadableResource(string $resourceId): array
+    {
+        if (!$this->source instanceof ReadableResourceAdapterInterface) throw new \RuntimeException('No safe read policy', 403);
+        return $this->source->getReadableResource($resourceId);
+    }
+
+    public function getStoredReadableResource(string $resourceId, \SuperSoft\Component\Smartbrowser\Administrator\Support\StoredSelectionReadContext $context): array
+    {
+        // Scoped user references cannot be retyped to bypass their stored adapter identity.
+        if ($this->source instanceof StoredSelectionReadableAdapterInterface) throw new \RuntimeException('No stored wrapper policy', 403);
+        return $this->getReadableResource($resourceId);
     }
 
     public function getBreadcrumb(string $nodeId): array

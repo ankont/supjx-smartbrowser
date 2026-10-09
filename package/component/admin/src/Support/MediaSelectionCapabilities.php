@@ -8,8 +8,6 @@ final class MediaSelectionCapabilities
     public static function forResource(bool $isNode, string $mime): array
     {
         if ($isNode) return [];
-        $thumbnail = ['key' => 'media.thumbnailOverride', 'type' => 'resource', 'editor' => 'resource', 'visualRole' => 'thumbnail', 'label' => 'COM_SMARTBROWSER_USAGE_THUMBNAIL', 'default' => null,
-            'pickerLabel' => 'COM_SMARTBROWSER_USAGE_PICK_IMAGE', 'picker' => ['adapter' => 'media', 'selectionTarget' => 'item', 'allowedResourceTypes' => ['image']]];
         if (str_starts_with($mime, 'image/')) return [
             ['key' => 'media.alt', 'type' => 'string', 'editor' => 'text', 'label' => 'COM_SMARTBROWSER_USAGE_ALT', 'default' => '', 'disabledWhen' => ['key' => 'media.decorative', 'equals' => true], 'inactiveValue' => '', 'validation' => ['maxLength' => 2048]],
             ['key' => 'media.decorative', 'type' => 'boolean', 'editor' => 'boolean', 'label' => 'COM_SMARTBROWSER_USAGE_DECORATIVE', 'default' => false],
@@ -18,9 +16,7 @@ final class MediaSelectionCapabilities
                 ['value' => 'lazy', 'label' => 'COM_SMARTBROWSER_USAGE_LAZY'],
                 ['value' => 'eager', 'label' => 'COM_SMARTBROWSER_USAGE_EAGER'],
             ]],
-            $thumbnail,
         ];
-        if ($mime === 'application/pdf') return [$thumbnail];
         return [];
     }
 }

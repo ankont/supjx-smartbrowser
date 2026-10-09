@@ -28,18 +28,18 @@
       <tbody>
         <tr
           v-for="resource in resources"
-          :key="resource.id"
-          :class="{ selected: selectedIds.includes(resource.id), focused: focusedId === resource.id, focusable: canFocusResource(resource), contextual: isContextualResource(resource) }"
+          :key="resourceKey(resource)"
+          :class="{ selected: selectedIds.includes(resourceKey(resource)), focused: focusedId === resourceKey(resource), focusable: canFocusResource(resource), contextual: isContextualResource(resource) }"
           :tabindex="canFocusResource(resource) ? 0 : undefined"
-          :aria-current="focusedId === resource.id ? 'true' : undefined"
+          :aria-current="focusedId === resourceKey(resource) ? 'true' : undefined"
           @click.stop="openMenu = null; $emit('select', resource, $event.ctrlKey || $event.metaKey)"
       @dblclick.stop="performDefault(resource, $event)"
       @keydown.enter.prevent="performDefault(resource)"
         >
           <td class="resource-type-column">
             <ResourceVisual :resource="resource" variant="compact" :allow-image="options.detailsThumbnails" />
-            <label v-if="canSelectResource(resource)" class="resource-row-select" :class="{ checked: selectedIds.includes(resource.id) }" @click.stop>
-              <input type="checkbox" :checked="selectedIds.includes(resource.id)" :aria-label="resource.title" @change="$emit('select', resource, true)">
+            <label v-if="canSelectResource(resource)" class="resource-row-select" :class="{ checked: selectedIds.includes(resourceKey(resource)) }" @click.stop>
+              <input type="checkbox" :checked="selectedIds.includes(resourceKey(resource))" :aria-label="resource.title" @change="$emit('select', resource, true)">
             </label>
           </td>
           <th class="resource-title-cell" scope="row" :title="resource.title">
@@ -78,12 +78,12 @@
             </span>
           </td>
           <td class="resource-row-actions">
-            <button v-if="itemActions(resource).length" type="button" class="resource-row-menu-toggle" :aria-expanded="openMenu === resource.id" :title="t('COM_SMARTBROWSER_ACTIONS')" @click.stop="$emit('focus', resource); toggleMenu(resource.id)">
+            <button v-if="itemActions(resource).length" type="button" class="resource-row-menu-toggle" :aria-expanded="openMenu === resourceKey(resource)" :title="t('COM_SMARTBROWSER_ACTIONS')" @click.stop="$emit('focus', resource); toggleMenu(resourceKey(resource))">
               <span class="fas fa-ellipsis-h" aria-hidden="true" />
             </button>
-            <div v-if="openMenu === resource.id" class="resource-item-menu resource-row-menu" @click.stop>
+            <div v-if="openMenu === resourceKey(resource)" class="resource-item-menu resource-row-menu" @click.stop>
               <strong>{{ resource.title }}</strong>
-              <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="[`resource-action-${action.id}`, { 'resource-default-action': action.isDefault }]" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
+              <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="[`resource-action-${action.id}`, { 'resource-default-action': action.isDefault, 'resource-modified-action': action.isModified }]" :title="action.isDefault ? t('COM_SMARTBROWSER_DOUBLE_CLICK') : action.isModified ? t('COM_SMARTBROWSER_CTRL_DOUBLE_CLICK') : undefined" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
                 <span :class="action.icon" aria-hidden="true" />
                 {{ t(action.label) }}
               </button>
@@ -96,17 +96,18 @@
 </template>
 
 <script setup>
+import { resourceKey } from '../core/selectionIdentity.js';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { canActOnResource, canFocusResource, canSelectResource, isContextualResource } from '../core/resourcePolicy.js';
 import { itemMenuActions } from '../core/itemMenuActions.js';
 import { fieldIcons } from '../core/fieldIcons.js';
 import ResourceVisual from './ResourceVisual.vue';
 
-const props = defineProps({ defaultAction: Function, previewAction: Function, selectionControls: { type: Boolean, default: true }, resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, columns: Array, t: Function });
+const props = defineProps({ defaultAction: Function, modifiedAction: Function, previewAction: Function, selectionControls: { type: Boolean, default: true }, resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, columns: Array, t: Function });
 const emit = defineEmits(['select', 'select-all', 'focus', 'open', 'activate', 'sort', 'action']);
 const performDefault = (resource, event) => {
-  if ((event?.ctrlKey || event?.metaKey) && props.previewAction) {
-    const preview = props.previewAction(resource);
+  if ((event?.ctrlKey || event?.metaKey) && (props.modifiedAction || props.previewAction)) {
+    const preview = props.modifiedAction ? props.modifiedAction(resource) : props.previewAction(resource);
     if (preview && props.actionAvailable(preview, [resource])) { emit('action', preview, resource); return; }
   }
   if (props.defaultAction) {
@@ -174,7 +175,7 @@ const status = (resource) => ({
 const statusOverlay = (resource) => resource.overlays?.find((overlay) => overlay.id === 'status') || {};
 const openMenu = ref(null);
 const toggleMenu = (id) => { openMenu.value = openMenu.value === id ? null : id; };
-const itemActions = resource => itemMenuActions(props.actions, resource, props.actionAvailable, props.defaultAction?.(resource));
+const itemActions = resource => itemMenuActions(props.actions, resource, props.actionAvailable, props.defaultAction?.(resource), (props.modifiedAction || props.previewAction)?.(resource));
 const overlayAction = (overlay, resource) => canActOnResource(resource)
   && resource.interactiveOverlays !== false
   ? props.actions.find((action) => action.id === overlay.action && props.actionAvailable(action, [resource]))

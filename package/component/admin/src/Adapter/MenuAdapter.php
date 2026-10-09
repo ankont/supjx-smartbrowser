@@ -16,7 +16,7 @@ use SuperSoft\Component\Smartbrowser\Administrator\Support\OrderingService;
 
 defined('_JEXEC') or die;
 
-final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface, ContextResourceProviderInterface
+final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface, ContextResourceProviderInterface, ReadableResourceAdapterInterface
 {
     private ?string $browseRoot = null;
     private ?array $menus = null;
@@ -108,6 +108,65 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             }
         }
         throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+    }
+
+    public function getReadableResource(string $resourceId): array
+    {
+        if (!preg_match('/^menu-item:([1-9][0-9]*)$/D', $resourceId, $matches)) throw new \RuntimeException('Not readable', 403);
+        $menu = $this->app->getMenu('site');
+        $item = $this->readableSiteItem($menu, (int) $matches[1]);
+        $url = $this->readableSiteUrl($menu, $item, []);
+        return ['id' => $resourceId, 'title' => (string) $item->title, 'subtitle' => null, 'parentId' => null,
+            'kind' => 'node', 'type' => 'menu-item', 'icon' => 'fas fa-diagram-predecessor', 'image' => null,
+            'status' => 1, 'capabilities' => [], 'overlays' => [],
+            'metadata' => ['id' => (int) $item->id, 'url' => $url, 'alias' => $item->alias ?? '', 'language' => $item->language ?? '*',
+                'accessId' => (int) $item->access, 'state' => 1, 'menuItemKind' => (string) $item->type,
+                'parent' => (int) $item->parent_id > 1 ? (string) $this->readableSiteItem($menu, (int) $item->parent_id)->title : '']];
+    }
+
+    private function readableSiteItem(object $menu, int $id): object
+    {
+        // SiteMenu loads only enabled frontend items within their publication window.
+        $item = $menu->getItems('id', $id, true);
+        if (!$item) throw new \RuntimeException('Unavailable', 404);
+        $cursor = $item; $seen = [];
+        while ($cursor && (int) $cursor->id > 1) {
+            if (isset($seen[$cursor->id]) || !in_array((int) $cursor->access, $this->app->getIdentity()->getAuthorisedViewLevels(), true)) throw new \RuntimeException('Not readable', 403);
+            $seen[$cursor->id] = true;
+            if ((int) $cursor->parent_id <= 1) break;
+            $cursor = $menu->getItems('id', (int) $cursor->parent_id, true);
+            if (!$cursor) throw new \RuntimeException('Parent unavailable', 403);
+        }
+        return $item;
+    }
+
+    private function readableSiteUrl(object $menu, object $item, array $seen): ?string
+    {
+        if (isset($seen[$item->id])) throw new \RuntimeException('Invalid alias chain', 403);
+        $seen[$item->id] = true;
+        if ($item->type === 'alias') {
+            $target = $this->readableSiteItem($menu, (int) $item->getParams()->get('aliasoptions', 0));
+            return $this->readableSiteUrl($menu, $target, $seen);
+        }
+        if (in_array($item->type, ['heading', 'separator'], true)) return null;
+        if ($item->type === 'url') {
+            $parts = parse_url((string) $item->link);
+            return is_array($parts) && in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)
+                && !isset($parts['user']) && !isset($parts['pass']) && !preg_match('/[\x00-\x20<>"\x27]/', (string) $item->link) ? (string) $item->link : null;
+        }
+        parse_str((string) parse_url((string) $item->link, PHP_URL_QUERY), $query);
+        $reference = match ($query['option'] ?? '') {
+            'com_content' => match ($query['view'] ?? '') {
+                'article' => ['articles', 'article:' . (int) ($query['id'] ?? 0)],
+                'category' => ['categories', 'category:' . (int) ($query['id'] ?? 0)],
+                default => null,
+            },
+            'com_tags' => ($query['view'] ?? '') === 'tag' && is_scalar($query['id'] ?? null) ? ['tags', 'tag:' . (int) $query['id']] : null,
+            default => null,
+        };
+        if (!$reference) return null; // No verified destination policy for arbitrary components.
+        (new AdapterRegistry($this->app))->getReadable($reference[0])->getReadableResource($reference[1]);
+        return \Joomla\CMS\Router\Route::link('site', 'index.php?Itemid=' . (int) $item->id, false);
     }
 
     public function getBreadcrumb(string $nodeId): array

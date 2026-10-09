@@ -15,7 +15,7 @@ use SuperSoft\Component\Smartbrowser\Administrator\Model\SmartAuthorsArticleMode
 
 defined('_JEXEC') or die;
 
-abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface
+abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface, ReadableResourceAdapterInterface
 {
     protected const ROOT_ID = 'content:root';
     protected ?string $browseRoot = null;
@@ -64,6 +64,55 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         }
 
         return $this->normalizeArticle($item);
+    }
+
+    public function getReadableResource(string $resourceId): array
+    {
+        $this->assertBrowseScope([$resourceId]);
+        if (preg_match('/^article:([1-9][0-9]*)$/D', $resourceId, $matches)) {
+            $article = $this->contentModel('Article')->getItem((int) $matches[1]);
+            if (!$article || empty($article->id)) throw new \RuntimeException('Unavailable', 404);
+            ReadVisibility::assertPublished($article, $this->app->getIdentity(), 'state');
+            $this->assertReadableCategory((int) $article->catid);
+            $resource = $this->normalizeArticle($article);
+        } elseif (preg_match('/^category:([1-9][0-9]*)$/D', $resourceId, $matches)) {
+            $resource = $this->normalizeCategory($this->assertReadableCategory((int) $matches[1]));
+        } elseif (preg_match('/^tag:([1-9][0-9]*)$/D', $resourceId, $matches) && in_array($this->getId(), ['tags', 'articles-by-tag'], true)) {
+            $tag = $this->getTag((int) $matches[1]);
+            $cursor = $tag; $seen = [];
+            while ((int) $cursor->id !== $this->tagRootId()) {
+                if (isset($seen[$cursor->id])) throw new \RuntimeException('Invalid tag ancestry', 403);
+                $seen[$cursor->id] = true;
+                ReadVisibility::assertPublished($cursor, $this->app->getIdentity(), 'published');
+                $cursor = $this->getTag((int) $cursor->parent_id);
+            }
+            // Avoid tree-wide metadata and authoring decorations in public descriptors.
+            $resource = ['id' => $resourceId, 'title' => $this->title((string) $tag->title), 'subtitle' => null,
+                'kind' => 'node', 'type' => 'tag', 'parentId' => null, 'icon' => 'fas fa-tag', 'image' => null,
+                'status' => 1, 'metadata' => ['id' => (int) $tag->id, 'alias' => (string) $tag->alias,
+                    'language' => $tag->language ?? '*', 'created' => $tag->created_time ?? null, 'modified' => $tag->modified_time ?? null,
+                    'languageKey' => $this->languageKey((string) $tag->title),
+                    'tagPaths' => implode(' / ', array_slice($this->tagPathTitles((int) $tag->id), 0, -1)),
+                    'accessId' => (int) $tag->access, 'state' => (int) $tag->published,
+                    'url' => \Joomla\CMS\Router\Route::link('site', 'index.php?option=com_tags&view=tag&id=' . (int) $tag->id, false)]];
+        } else {
+            throw new \RuntimeException('No safe read policy for reference.', 403);
+        }
+        $public = ReadVisibility::publicDescriptor($resource);
+        if (isset($resource['metadata']['url'])) $public['metadata']['url'] = $resource['metadata']['url'];
+        if (isset($resource['metadata']['tagPaths'])) $public['metadata']['tagPaths'] = $resource['metadata']['tagPaths'];
+        return $public;
+    }
+
+    private function assertReadableCategory(int $id): CategoryNode
+    {
+        $category = $this->getCategory($id);
+        $cursor = $category;
+        while ($cursor && (int) $cursor->id > 1) {
+            ReadVisibility::assertPublished($cursor, $this->app->getIdentity(), 'published');
+            $cursor = $cursor->getParent();
+        }
+        return $category;
     }
 
     public function getBreadcrumb(string $nodeId): array

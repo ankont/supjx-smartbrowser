@@ -2,11 +2,18 @@ import { computed, reactive, watch } from 'vue';
 import { asContextualResource, asPrimaryResource, canBulkSelectResource, canFocusResource, canSelectResource } from './resourcePolicy.js';
 
 import { compareResources as compare } from './resourceSort.js';
+import { referenceKey, resourceKey } from './selectionIdentity.js';
 
 export default function createBrowserState({ options, api, persistence, viewRegistry }) {
-  const preserveSelection = Boolean(options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
+  const collectionMode = Boolean(options.pickerContext?.collectionMode);
+  const snapshot = collectionMode ? options.pickerContext.getCollectionSnapshot() : null;
+  const preserveSelection = Boolean(collectionMode || options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
+  const adapter = options.adapter?.replace(/^flat-/, '');
+  const identify = resource => collectionMode ? { ...resource, adapter, selection: { adapter, id: resource.id }, selectionKey: referenceKey({ adapter, id: resource.id }) } : resource;
+  const foreignAdapter = resource => collectionMode && options.pickerContext.homogeneous && state.selectedIds.length
+    && (state.selectedResources[state.selectedIds[0]]?.selection?.adapter || snapshot.items.find(entry => referenceKey(entry.selection) === state.selectedIds[0])?.selection.adapter) !== resource.selection?.adapter;
   const allowedTypes = new Set(options.allowedResourceTypes || []);
-  const applySelectionConstraints = (resource) => options.mode === 'readonly' || (allowedTypes.size && !allowedTypes.has(resource.type))
+  const applySelectionConstraints = (resource) => options.mode === 'readonly' || foreignAdapter(resource) || (allowedTypes.size && !allowedTypes.has(resource.type))
     ? { ...resource, selectable: false, bulkSelectable: false }
     : resource;
   const defaults = {
@@ -39,8 +46,8 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     presentation: options.presentation || {},
     currentResource: null,
     focusedId: null,
-    selectedIds: [],
-    selectedResources: {},
+    selectedIds: snapshot ? snapshot.items.map(entry => referenceKey(entry.selection)) : [],
+    selectedResources: snapshot?.resources || {},
     search: '',
     loading: false,
     busy: false,
@@ -51,8 +58,8 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     const query = state.search.trim().toLocaleLowerCase();
     const matches = (item) => !query || [item.title, item.subtitle, item.metadata?.alias]
       .some((value) => String(value || '').toLocaleLowerCase().includes(query));
-    const nodes = state.nodes.map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
-    const items = state.items.map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
+    const nodes = state.nodes.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
+    const items = state.items.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
     const contextItems = state.contextItems.map(asContextualResource);
     if (!state.sortBy) return [...nodes, ...items, ...contextItems];
     return [
@@ -70,9 +77,9 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     return resources.value.filter((resource) => canBulkSelectResource(resource, target));
   });
   const selection = computed(() => preserveSelection
-    ? state.selectedIds.map(id => resources.value.find(resource => resource.id === id) || state.selectedResources[id]).filter(Boolean)
-    : resources.value.filter((resource) => state.selectedIds.includes(resource.id)));
-  const focusedResource = computed(() => resources.value.find((resource) => resource.id === state.focusedId)
+    ? state.selectedIds.map(id => resources.value.find(resource => resourceKey(resource) === id) || state.selectedResources[id]).filter(Boolean)
+    : resources.value.filter((resource) => state.selectedIds.includes(resourceKey(resource))));
+  const focusedResource = computed(() => resources.value.find((resource) => resourceKey(resource) === state.focusedId)
     || (preserveSelection ? state.selectedResources[state.focusedId] : null) || null);
 
   async function load(nodeId = state.selectedNode) {
@@ -91,8 +98,9 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       state.nodes = data.nodes;
       state.items = data.items;
       if (preserveSelection) {
-        for (const resource of [...data.nodes, ...data.items]) {
-          if (state.selectedIds.includes(resource.id)) state.selectedResources[resource.id] = applySelectionConstraints(asPrimaryResource(resource));
+        for (const item of [...data.nodes, ...data.items]) {
+          const resource = identify(item);
+          if (state.selectedIds.includes(resourceKey(resource))) state.selectedResources[resourceKey(resource)] = applySelectionConstraints(asPrimaryResource(resource));
         }
       }
       state.contextItems = data.contextItems || [];
@@ -126,20 +134,26 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   function toggle(resource, additive = true) {
     focus(resource);
     const target = options.selectionTarget || 'both';
-    if (!canSelectResource(resource, target)) return;
-    if (preserveSelection) state.selectedResources[resource.id] = resource;
-    const exists = state.selectedIds.includes(resource.id);
-    if (!options.multiple || !additive) state.selectedIds = exists ? [] : [resource.id];
-    else state.selectedIds = exists ? state.selectedIds.filter((id) => id !== resource.id) : [...state.selectedIds, resource.id];
+    if (!canSelectResource(resource, target) || foreignAdapter(resource)) return;
+    const key = resourceKey(resource);
+    if (preserveSelection) state.selectedResources[key] = resource;
+    const exists = state.selectedIds.includes(key);
+    if (!options.multiple || !additive) state.selectedIds = exists ? [] : [key];
+    else state.selectedIds = exists ? state.selectedIds.filter((id) => id !== key) : [...state.selectedIds, key];
   }
 
   function focus(resource) {
-    if (canFocusResource(resource)) state.focusedId = resource.id;
+    if (canFocusResource(resource)) state.focusedId = resourceKey(resource);
   }
 
   function selectAll() {
-    if (preserveSelection) bulkSelectableResources.value.forEach(resource => { state.selectedResources[resource.id] = resource; });
-    const bulkIds = bulkSelectableResources.value.map((resource) => resource.id);
+    if (preserveSelection) bulkSelectableResources.value.forEach(resource => { state.selectedResources[resourceKey(resource)] = resource; });
+    const bulkIds = bulkSelectableResources.value.map(resourceKey);
+    if (collectionMode && !options.multiple) {
+      const first = bulkIds[0];
+      state.selectedIds = first && !state.selectedIds.includes(first) ? [first] : [];
+      return;
+    }
     const allSelected = bulkIds.length > 0 && bulkIds.every((id) => state.selectedIds.includes(id));
     state.selectedIds = allSelected
       ? state.selectedIds.filter((id) => !bulkIds.includes(id))
@@ -147,8 +161,8 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   }
 
   function invertSelection() {
-    if (preserveSelection) bulkSelectableResources.value.forEach(resource => { state.selectedResources[resource.id] = resource; });
-    const visibleIds = bulkSelectableResources.value.map((resource) => resource.id);
+    if (preserveSelection) bulkSelectableResources.value.forEach(resource => { state.selectedResources[resourceKey(resource)] = resource; });
+    const visibleIds = bulkSelectableResources.value.map(resourceKey);
     const selected = new Set(state.selectedIds);
     visibleIds.forEach((id) => selected.has(id) ? selected.delete(id) : selected.add(id));
     state.selectedIds = [...selected];

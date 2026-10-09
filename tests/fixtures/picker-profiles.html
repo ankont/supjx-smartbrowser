@@ -11,6 +11,8 @@
   <button id="images" class="btn btn-primary">Images</button>
   <button id="pdf" class="btn btn-primary">PDF</button>
   <button id="multiple" class="btn btn-primary">Multiple</button>
+  <button id="mixed" class="btn btn-primary">Mixed collection</button>
+  <button id="homogeneous" class="btn btn-primary">Homogeneous collection</button>
   <button id="legacy" class="btn btn-primary">Legacy</button>
   <button id="article" class="btn btn-primary">Article</button>
   <button id="hidden" class="btn btn-primary">Hidden</button>
@@ -21,6 +23,8 @@
 <div id="smartbrowser-app" class="smartbrowser"></div>
 <script>
 const labels = {
+  PLG_FIELDS_SMARTBROWSERPICKER_EDIT: 'Change selection / usage', PLG_FIELDS_SMARTBROWSERPICKER_SELECT: 'Select resources', PLG_FIELDS_SMARTBROWSERPICKER_CLEAR: 'Clear selection', PLG_FIELDS_SMARTBROWSERPICKER_INVALID: 'Invalid field selection',
+  COM_SMARTBROWSER_COLLECTION_TITLE: 'Selected resources', COM_SMARTBROWSER_COLLECTION_REMOVE: 'Remove', COM_SMARTBROWSER_COLLECTION_EMPTY: 'No resources selected', COM_SMARTBROWSER_ACTIONS: 'Actions', COM_SMARTBROWSER_NAME: 'Name', COM_SMARTBROWSER_LOADING: 'Loading',
   COM_SMARTBROWSER_USAGE_ALT: 'Alternative text', COM_SMARTBROWSER_USAGE_DECORATIVE: 'Decorative image', COM_SMARTBROWSER_USAGE_LOADING: 'Loading',
   COM_SMARTBROWSER_USAGE_AUTO: 'Automatic', COM_SMARTBROWSER_USAGE_LAZY: 'Lazy', COM_SMARTBROWSER_USAGE_EAGER: 'Eager',
   COM_SMARTBROWSER_USAGE_THUMBNAIL: 'Thumbnail', COM_SMARTBROWSER_USAGE_INFO: 'Information', COM_SMARTBROWSER_USAGE_OPTIONS: 'Usage options',
@@ -31,17 +35,17 @@ const labels = {
 const params = new URL(location.href).searchParams;
 const roots = [{ id: 'local-images:/', title: 'Library', icon: 'fas fa-folder', kind: 'node', type: 'folder', selectable: false, navigable: true }];
 const imageCapabilities = [
-  { key: 'media.alt', type: 'string', editor: 'text', label: 'COM_SMARTBROWSER_USAGE_ALT', default: '', validation: { maxLength: 2048 } },
+  { key: 'media.alt', type: 'string', editor: 'text', label: 'COM_SMARTBROWSER_USAGE_ALT', default: '', validation: { maxLength: 2048 }, disabledWhen: { key: 'media.decorative', equals: true }, inactiveValue: '' },
   { key: 'media.decorative', type: 'boolean', editor: 'boolean', label: 'COM_SMARTBROWSER_USAGE_DECORATIVE', default: false },
   { key: 'media.loading', type: 'string', editor: 'select', label: 'COM_SMARTBROWSER_USAGE_LOADING', default: 'auto', options: [{ value: 'auto', label: 'COM_SMARTBROWSER_USAGE_AUTO' }, { value: 'lazy', label: 'COM_SMARTBROWSER_USAGE_LAZY' }, { value: 'eager', label: 'COM_SMARTBROWSER_USAGE_EAGER' }] },
 ];
 const resources = [
   { id: 'local-images:/a.png', title: 'First image', kind: 'item', type: 'image', image: '/resources/images/visual-example.svg', icon: 'fas fa-file-image', selectable: true, metadata: { mimeType: 'image/png' }, selectionCapabilities: imageCapabilities },
   { id: 'local-images:/b.png', title: 'Second image', kind: 'item', type: 'image', image: '/resources/images/visual-example.svg', icon: 'fas fa-file-image', selectable: true, metadata: { mimeType: 'image/png' }, selectionCapabilities: imageCapabilities },
-  { id: 'local-images:/report.pdf', title: 'Report PDF', kind: 'item', type: 'document', icon: 'fas fa-file-pdf', selectable: true, metadata: { mimeType: 'application/pdf' }, selectionCapabilities: [{ key: 'media.thumbnailOverride', type: 'resource', editor: 'resource', label: 'COM_SMARTBROWSER_USAGE_THUMBNAIL', default: null, picker: { adapter: 'media', allowedResourceTypes: ['image'], selectionTarget: 'item' } }] },
+  { id: 'local-images:/report.pdf', title: 'Report PDF', kind: 'item', type: 'document', icon: 'fas fa-file-pdf', selectable: true, metadata: { mimeType: 'application/pdf' }, selectionCapabilities: [{ key: 'visual.thumbnailOverride', type: 'resource', editor: 'resource', visualRole: 'thumbnail', label: 'COM_SMARTBROWSER_USAGE_THUMBNAIL', default: null, picker: { adapter: 'media', allowedResourceTypes: ['image'], selectionTarget: 'item' } }] },
   { id: 'article:1', title: 'Article', kind: 'item', type: 'article', icon: 'fas fa-newspaper', selectable: true, metadata: {}, selectionCapabilities: [{ key: 'example.label', type: 'string', editor: 'example.label', label: 'Display label', default: '' }] },
 ];
-window.fixtureOptions = { adapter: params.get('adapter') || 'media', application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
+window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'Media', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'Articles', icon: 'fas fa-book-open' }], application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
   allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
 window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; document.body.prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
   request(config) {
@@ -49,8 +53,9 @@ window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptio
     const body = config.data ? JSON.parse(config.data) : null;
     const items = resources.filter(resource => request.searchParams.get('adapter') === 'articles' ? resource.type === 'article' : resource.type !== 'article');
     const response = request.searchParams.get('task') === 'api.collection'
-      ? { identifiers: body.items, resources: body.items.map(id => resources.find(resource => resource.id === id) || { id, unavailable: true }) }
-      : { nodes: [], items, breadcrumb: roots, actions: [] };
+      ? body.operation === 'reorder' ? { items: [...body.items].reverse() } : body.referenceItems ? { items: body.items, resources: body.items.map(entry => ({ ...(resources.find(resource => resource.id === entry.selection.id) || { id: entry.selection.id, title: entry.selection.id, unavailable: true, metadata: {}, capabilities: {} }), adapter: entry.selection.adapter, selection: entry.selection, selectionKey: JSON.stringify([entry.selection.adapter, entry.selection.id]), collectionActions: [], collectionPresentation: { columns: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }], infoFields: [] } })) }
+        : { identifiers: body.items, resources: body.items.map(id => resources.find(resource => resource.id === id) || { id, title: id, unavailable: true, metadata: {}, capabilities: {} }) }
+      : { nodes: [], items, breadcrumb: roots, actions: [{ id: 'edit', label: 'Edit', requiresSelection: true, single: true, icon: 'fas fa-pen' }, { id: 'checkin', label: 'Check in', requiresSelection: true, icon: 'fas fa-lock' }] };
     const timer = setTimeout(() => config.onSuccess(JSON.stringify({ success: true, data: response })), 10);
     return { abort() { clearTimeout(timer); } };
   },
@@ -63,13 +68,37 @@ window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptio
 if (params.get('view') === 'browser') {
   document.getElementById('host').remove();
   await import('/package/component/media/js/smartbrowser.js');
+} else if (params.has('fieldFixture')) {
+  document.getElementById('host').remove(); document.getElementById('smartbrowser-app').remove();
+  const form = document.createElement('form'); form.style.cssText = 'padding:20px;max-width:860px;margin:auto';
+  const profile = { 'media.alt': {}, 'media.decorative': {}, 'media.loading': {}, 'visual.thumbnailOverride': {} };
+  const scenarios = [
+    ['Image compact', 'media', false, 'compact', ['local-images:/a.png'], { 'local-images:/a.png': { 'media.alt': 'Stored alternative text' } }],
+    ['PDF collection', 'media', false, 'collection', ['local-images:/report.pdf'], { 'local-images:/report.pdf': { 'visual.thumbnailOverride': { adapter: 'media', id: 'local-images:/b.png' } } }],
+    ['Article empty profile', 'articles', false, 'compact', ['article:1'], {}],
+    ['Multiple ordered', 'media', true, 'collection', ['local-images:/b.png', 'local-images:/a.png'], { 'local-images:/b.png': { 'media.alt': 'Second usage' }, 'local-images:/a.png': { 'media.alt': 'First usage' } }],
+  ];
+  for (const [title, adapter, multiple, editorDisplay, ids, usage] of scenarios) {
+    const heading = document.createElement('h3'); heading.textContent = title; form.append(heading);
+    const field = document.createElement('div'); field.className = 'sb-selection-field';
+    field.dataset.sbField = JSON.stringify({ adapter, allowedAdapters: adapter === 'articles' || multiple ? ['articles', 'media'] : [adapter], multiple, editorDisplay, ordering: multiple, selectionTarget: 'item', readOnly: false,
+      selectionProfile: adapter === 'articles' ? {} : profile, apiBaseUrl: location.origin + '/index.php', pickerUrl: location.origin + '/index.php', csrfToken: 'test' });
+    field.innerHTML = '<input type="hidden" data-sb-value><div data-sb-collection></div><p data-sb-error hidden></p><div class="sb-selection-field-controls"><button type="button" class="btn btn-outline-primary" data-sb-select>Select resources</button><button type="button" class="btn btn-outline-secondary" data-sb-clear>Clear</button></div>';
+    field.querySelector('input').value = JSON.stringify({ version: 1, items: ids.map(id => ({ selection: { adapter, id }, usage: usage[id] || {} })) }); form.append(field);
+    const debug = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Stored value'; debug.append(summary);
+    const stored = document.createElement('pre'); stored.className = 'fixture-stored'; stored.style.whiteSpace = 'pre-wrap'; stored.textContent = field.querySelector('input').value;
+    field.querySelector('input').addEventListener('change', event => { stored.textContent = event.target.value; }); debug.append(stored); form.append(debug);
+  }
+  document.body.append(form);
+  await import('/package/component/media/js/selection-field.js');
 } else {
   document.getElementById('smartbrowser-app').remove();
-  const profile = { 'media.alt': { required: true }, 'media.decorative': {}, 'media.loading': { presentation: 'secondary' }, 'media.thumbnailOverride': {} };
+  const profile = { 'media.alt': { required: true }, 'media.decorative': {}, 'media.loading': { presentation: 'secondary' }, 'visual.thumbnailOverride': {} };
   const open = async config => { document.getElementById('result').textContent = JSON.stringify(await SmartBrowserPicker.open(config), null, 2); };
   document.getElementById('images').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', initialSelection: ['local-images:/a.png'] });
-  document.getElementById('pdf').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', initialSelection: ['local-images:/report.pdf'], initialUsage: { 'local-images:/report.pdf': { 'media.thumbnailOverride': { adapter: 'media', id: 'local-images:/b.png' } } } });
+  document.getElementById('pdf').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', initialSelection: ['local-images:/report.pdf'], initialUsage: { 'local-images:/report.pdf': { 'visual.thumbnailOverride': { adapter: 'media', id: 'local-images:/b.png' } } } });
   document.getElementById('multiple').onclick = () => open({ selectionProfile: profile, resultFormat: 'usage', multiple: true, initialSelection: ['local-images:/b.png', 'local-images:/a.png'] });
+  for (const homogeneous of [false, true]) document.getElementById(homogeneous ? 'homogeneous' : 'mixed').onclick = () => open({ adapter: 'media', allowedAdapters: ['media', 'articles'], homogeneous, resultFormat: 'collection', multiple: true, selectionProfile: { 'media.alt': {} }, initialCollection: [{ selection: { adapter: 'media', id: 'local-images:/a.png' }, usage: { 'media.alt': 'Retained across adapters' } }] });
   document.getElementById('legacy').onclick = () => open({});
   const hidden = { required: true, default: 'lazy', presentation: 'hidden' };
   document.getElementById('hidden').onclick = () => open({ resultFormat: 'usage', selectionProfile: { 'media.loading': hidden }, initialSelection: ['local-images:/a.png'] });

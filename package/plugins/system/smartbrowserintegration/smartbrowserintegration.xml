@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="plugin" group="system" method="upgrade">
     <name>PLG_SYSTEM_SMARTBROWSERINTEGRATION</name>
-    <version>2.1.7</version>
+    <version>3.0.9</version>
     <description>PLG_SYSTEM_SMARTBROWSERINTEGRATION_DESC</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">SuperSoft\Plugin\System\Smartbrowserintegration</namespace>

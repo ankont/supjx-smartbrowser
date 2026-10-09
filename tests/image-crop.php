@@ -15,6 +15,7 @@ namespace SuperSoftJx\Plugin\Content\SmartCrop\Helper {
 }
 namespace {
     define('_JEXEC', 1);
+require_once __DIR__ . '/../package/component/admin/src/Support/ResourceDescriptor.php';
     require __DIR__ . '/../package/component/admin/src/Support/ResourceVisualDecorator.php';
     use SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceVisualDecorator;
     use Joomla\CMS\Plugin\PluginHelper;

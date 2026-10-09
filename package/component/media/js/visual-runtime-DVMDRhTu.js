@@ -3370,10 +3370,10 @@ var Q = [
 				ratio: e.target.naturalWidth / e.target.naturalHeight
 			};
 		}, p = ya(() => n.resource.imageCrop?.source === n.resource.image ? n.resource.imageCrop : null), m = ya(() => es(n.resource, {
-			settings: n.settings ?? r.visualSettings ?? {},
+			settings: n.settings ?? n.resource.collectionVisualSettings ?? r.visualSettings ?? {},
 			allowImage: n.allowImage,
 			open: n.open,
-			background: n.background ?? r.imageBackground ?? "auto",
+			background: n.background ?? n.resource.collectionImageBackground ?? r.imageBackground ?? "auto",
 			availableAssets: n.availableAssets,
 			compact: n.variant === "compact",
 			alignBaseStart: n.alignBaseStart,

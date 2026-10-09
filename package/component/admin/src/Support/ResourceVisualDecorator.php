@@ -19,6 +19,12 @@ final class ResourceVisualDecorator
 
     public function decorate(array $response, string $adapterId): array
     {
+        foreach (self::GROUPS as $group) {
+            foreach ($response[$group] ?? [] as $index => $resource) {
+                if (is_array($resource)) $response[$group][$index] = ResourceDescriptor::complete($resource, $response['presentation'] ?? []);
+            }
+        }
+        if (is_array($response['currentResource'] ?? null)) $response['currentResource'] = ResourceDescriptor::complete($response['currentResource'], $response['presentation'] ?? []);
         if (class_exists(IconOptions::class)) {
             foreach (self::GROUPS as $group) {
                 foreach ($response[$group] ?? [] as $index => $resource) {

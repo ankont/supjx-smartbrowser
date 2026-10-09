@@ -52,12 +52,12 @@ async page => {
   await frame().locator('.resource-usage-reference > span').filter({ hasText: 'First image' }).waitFor();
   check(await page.locator('dialog.smartbrowser-picker').count() === 1, 'Nested selection closed the outer picker');
   await select(); await closed();
-  check((await result()).usage['local-images:/report.pdf']['media.thumbnailOverride'].id === 'local-images:/a.png', 'Thumbnail reference was not updated');
+  check((await result()).usage['local-images:/report.pdf']['visual.thumbnailOverride'].id === 'local-images:/a.png', 'Thumbnail reference was not updated');
   await page.locator('#pdf').click();
   await frame().locator('.resource-usage-reference > span').waitFor();
   await frame().locator('.resource-usage-field > select').selectOption('auto');
   await select(); await closed();
-  check((await result()).usage['local-images:/report.pdf']['media.thumbnailOverride'] === null, 'Thumbnail was not cleared');
+  check((await result()).usage['local-images:/report.pdf']['visual.thumbnailOverride'] === null, 'Thumbnail was not cleared');
   await page.locator('#multiple').click();
   await frame().locator('.resource-usage-editor').waitFor();
   await frame().locator('.resource-usage-field input[type=text]').fill('Second label');

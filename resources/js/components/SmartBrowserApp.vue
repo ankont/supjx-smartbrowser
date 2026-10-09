@@ -6,7 +6,7 @@
     </div>
     <ResourceActions
       :actions="state.actions"
-      :available="(action) => driver.available(action, selection)"
+      :available="action => actionAvailable(action, selection)"
       :selection="selection"
       :batch-available="options.mode === 'manage'"
       :flat-available="flatAvailable"
@@ -22,7 +22,7 @@
       :allow-no-user="options.allowNoUser"
       :can-complete="selection.length > 0 && !usageValidating"
       :t="t"
-      @action="driver.execute($event, selection)"
+      @action="executeAction($event, selection)"
       @batch="batchDialog?.open()"
       @toggle-flat="toggleFlat"
       @toggle-filters="toggleFilters"
@@ -40,10 +40,14 @@
         </button>
       </template>
     </ResourceActions>
+    <details v-if="collectionMode" class="resource-picker-collection">
+      <summary><span class="fas fa-chevron-right resource-picker-collection-chevron" aria-hidden="true" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: <span>{{ state.selectedIds.length }}</span></summary>
+      <CollectionView v-if="pickerCollection" :model="pickerCollection" :api="api" :config="pickerCollectionConfig" :t="t" />
+    </details>
     <ResourceBatchDialog ref="batchDialog" :selection="selection" :adapter="options.adapter" :filters="state.presentation.filters" :batch-options="state.presentation.batchOptions" :t="t" @apply="applyBatch" />
-    <div class="smartbrowser-layout" :class="{ 'flat-mode': flatActive, 'tree-collapsed': treeCollapsed }">
-      <ResourceTree v-if="!flatActive && !treeCollapsed" :adapters="options.adapters" :active-adapter="options.adapter" :roots="state.roots" :nodes="state.nodes" :breadcrumb="state.breadcrumb" :selected-node="state.selectedNode" :t="t" @open="load" @adapter="switchAdapter" />
-      <button v-if="!flatActive" type="button" class="resource-sidebar-handle" :title="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-label="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-expanded="!treeCollapsed" @click="treeCollapsed = !treeCollapsed">
+    <div class="smartbrowser-layout" :class="{ 'flat-mode': flatActive && !collectionMode, 'tree-collapsed': treeCollapsed }">
+      <ResourceTree v-if="(!flatActive || collectionMode) && !treeCollapsed" :adapters="pickerContext?.allowedAdapters?.length ? (options.adapters || []).filter(adapter => pickerContext.allowedAdapters.includes(adapter.id.replace(/^flat-/, ''))) : options.adapters" :active-adapter="options.adapter" :roots="state.roots" :nodes="flatActive ? [] : state.nodes" :breadcrumb="state.breadcrumb" :selected-node="state.selectedNode" :t="t" @open="load" @adapter="switchAdapter" />
+      <button v-if="!flatActive || collectionMode" type="button" class="resource-sidebar-handle" :title="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-label="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-expanded="!treeCollapsed" @click="treeCollapsed = !treeCollapsed">
         <span :class="treeCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'" aria-hidden="true" />
       </button>
       <main class="resource-main">
@@ -103,12 +107,13 @@
             :resources="resources"
             :selected-ids="state.selectedIds"
             :focused-id="state.focusedId"
-            :all-selected="bulkSelectableResources.length > 0 && bulkSelectableResources.every((resource) => state.selectedIds.includes(resource.id))"
+            :all-selected="bulkSelectableResources.length > 0 && bulkSelectableResources.every((resource) => state.selectedIds.includes(resourceKey(resource)))"
             :options="state.viewOptions"
             :actions="state.actions"
             :action-available="itemActionAvailable"
             :default-action="resourceDefault"
             :preview-action="resourcePreview"
+            :modified-action="resourceModified"
             :sort-by="state.sortBy"
             :sort-direction="state.sortDirection"
             :sort-fields="state.presentation.sortFields"
@@ -125,10 +130,10 @@
             @sort="sortFromTable"
           />
           <div v-if="isMedia && dragging" class="resource-drop-overlay"><span class="fas fa-cloud-upload-alt" />{{ t('COM_SMARTBROWSER_DROP_UPLOAD') }}</div>
-          <ResourceInfoPanel v-if="showInfo" :resource="focusedResource" :fields="state.presentation.infoFields" :t="t"
-            :usage-definitions="usageDefinitions" :usage-values="usageValues" :usage-errors="usageErrors[focusedResource?.id] || {}"
+          <ResourceInfoPanel v-if="showInfo" :resource="focusedResource" :fields="focusedResource?.collectionPresentation?.infoFields || state.presentation.infoFields" :t="t"
+            :usage-definitions="usageDefinitions" :usage-values="usageValues" :usage-errors="usageErrors[resourceKey(focusedResource)] || {}"
             :usage-editors="pickerContext?.editors" :resolve-reference="resolveUsageReference" :usage-revision="usageRevision"
-            :preview-actions="previewActions" :preview-context="previewContext" :can-preview="Boolean(resourcePreview(focusedResource)) && driver.canPreview(focusedResource) && !state.busy" @preview="runItemAction(resourcePreview(focusedResource), focusedResource)" @usage-change="setUsage" />
+            :preview-actions="previewActions" :preview-context="previewContext" :can-preview="Boolean(resourcePreview(focusedResource)) && driverFor(focusedResource).canPreview(focusedResource) && !state.busy" @preview="runItemAction(resourcePreview(focusedResource), focusedResource)" @usage-change="setUsage" />
         </div>
       </main>
     </div>
@@ -136,7 +141,7 @@
 </template>
 
 <script setup>
-import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { createDisplayMode } from '../core/displayMode.js';
 import ResourceActions from './ResourceActions.vue';
 import ResourceBatchDialog from './ResourceBatchDialog.vue';
@@ -145,10 +150,14 @@ import ResourceToolbar from './ResourceToolbar.vue';
 import ResourceTree from './ResourceTree.vue';
 import { flatRootUrl, flatUiStorageKey, flatViewUrl, regularViewUrl } from '../core/flatViewNavigation.js';
 import { columnCatalog } from '../core/columnCatalog.js';
-import { defaultResourceAction, resourcePreviewAction } from '../core/defaultResourceAction.js';
+import { defaultResourceAction, resourcePreviewAction, modifiedResourceAction } from '../core/defaultResourceAction.js';
 import { createSelectionUsage } from '../core/selectionUsage.js';
+import { referenceKey, resourceKey, resourceReference } from '../core/selectionIdentity.js';
+import CollectionView from './CollectionView.vue';
+import { createCollectionState } from '../core/collectionState.js';
 import ResourceApi from '../services/ResourceApi.js';
-import { canSelectResource } from '../core/resourcePolicy.js';
+import MediaActionDriver from '../adapters/MediaActionDriver.js';
+import { asPrimaryResource, canSelectResource } from '../core/resourcePolicy.js';
 
 const browser = inject('browser');
 const options = inject('smartBrowserOptions');
@@ -166,6 +175,49 @@ const api = inject('resourceApi');
 const registry = inject('viewRegistry');
 const { state, resources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection } = browser;
 const pickerContext = options.mode === 'select' ? options.pickerContext : null;
+const collectionMode = Boolean(pickerContext?.collectionMode);
+const t = (key) => Joomla.Text?._(key, key) || key;
+const itemDrivers = new Map();
+const driverFor = resource => {
+  const adapter = resource?.selection?.adapter || resource?.adapter;
+  if (!adapter || adapter === options.adapter.replace(/^flat-/, '')) return driver;
+  if (!itemDrivers.has(adapter)) {
+    const scopedApi = new ResourceApi({ ...options, adapter, browseRoot: null, flatScope: null });
+    itemDrivers.set(adapter, { api: scopedApi, driver: new MediaActionDriver(scopedApi, state, async () => {
+      await pickerCollection?.refresh();
+      for (const resource of pickerCollection?.browser.state.items || []) state.selectedResources[resourceKey(resource)] = asPrimaryResource(resource);
+      await load();
+    }, t, options.editorMode, options.application) });
+  }
+  return itemDrivers.get(adapter).driver;
+};
+const actionsFor = resource => resource?.collectionActions || state.actions;
+const scopedAction = (action, resource) => actionsFor(resource).find(candidate => candidate.id === action.id) || action;
+const actionAvailable = (action, targets) => {
+  if (!collectionMode || action.currentNode || !targets.length) return driver.available(action, targets);
+  if (action.single && targets.length !== 1) return false;
+  const available = resource => (!resource.collectionActions || resource.collectionActions.some(candidate => candidate.id === action.id)) && driverFor(resource).available(scopedAction(action, resource), [resource]);
+  return action.exclusiveGroup ? targets.some(available) : targets.every(available);
+};
+const executeAction = async (action, targets) => {
+  if (!actionAvailable(action, targets)) return;
+  if (!collectionMode || action.currentNode || !targets.length) return driver.execute(action, targets);
+  const groups = new Map();
+  for (const resource of targets) {
+    const scopedDriver = driverFor(resource);
+    if (!groups.has(scopedDriver)) groups.set(scopedDriver, []);
+    groups.get(scopedDriver).push(resource);
+  }
+  for (const [scopedDriver, resources] of groups) await scopedDriver.execute(scopedAction(action, resources[0]), resources);
+};
+onBeforeUnmount(() => itemDrivers.forEach(({ api, driver }) => { driver.destroy(); api.destroy(); }));
+let pickerCollection, updatingProjection = false;
+const pickerCollectionConfig = { referenceItems: true, homogeneous: pickerContext?.homogeneous === true, readOnly: false, showCount: false,
+  items: pickerContext?.getCollectionSnapshot?.().items || [], layout: 'compact', allowRemove: true, allowOrdering: options.multiple && pickerContext?.allowOrdering !== false,
+  contextActions: false, resourceActions: [{ id: 'selectionFocus', label: 'COM_SMARTBROWSER_USAGE_OPTIONS', icon: 'fas fa-pen', requiresSelection: true }],
+  defaultResourceActionId: 'selectionFocus', apiBaseUrl: options.apiBaseUrl, csrfToken: options.csrfToken, application: options.application,
+  onResourceAction: (_action, resource) => { state.selectedResources[resourceKey(resource)] = resource; state.focusedId = resourceKey(resource); },
+};
 const referenceApis = new Map();
 async function resolveUsageReference(reference, constraint = {}) {
   const key = JSON.stringify([reference.adapter, constraint.browseRoot || '']);
@@ -174,7 +226,29 @@ async function resolveUsageReference(reference, constraint = {}) {
   return result.resources[0];
 }
 const usage = createSelectionUsage({ profile: pickerContext?.selectionProfile || {}, initialUsage: pickerContext?.initialUsage || {}, editors: pickerContext?.editors || {}, resolveReference: resolveUsageReference });
+const collectionItems = () => state.selectedIds.flatMap(key => {
+  const resource = selection.value.find(resource => resourceKey(resource) === key);
+  if (resource) return [{ selection: resourceReference(resource, options.adapter.replace(/^flat-/, '')), usage: usage.get(resource) }];
+  const retained = pickerContext?.getCollectionSnapshot?.().items.find(entry => referenceKey(entry.selection) === key);
+  return retained ? [retained] : [];
+});
+const commitCollection = () => { if (collectionMode) pickerContext.commitCollection({ items: collectionItems(), resources: Object.fromEntries(selection.value.map(resource => [resourceKey(resource), resource])) }); };
+watch(() => [state.selectedIds, state.selectedResources], commitCollection, { deep: true, flush: 'sync' });
+onBeforeUnmount(commitCollection);
 const usageVersion = ref(0);
+if (collectionMode) {
+  pickerCollection = createCollectionState({ config: pickerCollectionConfig, api, translate: t, notify: detail => {
+    updatingProjection = true;
+    state.selectedResources = Object.fromEntries(detail.resources.map(resource => [resourceKey(resource), asPrimaryResource(resource)]));
+    state.selectedIds = detail.items.map(entry => referenceKey(entry.selection));
+    updatingProjection = false;
+  } });
+  pickerCollection.refresh().catch(error => Joomla.renderMessages({ error: [error.message] }));
+  watch(() => [state.selectedIds, usageVersion.value], () => {
+    if (!updatingProjection) pickerCollection.setItems(collectionItems()).catch(error => Joomla.renderMessages({ error: [error.message] }));
+  }, { deep: true, flush: 'sync' });
+  onBeforeUnmount(() => pickerCollection.destroy());
+}
 const pickerMaximized = ref(pickerContext?.isMaximized?.() || false);
 const usageRevision = ref(0);
 const usageErrors = ref({});
@@ -193,8 +267,9 @@ const toggleInfo = () => {
 const setResourceUsage = (resource, key, value) => {
   if (!resource || unmounted) return;
   usage.set(resource, key, value);
-  usageErrors.value = { ...usageErrors.value, [resource.id]: {} };
+  usageErrors.value = { ...usageErrors.value, [resourceKey(resource)]: {} };
   usageVersion.value++;
+  commitCollection();
 };
 const setUsage = (key, value) => setResourceUsage(focusedResource.value, key, value);
 const previewContext = computed(() => {
@@ -272,7 +347,6 @@ const toggleFlat = () => {
 const adapterIcon = computed(() => options.adapters?.find((adapter) => adapter.id === options.adapter)?.icon || 'fas fa-list');
 const openNodeIcon = computed(() => options.adapters?.find(adapter => adapter.id === options.adapter)?.nodeOpenIcon || ({ media: 'fas fa-folder-open', articles: 'fas fa-box-open', 'flat-articles': 'fas fa-box-open', categories: 'fas fa-box-open', tags: 'fas fa-tags', 'articles-by-tag': 'fas fa-tags', users: 'fas fa-users-viewfinder', menus: 'fas fa-diagram-successor', 'featured-articles': 'fas fa-star' })[options.adapter] || 'fas fa-folder-open');
 const sizes = ['sm', 'md', 'lg', 'xl'];
-const t = (key) => Joomla.Text?._(key, key) || key;
 const applyBatch = async ({ selection: ids, payload, resolve, reject }) => {
   try {
     const result = await api.execute('batch', ids, payload);
@@ -308,6 +382,7 @@ const completeSelection = async (selected) => {
     return;
   }
   const detail = { adapter: options.adapter.replace(/^flat-/, ''), mode: options.mode, resources: [...selected] };
+  if (collectionMode) detail.collectionItems = selected.map(resource => ({ selection: resourceReference(resource, options.adapter.replace(/^flat-/, '')), usage: result.usage[resourceKey(resource)] || {} }));
   if (pickerContext) { detail.pickerInstance = options.pickerInstance; detail.usage = result.usage; }
   document.dispatchEvent(new CustomEvent('smartbrowser:select', { detail }));
   if (window.parent !== window) window.parent.document.dispatchEvent(new CustomEvent('smartbrowser:select', { detail }));
@@ -317,23 +392,33 @@ const resize = (step) => {
   const current = sizes.indexOf(state.viewOptions.gridSize);
   state.viewOptions.gridSize = sizes[Math.max(0, Math.min(sizes.length - 1, current + step))];
 };
-const resourceDefault = resource => defaultResourceAction(resource, options.mode, state.actions, (action, selection) => driver.available(action, selection), options.selectionTarget || 'both');
-const resourcePreview = resource => resourcePreviewAction(resource, options.mode, state.actions, (action, selection) => driver.available(action, selection));
-const itemActionAvailable = (action, target) => !state.busy && (action.local ? target.every(resource => resourceDefault(resource)?.id === action.id) : driver.available(action, target));
+const resourceDefault = resource => defaultResourceAction(resource, options.mode, actionsFor(resource), actionAvailable, options.selectionTarget || 'both');
+const resourcePreview = resource => resourcePreviewAction(resource, options.mode, actionsFor(resource), actionAvailable);
+const resourceModified = resource => modifiedResourceAction(resource, options.mode, actionsFor(resource), actionAvailable, options.selectionTarget || 'both');
+const itemActionAvailable = (action, target) => !state.busy && (action.local ? target.every(resource => resourceDefault(resource)?.id === action.id || resourceModified(resource)?.id === action.id) : actionAvailable(action, target));
 const activate = resource => { const action = resourceDefault(resource); if (action) runItemAction(action, resource); };
 const runItemAction = (action, resource) => {
   if (!action || !resource) return;
   if (!itemActionAvailable(action, [resource])) return;
   if (action.id === 'browseOpen') return load(resource.id);
-  if (action.id === 'pickerSelect') return completeSelection([resource]);
-  return driver.execute(action, [resource]);
+  if (action.id === 'pickerSelect') {
+    if (!collectionMode) return completeSelection([resource]);
+    if (!state.selectedIds.includes(resourceKey(resource))) toggle(resource, true);
+    return completeSelection(selection.value);
+  }
+  return executeAction(action, [resource]);
 };
 const switchAdapter = (adapter) => {
+  if (pickerContext?.allowedAdapters?.length && !pickerContext.allowedAdapters.includes(adapter.replace(/^flat-/, ''))) return;
   if (adapter === options.adapter) return;
+  commitCollection();
   const url = new URL(window.location.href);
   url.searchParams.set('adapter', adapter);
   url.searchParams.delete('node');
   url.searchParams.delete('browseRoot');
+  if (pickerContext?.initialBrowseRoot && adapter.replace(/^flat-/, '') === pickerContext.initialAdapter.replace(/^flat-/, '')) url.searchParams.set('browseRoot', pickerContext.initialBrowseRoot);
+  url.searchParams.delete('initialResource');
+  url.searchParams.delete('flatScope');
   window.location.href = url.toString();
 };
 const applyFilter = async ({ id, value }) => {
@@ -405,7 +490,17 @@ onMounted(() => {
     return;
   }
   load(state.selectedNode).then(async () => {
-    if (pickerContext?.initialSelection?.length) {
+    if (collectionMode) {
+      const snapshot = pickerContext.getCollectionSnapshot();
+      try {
+        const result = await api.collection(snapshot.items, { referenceItems: true, homogeneous: pickerContext.homogeneous });
+        if (unmounted) return;
+        state.selectedResources = Object.fromEntries(result.resources.map(resource => [resourceKey(resource), asPrimaryResource(resource)]));
+        state.selectedIds = result.items.map(entry => referenceKey(entry.selection));
+        state.focusedId = state.selectedIds.find(key => resources.value.some(resource => resourceKey(resource) === key)) || state.selectedIds[0] || null;
+      } catch (error) { if (!unmounted) Joomla.renderMessages({ error: [error.message] }); }
+    }
+    if (!collectionMode && pickerContext?.initialSelection?.length && (!pickerContext.initialAdapter || pickerContext.initialAdapter.replace(/^flat-/, '') === options.adapter.replace(/^flat-/, ''))) {
       const ids = pickerContext.initialSelection.map(item => item && typeof item === 'object' ? item.id : item);
       try {
         const result = await api.collection(options.multiple ? ids : ids.slice(0, 1));
@@ -419,7 +514,7 @@ onMounted(() => {
       } catch (error) { if (!unmounted) Joomla.renderMessages({ error: [error.message] }); }
     }
     if (options.adapter === 'media' && options.initialResource && resources.value.some((resource) => resource.id === options.initialResource)) {
-      state.focusedId = options.initialResource;
+      state.focusedId = resourceKey(resources.value.find(resource => resource.id === options.initialResource));
     }
   });
 });

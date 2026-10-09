@@ -9,6 +9,8 @@ $StageRoot = Join-Path $PSScriptRoot 'stage'
 $ComponentZip = Join-Path $StageRoot 'packages\com_smartbrowser.zip'
 $PluginRoot = Join-Path $ProjectRoot 'package\plugins\system\smartbrowserintegration'
 $PluginZip = Join-Path $StageRoot 'packages\plg_system_smartbrowserintegration.zip'
+$FieldPluginRoot = Join-Path $ProjectRoot 'package\plugins\fields\smartbrowserpicker'
+$FieldPluginZip = Join-Path $StageRoot 'packages\plg_fields_smartbrowserpicker.zip'
 $Version = ([xml](Get-Content -LiteralPath $PackageManifest -Raw)).extension.version
 $PackageZip = Join-Path $OutputDirectory "pkg_smartbrowser-v$Version.zip"
 $BuiltScript = Join-Path $ComponentRoot 'media\js\smartbrowser.js'
@@ -98,6 +100,8 @@ New-PortableZip -SourceDirectory $ComponentRoot -DestinationZip $ComponentZip
 Assert-PortableZip -ZipPath $ComponentZip
 New-PortableZip -SourceDirectory $PluginRoot -DestinationZip $PluginZip
 Assert-PortableZip -ZipPath $PluginZip
+New-PortableZip -SourceDirectory $FieldPluginRoot -DestinationZip $FieldPluginZip
+Assert-PortableZip -ZipPath $FieldPluginZip
 
 Copy-Item -LiteralPath $PackageManifest -Destination $StageRoot
 Copy-Item -LiteralPath (Join-Path $ProjectRoot 'language') -Destination $StageRoot -Recurse

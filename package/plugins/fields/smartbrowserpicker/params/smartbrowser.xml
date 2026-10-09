@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form addfieldprefix="SuperSoft\Component\Smartbrowser\Administrator\Field">
+  <fields name="fieldparams"><fieldset name="fieldparams">
+    <field name="allowed_adapters" type="Smartbrowseradapter" label="PLG_FIELDS_SMARTBROWSERPICKER_ADAPTER" default="media" required="true" multiple="true" />
+    <field name="browse_root" type="text" label="PLG_FIELDS_SMARTBROWSERPICKER_ROOT" description="PLG_FIELDS_SMARTBROWSERPICKER_ROOT_DESC" />
+    <field name="selection_target" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_TARGET" default="item" validate="options">
+      <option value="item">PLG_FIELDS_SMARTBROWSERPICKER_ITEMS</option><option value="node">PLG_FIELDS_SMARTBROWSERPICKER_NODES</option><option value="both">PLG_FIELDS_SMARTBROWSERPICKER_BOTH</option>
+    </field>
+    <field name="allowed_resource_types" type="text" label="PLG_FIELDS_SMARTBROWSERPICKER_TYPES" description="PLG_FIELDS_SMARTBROWSERPICKER_TYPES_DESC" />
+    <field name="multiple" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_FIELDS_SMARTBROWSERPICKER_MULTIPLE" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="homogeneous" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_FIELDS_SMARTBROWSERPICKER_HOMOGENEOUS" default="1" showon="multiple:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="ordering" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_FIELDS_SMARTBROWSERPICKER_ORDERING" default="1" showon="multiple:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="editor_display" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_DISPLAY" default="auto" validate="options">
+      <option value="auto">PLG_FIELDS_SMARTBROWSERPICKER_AUTO</option><option value="compact">PLG_FIELDS_SMARTBROWSERPICKER_COMPACT</option><option value="collection">PLG_FIELDS_SMARTBROWSERPICKER_COLLECTION</option>
+    </field>
+    <field name="selection_profile" type="textarea" label="PLG_FIELDS_SMARTBROWSERPICKER_PROFILE" description="PLG_FIELDS_SMARTBROWSERPICKER_PROFILE_DESC" rows="7" filter="raw" default="{}" />
+  </fieldset></fields>
+</form>

@@ -35,7 +35,7 @@ export async function mediaMarkup(resource, usage = {}) {
   } else {
     element = document.createElement('a');
     element.href = url;
-    const reference = usage['media.thumbnailOverride'];
+    const reference = usage['visual.thumbnailOverride'];
     if (reference) {
       const image = document.createElement('img');
       image.src = await thumbnail(reference);
@@ -52,7 +52,7 @@ const run = handler => async editor => {
 JoomlaEditorButton.registerAction('smartbrowser-media', run(async editor => {
   const result = await window.SmartBrowserPicker.open({ url: settings().url, adapter: 'media', selectionTarget: 'item',
     allowedResourceTypes: ['image', 'document', 'video', 'audio'], resultFormat: 'usage',
-    selectionProfile: { 'media.alt': {}, 'media.decorative': {}, 'media.loading': { default: 'auto' }, 'media.thumbnailOverride': {} } });
+    selectionProfile: { 'media.alt': {}, 'media.decorative': {}, 'media.loading': { default: 'auto' }, 'visual.thumbnailOverride': {} } });
   if (result) editor.replaceSelection(await mediaMarkup(result.selection, result.usage[result.selection.id]));
 }));
 JoomlaEditorButton.registerAction('smartbrowser-article', run(async editor => {

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { lightweightImage, thumbnailCapabilities } from '../resources/js/core/lightweightVisual.js';
+import { effectiveIcon, lightweightImage, thumbnailCapabilities } from '../resources/js/core/lightweightVisual.js';
 import { createSelectionUsage } from '../resources/js/core/selectionUsage.js';
 
 test('decorative dependency clears alt in initial/current usage and validation results', async () => {
@@ -44,7 +44,7 @@ test('Info visual stays separate from card/full preview and uses the existing di
   assert.ok(visual.includes("$emit('preview')"));
   assert.ok(visual.includes('initialSelection:'));
   assert.ok(visual.includes('fas fa-eye'));
-  assert.ok(visual.includes('props.editable ? thumbnailDefinitions.value : []'));
+  assert.ok(visual.includes("props.editable ? thumbnailDefinitions.value.filter(definition => definition.presentation !== 'hidden') : []"));
   assert.ok(info.includes(':editable="tab === \'usage\'"'));
   assert.ok(info.includes("available ? preferredTab.value : 'info'"));
   assert.ok(info.includes("selectTab('info')"));
@@ -57,4 +57,13 @@ test('Info visual stays separate from card/full preview and uses the existing di
   assert.ok(general.includes('background: transparent'));
   assert.match(css, /\.resource-lightweight-preview-action \{ inset-inline-start: 4px; inset-inline-end: auto;/);
   assert.match(css, /\.resource-info-panel\.showing-usage \.resource-lightweight-visual \{[^}]*width: 144px; height: 112px/);
+});
+
+test('effective icons preserve native CSS class identity independently of thumbnails', () => {
+  const resource = { icon: 'fas fa-newspaper', image: 'native.jpg' };
+  assert.equal(effectiveIcon(resource), 'fas fa-newspaper');
+  assert.equal(effectiveIcon(resource, { 'visual.iconOverride': 'fas fa-book' }), 'fas fa-book');
+  assert.equal(lightweightImage(resource), 'native.jpg');
+  assert.equal(effectiveIcon(resource, { 'visual.iconOverride': '<script>' }), 'fas fa-newspaper');
+  assert.equal(effectiveIcon({ unavailable: true }, { 'visual.iconOverride': 'fas fa-book' }), '');
 });

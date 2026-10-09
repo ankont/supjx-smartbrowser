@@ -3,6 +3,8 @@ const own = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
 const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const empty = value => value === null || value === undefined || typeof value === 'string' && !value.trim();
 const builtinEditors = new Set(['text', 'textarea', 'boolean', 'select', 'number', 'resource']);
+import { normalizeReference, resourceKey } from './selectionIdentity.js';
+export { normalizeReference } from './selectionIdentity.js';
 
 export const capabilityDisabled = (definition, values) => Boolean(definition.disabledWhen && own(values || {}, definition.disabledWhen.key) && values[definition.disabledWhen.key] === definition.disabledWhen.equals);
 
@@ -21,13 +23,6 @@ export function applicableCapabilities(resource, profile = {}) {
       required: policy.required === true,
     }];
   });
-}
-
-export function normalizeReference(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)
-    || typeof value.adapter !== 'string' || !/^[a-z][a-z0-9-]*$/.test(value.adapter)
-    || typeof value.id !== 'string' || !value.id || value.id.length > 2048) return null;
-  return { adapter: value.adapter, id: value.id };
 }
 
 export function valueError(definition, value) {
@@ -58,11 +53,12 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
   const definitions = resource => applicableCapabilities(resource, profile);
   function get(resource) {
     if (!resource) return {};
-    if (!values.has(resource.id)) values.set(resource.id, {});
-    const state = values.get(resource.id);
+    const key = resourceKey(resource);
+    if (!values.has(key)) values.set(key, resource.unavailable ? copy(initialUsage[key] || {}) : {});
+    const state = values.get(key);
     for (const definition of definitions(resource)) {
-      if (!own(state, definition.key)) state[definition.key] = copy(own(initialUsage[resource.id] || {}, definition.key)
-        ? initialUsage[resource.id][definition.key] : definition.default ?? null);
+      if (!own(state, definition.key)) state[definition.key] = copy(own(initialUsage[key] || {}, definition.key)
+        ? initialUsage[key][definition.key] : definition.default ?? null);
     }
     for (const definition of definitions(resource)) {
       if (capabilityDisabled(definition, state)) state[definition.key] = copy(definition.inactiveValue ?? null);
@@ -72,7 +68,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
   function set(resource, key, value) {
     if (!definitions(resource).some(definition => definition.key === key)) return;
     get(resource);
-    values.get(resource.id)[key] = copy(value);
+    values.get(resourceKey(resource))[key] = copy(value);
     get(resource);
   }
   async function validate(resources) {
@@ -80,6 +76,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
     const profileErrors = {};
     const usage = {};
     for (const resource of resources) {
+      const key = resourceKey(resource);
       const current = get(resource);
       const result = {};
       for (const definition of definitions(resource)) {
@@ -88,7 +85,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
         if (!error && definition.type === 'resource' && !empty(value)) {
           const reference = normalizeReference(value);
           const picker = definition.picker || {};
-          if (picker.adapter && reference.adapter !== picker.adapter) error = 'COM_SMARTBROWSER_USAGE_INVALID';
+          if (picker.adapter && reference.adapter !== picker.adapter || picker.allowedAdapters?.length && !picker.allowedAdapters.includes(reference.adapter)) error = 'COM_SMARTBROWSER_USAGE_INVALID';
           else {
             try {
               const resolved = await resolveReference(reference, picker);
@@ -106,16 +103,16 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
           catch { error = 'COM_SMARTBROWSER_USAGE_INVALID'; }
         }
         if (error) {
-          errors[resource.id] ||= {};
-          errors[resource.id][definition.key] = error;
+          errors[key] ||= {};
+          errors[key][definition.key] = error;
           if (definition.presentation === 'hidden') {
-            profileErrors[resource.id] ||= {};
-            profileErrors[resource.id][definition.key] = error;
+            profileErrors[key] ||= {};
+            profileErrors[key][definition.key] = error;
           }
         }
         result[definition.key] = definition.type === 'resource' && !empty(value) ? normalizeReference(value) : value;
       }
-      usage[resource.id] = result;
+      usage[key] = resource.unavailable ? current : result;
     }
     return { valid: !Object.keys(errors).length, errors, profileErrors, usage };
   }

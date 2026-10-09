@@ -1,5 +1,64 @@
 # Changelog
 
+## 3.0.9 - 2026-10-08
+
+- Add a translated Double click tooltip to bold default actions in grid/details menus, alongside the modified-action tooltip.
+
+## 3.0.8 - 2026-10-08
+
+- Ctrl+double-click edits nodes in manage mode and selects eligible nodes in selection mode, while normal activation still navigates.
+- Mark the modified action in grid/details context menus with italics and a translated tooltip; keep the default action bold and full Preview independent.
+
+## 3.0.7 - 2026-10-08
+
+- Raise embedded collections only while their item menu is open, keeping menus above adjacent browser and collection toolbars.
+
+## 3.0.6 - 2026-10-08
+
+- Allow embedded Collection View menus to extend outside their browser/table containers without changing full-browser scrolling.
+- Use neutral Remove/Αφαίρεση wording for single and multiple selections.
+
+## 3.0.5 - 2026-10-08
+
+- Move the Collection View count to its footer and add a colon before the number.
+- Make the Picker selection disclosure visibly interactive with a rotating chevron, hover and focus states; suppress the duplicate count in the embedded collection.
+
+## 3.0.4 - 2026-10-08
+
+- Add an optional generic onAdd callback to the Collection View toolbar, before Remove, with the label Add/Προσθήκη.
+- Move custom-field additions into the shared toolbar, including compact and empty views; remove the external field controls.
+
+## 3.0.3 - 2026-10-08
+
+- Restore Picker action-toolbar rendering with real adapter actions by binding availability to the current selection; keep the existing completion action.
+- Export collection language strings to browser/Picker instances.
+- Remove flat article views from adapter descriptors; retain adapter navigation in reference-collection Pickers while browsing flat views.
+- Extend the production fixture with nonempty actions and add regressions for toolbar binding, translations and adapter navigation.
+
+## 3.0.2 - 2026-10-08
+
+- Use smartbrowser as the custom-field identifier and SupJx SmartBrowser Picker (smartbrowser) as its type-list label.
+- Keep only the canonical type in discovery, including upgrades with obsolete files left on disk; no legacy field-type compatibility is provided.
+
+## 3.0.1 - 2026-10-08
+
+- Fix field creation and edit-form namespace registration using Joomla FormHelper instead of the nonexistent Form::addFieldPrefix method.
+- Rename the field plugin to Fields - SuperSoftJx - SmartBrowser Picker and prefix its field-type label.
+- Add regression coverage for plugin form/DOM preparation, preserving native parameter loading and disabled-field ACL attributes.
+
+## 3.0.0 - 2026-10-08
+
+- Add the Fields - SmartBrowser Picker plugin for administrator and frontend custom-field editing.
+- Configure allowed adapters, browse root, resource target/types, single/multiple selection, ordering, generic Selection Profile JSON and Auto/Compact/Collection editor display.
+- Generalize the core collection contract to ordered per-item normalized adapter/resource references and independent usage values, with optional homogeneous constraints and unchanged legacy APIs.
+- Preserve selected resources and usage while switching browsing adapters; keep grids/columns single-adapter and resolve metadata, visuals and actions per selected item.
+- Store versioned field collections without resolved labels or presentation markup.
+- Reuse the Picker and Collection View, adding a compact details-renderer route and generic collection host-action callback.
+- Resolve prepared values dynamically with adapter/access checks and safe unavailable states; provide escaped text-only default output.
+- Preserve other items and their usages when editing one selection. Enforce homogeneous restrictions at addition, not browsing; allow mixed fields by disabling the optional constraint.
+- Validate stored field usages server-side against the existing capability/profile contract, including reference permissions and resource types.
+- Verify 321 JavaScript tests and 18 standalone PHP regression scripts, plus production-bundle browser fixtures for mixed/homogeneous selection, image/PDF/article fields, nested thumbnails and per-item usage/order preservation.
+
 ## 2.1.7 - 2026-10-08
 
 - Restrict thumbnail editing actions to Usage options, preserving the effective visual in Information.

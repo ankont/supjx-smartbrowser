@@ -11,7 +11,7 @@ const image = id => ({ id, kind: 'item', type: 'image', selectable: true, focusa
   { key: 'media.loading', type: 'string', editor: 'select', default: 'auto', options: [{ value: 'auto' }, { value: 'lazy' }, { value: 'eager' }] },
 ] });
 const pdf = id => ({ id, kind: 'item', type: 'document', selectionCapabilities: [
-  { key: 'media.thumbnailOverride', type: 'resource', editor: 'resource', default: null, picker: { adapter: 'media', selectionTarget: 'item', allowedResourceTypes: ['image'] } },
+  { key: 'visual.thumbnailOverride', type: 'resource', editor: 'resource', default: null, picker: { adapter: 'media', selectionTarget: 'item', allowedResourceTypes: ['image'] } },
 ] });
 
 test('hidden required options retain defaults and initial values in the usage result', async () => {
@@ -51,10 +51,10 @@ test('hidden custom values need no UI renderer but still run registered validato
 
 test('hidden resource references still require adapter/type validation', async () => {
   const resource = pdf('file:pdf');
-  const model = createSelectionUsage({ profile: { 'media.thumbnailOverride': { presentation: 'hidden', default: { adapter: 'media', id: 'file:wrong' } } }, resolveReference: async () => ({ type: 'document', kind: 'item' }) });
+  const model = createSelectionUsage({ profile: { 'visual.thumbnailOverride': { presentation: 'hidden', default: { adapter: 'media', id: 'file:wrong' } } }, resolveReference: async () => ({ type: 'document', kind: 'item' }) });
   const result = await model.validate([resource]);
   assert.equal(result.valid, false);
-  assert.ok(result.profileErrors[resource.id]['media.thumbnailOverride']);
+  assert.ok(result.profileErrors[resource.id]['visual.thumbnailOverride']);
 });
 
 test('capabilities intersect the profile per resource, with no media-specific core cases', async () => {
@@ -110,21 +110,21 @@ test('generic validation supports required, type, options and non-weakening prof
 test('PDF thumbnail references resolve through the adapter and return identity only', async () => {
   const calls = [];
   let resolved = image('files:/cover.jpg');
-  const model = createSelectionUsage({ profile: { 'media.thumbnailOverride': {} }, resolveReference: async (ref, constraint) => { calls.push({ ref, constraint }); return resolved; } });
+  const model = createSelectionUsage({ profile: { 'visual.thumbnailOverride': {} }, resolveReference: async (ref, constraint) => { calls.push({ ref, constraint }); return resolved; } });
   const a = pdf('file:a'), b = pdf('file:b');
-  model.set(a, 'media.thumbnailOverride', { adapter: 'media', id: 'files:/cover.jpg', title: 'Not retained', html: '<img>' });
+  model.set(a, 'visual.thumbnailOverride', { adapter: 'media', id: 'files:/cover.jpg', title: 'Not retained', html: '<img>' });
   const result = await model.validate([a, b]);
   assert.equal(result.valid, true);
-  assert.deepEqual(result.usage[a.id]['media.thumbnailOverride'], { adapter: 'media', id: 'files:/cover.jpg' });
-  assert.equal(result.usage[b.id]['media.thumbnailOverride'], null);
+  assert.deepEqual(result.usage[a.id]['visual.thumbnailOverride'], { adapter: 'media', id: 'files:/cover.jpg' });
+  assert.equal(result.usage[b.id]['visual.thumbnailOverride'], null);
   assert.equal(calls[0].constraint.allowedResourceTypes[0], 'image');
   for (const invalid of [{ ...resolved, type: 'document' }, { ...resolved, kind: 'node' }, { ...resolved, unavailable: true }, { ...resolved, selectable: false }]) {
     resolved = invalid;
     assert.equal((await model.validate([a])).valid, false);
   }
-  model.set(a, 'media.thumbnailOverride', { adapter: 'articles', id: 'article:1' });
+  model.set(a, 'visual.thumbnailOverride', { adapter: 'articles', id: 'article:1' });
   assert.equal((await model.validate([a])).valid, false);
-  model.set(a, 'media.thumbnailOverride', null);
+  model.set(a, 'visual.thumbnailOverride', null);
   assert.equal((await model.validate([a])).valid, true);
   assert.equal(normalizeReference({ adapter: 'media', id: 'a', image: 'url' }).image, undefined);
 });

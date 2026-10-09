@@ -21,6 +21,7 @@ namespace Joomla\Event {
 }
 namespace {
     define('_JEXEC', 1);
+require_once __DIR__ . '/../package/component/admin/src/Support/ResourceDescriptor.php';
     require __DIR__ . '/../package/component/admin/src/Support/ResourceVisualDecorator.php';
     use SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceVisualDecorator;
     use Joomla\CMS\Plugin\PluginHelper;
@@ -43,7 +44,9 @@ namespace {
         $fallback = ['id' => 'category:45', 'image' => null, 'icon' => 'fas fa-folder'];
         $response = ['items' => [$native], 'nodes' => [$fallback]];
         $decorator = new ResourceVisualDecorator($app);
-        if ($decorator->decorate($response, 'articles') !== $response) throw new \RuntimeException('No provider changed resources');
+        $complete = ['items' => [\SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceDescriptor::complete($native)],
+            'nodes' => [\SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceDescriptor::complete($fallback)]];
+        if ($decorator->decorate($response, 'articles') !== $complete) throw new \RuntimeException('No provider changed native visuals');
         $dispatcher->provider = static function ($event): void {
             $decorations = $event->getArgument('decorations');
             foreach ($event->getArgument('resources') as $resource) {

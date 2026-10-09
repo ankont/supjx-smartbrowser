@@ -11,7 +11,7 @@
         </template>
       </LightweightResourceVisual>
       <h3>{{ resource.title }}</h3>
-      <SelectionUsageEditor v-if="usageDefinitions?.length && tab === 'usage'" :key="resource.id" :definitions="formDefinitions" :values="usageValues" :errors="usageErrors" :resource="resource" :t="t" :editors="usageEditors" :resolve-reference="resolveReference" @change="(key, value) => $emit('usage-change', key, value)" />
+      <SelectionUsageEditor v-if="usageDefinitions?.length && tab === 'usage'" :key="resourceKey(resource)" :definitions="formDefinitions" :values="usageValues" :errors="usageErrors" :resource="resource" :t="t" :editors="usageEditors" :resolve-reference="resolveReference" @change="(key, value) => $emit('usage-change', key, value)" />
       <template v-else>
       <dl v-if="fields?.length">
         <div v-for="field in visibleFields" :key="`${field.source}-${field.label}`" v-show="fieldValue(field) !== '' && fieldValue(field) !== null && fieldValue(field) !== undefined">
@@ -72,6 +72,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { resourceKey } from '../core/selectionIdentity.js';
 import { iconForField } from '../core/fieldIcons.js';
 import LightweightResourceVisual from './LightweightResourceVisual.vue';
 import { thumbnailCapabilities } from '../core/lightweightVisual.js';
@@ -86,7 +87,7 @@ const selectTab = value => { preferredTab.value = value; tab.value = value; };
 const actionBusy = ref(false);
 const previewElement = ref(null);
 let previewAbort;
-watch(() => props.resource?.id, () => previewAbort?.abort());
+watch(() => resourceKey(props.resource), () => previewAbort?.abort());
 onBeforeUnmount(() => previewAbort?.abort());
 watch(() => Boolean(props.usageDefinitions?.length), available => { tab.value = available ? preferredTab.value : 'info'; }, { immediate: true });
 watch(() => props.usageRevision, () => { if (props.usageDefinitions?.length) tab.value = 'usage'; });
@@ -112,7 +113,7 @@ const supplementalFields = [
   ['metadata.width', 'COM_SMARTBROWSER_DIMENSIONS', 'dimensions'],
 ].map(([source, label, format]) => ({ source, label, format }));
 const visibleFields = computed(() => {
-  const fields = (props.fields || []).filter((field) =>
+  const fields = (props.resource?.infoFields?.length ? props.resource.infoFields : props.fields || []).filter((field) =>
     (!field.kinds || field.kinds.includes(props.resource?.kind))
     && !['metadata.locationPath', 'metadata.category', 'metadata.tags'].includes(field.source));
   const present = new Set(fields.map((field) => field.source));

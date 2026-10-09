@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
 import { readFile } from 'node:fs/promises';
+import { collectionEntries, referenceKey } from '../resources/js/core/selectionIdentity.js';
 const source = await readFile(new URL('../package/component/media/js/picker.js', import.meta.url), 'utf8');
 
-function fixture() {
+function fixture(collectionMode = false) {
   const dialogs = [], listeners = new Set();
   const document = {
     addEventListener(name, callback) { listeners.add(callback); }, removeEventListener(name, callback) { listeners.delete(callback); }, body: { appendChild() {} },
@@ -16,9 +17,10 @@ function fixture() {
     },
   };
   const window = { location: { href: 'https://example.test/index.php' }, SmartBrowserMediaValue: { selectionLocation: () => ({}) }, SmartBrowserDialogDismiss: { install(dialog, dirty, close) { dialog.dismiss = close; } } };
-  vm.runInNewContext(source, { window, document, URL, Joomla: { getOptions: () => ({}) } });
+  const collectionContract = { collectionEntries, referenceKey, createEditorSize: () => ({ toggle: () => false, isMaximized: () => false, destroy() {} }) };
+  vm.runInNewContext(collectionMode ? source.replace('Promise.resolve(null)', 'Promise.resolve(collectionContract)') : source, { window, document, URL, collectionContract, Joomla: { getOptions: () => ({}) } });
   const id = dialog => new URL(dialog.frame.src).searchParams.get('pickerInstance');
-  const send = (dialog, resources, usage = {}) => [...listeners].forEach(listener => listener({ detail: { pickerInstance: id(dialog), resources, usage } }));
+  const send = (dialog, resources, usage = {}, extra = {}) => [...listeners].forEach(listener => listener({ detail: { pickerInstance: id(dialog), resources, usage, ...extra } }));
   return { picker: window.SmartBrowserPicker, dialogs, listeners, id, send };
 }
 
@@ -36,6 +38,42 @@ test('legacy result and nested instance isolation preserve single/multiple selec
   f.send(f.dialogs[0], [{ id: 'article:2', type: 'article' }, { id: 'article:1', type: 'article' }]);
   assert.deepEqual(Array.from(await outer, resource => resource.id), ['article:2', 'article:1']);
   assert.equal(f.listeners.size, 0);
+});
+
+test('core reference Picker retains snapshots across adapter navigation, isolates instances and returns canonical usages', async () => {
+  const f = fixture(true);
+  const items = [{ selection: { adapter: 'articles', id: 'article:1' }, usage: { 'example.label': 'A' } }];
+  const result = f.picker.open({ resultFormat: 'collection', allowedAdapters: ['articles', 'media'], initialCollection: items, multiple: true });
+  await new Promise(setImmediate);
+  const dialog = f.dialogs[0], id = f.id(dialog);
+  const url = new URL(dialog.frame.src);
+  assert.equal(url.searchParams.get('adapter'), 'articles');
+  assert.equal(url.searchParams.get('showAdapterSwitcher'), '1');
+  assert.equal(f.picker.context(id, {}), null);
+  const context = f.picker.context(id, dialog.frame.contentWindow);
+  assert.equal(context.collectionMode, true);
+  items[0].usage['example.label'] = 'Not copied';
+  assert.equal(context.getCollectionSnapshot().items[0].usage['example.label'], 'A');
+  const mixed = [...context.getCollectionSnapshot().items, { selection: { adapter: 'media', id: 'local:/one.png' }, usage: { 'media.alt': 'B' } }];
+  context.commitCollection({ items: mixed, resources: {} });
+  assert.equal(f.picker.context(id, dialog.frame.contentWindow).initialUsage[referenceKey(mixed[1].selection)]['media.alt'], 'B');
+  const other = f.picker.open({ resultFormat: 'collection', adapter: 'media', multiple: true, allowOrdering: false });
+  const otherContext = f.picker.context(f.id(f.dialogs[1]), f.dialogs[1].frame.contentWindow);
+  assert.equal(otherContext.getCollectionSnapshot().items.length, 0);
+  assert.equal(otherContext.allowOrdering, false);
+  f.send(dialog, [], {}, { collectionItems: mixed });
+  assert.deepEqual(JSON.parse(JSON.stringify(await result)), JSON.parse(JSON.stringify({ items: mixed })));
+  assert.equal(f.listeners.size, 1);
+  f.dialogs[1].dismiss(); assert.equal(await other, null); assert.equal(f.listeners.size, 0);
+});
+
+test('reference Picker enforces homogeneous and single constraints without creating leaked dialogs', async () => {
+  const f = fixture(true);
+  const items = [{ selection: { adapter: 'articles', id: 'article:1' }, usage: {} }, { selection: { adapter: 'media', id: 'local:/one.png' }, usage: {} }];
+  await assert.rejects(f.picker.open({ resultFormat: 'collection', homogeneous: true, multiple: true, initialCollection: items }));
+  await assert.rejects(f.picker.open({ resultFormat: 'collection', multiple: false, initialCollection: items }));
+  await assert.rejects(f.picker.open({ resultFormat: 'collection', adapter: 'media', allowedAdapters: ['articles'] }));
+  assert.equal(f.dialogs.length, 0); assert.equal(f.listeners.size, 0);
 });
 
 test('usage result is opt-in, initial context is copied and restricted to the owning iframe', async () => {
@@ -89,6 +127,7 @@ test('invalid profile inputs fail before any host listeners are installed', asyn
   const f = fixture();
   await assert.rejects(f.picker.open({ selectionProfile: [] }));
   await assert.rejects(f.picker.open({ initialSelection: 'file:1' }));
+  await assert.rejects(f.picker.open({ allowedAdapters: 'media' }));
   await assert.rejects(f.picker.open({ url: 'http://[' }));
   assert.equal(f.listeners.size, 0);
 });

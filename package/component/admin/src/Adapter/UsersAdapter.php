@@ -14,7 +14,7 @@ use SuperSoft\Component\Smartbrowser\Administrator\Support\BatchRunner;
 
 defined('_JEXEC') or die;
 
-final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface
+final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface, StoredSelectionReadableAdapterInterface
 {
     private const ROOT_ID = 'users:root';
 
@@ -80,6 +80,21 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         }
 
         throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+    }
+
+    public function getReadableResource(string $resourceId): array
+    {
+        throw new \RuntimeException('Stored visible host context required.', 403);
+    }
+
+    public function getStoredReadableResource(string $resourceId, \SuperSoft\Component\Smartbrowser\Administrator\Support\StoredSelectionReadContext $context): array
+    {
+        if (!preg_match('/^user:([1-9][0-9]*)$/D', $resourceId, $matches)
+            || !$context->permits(['adapter' => $this->getId(), 'id' => $resourceId])) throw new \RuntimeException('Not readable', 403);
+        $user = $this->user((int) $matches[1]);
+        return ['id' => $resourceId, 'title' => (string) $user->name, 'subtitle' => null, 'parentId' => null,
+            'kind' => 'item', 'type' => 'user', 'icon' => 'fas fa-user', 'image' => null,
+            'capabilities' => [], 'overlays' => [], 'metadata' => ['id' => (int) $user->id]];
     }
 
     public function getBreadcrumb(string $nodeId): array

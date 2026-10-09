@@ -20,7 +20,7 @@ test('media editor button requests usages and applies decorative/loading options
   const f = fixture({ selection: { id: 'image:1', type: 'image', metadata: { url: '/images/a.jpg' } }, usage: { 'image:1': { 'media.alt': 'Example', 'media.decorative': true, 'media.loading': 'lazy' } } });
   await f.actions.get('smartbrowser-media')(f.editor);
   assert.equal(f.config().resultFormat, 'usage');
-  assert.ok(f.config().selectionProfile['media.thumbnailOverride']);
+  assert.ok(f.config().selectionProfile['visual.thumbnailOverride']);
   assert.equal(f.inserted[0].alt, '');
   assert.equal(f.inserted[0].loading, 'lazy');
 });

@@ -32,4 +32,21 @@ foreach ([[['a','b','c','d'], ['b','c'], 'up', ['b','c','a','d']], [['a','b','c'
     if (OrderingSteps::orderedIds($ids, $selected, $direction) !== $expected) throw new \RuntimeException('Collection ordering changed semantics');
 }
 echo "Collection resolution, access and ordering OK\n";
+$entries = CollectionResources::entries([
+    ['selection' => ['adapter' => 'articles', 'id' => 'article:1'], 'usage' => ['example.label' => 'A']],
+    ['selection' => ['adapter' => 'categories', 'id' => 'article:1'], 'usage' => ['example.label' => 'B']],
+    ['selection' => ['adapter' => 'articles', 'id' => 'article:1'], 'usage' => ['example.label' => 'Duplicate']],
+    ['selection' => ['adapter' => 'media', 'id' => 'local-files:/missing.pdf'], 'usage' => []],
+]);
+if (count($entries) !== 3) throw new \RuntimeException('Canonical deduplication failed');
+$groups = [];
+$mixed = CollectionResources::resolveEntries($entries, function ($adapter, $ids) use (&$groups) {
+    $groups[$adapter] = $ids;
+    if ($adapter === 'media') throw new \RuntimeException('Denied', 403);
+    return ['resources' => array_map(fn ($id) => ['id' => $id, 'title' => $adapter], $ids), 'actions' => [['id' => $adapter]], 'presentation' => ['infoFields' => [$adapter]]];
+});
+if (count($groups) !== 3 || array_column($mixed, 'adapter') !== ['articles', 'categories', 'media']) throw new \RuntimeException('Per-adapter resolving failed');
+if ($mixed[0]['selectionKey'] === $mixed[1]['selectionKey'] || $mixed[1]['collectionActions'][0]['id'] !== 'categories' || empty($mixed[2]['unavailable'])) throw new \RuntimeException('Per-item metadata/actions/access failed');
+try { CollectionResources::entries($entries, ['homogeneous' => true]); throw new \RuntimeException('Expected constraint rejection'); } catch (\InvalidArgumentException $error) {}
+echo "Mixed collection identities, usage, adapter resolution and constraints OK\n";
 }

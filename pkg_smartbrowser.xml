@@ -2,7 +2,7 @@
 <extension type="package" method="upgrade">
     <name>PKG_SMARTBROWSER</name>
     <packagename>smartbrowser</packagename>
-    <version>2.1.7</version>
+    <version>3.0.9</version>
     <creationDate>2026-09</creationDate>
     <author>SuperSoft — Kontarinis Andreas</author>
     <copyright>(C) 2026 SuperSoft. All rights reserved.</copyright>
@@ -15,5 +15,6 @@
     <files folder="packages">
         <file type="component" id="com_smartbrowser">com_smartbrowser.zip</file>
         <file type="plugin" id="smartbrowserintegration" group="system">plg_system_smartbrowserintegration.zip</file>
+        <file type="plugin" id="smartbrowserpicker" group="fields">plg_fields_smartbrowserpicker.zip</file>
     </files>
 </extension>

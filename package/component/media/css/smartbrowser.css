@@ -30,10 +30,13 @@ body[data-sb-focus-page] { overflow: hidden; }
 .resource-actions > .resource-display-toggle { flex: none; }
 .resource-actions:not(:has(.resource-filter-buttons)) > .resource-display-toggle { margin-inline-start: auto; }
 .smartbrowser .resource-item-menu button.resource-default-action { font-weight: 700; }
-.smartbrowser-collection .resource-browser { min-height: 0; flex-direction: column; width: 100%; }
-.smartbrowser-collection .resource-details-view { flex: 0 0 auto; width: 100%; }
+.smartbrowser .resource-item-menu button.resource-modified-action { font-style: italic; }
+.smartbrowser-collection .resource-browser { min-height: 0; flex-direction: column; width: 100%; overflow: visible; }
+.smartbrowser-collection .resource-details-view { flex: 0 0 auto; width: 100%; overflow: visible; }
+.smartbrowser-collection:has(.resource-item-menu) { position: relative; z-index: 41; }
+.smartbrowser-collection .resource-browser:has(.resource-item-menu) { z-index: 1; }
 .sb-collection-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; padding-inline-start: 12px; }
-.sb-collection-toolbar strong { font-size: 14px; font-weight: 600; }
+.sb-collection-count { padding: 6px 12px; font-size: 14px; font-weight: 600; border-top: 1px solid var(--sb-border); }
 .sb-collection-toolbar .resource-view-controls { flex-wrap: wrap; }
 .sb-collection-toolbar select { width: auto; max-width: 160px; min-width: 0; font-size: 13px; }
 .smartbrowser-collection .resource-empty-state { padding: 16px; }
@@ -2349,3 +2352,14 @@ html body dialog.smartbrowser-picker.is-maximized { position: fixed !important; 
 }
 
 .smartbrowser-editor-loading[hidden] { display: none; }
+.smartbrowser-collection.is-compact .resource-details-view thead { display: none; }
+.smartbrowser-collection.is-compact .resource-details-view .table { margin-bottom: 0; }
+.sb-selection-field { min-width: 0; }
+.sb-selection-field-controls { display: flex; gap: 6px; margin-block: 6px; }
+.resource-picker-collection { border-bottom: 1px solid var(--sb-border); padding: 6px 12px; }
+.resource-picker-collection > summary { display: flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 8px; font-size: .85rem; font-weight: 600; cursor: pointer; list-style: none; }
+.resource-picker-collection > summary::-webkit-details-marker { display: none; }
+.resource-picker-collection > summary:hover { background: var(--sb-sidebar); color: var(--sb-accent); }
+.resource-picker-collection > summary:focus-visible { outline: 2px solid var(--sb-accent); outline-offset: 2px; }
+.resource-picker-collection[open] > summary .resource-picker-collection-chevron { transform: rotate(90deg); }
+.resource-lightweight-icon.with-thumbnail { position: absolute; bottom: 4px; left: 4px; font-size: 22px; }

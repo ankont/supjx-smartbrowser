@@ -32,6 +32,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { capabilityDisabled, normalizeReference } from '../core/selectionUsage.js';
+import { resourceKey } from '../core/selectionIdentity.js';
 const props = defineProps({ definition: Object, resource: Object, value: null, values: Object, error: String, t: Function, editors: Object, resolveReference: Function });
 const emit = defineEmits(['change']);
 const fieldId = `sb-usage-${Math.random().toString(36).slice(2)}`;
@@ -68,7 +69,7 @@ async function pick() {
   } catch { localError.value = 'COM_SMARTBROWSER_USAGE_INVALID'; }
   finally { picking.value = false; }
 }
-watch([customEditor, () => props.resource?.id], async () => {
+watch([customEditor, () => resourceKey(props.resource)], async () => {
   abort?.abort(); editorInstance?.destroy?.(); editorInstance = null;
   await nextTick();
   if (disposed || !customEditor.value || !customContainer.value) return;

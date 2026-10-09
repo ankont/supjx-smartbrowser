@@ -1,10 +1,14 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_smartbrowser",
-  "version": "2.1.7",
+  "version": "3.0.9",
   "description": "SuperSoftJx - SmartBrowser",
   "license": "GPL-2.0-or-later",
   "assets": [
+    {
+      "name": "com_smartbrowser.selection-field", "type": "script", "uri": "com_smartbrowser/selection-field.js",
+      "dependencies": ["core", "messages", "com_smartbrowser.picker"], "attributes": {"type": "module"}
+    },
     {
       "name": "com_smartbrowser.icon-settings",
       "type": "script",

@@ -7,26 +7,26 @@
     </div>
     <div
       v-for="resource in resources"
-      :key="resource.id"
+      :key="resourceKey(resource)"
       class="resource-browser-item"
-      :class="{ selected: selectedIds.includes(resource.id), focused: focusedId === resource.id, active: openMenu === resource.id, contextual: isContextualResource(resource) }"
+      :class="{ selected: selectedIds.includes(resourceKey(resource)), focused: focusedId === resourceKey(resource), active: openMenu === resourceKey(resource), contextual: isContextualResource(resource) }"
       :role="canFocusResource(resource) ? 'button' : undefined"
       :tabindex="canFocusResource(resource) ? 0 : undefined"
-      :aria-pressed="canSelectResource(resource) ? selectedIds.includes(resource.id) : undefined"
+      :aria-pressed="canSelectResource(resource) ? selectedIds.includes(resourceKey(resource)) : undefined"
       @click.stop="openMenu = null; $emit('select', resource, $event.ctrlKey || $event.metaKey)"
       @dblclick.stop="performDefault(resource, $event)"
       @keydown.enter.prevent="performDefault(resource)"
       @mouseleave="openMenu = null"
     >
-      <label v-if="canSelectResource(resource)" class="resource-item-select" :class="{ checked: selectedIds.includes(resource.id) }" @click.stop>
-        <input type="checkbox" :checked="selectedIds.includes(resource.id)" :aria-label="resource.title" @change="$emit('select', resource, true)">
+      <label v-if="canSelectResource(resource)" class="resource-item-select" :class="{ checked: selectedIds.includes(resourceKey(resource)) }" @click.stop>
+        <input type="checkbox" :checked="selectedIds.includes(resourceKey(resource))" :aria-label="resource.title" @change="$emit('select', resource, true)">
       </label>
-      <button v-if="itemActions(resource).length" type="button" class="resource-item-menu-toggle" :aria-expanded="openMenu === resource.id" :title="t('COM_SMARTBROWSER_ACTIONS')" @click.stop="$emit('focus', resource); toggleMenu(resource.id, $event)">
+      <button v-if="itemActions(resource).length" type="button" class="resource-item-menu-toggle" :aria-expanded="openMenu === resourceKey(resource)" :title="t('COM_SMARTBROWSER_ACTIONS')" @click.stop="$emit('focus', resource); toggleMenu(resourceKey(resource), $event)">
         <span class="fas fa-ellipsis-h" aria-hidden="true" />
       </button>
-      <div v-if="openMenu === resource.id" class="resource-item-menu" :class="{ 'align-start': menuAlignStart }" :style="menuMaxWidth ? { maxWidth: `${menuMaxWidth}px` } : null" @click.stop>
+      <div v-if="openMenu === resourceKey(resource)" class="resource-item-menu" :class="{ 'align-start': menuAlignStart }" :style="menuMaxWidth ? { maxWidth: `${menuMaxWidth}px` } : null" @click.stop>
         <strong>{{ resource.title }}</strong>
-        <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="[`resource-action-${action.id}`, { 'resource-default-action': action.isDefault }]" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
+        <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="[`resource-action-${action.id}`, { 'resource-default-action': action.isDefault, 'resource-modified-action': action.isModified }]" :title="action.isDefault ? t('COM_SMARTBROWSER_DOUBLE_CLICK') : action.isModified ? t('COM_SMARTBROWSER_CTRL_DOUBLE_CLICK') : undefined" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
           <span :class="action.icon" aria-hidden="true" />
           {{ t(action.label) }}
         </button>
@@ -56,16 +56,17 @@
 </template>
 
 <script setup>
+import { resourceKey } from '../core/selectionIdentity.js';
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { canActOnResource, canFocusResource, canSelectResource, isContextualResource } from '../core/resourcePolicy.js';
 import { itemMenuActions } from '../core/itemMenuActions.js';
 import ResourceVisual from './ResourceVisual.vue';
 
-const props = defineProps({ defaultAction: Function, previewAction: Function, selectionControls: { type: Boolean, default: true }, resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, gridFields: Array, t: Function });
+const props = defineProps({ defaultAction: Function, modifiedAction: Function, previewAction: Function, selectionControls: { type: Boolean, default: true }, resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, gridFields: Array, t: Function });
 const emit = defineEmits(['select', 'select-all', 'focus', 'open', 'activate', 'action']);
 const performDefault = (resource, event) => {
-  if ((event?.ctrlKey || event?.metaKey) && props.previewAction) {
-    const preview = props.previewAction(resource);
+  if ((event?.ctrlKey || event?.metaKey) && (props.modifiedAction || props.previewAction)) {
+    const preview = props.modifiedAction ? props.modifiedAction(resource) : props.previewAction(resource);
     if (preview && props.actionAvailable(preview, [resource])) { emit('action', preview, resource); return; }
   }
   if (props.defaultAction) {
@@ -90,7 +91,7 @@ const toggleMenu = async (id, event) => {
   const menu = item.querySelector('.resource-item-menu');
   menuAlignStart.value = menu?.getBoundingClientRect().left < view.getBoundingClientRect().left + 4;
 };
-const itemActions = resource => itemMenuActions(props.actions, resource, props.actionAvailable, props.defaultAction?.(resource));
+const itemActions = resource => itemMenuActions(props.actions, resource, props.actionAvailable, props.defaultAction?.(resource), (props.modifiedAction || props.previewAction)?.(resource));
 const overlayAction = (overlay, resource) => canActOnResource(resource)
   && resource.interactiveOverlays !== false
   ? props.actions.find((action) => action.id === overlay.action && props.actionAvailable(action, [resource]))
@@ -122,7 +123,7 @@ const secondaryLines = (resource) => {
     resource.type === 'image' && metadata.width > 0 && metadata.height > 0
       ? line('COM_SMARTBROWSER_DIMENSIONS', `${metadata.width} × ${metadata.height}`, 'fas fa-expand') : null,
   ].filter(Boolean);
-  return (props.gridFields || []).map((field) => line(
+  return (resource.collectionPresentation?.gridFields || props.gridFields || []).map((field) => line(
     field.label || 'COM_SMARTBROWSER_DETAILS',
     field.format === 'date' ? formatDate(valueAt(resource, field.source)) : valueAt(resource, field.source),
     'fas fa-info',

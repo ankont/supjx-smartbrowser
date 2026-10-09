@@ -21,6 +21,18 @@ final class AdapterRegistry
             throw new \RuntimeException('Not authorised to manage content.', 403);
         }
 
+        return $this->create($id, $browseRoot, $flatScope);
+    }
+
+    public function getReadable(string $id, ?string $browseRoot = null): ReadableResourceAdapterInterface
+    {
+        $adapter = $this->create($id, $browseRoot);
+        if (!$adapter instanceof ReadableResourceAdapterInterface) throw new \RuntimeException('No safe read policy.', 403);
+        return $adapter;
+    }
+
+    private function create(string $id, ?string $browseRoot = null, ?string $flatScope = null): ResourceAdapterInterface
+    {
         $adapter = match ($id) {
             'media'    => new MediaAdapter($this->app),
             'articles' => new ArticleAdapter($this->app),
@@ -55,9 +67,6 @@ final class AdapterRegistry
             $this->canUse('media') ? ['id' => 'media', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_MEDIA'), 'icon' => 'fas fa-photo-video'] : null,
             $this->canUse('articles')
                 ? ['id' => 'articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_ARTICLES'), 'icon' => 'fas fa-book-open']
-                : null,
-            $this->canUse('flat-articles')
-                ? ['id' => 'flat-articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES'), 'icon' => 'fas fa-book-open']
                 : null,
             $this->canUse('featured-articles')
                 ? ['id' => 'featured-articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_FEATURED_ARTICLES'), 'icon' => 'fas fa-star']

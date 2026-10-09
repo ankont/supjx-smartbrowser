@@ -10,8 +10,8 @@ export function mountCollection(container, configuration = {}) {
   if (mounted.has(target)) throw new Error('A SmartBrowser collection is already mounted in this container.');
   const defaults = window.Joomla?.getOptions('com_smartbrowser.collection', {}) || {};
   const config = { ...defaults, ...configuration };
-  if (!config.adapter || !config.apiBaseUrl || !config.csrfToken) throw new TypeError('Collection adapter, apiBaseUrl and csrfToken are required.');
-  if (config.layout && !['grid', 'details'].includes(config.layout)) throw new TypeError('Collection layout must be grid or details.');
+  if (!config.apiBaseUrl || !config.csrfToken) throw new TypeError('Collection apiBaseUrl and csrfToken are required.');
+  if (config.layout && !['grid', 'details', 'compact'].includes(config.layout)) throw new TypeError('Collection layout must be grid, details or compact.');
   const t = config.translate || (key => window.Joomla?.Text?._(key, key) || key);
   const api = new ResourceApi({ ...config, mode: config.readOnly ? 'readonly' : 'manage' });
   let destroyed = false;
@@ -28,6 +28,7 @@ export function mountCollection(container, configuration = {}) {
   const instance = {
     ready, getItems: model.getItems,
     setItems: items => model.setItems(items),
+    addItems: items => model.addItems(items),
     refresh: () => model.refresh(),
     destroy() {
       if (destroyed) return;

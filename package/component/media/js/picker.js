@@ -1,6 +1,8 @@
 (function () {
   const scriptUrl = document.currentScript?.src;
   const sizeModule = scriptUrl ? import(new URL('picker-size.js', scriptUrl).href) : Promise.resolve(null);
+  let contract;
+  sizeModule.then(module => { contract = module; }).catch(() => {});
   sizeModule.catch(() => {});
   const instances = new Map();
   const editors = Object.create(null);
@@ -19,6 +21,7 @@
       allowNoUser: config.allowNoUser ? '1' : '0',
       Itemid: '0',
     };
+    if (config.resultFormat === 'collection') values.showAdapterSwitcher = !config.allowedAdapters?.length || config.allowedAdapters.length > 1 ? '1' : '0';
     Object.entries(values).forEach(([key, value]) => { if (value !== '') url.searchParams.set(key, value); });
     if (selected.node || config.initialNode) {
       url.searchParams.set('node', selected.node || config.initialNode);
@@ -43,14 +46,28 @@
     context(id, source) {
       const instance = instances.get(id);
       if (!instance || instance.frame.contentWindow !== source) return null;
-      return { ...instance.context, editors: { ...editors }, previewActions: [...previewActions.values()], toggleSize: () => instance.size?.toggle() || false, isMaximized: () => instance.size?.isMaximized() || false };
+      return { ...instance.context, ...(instance.snapshot ? {
+        getCollectionSnapshot: () => clone(instance.snapshot),
+        commitCollection: snapshot => { instance.snapshot = { items: contract.collectionEntries(snapshot.items, instance.constraints), resources: clone(snapshot.resources || {}) }; },
+        initialUsage: Object.fromEntries(instance.snapshot.items.map(entry => [contract.referenceKey(entry.selection), entry.usage])),
+      } : {}), editors: { ...editors }, previewActions: [...previewActions.values()], toggleSize: () => instance.size?.toggle() || false, isMaximized: () => instance.size?.isMaximized() || false };
     },
     open(config = {}) {
+      const collectionMode = config.resultFormat === 'collection';
+      if (collectionMode && !contract) return sizeModule.then(module => { if (!module) throw new Error('Collection contract unavailable.'); contract = module; return window.SmartBrowserPicker.open(config); });
       return new Promise((resolve, reject) => {
         for (const name of ['selectionProfile', 'initialUsage']) {
           if (config[name] != null && (typeof config[name] !== 'object' || Array.isArray(config[name]))) throw new TypeError(`${name} must be an object.`);
         }
         if (config.initialSelection != null && !Array.isArray(config.initialSelection)) throw new TypeError('initialSelection must be an ordered array.');
+        if (config.allowedAdapters != null && (!Array.isArray(config.allowedAdapters) || config.allowedAdapters.length > 50 || config.allowedAdapters.some(id => typeof id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(id)))) throw new TypeError('allowedAdapters must contain adapter IDs.');
+        const constraints = { allowedAdapters: config.allowedAdapters || [], homogeneous: config.homogeneous === true };
+        const snapshot = collectionMode ? { items: contract.collectionEntries(config.initialCollection || [], constraints), resources: {} } : null;
+        if (snapshot && !config.multiple && snapshot.items.length > 1) throw new TypeError('Single selection accepts at most one resource.');
+        if (collectionMode) {
+          config = { ...config, adapter: config.adapter || snapshot.items[0]?.selection.adapter || constraints.allowedAdapters[0] || 'media' };
+          if (constraints.allowedAdapters.length && !constraints.allowedAdapters.includes(config.adapter.replace(/^flat-/, ''))) throw new TypeError('Disallowed browsing adapter.');
+        }
         const dialog = document.createElement('dialog');
         dialog.className = 'smartbrowser-picker';
         dialog.innerHTML = '<iframe title="SmartBrowser"></iframe><button type="button" class="btn-close" aria-label="Close"></button>';
@@ -71,19 +88,31 @@
         };
         const selected = (event) => {
           if (event.detail?.pickerInstance !== instanceId) return;
+          if (collectionMode) {
+            const items = contract.collectionEntries(event.detail.collectionItems || [], constraints);
+            if (!config.multiple && items.length > 1) return;
+            if (items.length) close({ items });
+            return;
+          }
+          if (config.allowedAdapters?.length && event.detail.adapter && !config.allowedAdapters.includes(event.detail.adapter)) return;
           const allowed = new Set(config.allowedResourceTypes || []);
           const resources = (event.detail?.resources || []).filter((resource) => !allowed.size || allowed.has(resource.type));
           if (!resources.length) return;
           const selection = config.multiple ? resources : (resources[0] || null);
           const usage = Object.fromEntries((config.multiple ? resources : resources.slice(0, 1)).map(resource => [resource.id, event.detail?.usage?.[resource.id] || {}]));
-          const result = config.resultFormat === 'usage' ? { selection, usage } : selection;
+          const result = config.resultFormat === 'usage' ? { selection, usage, ...(config.includeAdapter ? { adapter: event.detail.adapter || (config.adapter || 'media').replace(/^flat-/, '') } : {}) } : selection;
           close(result);
         };
         const url = new URL(buildUrl(config.url || Joomla.getOptions('com_smartbrowser.picker', {}).url || 'index.php?option=com_smartbrowser', config));
         url.searchParams.set('pickerInstance', instanceId);
-        instances.set(instanceId, { frame, context: clone({
+        instances.set(instanceId, { frame, snapshot, constraints, context: clone({
           selectionProfile: config.selectionProfile || {}, initialUsage: config.initialUsage || {},
           initialSelection: config.initialSelection || [],
+          allowedAdapters: config.allowedAdapters || [],
+          initialAdapter: config.adapter || 'media',
+          initialBrowseRoot: config.browseRoot || '',
+          collectionMode, homogeneous: config.homogeneous === true,
+          allowOrdering: config.allowOrdering !== false && config.ordering !== false,
         }) });
         window.SmartBrowserDialogDismiss.install(dialog, () => false, () => close());
         document.addEventListener('smartbrowser:select', selected);

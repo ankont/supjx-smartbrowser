@@ -1,6 +1,7 @@
 <?php
 
 define('_JEXEC', 1);
+require_once __DIR__ . '/../package/component/admin/src/Support/ResourceDescriptor.php';
 require __DIR__ . '/../package/component/admin/src/Support/ResourceVisualDecorator.php';
 require __DIR__ . '/../package/component/admin/src/Support/VisualOptions.php';
 

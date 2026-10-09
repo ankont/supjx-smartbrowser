@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="plugin" group="fields" method="upgrade">
+  <name>PLG_FIELDS_SMARTBROWSERPICKER</name>
+  <version>3.0.9</version>
+  <creationDate>2026-10</creationDate>
+  <author>SuperSoft</author>
+  <license>GNU General Public License version 2 or later</license>
+  <description>PLG_FIELDS_SMARTBROWSERPICKER_XML_DESCRIPTION</description>
+  <namespace path="src">SuperSoft\Plugin\Fields\Smartbrowserpicker</namespace>
+  <files><folder plugin="smartbrowserpicker">services</folder><folder>src</folder><folder>params</folder><folder>tmpl</folder></files>
+  <languages>
+    <language tag="en-GB">language/en-GB/plg_fields_smartbrowserpicker.ini</language>
+    <language tag="en-GB">language/en-GB/plg_fields_smartbrowserpicker.sys.ini</language>
+    <language tag="el-GR">language/el-GR/plg_fields_smartbrowserpicker.ini</language>
+    <language tag="el-GR">language/el-GR/plg_fields_smartbrowserpicker.sys.ini</language>
+  </languages>
+</extension>

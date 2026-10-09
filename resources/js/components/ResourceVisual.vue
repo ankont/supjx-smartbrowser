@@ -40,8 +40,8 @@ onBeforeUnmount(() => { observer?.disconnect(); visualStyleRegistry().remove(vis
 const imageLoaded = (event) => { dimensions.value = { url: props.resource.image, ratio: event.target.naturalWidth / event.target.naturalHeight }; };
 const crop = computed(() => props.resource.imageCrop?.source === props.resource.image ? props.resource.imageCrop : null);
 const visual = computed(() => resolveResourceVisual(props.resource, {
-  settings: props.settings ?? options.visualSettings ?? {}, allowImage: props.allowImage, open: props.open,
-  background: props.background ?? options.imageBackground ?? 'auto', availableAssets: props.availableAssets,
+  settings: props.settings ?? props.resource.collectionVisualSettings ?? options.visualSettings ?? {}, allowImage: props.allowImage, open: props.open,
+  background: props.background ?? props.resource.collectionImageBackground ?? options.imageBackground ?? 'auto', availableAssets: props.availableAssets,
   compact: props.variant === 'compact',
   alignBaseStart: props.alignBaseStart,
   iconRatios: iconRatios.value,
