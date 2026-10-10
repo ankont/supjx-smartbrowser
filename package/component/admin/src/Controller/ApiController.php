@@ -95,6 +95,11 @@ class ApiController extends BaseController
                 'filters' => is_array($filters) ? $filters : [],
                 'showContextResources' => $this->input->getBool('showContextResources', ContextOptions::enabled($adapter->getId(), $this->app->isClient('site'))),
             ];
+            if ($this->input->getMethod() === 'POST') {
+                if (!Session::checkToken('json')) throw new \RuntimeException('Invalid token', 403);
+                $body = json_decode($this->input->json->getRaw(), true, 32, JSON_THROW_ON_ERROR);
+                $options['selection'] = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::entries($body['items'] ?? []);
+            }
             $result = $adapter->getResources($nodeId, $options);
             if ($this->input->getCmd('mode') === 'readonly') $result['actions'] = [];
             $contextItems = $options['showContextResources'] && $adapter instanceof ContextResourceProviderInterface

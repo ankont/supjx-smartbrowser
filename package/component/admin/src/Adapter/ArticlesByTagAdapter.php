@@ -83,12 +83,12 @@ final class ArticlesByTagAdapter extends ArticleCollectionAdapter
         if ($articleSelection === []) {
             return $this->tagAdapter()->executeAction($action, $tagSelection);
         }
-        if (!in_array($action, ['publish', 'unpublish', 'archive', 'unarchive', 'trash'], true)) {
+        if (!in_array($action, ['publish', 'unpublish', 'archive', 'unarchive', 'trash', 'restore', 'delete'], true)) {
             throw new \InvalidArgumentException(\Joomla\CMS\Language\Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
         }
         $this->tagAdapter()->executeAction($action, $tagSelection);
         $this->executeArticleAction($action, $articleSelection, true);
-        return ['updated' => array_values($selection)];
+        return [$action === 'delete' ? 'deleted' : 'updated' => array_values($selection)];
     }
 
     private function tagAdapter(): TagAdapter

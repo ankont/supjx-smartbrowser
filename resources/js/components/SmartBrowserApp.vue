@@ -9,6 +9,7 @@
       :available="action => actionAvailable(action, selection)"
       :selection="selection"
       :batch-available="options.mode === 'manage'"
+      :can-cancel="typeof pickerContext?.cancel === 'function'"
       :flat-available="flatAvailable"
       :flat-active="flatActive"
       :filters-open="filtersOpen"
@@ -24,6 +25,7 @@
       :t="t"
       @action="executeAction($event, selection)"
       @batch="batchDialog?.open()"
+      @cancel="pickerContext?.cancel()"
       @toggle-flat="toggleFlat"
       @toggle-filters="toggleFilters"
       @filter="applyFilter"
@@ -44,7 +46,7 @@
       <summary><span class="fas fa-chevron-right resource-picker-collection-chevron" aria-hidden="true" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: <span>{{ state.selectedIds.length }}</span></summary>
       <CollectionView v-if="pickerCollection" :model="pickerCollection" :api="api" :config="pickerCollectionConfig" :t="t" />
     </details>
-    <ResourceBatchDialog ref="batchDialog" :selection="selection" :adapter="options.adapter" :filters="state.presentation.filters" :batch-options="state.presentation.batchOptions" :t="t" @apply="applyBatch" />
+    <ResourceBatchDialog ref="batchDialog" :selection="selection" :adapter="options.adapter" :filters="state.presentation.filters" :batch-options="state.presentation.batchOptions" :sort-fields="state.presentation.sortFields" :ordering-available="reorderVisible" :t="t" @apply="applyBatch" />
     <div class="smartbrowser-layout" :class="{ 'flat-mode': flatActive && !collectionMode, 'tree-collapsed': treeCollapsed }">
       <ResourceTree v-if="(!flatActive || collectionMode) && !treeCollapsed" :adapters="pickerContext?.allowedAdapters?.length ? (options.adapters || []).filter(adapter => pickerContext.allowedAdapters.includes(adapter.id.replace(/^flat-/, ''))) : options.adapters" :active-adapter="options.adapter" :roots="state.roots" :nodes="flatActive ? [] : state.nodes" :breadcrumb="state.breadcrumb" :selected-node="state.selectedNode" :t="t" @open="load" @adapter="switchAdapter" />
       <button v-if="!flatActive || collectionMode" type="button" class="resource-sidebar-handle" :title="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-label="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-expanded="!treeCollapsed" @click="treeCollapsed = !treeCollapsed">
@@ -109,6 +111,7 @@
             :focused-id="state.focusedId"
             :all-selected="bulkSelectableResources.length > 0 && bulkSelectableResources.every((resource) => state.selectedIds.includes(resourceKey(resource)))"
             :options="state.viewOptions"
+            :selection-controls="options.mode !== 'select' || options.multiple"
             :actions="state.actions"
             :action-available="itemActionAvailable"
             :default-action="resourceDefault"
@@ -174,7 +177,7 @@ const driver = inject('actionDriver');
 const api = inject('resourceApi');
 const registry = inject('viewRegistry');
 const { state, resources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection } = browser;
-const pickerContext = options.mode === 'select' ? options.pickerContext : null;
+const pickerContext = options.mode === 'select' ? options.pickerContext || options.selectionHost : options.selectionHost || null;
 const collectionMode = Boolean(pickerContext?.collectionMode);
 const t = (key) => Joomla.Text?._(key, key) || key;
 const itemDrivers = new Map();
@@ -189,6 +192,7 @@ const driverFor = resource => {
       await load();
     }, t, options.editorMode, options.application) });
   }
+  itemDrivers.get(adapter).driver.selectionHost = selectionHost;
   return itemDrivers.get(adapter).driver;
 };
 const actionsFor = resource => resource?.collectionActions || state.actions;
@@ -232,7 +236,32 @@ const collectionItems = () => state.selectedIds.flatMap(key => {
   const retained = pickerContext?.getCollectionSnapshot?.().items.find(entry => referenceKey(entry.selection) === key);
   return retained ? [retained] : [];
 });
-const commitCollection = () => { if (collectionMode) pickerContext.commitCollection({ items: collectionItems(), resources: Object.fromEntries(selection.value.map(resource => [resourceKey(resource), resource])) }); };
+const commitCollection = () => { if (collectionMode) pickerContext.commitCollection?.({ items: collectionItems(), resources: Object.fromEntries(selection.value.map(resource => [resourceKey(resource), resource])), virtualResources: state.virtualResources }); };
+const selectionHost = options.selectionState && (pickerContext || options.selectionHost) ? {
+  editorContext: pickerContext?.selectionEditorContext || {},
+  canAdd: (adapter, type) => browser.canAddSelection(adapter, type),
+  canCreate: type => browser.canCreateSelectionResource(type),
+  remove: resources => {
+    browser.deleteVirtualResources(resources);
+    resources.forEach(resource => usage.forget(resource));
+    usageVersion.value++;
+    commitCollection();
+    options.selectionHost?.onChange?.({ items: collectionItems() });
+  },
+  replace: (resource, previous) => {
+    const oldValues = previous ? { ...usage.get(previous) } : {};
+    const next = browser.replaceSelectionResource(resource, previous);
+    for (const definition of usage.definitions(next)) {
+      if (Object.prototype.hasOwnProperty.call(oldValues, definition.key)) usage.set(next, definition.key, oldValues[definition.key]);
+    }
+    usageVersion.value++;
+    commitCollection();
+    options.selectionHost?.onChange?.({ items: collectionItems() });
+    if (previous && resourceKey(previous) !== resourceKey(next)) usage.forget(previous);
+    return next;
+  },
+} : null;
+driver.selectionHost = selectionHost;
 watch(() => [state.selectedIds, state.selectedResources], commitCollection, { deep: true, flush: 'sync' });
 onBeforeUnmount(commitCollection);
 const usageVersion = ref(0);

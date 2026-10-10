@@ -15,9 +15,17 @@ final class ArticleAdapter extends ArticleCollectionAdapter
         $categoryId = $this->categoryId($nodeId);
         $category = $categoryId ? $this->getCategory($categoryId) : $this->categoryRoot();
         $stateFilter = (string) ($options['filters']['state'] ?? 'active');
+        $articleCategories = $stateFilter === 'trashed'
+            ? array_fill_keys(array_column($this->getAllArticles($options + ['stateFilter' => 'trashed']), 'parentId'), true) : [];
         $nodes = [];
         foreach ($category->getChildren(false) as $child) {
-            if ($this->canViewCategory($child) && ($this->matchesState((int) $child->published, $stateFilter) || $this->hasMatchingDescendant($child, $stateFilter))) {
+            $containsArticle = isset($articleCategories['category:' . (int) $child->id]);
+            if ($articleCategories && !$containsArticle) {
+                foreach ($child->getChildren(true) as $descendant) {
+                    if (isset($articleCategories['category:' . (int) $descendant->id])) { $containsArticle = true; break; }
+                }
+            }
+            if ($this->canViewCategory($child) && ($containsArticle || $this->matchesState((int) $child->published, $stateFilter) || $this->hasMatchingDescendant($child, $stateFilter))) {
                 $nodes[] = $this->normalizeCategory($child);
             }
         }

@@ -18,6 +18,10 @@ final class MediaBatchRunner
     public function run(array $selection, array $payload): array
     {
         if (!$selection) $this->invalid();
+        if (!empty($payload['extract'])) {
+            if (!empty($payload['rename']) || !empty($payload['zip']) || ($payload['placement'] ?? 'none') !== 'none') $this->invalid();
+            return $this->extract($selection, !empty($payload['deleteArchive']));
+        }
         $rename = !empty($payload['rename']);
         $placement = (string) ($payload['placement'] ?? 'none');
         $zip = !empty($payload['zip']);
@@ -98,6 +102,73 @@ final class MediaBatchRunner
         $response = ['updated' => $result];
         if ($zip) $response['download'] = $this->zip($result, (string) ($payload['zipName'] ?? 'selection.zip'));
         return $response;
+    }
+
+    private function extract(array $selection, bool $deleteArchive): array
+    {
+        $identity = $this->app->getIdentity();
+        if (!$identity->authorise('core.create', 'com_media') || $deleteArchive && !$identity->authorise('core.delete', 'com_media')) $this->denied();
+        if (!class_exists(\ZipArchive::class)) throw new \RuntimeException('ZIP extension is not available', 501);
+        if (count($selection) !== 1) $this->invalid();
+        $id = (string) reset($selection); $this->adapter->assertBrowseScope([$id]);
+        $resource = $this->adapter->getResource($id);
+        if (empty($resource['capabilities']['extract']) || (int) ($resource['metadata']['size'] ?? 0) > 20 * 1024 * 1024) $this->invalid();
+        [$provider, $path] = $this->split($id);
+        $parent = dirname($path); $folder = pathinfo($path, PATHINFO_FILENAME);
+        if (!$folder || str_starts_with($folder, '.') || str_contains($folder, ':')) $this->invalid();
+        $destination = rtrim($parent, '/') . '/' . $folder;
+        $this->adapter->assertBrowseScope([$provider . ':' . $destination]);
+        foreach ($this->children($provider, $parent) as $child) if (strcasecmp((string) $child->name, $folder) === 0) {
+            throw new \InvalidArgumentException('Extraction folder already exists', 409);
+        }
+        $content = $this->contents($provider, $path);
+        if (strlen($content) > 20 * 1024 * 1024) $this->invalid();
+        $file = tempnam(sys_get_temp_dir(), 'smartbrowser-zip-');
+        if ($file === false) throw new \RuntimeException('Could not create temporary ZIP', 500);
+        $zip = new \ZipArchive(); $opened = false; $created = false; $complete = false;
+        try {
+            if (file_put_contents($file, $content) !== strlen($content) || $zip->open($file, \ZipArchive::CHECKCONS) !== true) $this->invalid();
+            $opened = true; $entries = [];
+            if ($zip->numFiles > 1000) $this->invalid();
+            for ($index = 0; $index < $zip->numFiles; $index++) {
+                $entry = $zip->statIndex($index); if (!$entry) $this->invalid();
+                $opsys = 0; $attributes = 0;
+                $zip->getExternalAttributesIndex($index, $opsys, $attributes);
+                $entry['symlink'] = $opsys === 3 && (($attributes >> 16) & 0170000) === 0120000;
+                $entry['index'] = $index; $entries[] = $entry;
+            }
+            $entries = ZipEntries::validate($entries);
+            $name = $this->api->createFolder($provider, $folder, $parent, false);
+            $destination = rtrim($parent, '/') . '/' . $name; $created = true;
+            $directories = ['' => $destination];
+            foreach ($entries as $entry) {
+                $parts = explode('/', rtrim($entry['name'], '/')); $filename = array_pop($parts);
+                if (str_ends_with($entry['name'], '/')) $parts[] = $filename;
+                $relative = ''; $directory = $destination;
+                foreach ($parts as $part) {
+                    $relative .= ($relative ? '/' : '') . $part;
+                    if (!isset($directories[$relative])) {
+                        $name = $this->api->createFolder($provider, $part, $directory, false);
+                        $directories[$relative] = $directory . '/' . $name;
+                    }
+                    $directory = $directories[$relative];
+                }
+                if (str_ends_with($entry['name'], '/')) continue;
+                $data = $zip->getFromIndex($entry['index']);
+                if (!is_string($data) || strlen($data) !== (int) $entry['size']) $this->invalid();
+                // Native provider upload validation remains authoritative; never extract paths directly.
+                $this->api->createFile($provider, $filename, $directory, $data, false);
+            }
+            $complete = true;
+            if ($deleteArchive) $this->api->delete($provider, $path);
+            return ['updated' => [$provider . ':' . $destination], 'deleted' => $deleteArchive ? [$id] : []];
+        } catch (\Throwable $error) {
+            if ($created && !$complete) { try { $this->api->delete($provider, $destination); } catch (\Throwable) {} }
+            throw $error;
+        } finally {
+            if ($opened) $zip->close();
+            @unlink($file);
+        }
     }
 
     private function copy(string $sourceAdapter, string $source, string $targetAdapter, string $parent, ?string $targetName = null): string

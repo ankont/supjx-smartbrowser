@@ -14,5 +14,11 @@
       <option value="auto">PLG_FIELDS_SMARTBROWSERPICKER_AUTO</option><option value="compact">PLG_FIELDS_SMARTBROWSERPICKER_COMPACT</option><option value="collection">PLG_FIELDS_SMARTBROWSERPICKER_COLLECTION</option>
     </field>
     <field name="selection_profile" type="textarea" label="PLG_FIELDS_SMARTBROWSERPICKER_PROFILE" description="PLG_FIELDS_SMARTBROWSERPICKER_PROFILE_DESC" rows="7" filter="raw" default="{}" />
+    <field name="anchor_suggestions" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_ANCHORS" default="none" validate="options">
+      <option value="none">PLG_FIELDS_SMARTBROWSERPICKER_ANCHORS_NONE</option>
+      <option value="anchors">PLG_FIELDS_SMARTBROWSERPICKER_ANCHORS_ONLY</option>
+      <option value="all">PLG_FIELDS_SMARTBROWSERPICKER_ANCHORS_ALL</option>
+    </field>
+    <field name="phone_country_prefix" type="text" label="PLG_FIELDS_SMARTBROWSERPICKER_PHONE_PREFIX" description="PLG_FIELDS_SMARTBROWSERPICKER_PHONE_PREFIX_DESC" default="" />
   </fieldset></fields>
 </form>

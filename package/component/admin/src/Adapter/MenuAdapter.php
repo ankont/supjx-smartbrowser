@@ -200,7 +200,9 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             $this->action('copyLink', 'COM_SMARTBROWSER_COPY_LINK', 'fas fa-copy', 'resource', false, true, true),
             $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'node', false, true, false, false, false, 'publication'),
             $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),
-            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true),
+            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true, false, false, false, 'trashState'),
+            $this->action('restore', 'COM_SMARTBROWSER_ACTION_RESTORE', 'fas fa-undo', 'node', false, true, false, false, false, 'trashState'),
+            [...$this->action('delete', 'JACTION_DELETE', 'fas fa-trash-alt', 'node', false, true), 'trashedOnly' => true],
         ];
     }
 
@@ -216,7 +218,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             return $this->editorResponse('index.php?option=com_menus&task=item.add&menutype=' . rawurlencode($menuType) . '&parent_id=' . $parentId);
         }
 
-        if (in_array($action, ['publish', 'unpublish', 'trash'], true)) {
+        if (in_array($action, ['publish', 'unpublish', 'trash', 'restore', 'delete'], true)) {
             if ($selection === []) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
             $ids = [];
             foreach ($selection as $selectedId) {
@@ -231,10 +233,11 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 $ids[] = $id;
             }
             $model = $this->menuModel('Item');
-            if (!$model->publish($ids, match ($action) { 'publish' => 1, 'unpublish' => 0, 'trash' => -2 })) {
+            $success = $action === 'delete' ? $model->delete($ids) : $model->publish($ids, match ($action) { 'publish' => 1, 'unpublish', 'restore' => 0, 'trash' => -2 });
+            if (!$success) {
                 throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
             }
-            return ['updated' => array_values($selection)];
+            return [$action === 'delete' ? 'deleted' : 'updated' => array_values($selection)];
         }
 
         $resourceId = $this->requireOne($selection);
@@ -387,6 +390,8 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             'unpublish' => $state === 1 && $identity->authorise('core.edit.state', $asset),
             'createChild' => $identity->authorise('core.create', $asset),
             'trash' => $state !== -2 && $identity->authorise('core.edit.state', $asset),
+            'delete' => $state === -2 && $identity->authorise('core.delete', $asset),
+            'restore' => $state === -2 && $identity->authorise('core.edit.state', $asset),
         ];
     }
 

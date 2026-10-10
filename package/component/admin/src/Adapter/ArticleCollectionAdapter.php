@@ -29,6 +29,7 @@ abstract class ArticleCollectionAdapter extends ContentAdapter
             $this->action('unfeature', 'JUNFEATURE', 'far fa-star', 'item', false, true, false, true, false, 'featured'),
             $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'selection', false, true, false, false, false, 'trashState'),
             $this->action('restore', 'COM_SMARTBROWSER_ACTION_RESTORE', 'fas fa-undo', 'selection', false, true, false, false, false, 'trashState'),
+            [...$this->action('delete', 'JACTION_DELETE', 'fas fa-trash-alt', 'selection', false, true), 'trashedOnly' => true],
         ];
     }
 
@@ -57,6 +58,7 @@ abstract class ArticleCollectionAdapter extends ContentAdapter
             'unarchive' => $this->setState($selection, 0),
             'restore' => $this->setState($selection, 0),
             'trash' => $this->setState($selection, -2),
+            'delete' => $this->deleteTrashed($selection),
             'feature' => $this->setFeatured($selection, 1),
             'unfeature' => $this->setFeatured($selection, 0),
             default => throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_UNKNOWN_ACTION'), 400),

@@ -19,7 +19,9 @@ export function collectionEntries(items, { adapter, allowedAdapters = [], homoge
       || Object.keys(usage).some(key => !/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(key)) || JSON.stringify(usage).length > 65536) throw new TypeError('Invalid collection usage.');
     return { selection, usage: JSON.parse(JSON.stringify(usage)) };
   }).filter(entry => {
-    const key = referenceKey(entry.selection);
+    const reference = entry.selection;
+    const key = referenceKey(/^uri:[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)?$/.test(reference.id)
+      ? { ...reference, id: reference.id.split('.')[0] } : reference);
     if (seen.has(key)) return false;
     seen.add(key); return true;
   });

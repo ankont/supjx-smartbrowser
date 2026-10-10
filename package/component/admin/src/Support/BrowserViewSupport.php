@@ -25,7 +25,18 @@ final class BrowserViewSupport
         $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
         foreach ($this->languageKeys() as $key) Text::script($key);
+        foreach (['web','mail','tel','fragment','joomla'] as $type) {
+            Text::script('COM_SMARTBROWSER_LINK_'.strtoupper($type));
+            Text::script('COM_SMARTBROWSER_LINK_CREATE_'.strtoupper($type));
+        }
+        foreach (['COM_SMARTBROWSER_LINK_CREATE','COM_SMARTBROWSER_LINK_DUPLICATE','COM_SMARTBROWSER_LINK_SELECTION_FULL','JTOOLBAR_SAVE','JCANCEL'] as $key) Text::script($key);
+        foreach (['ADDRESS_MODE','EFFECTIVE_ADDRESS','MODE_AUTO','MODE_ABSOLUTE','MODE_RELATIVE','EXTERNAL_RELATIVE','COMPONENT','VIEW','ID'] as $suffix) Text::script('COM_SMARTBROWSER_LINK_'.$suffix);
+        foreach (['NAME_AUTO','WEB_WARNING'] as $suffix) Text::script('COM_SMARTBROWSER_LINK_'.$suffix);
+        Text::script('COM_SMARTBROWSER_ACTION_RENAME');
+        Text::script('COM_SMARTBROWSER_LINK_HOME_PAGE');
+        Text::script('JYES');
         Text::script('COM_MEDIA_FILE_EXISTS_AND_OVERRIDE');
+        foreach (['COM_SMARTBROWSER_BATCH_SORT', 'COM_SMARTBROWSER_BATCH_EXTRACT', 'COM_SMARTBROWSER_BATCH_EXTRACT_DELETE'] as $key) Text::script($key);
         Text::script('COM_MEDIA_UPLOAD_SUCCESS');
 
         Text::script('JGLOBAL_SELECT_NO_RESULTS_MATCH');
@@ -47,7 +58,8 @@ final class BrowserViewSupport
         $flatScope = $input->getString('flatScope') ?: null;
         $adapter = $registry->get($adapterId, $browseRoot, $flatScope);
         $showAdapterSwitcher = $input->getBool('showAdapterSwitcher', false);
-        $adapterDescriptors = $registry->descriptors();
+        $selectionState = $input->getBool('selectionState', false);
+        $adapterDescriptors = $registry->descriptors($selectionState);
         if (str_starts_with($adapterId, 'flat-')) {
             $sourceId = substr($adapterId, 5);
             foreach ($adapterDescriptors as $descriptor) {
@@ -67,6 +79,8 @@ final class BrowserViewSupport
 
         $options = [
             'adapter' => $adapterId, 'adapters' => $adapterDescriptors,
+            'selectionState' => $selectionState,
+            'adapterOptions' => json_decode($input->getString('adapterOptions', '{}'), true, 8) ?: [],
             'initialFilters' => [],
             'gridWidths' => $gridWidths,
             'visualSettings' => VisualOptions::forAdapter($adapterId, $params),

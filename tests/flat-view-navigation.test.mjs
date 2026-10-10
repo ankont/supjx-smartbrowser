@@ -134,7 +134,7 @@ test('flat view control follows filters and uses a labelled local icon', async (
   assert.match(actions, /resource-flat-toggle[^>]*:title="t\('COM_SMARTBROWSER_FLAT_VIEW'\)"[^>]*:aria-label="t\('COM_SMARTBROWSER_FLAT_VIEW'\)"/);
   assert.match(actions, /fas fa-layer-group/);
   assert.match(adapter, /'icon' => \$this->browseRoot \? 'fas fa-box' : 'fas fa-newspaper'/);
-  assert.match(breadcrumb, /v-if="index === 0" :class="rootIcon"/);
+  assert.match(breadcrumb, /v-if="index === 0" :class="crumb.useResourceIcon \? crumb.openIcon \|\| crumb.icon : rootIcon"/);
   assert.match(css, /\.resource-actions \.resource-flat-toggle \{[^}]*background: #e8f2fb;/s);
 });
 

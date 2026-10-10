@@ -1,7 +1,5 @@
 import { createEditorSize } from '../core/editorSize.js';
 
-const promptValue = (message, value = '') => window.prompt(message, value);
-
 export const previewKind = (resource) => {
   if (!resource.metadata?.url) return null;
   const mime = (resource.metadata.mimeType || '').toLowerCase();
@@ -41,6 +39,8 @@ export default class MediaActionDriver {
 
   available(action, selection) {
     if (this.destroyed) return false;
+    if (action.selectionScoped && (!this.selectionHost || action.currentNode && !(this.selectionHost.canCreate
+      ? this.selectionHost.canCreate(action.resourceType || 'uri') : this.selectionHost.canAdd(this.api.options.adapter, action.resourceType || 'uri')))) return false;
     if (action.currentNode && this.state.currentResource?.capabilities?.[action.id] === false) return false;
     if (action.requiresSelection && selection.length === 0) return false;
     if (action.single && selection.length !== 1) return false;
@@ -76,35 +76,40 @@ export default class MediaActionDriver {
 
     if (action.id === 'upload') return this.pickUpload();
     if (action.id === 'createNode') {
-      const name = promptValue(this.translate('COM_SMARTBROWSER_NEW_FOLDER_NAME'));
+      const name = await this.actionDialog({ title: 'COM_SMARTBROWSER_NEW_FOLDER_NAME', value: '' });
       if (name) await this.mutate(action.id, [], { nodeId: this.state.selectedNode, name });
       return;
     }
     if (action.currentNode) {
       const result = await this.api.execute(action.id, [], { nodeId: this.state.selectedNode });
+      if (result?.command === 'selectionEditor') return this.selectionEditor(result, null);
       if (result?.command === 'openEditor') this.openEditor(result.url);
       else await this.reload();
       return;
     }
     if (action.id === 'rename') {
-      const name = promptValue(this.translate('COM_SMARTBROWSER_RENAME_TO'), selection[0].title);
+      const name = await this.actionDialog({ title: 'COM_SMARTBROWSER_RENAME_TO', value: selection[0].title });
       if (name && name !== selection[0].title) await this.mutate(action.id, ids, { name });
       return;
     }
     if (action.id === 'delete') {
-      if (window.confirm(this.translate('COM_SMARTBROWSER_CONFIRM_DELETE'))) await this.mutate(action.id, ids);
+      if (action.confirm === false || await this.actionDialog({ title: 'COM_SMARTBROWSER_DELETE', message: this.translate('COM_SMARTBROWSER_CONFIRM_DELETE'), accept: 'COM_SMARTBROWSER_DELETE', destructive: true })) {
+        if (action.localState) this.selectionHost.remove(targets);
+        else await this.mutate(action.id, ids);
+      }
       return;
     }
     if (action.id === 'removeFromGroup') {
       const groups = Object.fromEntries(targets.map((resource) => [resource.id, resource.metadata?.sourceGroupId]));
       if (ids.some((id) => !groups[id])) return;
-      if (window.confirm(this.translate('COM_SMARTBROWSER_CONFIRM_REMOVE_FROM_GROUP'))) {
+      if (await this.actionDialog({ title: 'COM_SMARTBROWSER_REMOVE_FROM_GROUP', message: this.translate('COM_SMARTBROWSER_CONFIRM_REMOVE_FROM_GROUP'), accept: 'COM_SMARTBROWSER_REMOVE_FROM_GROUP' })) {
         await this.mutate(action.id, ids, { groups });
       }
       return;
     }
 
     const resource = await this.api.execute(action.id, ids);
+    if (resource?.command === 'selectionEditor') return this.selectionEditor(resource, targets[0]);
     if (resource?.command === 'previewUrl') {
       this.previewUrl(resource.url, resource.title);
       return;
@@ -135,6 +140,161 @@ export default class MediaActionDriver {
     if (action.id === 'share') this.share(resource);
     if (action.id === 'download') this.download(resource);
     if (resource?.updated || resource?.deleted) await this.reload();
+  }
+
+  actionDialog({ title, message, value, accept = 'JTOOLBAR_SAVE', destructive = false }) {
+    if (this.destroyed) return Promise.resolve(null);
+    const text = value => { const decoder = document.createElement('textarea'); decoder.innerHTML = value; return decoder.value; };
+    const dialog = document.createElement('dialog'); dialog.className = 'smartbrowser-editor smartbrowser-local-editor';
+    const form = document.createElement('form');
+    const heading = document.createElement('h3'); heading.textContent = text(this.translate(title)); form.append(heading);
+    let input;
+    if (value !== undefined) {
+      const label = document.createElement('label'); label.textContent = text(this.translate('COM_SMARTBROWSER_NAME'));
+      input = document.createElement('input'); input.type = 'text'; input.className = 'form-control'; input.value = value; input.required = true;
+      label.append(input); form.append(label);
+    } else {
+      const paragraph = document.createElement('p'); paragraph.textContent = text(message || ''); form.append(paragraph);
+    }
+    const actions = document.createElement('div'); actions.className = 'smartbrowser-local-editor-actions';
+    const submit = document.createElement('button'); submit.type = 'submit'; submit.className = destructive ? 'btn btn-danger' : 'btn btn-primary'; submit.textContent = text(this.translate(accept));
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'btn btn-danger'; cancel.textContent = text(this.translate('JCANCEL'));
+    actions.append(submit, cancel); form.append(actions); dialog.append(form);
+    cancel.addEventListener('click', () => dialog.close());
+    window.SmartBrowserDialogDismiss?.install(dialog, () => input ? input.value !== value : false);
+    return new Promise(resolve => {
+      this.ownDialog(dialog, () => { dialog.remove(); resolve(null); });
+      form.addEventListener('submit', event => {
+        event.preventDefault(); if (!form.reportValidity() || this.destroyed) return;
+        resolve(input ? input.value : true); dialog.close();
+      });
+      dialog.showModal();
+      if (input) { input.focus(); input.select(); } else cancel.focus();
+    });
+  }
+
+  async selectionEditor(definition, previous) {
+    if (!this.selectionHost || this.destroyed) return;
+    const dialog = document.createElement('dialog');
+    dialog.className = 'smartbrowser-editor smartbrowser-local-editor';
+    const form = document.createElement('form');
+    const text = key => { const decoder = document.createElement('textarea'); decoder.innerHTML = this.translate(key); return decoder.value; };
+    const title = document.createElement('h3'); title.textContent = text(definition.label); form.append(title);
+    const inputs = new Map();
+    for (const field of definition.fields || []) {
+      if (field.type === 'hidden') {
+        const input = document.createElement('input'); input.type = 'hidden';
+        input.value = field.contextValue ? this.selectionHost.editorContext?.[field.contextValue] || field.value || '' : field.value || '';
+        inputs.set(field.name, input); form.append(input); continue;
+      }
+      if (field.type === 'segmented') {
+        const group = document.createElement('fieldset'); group.className = 'smartbrowser-local-editor-modes';
+        const legend = document.createElement('legend'); legend.textContent = text(field.label); group.append(legend);
+        const input = document.createElement('input'); input.type = 'hidden'; input.value = field.value || ''; group.append(input); inputs.set(field.name, input);
+        const controls = document.createElement('div'); controls.className = 'btn-group'; group.append(controls);
+        for (const choice of field.options || []) {
+          const button = document.createElement('button'); button.type = 'button'; button.className = 'btn btn-outline-primary'; button.textContent = text(choice.label);
+          button.dataset.value = choice.value; button.setAttribute('aria-pressed', String(choice.value === input.value));
+          button.addEventListener('click', () => {
+            input.value = choice.value;
+            for (const candidate of controls.children) candidate.setAttribute('aria-pressed', String(candidate.dataset.value === input.value));
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+          }); controls.append(button);
+        }
+        form.append(group); continue;
+      }
+      const label = document.createElement('label'); label.textContent = text(field.label);
+      const input = document.createElement(field.type === 'select' ? 'select' : 'input'); input.className = 'form-control';
+      if (field.type === 'select') for (const choice of field.options || []) {
+        const option = document.createElement('option'); option.value = choice.value; option.textContent = text(choice.label); input.append(option);
+      }
+      else input.type = 'text';
+      input.value = field.value || ''; input.required = field.required === true; input.maxLength = field.maxlength || 2048;
+      label.append(input); form.append(label); inputs.set(field.name, input);
+      if (field.placeholder) input.placeholder = field.placeholder;
+      if (field.hint) { const hint = document.createElement('small'); hint.className = 'text-muted'; hint.textContent = text(field.hint); label.append(hint); }
+      if (field.warningPattern) {
+        const warning = document.createElement('p'); warning.className = 'alert alert-warning'; warning.textContent = text('COM_SMARTBROWSER_LINK_WEB_WARNING');
+        const refresh = () => { warning.hidden = !input.value || !new RegExp(field.warningPattern, 'i').test(input.value); };
+        input.addEventListener('input', refresh); refresh(); label.append(warning);
+      }
+    }
+    for (const field of definition.fields || []) {
+      if (field.placeholderFrom && !field.computedPlaceholder) {
+        const source = inputs.get(field.placeholderFrom);
+        source?.addEventListener('input', () => { inputs.get(field.name).placeholder = source.value; });
+      }
+      if (field.type === 'select' && field.dependsOn) {
+        const input = inputs.get(field.name);
+        const refresh = () => {
+          const previous = input.value; input.replaceChildren();
+          for (const choice of field.options || []) {
+            if (choice.parent !== inputs.get(field.dependsOn)?.value) continue;
+            const option = document.createElement('option'); option.value = choice.value; option.textContent = text(choice.label); input.append(option);
+          }
+          if ([...input.options].some(option => option.value === previous)) input.value = previous;
+        };
+        refresh(); inputs.get(field.dependsOn)?.addEventListener('change', refresh);
+      }
+      if (!field.suggestions) continue;
+      const list = document.createElement('datalist'); list.id = `smartbrowser-suggestions-${Math.random().toString(36).slice(2)}`;
+      inputs.get(field.name).setAttribute('list', list.id); form.append(list);
+      const refresh = () => {
+        const source = typeof field.suggestions === 'string' ? this.selectionHost.editorContext?.suggestions?.[field.suggestions]
+          : field.suggestionsBy ? field.suggestions[inputs.get(field.suggestionsBy)?.value] : field.suggestions;
+        list.replaceChildren();
+        for (const choice of Array.isArray(source) ? source.slice(0, 500) : []) {
+          const option = document.createElement('option'); option.value = typeof choice === 'string' ? choice : choice.value;
+          if (typeof choice === 'object' && choice.label) option.label = choice.label;
+          list.append(option);
+        }
+      };
+      refresh(); if (field.suggestionsBy) inputs.get(field.suggestionsBy)?.addEventListener('input', refresh);
+    }
+    const error = document.createElement('p'); error.className = 'text-danger'; error.setAttribute('role','alert'); form.append(error);
+    const actions = document.createElement('div'); actions.className = 'smartbrowser-local-editor-actions';
+    const save = document.createElement('button'); save.type = 'submit'; save.className = 'btn btn-primary'; save.textContent = text('JTOOLBAR_SAVE');
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'btn btn-danger'; cancel.textContent = text('JCANCEL');
+    actions.append(save, cancel); form.append(actions); dialog.append(form);
+    cancel.addEventListener('click', () => dialog.close());
+    const initialValues = new Map([...inputs].map(([name, input]) => [name, input.value]));
+    window.SmartBrowserDialogDismiss?.install(dialog, () => [...inputs].some(([name, input]) => input.value !== initialValues.get(name)));
+    let placeholderTimer, placeholderVersion = 0;
+    const computedField = definition.fields?.find(field => field.computedPlaceholder);
+    const schedulePlaceholder = () => {
+      clearTimeout(placeholderTimer);
+      const version = ++placeholderVersion;
+      if (!computedField || inputs.get(computedField.name).value) return;
+      inputs.get(computedField.name).placeholder = '';
+      placeholderTimer = setTimeout(async () => {
+        if (this.destroyed || !dialog.isConnected) return;
+        try {
+          // The existing stateless resolver supplies the automatic title; this does not select or save an item.
+          const payload = { nodeId: definition.nodeId, ...Object.fromEntries([...inputs].map(([key, input]) => [key, input.value])), [computedField.name]: '' };
+          const result = await this.api.execute(definition.action, [], payload);
+          if (version === placeholderVersion && dialog.isConnected && !this.destroyed) inputs.get(computedField.name).placeholder = result.resource.title;
+        } catch { /* Invalid/incomplete input retains the provisional hint until corrected. */ }
+      }, 300);
+    };
+    if (computedField) form.addEventListener('input', schedulePlaceholder);
+    return new Promise(resolve => {
+      this.ownDialog(dialog, () => { clearTimeout(placeholderTimer); placeholderVersion++; dialog.remove(); resolve(); });
+      form.addEventListener('submit', async event => {
+        event.preventDefault(); if (!form.reportValidity()) return;
+        save.disabled = true; error.textContent = '';
+        try {
+          const payload = { nodeId: definition.nodeId, ...Object.fromEntries([...inputs].map(([key,input]) => [key,input.value])) };
+          const result = await this.api.execute(definition.action, [], payload);
+          if (this.destroyed) return;
+          const next = this.selectionHost.replace({ ...result.resource, adapter: this.api.options.adapter.replace(/^flat-/, '') }, previous);
+          dialog.close(); await this.reload();
+          this.state.focusedId = next.selectionKey || next.id;
+        } catch (failure) { error.textContent = this.translate(failure.message); }
+        finally { save.disabled = false; }
+      });
+      dialog.showModal(); [...inputs.values()].find(input => input.type !== 'hidden')?.focus();
+      schedulePlaceholder();
+    });
   }
 
   canPreview(resource) {
@@ -246,7 +406,7 @@ export default class MediaActionDriver {
           } catch (error) {
             if (error.status !== 409) throw error;
             const question = this.translate('COM_MEDIA_FILE_EXISTS_AND_OVERRIDE').replace(/%[sS]/, file.name);
-            if (!window.confirm(question)) continue;
+            if (!await this.actionDialog({ title: 'COM_SMARTBROWSER_ACTION_UPLOAD', message: question, accept: 'JYES', destructive: true })) continue;
             await this.api.execute('upload', [], { ...payload, override: true });
           }
           uploaded++;

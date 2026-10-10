@@ -38,7 +38,7 @@
         >
           <td class="resource-type-column">
             <ResourceVisual :resource="resource" variant="compact" :allow-image="options.detailsThumbnails" />
-            <label v-if="canSelectResource(resource)" class="resource-row-select" :class="{ checked: selectedIds.includes(resourceKey(resource)) }" @click.stop>
+            <label v-if="selectionControls && canSelectResource(resource)" class="resource-row-select" :class="{ checked: selectedIds.includes(resourceKey(resource)) }" @click.stop>
               <input type="checkbox" :checked="selectedIds.includes(resourceKey(resource))" :aria-label="resource.title" @change="$emit('select', resource, true)">
             </label>
           </td>

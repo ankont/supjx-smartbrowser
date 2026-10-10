@@ -23,7 +23,7 @@ async page => {
   await frame().locator('.resource-browser-grid').waitFor();
   check(await frame().locator('.resource-info-panel').count() === 0, 'Forced Info open must not leak to the next picker');
   check(JSON.parse(await page.evaluate(() => sessionStorage.getItem('supjx.smartbrowser.media'))).showInfo === false, 'Remembered preference changed');
-  await page.locator('dialog.smartbrowser-picker > .btn-close').click();
+  await frame().locator('.resource-picker-cancel').click();
   await page.locator('#hidden').click();
   await frame().locator('.resource-browser-item.selected').waitFor();
   check(await frame().locator('.resource-info-panel').count() === 0, 'Hidden-only profile opened Info');
@@ -35,7 +35,7 @@ async page => {
   await frame().getByText('Hidden options configuration error', { exact: true }).waitFor();
   check(await page.locator('dialog.smartbrowser-picker').count() === 1, 'Invalid hidden option completed selection');
   check(await frame().locator('.resource-usage-editor').count() === 0, 'Hidden validation exposed a usage editor');
-  await page.locator('dialog.smartbrowser-picker > .btn-close').click();
+  await frame().locator('.resource-picker-cancel').click();
   await page.locator('#hidden-mixed').click();
   await frame().locator('.resource-usage-editor').waitFor();
   check(await frame().locator('.resource-usage-field').count() === 1, 'Mixed profile rendered hidden field');
@@ -80,6 +80,6 @@ async page => {
   const fits = await frame().locator('.resource-usage-field input[type=text]').evaluate(input => input.getBoundingClientRect().right <= window.innerWidth);
   check(fits, 'Usage controls overflow mobile frame');
   await page.screenshot({ path: '.playwright-mcp/picker-usage-mobile.png' });
-  await page.locator('dialog.smartbrowser-picker > .btn-close').click();
+  await frame().locator('.resource-picker-cancel').click();
   return 'Image defaults/validation, Info persistence, nested PDF picker/change/remove, ordered multiple selection, non-media custom editor/preview action and mobile layout OK';
 }

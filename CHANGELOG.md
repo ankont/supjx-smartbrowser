@@ -1,5 +1,79 @@
 # Changelog
 
+## 3.1.12 - 2026-10-10
+
+- Register the missing local Rename translation.
+- Replace browser prompts/confirmations for rename, folder creation, deletion, group removal and upload overwrite with shared content-sized SmartBrowser dialogs; preserve cancellation and local link deletion without confirmation.
+- Compute automatic link name hints with the existing stateless resolver, including the final root URL, and translate Home Page into Greek.
+
+## 3.1.11 - 2026-10-10
+
+- Add optional named URI references, automatic name hints and local Rename, preserving duplicate-URI constraints and ordered replacement.
+- Add advisory URL warnings in the local editor; invalid destinations still fail validation.
+- Allow callers/fields to specify an optional phone country prefix, recognize international 00 prefixes and retain entered phone formatting in link names.
+
+## 3.1.10 - 2026-10-10
+
+- Match the local resource editor Cancel button to the red styling of other editor modals.
+
+## 3.1.9 - 2026-10-10
+
+- Label Joomla path resources with the translated component name, view and optional ID; retain the URI as secondary information and use component names in editor choices.
+
+## 3.1.8 - 2026-10-10
+
+- Label root web links Home Page and remove confirmation for transient Direct Links deletion.
+- Separate local resource creation from selection constraints: single creation replaces selection; homogeneous multiple collections retain foreign virtual items without selecting them.
+
+## 3.1.7 - 2026-10-10
+
+- Replace web address format dropdown with direct segmented choices.
+- Explicit relative mode converts absolute destinations; automatic mode recognizes same-site HTTP/HTTPS URLs while retaining distinct custom ports.
+- Expose effective absolute addresses alongside returned URL values in Direct Links metadata, columns and sorting.
+- Size local resource editor dialogs to their content and scroll only when needed, without changing full resource editor sizing.
+
+## 3.1.6 - 2026-10-10
+
+- Simplify custom field selection editing labels to Edit.
+- Make Direct Links Edit the declared Ctrl-double-click action, reusing the shared italic menu indication and permission checks.
+
+## 3.1.5 - 2026-10-10
+
+- Add optional article anchor suggestions to SmartBrowser custom fields: none, intentional anchors only, or all IDs and anchors.
+- Read current Joomla editor content at Picker opening; retain editable suggestions, legacy anchor support and safe fallback outside article forms.
+
+## 3.1.4 - 2026-10-10
+
+- Decode translated text labels in the local resource editor.
+- Add automatic/absolute/relative web addresses, caller-provided anchor suggestions and configurable Direct Links nodes.
+- Add Joomla path resources with installed frontend component/view choices, retaining the URI reference contract.
+
+## 3.1.3 - 2026-10-10
+
+- Preserve Direct Links node icons in tree roots and breadcrumbs; remove duplicate URL columns and expose URL/type sorting.
+- Move Picker cancellation into the main toolbar and remove its empty close-button header; round normal modal corners.
+- Allow compact selections to switch between grid/details and remember the collection view locally.
+- Add spacing after the Info pane title and metadata.
+
+## 3.1.2 - 2026-10-09
+
+- Reuse native backend publishing/audit field definitions in the frontend article editor and save validation.
+- Show publishing dates, creator, modifier, revision and hits independently of presentation settings; retain native author-change ACL and read-only audit fields.
+
+## 3.1.1 - 2026-10-09
+
+- Add permanent Delete/Restore for trashed content, categories, tags and menu items; retain category navigation to trashed articles.
+- Hide selection checkboxes in single-value Pickers; retain them for multiple selections and management.
+- Retain deselected Direct Links for the selector lifetime with explicit Delete, friendly URI-derived labels, Greek naming and clean information fields.
+- Complete frontend article publishing dates and use consistent start/finish labels.
+- Add batch persisted sorting and safe provider-based ZIP extraction with optional archive removal; rename category placement to Change category.
+
+## 3.1.0 - 2026-10-09
+
+- Add the selection-scoped Direct Links adapter for web URIs, e-mail, phones and anchors.
+- Reuse the common resource editor host for temporary selection edits, retaining order and usage.
+- Resolve canonical URI references publicly without database persistence or destination requests.
+
 ## 3.0.9 - 2026-10-08
 
 - Add a translated Double click tooltip to bold default actions in grid/details menus, alongside the modified-action tooltip.

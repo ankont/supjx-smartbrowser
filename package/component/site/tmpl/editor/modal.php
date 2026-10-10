@@ -28,9 +28,12 @@ $renderField = static function (string $name, ?string $group = null) use ($form,
     $renderedFields[$key] = true;
     return $field->renderField();
 };
-$fieldsetFields = static function (string $name) use ($form, &$renderedFields): array {
+$articlePublishingFields = $this->resourceType === 'article'
+    ? ['featured', 'publish_up', 'publish_down', 'featured_up', 'featured_down', 'created', 'created_by', 'created_by_alias', 'modified', 'modified_by', 'version', 'hits'] : [];
+$fieldsetFields = static function (string $name) use ($form, &$renderedFields, $articlePublishingFields): array {
     $result = [];
     foreach ($form->getFieldset($name) as $field) {
+        if (empty($field->group) && in_array($field->fieldname ?? $field->name, $articlePublishingFields, true)) continue;
         $key = ($field->group ?? '') . '.' . $field->name;
         if (isset($renderedFields[$key])) continue;
         $renderedFields[$key] = true;
@@ -139,13 +142,8 @@ $menuItemTypeTitleKey = match ($menuItemType) {
             <fieldset class="options-form smartbrowser-editor-tab">
                 <?php foreach (['transition', 'state', 'catid', 'tags', 'note'] as $name) echo $renderField($name); ?>
                 <?php if ($saveHistory) echo $renderField('version_note'); ?>
-                <?php if ($showPublishing) echo $renderField('created_by_alias'); ?>
-                <?php if (Factory::getApplication()->getIdentity()->authorise('core.edit.state', 'com_content.article.' . $this->resourceId)) : ?>
-                    <?php echo $renderField('featured'); ?>
-                    <?php if ($showPublishing) : ?>
-                        <?php foreach (['featured_up', 'featured_down', 'publish_up', 'publish_down'] as $name) echo $renderField($name); ?>
-                    <?php endif; ?>
-                <?php endif; ?>
+                <?php echo $renderField('featured'); ?>
+                <?php foreach (['publish_up', 'publish_down', 'featured_up', 'featured_down', 'created', 'created_by', 'created_by_alias', 'modified', 'modified_by', 'version', 'hits'] as $name) echo $renderField($name); ?>
                 <?php echo $renderField('access'); ?>
             </fieldset>
             <?php echo HTMLHelper::_('uitab.endTab'); ?>

@@ -1,4 +1,4 @@
-import { i as e, n as t } from "./visual-runtime-BpJbHzSM.js";
+import { i as e, n as t } from "./visual-runtime-BjkbZE8K.js";
 import { mountCollection as n } from "./collection.js";
 //#region resources/js/core/selectionFieldValue.js
 function r(e, n, r = !0, i = !1) {
@@ -36,30 +36,54 @@ function i(n, i, a, o, s = null, c = !1) {
 	}, a, o, c);
 }
 //#endregion
-//#region resources/js/selection-field.js
-var a = /* @__PURE__ */ new WeakMap();
-function o(e) {
-	if (a.has(e)) return a.get(e);
-	let t = e.querySelector("[data-sb-value]"), o = t.value, s = JSON.parse(e.dataset.sbField), c = s.allowedAdapters || [s.adapter], l = (e) => window.Joomla?.Text?._(e, e) || e, u = e.querySelector("[data-sb-error]"), d = (e) => {
-		u.textContent = e ? l("PLG_FIELDS_SMARTBROWSERPICKER_INVALID") : "", u.hidden = !e;
-	}, f, p = !1, m = !1;
-	try {
-		f = r(t.value, c, s.multiple, s.homogeneous);
-	} catch (e) {
-		f = r("", c), d(e);
+//#region resources/js/core/articleAnchors.js
+function a(e, t = "none") {
+	if (!["anchors", "all"].includes(t)) return [];
+	let n = /* @__PURE__ */ new Set();
+	for (let r of e.querySelectorAll(t === "all" ? "[id], a[name]" : "a[name], a[id]:not([href])")) {
+		let e = r.getAttribute("id"), i = r.localName === "a" ? r.getAttribute("name") : null;
+		e && (t === "all" || !r.hasAttribute("href")) && n.add(e), i && n.add(i);
 	}
-	let h = () => {
-		t.value = f.items.length ? JSON.stringify(f) : "", t.dispatchEvent(new Event("change", { bubbles: !0 })), d(null);
-	}, g, _ = async () => g ? g.setItems(f.items) : (g = n(e.querySelector("[data-sb-collection]"), {
-		...s,
+	return [...n];
+}
+function o(e, t, n = window.Joomla?.editors?.instances) {
+	if (!["anchors", "all"].includes(t)) return [];
+	let r = e?.elements.namedItem("jform[articletext]");
+	if (!r || typeof r.value != "string") return [];
+	try {
+		let e = n?.[r.id], i = typeof e?.getValue == "function" ? e.getValue() : r.value;
+		if (typeof i != "string") return [];
+		let o = document.createElement("template");
+		return o.innerHTML = i, a(o.content, t);
+	} catch {
+		return [];
+	}
+}
+//#endregion
+//#region resources/js/selection-field.js
+var s = /* @__PURE__ */ new WeakMap();
+function c(e) {
+	if (s.has(e)) return s.get(e);
+	let t = e.querySelector("[data-sb-value]"), a = t.value, c = JSON.parse(e.dataset.sbField), l = c.allowedAdapters || [c.adapter], u = (e) => window.Joomla?.Text?._(e, e) || e, d = e.querySelector("[data-sb-error]"), f = (e) => {
+		d.textContent = e ? u("PLG_FIELDS_SMARTBROWSERPICKER_INVALID") : "", d.hidden = !e;
+	}, p, m = !1, h = !1;
+	try {
+		p = r(t.value, l, c.multiple, c.homogeneous);
+	} catch (e) {
+		p = r("", l), f(e);
+	}
+	let g = () => {
+		t.value = p.items.length ? JSON.stringify(p) : "", t.dispatchEvent(new Event("change", { bubbles: !0 })), f(null);
+	}, _, v = async () => _ ? _.setItems(p.items) : (_ = n(e.querySelector("[data-sb-collection]"), {
+		...c,
 		referenceItems: !0,
-		items: f.items,
-		layout: s.editorDisplay === "compact" ? "compact" : "grid",
-		readOnly: s.readOnly,
-		allowOrdering: s.multiple && s.ordering,
-		allowRemove: !s.readOnly,
+		items: p.items,
+		layout: c.editorDisplay === "compact" ? "compact" : "grid",
+		readOnly: c.readOnly,
+		allowOrdering: c.multiple && c.ordering,
+		allowRemove: !c.readOnly,
 		contextActions: !1,
-		onAdd: () => b(),
+		onAdd: () => x(),
 		resourceActions: [{
 			id: "selectionUsageEdit",
 			label: "PLG_FIELDS_SMARTBROWSERPICKER_EDIT",
@@ -67,78 +91,86 @@ function o(e) {
 			requiresSelection: !0
 		}],
 		defaultResourceActionId: "selectionUsageEdit",
-		onResourceAction: (e, t) => b(t),
+		onResourceAction: (e, t) => x(t),
 		onChange(e) {
-			f = r({
+			p = r({
 				version: 1,
 				items: e.items
-			}, c, s.multiple, s.homogeneous), h();
+			}, l, c.multiple, c.homogeneous), g();
 		},
-		onError: d
-	}), g.ready);
-	_().catch(d);
-	let v = e.querySelector("[data-sb-select]"), y = e.querySelector("[data-sb-clear]");
-	async function b(e = null) {
-		if (s.readOnly || m || p) return;
-		m = !0, v && (v.disabled = !0);
-		let t = f;
+		onError: f
+	}), _.ready);
+	v().catch(f);
+	let y = e.querySelector("[data-sb-select]"), b = e.querySelector("[data-sb-clear]");
+	async function x(e = null) {
+		if (c.readOnly || h || m) return;
+		h = !0, y && (y.disabled = !0);
+		let n = p;
 		try {
-			let n = e?.selection.adapter || t.items[0]?.selection.adapter || c[0], r = await window.SmartBrowserPicker.open({
-				...s,
-				url: s.pickerUrl,
-				adapter: n,
-				browseRoot: n === s.adapter ? s.browseRoot : "",
-				allowedAdapters: c,
-				homogeneous: s.multiple && s.homogeneous,
-				multiple: !e && s.multiple,
+			let r = e?.selection.adapter || n.items[0]?.selection.adapter || l[0], a = await window.SmartBrowserPicker.open({
+				...c,
+				url: c.pickerUrl,
+				adapter: r,
+				selectionEditorContext: {
+					...c.selectionEditorContext,
+					suggestions: {
+						...c.selectionEditorContext?.suggestions,
+						anchors: o(t.form, c.anchorSuggestions)
+					},
+					phoneCountryPrefix: c.phoneCountryPrefix || ""
+				},
+				browseRoot: r === c.adapter ? c.browseRoot : "",
+				allowedAdapters: l,
+				homogeneous: c.multiple && c.homogeneous,
+				multiple: !e && c.multiple,
 				resultFormat: "collection",
 				initialNode: e?.parentId || "",
-				initialCollection: e ? t.items.filter((t) => t.selection.adapter === e.selection.adapter && t.selection.id === e.id) : t.items
+				initialCollection: e ? n.items.filter((t) => t.selection.adapter === e.selection.adapter && t.selection.id === e.id) : n.items
 			});
-			if (!r || p || t !== f) return;
-			f = i(t, r, c, s.multiple, e?.selection, s.homogeneous), h(), await _();
+			if (!a || m || n !== p) return;
+			p = i(n, a, l, c.multiple, e?.selection, c.homogeneous), g(), await v();
 		} catch (e) {
-			p || d(e);
+			m || f(e);
 		} finally {
-			m = !1, v && (v.disabled = s.readOnly);
+			h = !1, y && (y.disabled = c.readOnly);
 		}
 	}
-	let x = () => b(), S = () => {
-		s.readOnly || p || (f = r("", c), h(), _().catch(d));
-	}, C = () => setTimeout(() => {
-		if (!p) {
-			t.value = o;
+	let S = () => x(), C = () => {
+		c.readOnly || m || (p = r("", l), g(), v().catch(f));
+	}, w = () => setTimeout(() => {
+		if (!m) {
+			t.value = a;
 			try {
-				f = r(t.value, c, s.multiple, s.homogeneous), _().catch(d), d(null);
+				p = r(t.value, l, c.multiple, c.homogeneous), v().catch(f), f(null);
 			} catch (e) {
-				d(e);
+				f(e);
 			}
 		}
 	}, 0);
-	v?.addEventListener("click", x), y?.addEventListener("click", S), t.form?.addEventListener("reset", C);
-	let w = { destroy() {
-		p || (p = !0, v?.removeEventListener("click", x), y?.removeEventListener("click", S), t.form?.removeEventListener("reset", C), g.destroy(), a.delete(e));
+	y?.addEventListener("click", S), b?.addEventListener("click", C), t.form?.addEventListener("reset", w);
+	let T = { destroy() {
+		m || (m = !0, y?.removeEventListener("click", S), b?.removeEventListener("click", C), t.form?.removeEventListener("reset", w), _.destroy(), s.delete(e));
 	} };
-	return a.set(e, w), w;
+	return s.set(e, T), T;
 }
-var s = (e) => {
-	e.matches?.("[data-sb-field]") && o(e), e.querySelectorAll?.("[data-sb-field]").forEach(o);
+var l = (e) => {
+	e.matches?.("[data-sb-field]") && c(e), e.querySelectorAll?.("[data-sb-field]").forEach(c);
 };
-s(document), document.addEventListener("joomla:updated", (e) => s(e.target));
-var c = new MutationObserver((e) => e.forEach((e) => {
+l(document), document.addEventListener("joomla:updated", (e) => l(e.target));
+var u = new MutationObserver((e) => e.forEach((e) => {
 	e.removedNodes.forEach((e) => {
 		e.nodeType === 1 && [e, ...e.querySelectorAll("[data-sb-field]")].forEach((e) => {
-			e.isConnected || a.get(e)?.destroy();
+			e.isConnected || s.get(e)?.destroy();
 		});
 	}), e.addedNodes.forEach((e) => {
-		e.nodeType === 1 && s(e);
+		e.nodeType === 1 && l(e);
 	});
 }));
-c.observe(document.body, {
+u.observe(document.body, {
 	childList: !0,
 	subtree: !0
 }), window.addEventListener("pagehide", () => {
-	c.disconnect(), document.querySelectorAll("[data-sb-field]").forEach((e) => a.get(e)?.destroy());
+	u.disconnect(), document.querySelectorAll("[data-sb-field]").forEach((e) => s.get(e)?.destroy());
 }, { once: !0 });
 //#endregion
-export { o as mountSelectionField };
+export { c as mountSelectionField };

@@ -68,7 +68,9 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
             $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),
             $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),
             $this->action('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),
-            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true),
+            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true, false, false, false, 'trashState'),
+            $this->action('restore', 'COM_SMARTBROWSER_ACTION_RESTORE', 'fas fa-undo', 'node', false, true, false, false, false, 'trashState'),
+            [...$this->action('delete', 'JACTION_DELETE', 'fas fa-trash-alt', 'node', false, true), 'trashedOnly' => true],
         ]));
     }
 
@@ -91,7 +93,7 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
             return $this->editorResponse('index.php?option=com_categories&task=category.add&extension=com_content&parent_id=' . max(1, $categoryId));
         }
 
-        if (!in_array($action, ['edit', 'publish', 'unpublish', 'archive', 'unarchive', 'trash'], true)) {
+        if (!in_array($action, ['edit', 'publish', 'unpublish', 'archive', 'unarchive', 'trash', 'restore', 'delete'], true)) {
             throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_UNKNOWN_ACTION'), 400);
         }
 
@@ -111,6 +113,8 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
             'archive' => $this->setState($selection, 2),
             'unarchive' => $this->setState($selection, 0),
             'trash' => $this->setState($selection, -2),
+            'restore' => $this->setState($selection, 0),
+            'delete' => $this->deleteTrashed($selection),
         };
     }
 

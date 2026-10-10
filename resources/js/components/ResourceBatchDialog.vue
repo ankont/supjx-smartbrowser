@@ -2,6 +2,13 @@
   <dialog ref="dialog" class="resource-batch-dialog" :aria-label="t('COM_SMARTBROWSER_BATCH_ACTIONS')">
     <div class="resource-batch-body">
       <div class="resource-batch-heading" role="heading" aria-level="3">{{ t('COM_SMARTBROWSER_BATCH_SELECT_ACTIONS') }}</div>
+      <details v-if="orderingAvailable && items.every(item => item.capabilities?.reorder)" class="resource-batch-step" :open="sort.enabled">
+        <summary @click.prevent="sort.enabled = !sort.enabled">{{ t('COM_SMARTBROWSER_BATCH_SORT') }}</summary>
+        <div class="resource-batch-fields">
+          <select v-model="sort.field" class="form-select" :aria-label="t('COM_SMARTBROWSER_BATCH_SORT')"><option v-for="field in sortFields" :key="field.id" :value="field.id">{{ t(field.label) }}</option></select>
+          <select v-model="sort.direction" class="form-select" :aria-label="t('COM_SMARTBROWSER_SORT_DIRECTION')"><option value="asc">{{ t('COM_SMARTBROWSER_ASCENDING') }}</option><option value="desc">{{ t('COM_SMARTBROWSER_DESCENDING') }}</option></select>
+        </div>
+      </details>
       <template v-if="isMedia">
         <details class="resource-batch-step" :open="media.placement !== 'none'">
           <summary @click.prevent="media.placement = media.placement === 'none' ? 'move' : 'none'">{{ t('COM_SMARTBROWSER_BATCH_PLACEMENT') }}</summary>
@@ -28,6 +35,10 @@
         <details class="resource-batch-step" :open="media.zip">
           <summary @click.prevent="media.zip = !media.zip">{{ t('COM_SMARTBROWSER_BATCH_ZIP') }}</summary>
           <div class="resource-batch-fields"><label>{{ t('COM_SMARTBROWSER_BATCH_ZIP_NAME') }}<span class="input-group"><input v-model="media.zipName" type="text" class="form-control" @blur="media.zipName = bareZipName"><span class="input-group-text">.zip</span></span></label></div>
+        </details>
+        <details v-if="canExtract" class="resource-batch-step" :open="media.extract">
+          <summary @click.prevent="media.extract = !media.extract">{{ t('COM_SMARTBROWSER_BATCH_EXTRACT') }}</summary>
+          <div class="resource-batch-fields"><label class="resource-batch-check"><input v-model="media.deleteArchive" type="checkbox" class="form-check-input" :disabled="!items.every(item => item.capabilities?.delete)"> {{ t('COM_SMARTBROWSER_BATCH_EXTRACT_DELETE') }}</label></div>
         </details>
       </template>
       <template v-else-if="isArticles">
@@ -137,7 +148,7 @@ import { computed, inject, onMounted, reactive, ref } from 'vue';
 import ResourceFancySelect from './ResourceFancySelect.vue';
 import ResourceBatchModeToggle from './ResourceBatchModeToggle.vue';
 
-const props = defineProps({ selection: { type: Array, required: true }, adapter: { type: String, required: true }, filters: { type: Array, default: () => [] }, batchOptions: { type: Object, default: () => ({}) }, t: { type: Function, required: true } });
+const props = defineProps({ selection: { type: Array, required: true }, adapter: { type: String, required: true }, filters: { type: Array, default: () => [] }, batchOptions: { type: Object, default: () => ({}) }, sortFields: { type: Array, default: () => [] }, orderingAvailable: Boolean, t: { type: Function, required: true } });
 const emit = defineEmits(['apply']);
 const api = inject('resourceApi');
 const busy = ref(false);
@@ -157,7 +168,7 @@ const isMenus = computed(() => adapter.value === 'menus');
 const isUsers = computed(() => adapter.value === 'users');
 const selectionPrefix = computed(() => ({ articles: 'article:', 'articles-by-tag': 'article:', categories: 'category:', tags: 'tag:', menus: 'menu-item:', users: 'user:' })[adapter.value]);
 const items = computed(() => selectionPrefix.value ? props.selection.filter((item) => item.id.startsWith(selectionPrefix.value)) : props.selection);
-const mediaDefaults = { rename: false, find: '', replace: '', prefix: '', suffix: '', number: false, startAt: 1, placement: 'none', destination: '', zip: false, zipName: 'selection' };
+const mediaDefaults = { rename: false, find: '', replace: '', prefix: '', suffix: '', number: false, startAt: 1, placement: 'none', destination: '', zip: false, zipName: 'selection', extract: false, deleteArchive: false };
 const articleDefaults = { changeLanguage: false, language: '', changeAccess: false, access: '', tagsOpen: false, tagAdd: [], tagRemove: [], placement: 'none', category: '' };
 const sharedDefaults = { changeLanguage: false, language: '', changeAccess: false, access: '', tagsOpen: false, tagAdd: [], tagRemove: [], placement: 'none', category: '', flipOrdering: false, menuDestination: '' };
 const userDefaults = { groupOpen: false, groupAction: 'add', group: '', resetOpen: false, reset: 'yes' };
@@ -165,12 +176,14 @@ const media = reactive({ ...mediaDefaults });
 const article = reactive({ ...articleDefaults });
 const shared = reactive({ ...sharedDefaults });
 const user = reactive({ ...userDefaults });
+const sort = reactive({ enabled: false, field: 'title', direction: 'asc' });
+const canExtract = computed(() => items.value.length === 1 && items.value[0].capabilities?.extract === true);
 const articleFields = [
   { id: 'language', enabled: 'changeLanguage', label: 'COM_SMARTBROWSER_BATCH_SET_LANGUAGE', placeholder: 'COM_SMARTBROWSER_SELECT_LANGUAGE' },
   { id: 'access', enabled: 'changeAccess', label: 'COM_SMARTBROWSER_BATCH_SET_ACCESS', placeholder: 'COM_SMARTBROWSER_SELECT_ACCESS' },
 ];
 const sharedFields = articleFields;
-const dirty = computed(() => JSON.stringify(media) !== JSON.stringify(mediaDefaults) || JSON.stringify(article) !== JSON.stringify(articleDefaults)
+const dirty = computed(() => sort.enabled || JSON.stringify(media) !== JSON.stringify(mediaDefaults) || JSON.stringify(article) !== JSON.stringify(articleDefaults)
   || JSON.stringify(shared) !== JSON.stringify(sharedDefaults) || JSON.stringify(user) !== JSON.stringify(userDefaults));
 const filterOptions = (id) => (props.batchOptions[id] || props.filters.find((filter) => filter.id === id)?.options || []).filter((option) => String(option.value) !== '');
 const menuDestinationOptions = computed(() => (props.batchOptions.menu || []).flatMap((menu) => [
@@ -187,6 +200,7 @@ const updateSharedTagRemove = (values) => { shared.tagRemove = values; shared.ta
 const optionTitle = (id, value) => props.t(filterOptions(id).find((option) => String(option.value) === String(value))?.label || value);
 const activeSteps = computed(() => {
   const steps = [];
+  if (sort.enabled && props.orderingAvailable) steps.push({ id: 'sort', title: props.t('COM_SMARTBROWSER_BATCH_SORT'), parameters: [props.t(props.sortFields.find(field => field.id === sort.field)?.label || sort.field), props.t(sort.direction === 'asc' ? 'COM_SMARTBROWSER_ASCENDING' : 'COM_SMARTBROWSER_DESCENDING')] });
   if (isMedia.value) {
     if (media.placement !== 'none') steps.push({ id: 'placement', title: props.t(media.placement === 'copy' ? 'COM_SMARTBROWSER_BATCH_COPY' : 'COM_SMARTBROWSER_BATCH_MOVE'), parameters: [folderOptions.value.find((option) => option.value === media.destination)?.path || '...'] });
     if (media.rename) steps.push({ id: 'rename', title: props.t('COM_SMARTBROWSER_BATCH_RENAME'), parameters: [
@@ -196,6 +210,7 @@ const activeSteps = computed(() => {
       ...(media.number ? [`${props.t('COM_SMARTBROWSER_BATCH_NUMBER')}: ${media.startAt}`] : []),
     ], preview: true });
     if (media.zip) steps.push({ id: 'zip', title: props.t('COM_SMARTBROWSER_BATCH_ZIP'), parameters: [`${bareZipName.value}.zip`] });
+    if (media.extract && canExtract.value) steps.push({ id: 'extract', title: props.t('COM_SMARTBROWSER_BATCH_EXTRACT'), parameters: media.deleteArchive ? [props.t('COM_SMARTBROWSER_BATCH_EXTRACT_DELETE')] : [] });
   } else if (isArticles.value) {
     for (const field of articleFields) if (article[field.enabled] && article[field.id]) steps.push({ id: field.id, title: props.t(field.label), parameters: [optionTitle(field.id, article[field.id])] });
     if (article.tagsOpen && article.tagAdd.length) steps.push({ id: 'tag-add', title: props.t('COM_SMARTBROWSER_BATCH_ADD_TAG'), parameters: article.tagAdd.map((tag) => optionTitle('tag', tag)) });
@@ -218,6 +233,7 @@ const activeSteps = computed(() => {
 });
 const canApply = computed(() => {
   if (!items.value.length || !activeSteps.value.length) return false;
+  if (media.extract && (!canExtract.value || media.rename || media.zip || media.placement !== 'none')) return false;
   if (isMedia.value && media.placement !== 'none' && !folderOptions.value.some((option) => option.value === media.destination)) return false;
   if (isArticles.value && article.placement !== 'none' && !article.category) return false;
   if (isCategories.value && shared.placement !== 'none' && !shared.category) return false;
@@ -236,7 +252,7 @@ const apply = async () => {
   if (busy.value || !canApply.value) return;
   busy.value = true;
   try {
-    await new Promise((resolve, reject) => emit('apply', { selection: items.value.map((item) => item.id), payload: payload(), resolve, reject }));
+    await new Promise((resolve, reject) => emit('apply', { selection: items.value.map((item) => item.id), payload: { ...payload(), ...(sort.enabled && props.orderingAvailable ? { sort: { field: sort.field, direction: sort.direction } } : {}) }, resolve, reject }));
     close();
   } catch (error) {
     window.Joomla?.renderMessages?.({ error: [error.message || String(error)] });
@@ -278,6 +294,7 @@ const open = () => {
   Object.assign(article, articleDefaults);
   Object.assign(shared, sharedDefaults);
   Object.assign(user, userDefaults);
+  Object.assign(sort, { enabled: false, field: props.sortFields[0]?.id || 'title', direction: 'asc' });
   folderOptions.value = [];
   dialog.value?.showModal();
   if (isMedia.value) loadFolders();

@@ -1,5 +1,28 @@
 # SuperSoftJx - SmartBrowser
 
+### Direct Links caller options
+
+Direct Links may have a custom resource name. Named IDs append `.<base64url-name>` to the existing encoded URI ID; unnamed references remain valid. Names are not Selection Usage or resolved snapshots. Rename updates the reference in place in the ordered selection; URI uniqueness ignores the name suffix. Empty names use automatic labels, with entered phone spacing/parentheses retained where applicable.
+An optional custom field `phone_country_prefix` (e.g. `+30`) or Picker `selectionEditorContext.phoneCountryPrefix` applies only to numbers without `+`/`00`. There is no default country, no regional number inference, and no automatic removal of national trunk digits. URL warnings are advisory; unsafe/malformed URIs still fail validation.
+
+Custom fields can optionally supply suggestions from the current article editor using the `anchor_suggestions` parameter: `none` (default), `anchors` (`a[name]` and `a[id]` without `href`), or `all` (all element IDs and named anchors). Suggestions are deduplicated and read on each Picker opening through the Joomla editor API, with a textarea fallback. Outside article edit forms the list is empty; manual fragment entry remains available. No anchor markup is created or changed by the field.
+
+The Picker accepts optional per-adapter browsing configuration and local-editor suggestions:
+
+```js
+SmartBrowserPicker.open({
+  // Other existing Picker parameters remain unchanged.
+  adapterOptions: { 'direct-links': { nodes: ['web', 'mail', 'tel', 'fragment', 'joomla'] } },
+  selectionEditorContext: {
+    suggestions: { anchors: ['section1', { value: 'section2', label: 'Second section' }] }
+  }
+});
+```
+
+Omitting `nodes` shows all five nodes; a configured list must be non-empty. This controls navigation, not read access to existing selections. Anchor suggestions remain editable and are supplied by the caller, not collected by the core.
+Web format defaults to automatic: same-site URLs become root-relative, external URLs remain absolute. Same-site comparison accepts HTTP/HTTPS variants of the same host and matching custom port (or standard ports). Relative input is interpreted against the Joomla site root; explicit relative mode removes the origin even from external URLs, preserving path/query/fragment. Absolute mode retains an existing absolute destination. The address mode is not stored separately. `metadata.url` is the returned URI; `metadata.effectiveAddress` expands relative web/Joomla addresses against the current site root, without network requests or destination access validation.
+Joomla paths use installed enabled frontend components/views as choices, with free inputs when no catalog is available. The optional numeric ID builds a normal `index.php?option=...&view=...&id=...` URI; it does not validate destination-resource existence or permissions. URI resolution performs no external requests and retains the existing encoded URI identity and selection/usage storage.
+
 SmartBrowser is a Joomla resource browser for articles, categories, tags, menu items, users, and media. It combines tree and flat navigation, grid and list views, contextual details, filtering, selection, editing, and batch operations in one interface. It runs in the administrator and site applications, subject to Joomla permissions.
 
 ## Requirements
@@ -19,9 +42,38 @@ The package installs `com_smartbrowser`, an optional system integration plugin a
 
 ## Features
 
+Direct Links (`direct-links`) is available to selection-state hosts, including the Picker and
+custom field allowed adapters, but not the Dashboard's independent sources. It has web, mail,
+telephone, fragment and Joomla path nodes. Deselected items remain in transient selector state until
+explicit Delete or selector closure; only selected references are returned and saved. Cancel never
+writes them to a library/database. Create and Edit use the common `selectionEditor` action command and
+dialog lifecycle. Creating a single-value link replaces the selection. In homogeneous multiple mode,
+foreign-adapter links may be created but cannot be selected until the constraint permits them.
+Type constraints and duplicate identities are checked by the collection host; URI edits replace
+the existing reference in its ordered position. Transient link deletion does not require confirmation.
+
+References use `{ "adapter": "direct-links", "id": "uri:<base64url-of-normalized-URI>" }` with
+the existing per-item usage map. `DirectLinkUri::reference(type,input)` creates references for
+programmatic callers, and the adapter resolves them for guests without network requests.
+Web URLs accept HTTP(S) and safe relative paths (no protocol-relative URLs or credentials).
+Mail input is a single address, telephone input is a formatted number, and fragments omit `#`.
+URI input is limited to 1400 bytes and canonical reference IDs to 2048 bytes.
+
+Generic hosts opt into `selectionState` and supply `selectionHost.onChange({items})` with their
+own persistence lifecycle. The core exposes `canAddSelection`/`replaceSelectionResource` and
+passes current selection references to selection-scoped providers; these are not Picker-only
+contracts. A plain browser without a persistence host cannot create/edit temporary resources.
+
 - Articles, categories, tags, articles by tag, menus, users, and media adapters.
 - Tree and flat views, scoped browsing, grid and configurable list columns, filters, sorting, and item details.
 - Selection and edit workflows, plus adapter-specific batch actions. Media batch actions include copy/move, rename, and ZIP creation.
+- Trashed content/category/tag/menu resources offer permanent Delete with native model ACL checks.
+- In an ordering view, batch Sort persists the selected sibling order using the view's sort fields;
+  featured articles retain their independent ordering. Unselected sibling slots are preserved.
+- Media ZIP extraction creates a new sibling folder without overwriting files. It uses provider
+  writes and rejects unsafe paths, encrypted/symlink entries and excessive expansion (1000 entries,
+  20 MB per file/archive, 100 MB expanded total, maximum ratio 200:1). PHP ZipArchive is required.
+  Optional archive deletion requires delete permission and happens only after successful extraction.
 - Optional replacement of administrator links for Articles, Categories, Tags, Media, Menus, Users, and Featured Articles. The original Joomla manager remains reachable from the browser.
 - Optional Media field picker integration and separate administrator/site editor-display settings.
 - English and Greek interface translations.
@@ -558,7 +610,7 @@ foreach ($selection['items'] as $selected) {
 
 Prepared data is resolved, not stored; it can differ by user permissions and must not be cached across users without appropriate access isolation. No image size, alignment, layout, link target, popup or rendering policy is configured/stored by this field.
 
-The public Collection View accepts `layout: 'compact'`, optional `resourceActions`, `defaultResourceActionId` and `onResourceAction(action, resource)` for generic host commands. The field uses the core `resultFormat: 'collection'` API directly. Legacy callers may request `includeAdapter: true` with `resultFormat: 'usage'` to add the actual resolving adapter to that result envelope; existing callers/results are unchanged.
+The public Collection View accepts `layout: 'compact'`, optional `resourceActions`, `defaultResourceActionId` and `onResourceAction(action, resource)` for generic host commands. Compact and normal collections share grid/details buttons; the chosen view is remembered in local storage without persisting selections or order. `viewPreferenceKey` optionally isolates a caller's view preference. The field uses the core `resultFormat: 'collection'` API directly. Legacy callers may request `includeAdapter: true` with `resultFormat: 'usage'` to add the actual resolving adapter to that result envelope; existing callers/results are unchanged.
 # Stored Selection Read Access
 
 ## Prepared Resource Contract

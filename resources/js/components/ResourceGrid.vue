@@ -18,7 +18,7 @@
       @keydown.enter.prevent="performDefault(resource)"
       @mouseleave="openMenu = null"
     >
-      <label v-if="canSelectResource(resource)" class="resource-item-select" :class="{ checked: selectedIds.includes(resourceKey(resource)) }" @click.stop>
+      <label v-if="selectionControls && canSelectResource(resource)" class="resource-item-select" :class="{ checked: selectedIds.includes(resourceKey(resource)) }" @click.stop>
         <input type="checkbox" :checked="selectedIds.includes(resourceKey(resource))" :aria-label="resource.title" @change="$emit('select', resource, true)">
       </label>
       <button v-if="itemActions(resource).length" type="button" class="resource-item-menu-toggle" :aria-expanded="openMenu === resourceKey(resource)" :title="t('COM_SMARTBROWSER_ACTIONS')" @click.stop="$emit('focus', resource); toggleMenu(resourceKey(resource), $event)">
@@ -126,7 +126,7 @@ const secondaryLines = (resource) => {
   return (resource.collectionPresentation?.gridFields || props.gridFields || []).map((field) => line(
     field.label || 'COM_SMARTBROWSER_DETAILS',
     field.format === 'date' ? formatDate(valueAt(resource, field.source)) : valueAt(resource, field.source),
-    'fas fa-info',
+    field.icon || 'fas fa-info',
   )).filter(Boolean);
 };
 onMounted(() => document.addEventListener('click', closeMenu));

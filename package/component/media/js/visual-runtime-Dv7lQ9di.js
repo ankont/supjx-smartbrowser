@@ -1,5 +1,5 @@
 import { B as e, C as t, D as n, F as r, H as i, M as a, O as o, P as s, R as c, S as l, U as u, V as d, W as f, _ as p, b as m, g as h, h as g, j as _, k as v, m as y, t as b, v as x, x as S, y as C, z as w } from "./visual-runtime-DVMDRhTu.js";
-import { a as T, i as E, n as D, t as O } from "./visual-runtime-BpJbHzSM.js";
+import { a as T, i as E, n as D, t as O } from "./visual-runtime-BjkbZE8K.js";
 //#region resources/js/core/fieldIcons.js
 var k = {
 	title: null,
@@ -111,7 +111,7 @@ function G(e, t, n, r, i = "both") {
 		label: "COM_SMARTBROWSER_SELECT",
 		icon: "fas fa-check",
 		local: !0
-	} : null : t === "manage" && U(e) && n.find((t) => t.id === "edit" && r(t, [e])) || null : W(e, t, n, r);
+	} : null : t === "manage" && U(e) && n.find((t) => t.id === "edit" && r(t, [e])) || null : (["manage", "select"].includes(t) && U(e) ? n.find((t) => t.modifiedDefault === !0 && r(t, [e])) : null) || W(e, t, n, r);
 }
 function K(e, t, n, r, i = "both") {
 	return e?.navigable ? {
@@ -135,14 +135,14 @@ var ee = (e, t, n, r = null, i = null) => {
 	}] : [];
 	let a = [t], o = [], s = /* @__PURE__ */ new Set();
 	for (let r of e || []) {
-		if (t.collectionActions && !r.collectionCommand && !t.collectionActions.some((e) => e.id === r.id) || !r.requiresSelection || r.id === "checkin" && !n(r, a) || r.id === "removeFromGroup" && !n(r, a)) continue;
+		if (t.collectionActions && !r.collectionCommand && !t.collectionActions.some((e) => e.id === r.id) || !r.requiresSelection || r.trashedOnly && t.status !== -2 || r.id === "trash" && t.status === -2 || r.id === "checkin" && !n(r, a) || r.id === "removeFromGroup" && !n(r, a)) continue;
 		if (!r.exclusiveGroup) {
 			o.push(r);
 			continue;
 		}
 		if (s.has(r.exclusiveGroup)) continue;
 		s.add(r.exclusiveGroup);
-		let i = e.filter((e) => e.requiresSelection && e.exclusiveGroup === r.exclusiveGroup), c = i.find((e) => n(e, a)), l = t.overlays?.find((e) => i.some((t) => t.id === e.action))?.action;
+		let i = e.filter((e) => e.requiresSelection && e.exclusiveGroup === r.exclusiveGroup && (e.id !== "trash" || t.status !== -2)), c = i.find((e) => n(e, a)), l = t.overlays?.find((e) => i.some((t) => t.id === e.action))?.action;
 		o.push(c || i.find((e) => e.id === l) || i[0]);
 	}
 	return i && !o.some((e) => e.id === i.id) && i.id !== r?.id && o.push(i), (r ? [{
@@ -242,7 +242,7 @@ var ee = (e, t, n, r = null, i = null) => {
 				n("COM_SMARTBROWSER_MENU_ITEM_TYPE", t.menuItemType, "fas fa-file-alt"),
 				n("COM_SMARTBROWSER_LANGUAGE_KEY", t.languageKey, "fas fa-language"),
 				e.type === "article" && c.gridFields?.some((e) => e.source === "metadata.cardSummaryWithCategory") ? n("JCATEGORY", t.category, "fas fa-folder") : null
-			].filter(Boolean) : e.kind === "item" && t.mimeType ? [n("COM_SMARTBROWSER_MIME_TYPE", t.mimeType, "fas fa-file-alt"), e.type === "image" && t.width > 0 && t.height > 0 ? n("COM_SMARTBROWSER_DIMENSIONS", `${t.width} × ${t.height}`, "fas fa-expand") : null].filter(Boolean) : (e.collectionPresentation?.gridFields || c.gridFields || []).map((t) => n(t.label || "COM_SMARTBROWSER_DETAILS", t.format === "date" ? N(M(e, t.source)) : M(e, t.source), "fas fa-info")).filter(Boolean);
+			].filter(Boolean) : e.kind === "item" && t.mimeType ? [n("COM_SMARTBROWSER_MIME_TYPE", t.mimeType, "fas fa-file-alt"), e.type === "image" && t.width > 0 && t.height > 0 ? n("COM_SMARTBROWSER_DIMENSIONS", `${t.width} × ${t.height}`, "fas fa-expand") : null].filter(Boolean) : (e.collectionPresentation?.gridFields || c.gridFields || []).map((t) => n(t.label || "COM_SMARTBROWSER_DETAILS", t.format === "date" ? N(M(e, t.source)) : M(e, t.source), t.icon || "fas fa-info")).filter(Boolean);
 		};
 		return v(() => document.addEventListener("click", j)), o(() => document.removeEventListener("click", j)), (e, n) => (_(), S("div", { class: i(["resource-browser-grid", `size-${r.options.gridSize}`]) }, [r.selectionControls ? (_(), S("div", {
 			key: 0,
@@ -270,7 +270,7 @@ var ee = (e, t, n, r = null, i = null) => {
 			onKeydown: y(g((e) => C(o), ["prevent"]), ["enter"]),
 			onMouseleave: n[3] ||= (e) => w.value = null
 		}, [
-			d(V)(o) ? (_(), S("label", {
+			r.selectionControls && d(V)(o) ? (_(), S("label", {
 				key: 0,
 				class: i(["resource-item-select", { checked: r.selectedIds.includes(d(T)(o)) }]),
 				onClick: n[1] ||= g(() => {}, ["stop"])
@@ -577,7 +577,7 @@ var ee = (e, t, n, r = null, i = null) => {
 				resource: o,
 				variant: "compact",
 				"allow-image": n.options.detailsThumbnails
-			}, null, 8, ["resource", "allow-image"]), d(V)(o) ? (_(), S("label", {
+			}, null, 8, ["resource", "allow-image"]), n.selectionControls && d(V)(o) ? (_(), S("label", {
 				key: 0,
 				class: i(["resource-row-select", { checked: n.selectedIds.includes(d(T)(o)) }]),
 				onClick: r[2] ||= g(() => {}, ["stop"])
@@ -684,7 +684,7 @@ var ee = (e, t, n, r = null, i = null) => {
 			}, null, 2), l(" " + f(n.t(t.label)), 1)], 10, He))), 128))])) : m("", !0)])
 		], 42, be))), 128))])])]));
 	}
-}, We = (e, t = "") => window.prompt(e, t), Ge = (e) => {
+}, We = (e) => {
 	if (!e.metadata?.url) return null;
 	let t = (e.metadata.mimeType || "").toLowerCase();
 	return t.startsWith("image/") ? "image" : /^video\/(mp4|webm|ogg)$/.test(t) ? "video" : /^audio\/(mpeg|mp4|ogg|wav|webm)$/.test(t) ? "audio" : t === "application/pdf" ? "pdf" : null;
@@ -707,7 +707,7 @@ var ee = (e, t, n, r = null, i = null) => {
 		}, { once: !0 }), document.body.appendChild(e);
 	}
 	available(e, t) {
-		return this.destroyed || e.currentNode && this.state.currentResource?.capabilities?.[e.id] === !1 || e.requiresSelection && t.length === 0 || e.single && t.length !== 1 || e.itemsOnly && t.some((e) => e.kind !== "item") || e.nodesOnly && t.some((e) => e.kind !== "node") ? !1 : e.exclusiveGroup && t.length ? t.some((t) => t.capabilities?.[e.id] === !0) : e.requiresSelection && t.length ? t.every((t) => t.capabilities?.[e.id] === !0) : !0;
+		return this.destroyed || e.selectionScoped && (!this.selectionHost || e.currentNode && !(this.selectionHost.canCreate ? this.selectionHost.canCreate(e.resourceType || "uri") : this.selectionHost.canAdd(this.api.options.adapter, e.resourceType || "uri"))) || e.currentNode && this.state.currentResource?.capabilities?.[e.id] === !1 || e.requiresSelection && t.length === 0 || e.single && t.length !== 1 || e.itemsOnly && t.some((e) => e.kind !== "item") || e.nodesOnly && t.some((e) => e.kind !== "node") ? !1 : e.exclusiveGroup && t.length ? t.some((t) => t.capabilities?.[e.id] === !0) : e.requiresSelection && t.length ? t.every((t) => t.capabilities?.[e.id] === !0) : !0;
 	}
 	async execute(e, t) {
 		if (!this.state.busy) {
@@ -726,7 +726,10 @@ var ee = (e, t, n, r = null, i = null) => {
 		let n = e.exclusiveGroup ? t.filter((t) => t.capabilities?.[e.id] === !0) : t, r = n.map((e) => e.id);
 		if (e.id === "upload") return this.pickUpload();
 		if (e.id === "createNode") {
-			let t = We(this.translate("COM_SMARTBROWSER_NEW_FOLDER_NAME"));
+			let t = await this.actionDialog({
+				title: "COM_SMARTBROWSER_NEW_FOLDER_NAME",
+				value: ""
+			});
 			t && await this.mutate(e.id, [], {
 				nodeId: this.state.selectedNode,
 				name: t
@@ -735,25 +738,39 @@ var ee = (e, t, n, r = null, i = null) => {
 		}
 		if (e.currentNode) {
 			let t = await this.api.execute(e.id, [], { nodeId: this.state.selectedNode });
+			if (t?.command === "selectionEditor") return this.selectionEditor(t, null);
 			t?.command === "openEditor" ? this.openEditor(t.url) : await this.reload();
 			return;
 		}
 		if (e.id === "rename") {
-			let n = We(this.translate("COM_SMARTBROWSER_RENAME_TO"), t[0].title);
+			let n = await this.actionDialog({
+				title: "COM_SMARTBROWSER_RENAME_TO",
+				value: t[0].title
+			});
 			n && n !== t[0].title && await this.mutate(e.id, r, { name: n });
 			return;
 		}
 		if (e.id === "delete") {
-			window.confirm(this.translate("COM_SMARTBROWSER_CONFIRM_DELETE")) && await this.mutate(e.id, r);
+			(e.confirm === !1 || await this.actionDialog({
+				title: "COM_SMARTBROWSER_DELETE",
+				message: this.translate("COM_SMARTBROWSER_CONFIRM_DELETE"),
+				accept: "COM_SMARTBROWSER_DELETE",
+				destructive: !0
+			})) && (e.localState ? this.selectionHost.remove(n) : await this.mutate(e.id, r));
 			return;
 		}
 		if (e.id === "removeFromGroup") {
 			let t = Object.fromEntries(n.map((e) => [e.id, e.metadata?.sourceGroupId]));
 			if (r.some((e) => !t[e])) return;
-			window.confirm(this.translate("COM_SMARTBROWSER_CONFIRM_REMOVE_FROM_GROUP")) && await this.mutate(e.id, r, { groups: t });
+			await this.actionDialog({
+				title: "COM_SMARTBROWSER_REMOVE_FROM_GROUP",
+				message: this.translate("COM_SMARTBROWSER_CONFIRM_REMOVE_FROM_GROUP"),
+				accept: "COM_SMARTBROWSER_REMOVE_FROM_GROUP"
+			}) && await this.mutate(e.id, r, { groups: t });
 			return;
 		}
 		let i = await this.api.execute(e.id, r);
+		if (i?.command === "selectionEditor") return this.selectionEditor(i, n[0]);
 		if (i?.command === "previewUrl") {
 			this.previewUrl(i.url, i.title);
 			return;
@@ -779,8 +796,178 @@ var ee = (e, t, n, r = null, i = null) => {
 		}
 		e.id === "preview" && this.preview(i), e.id === "edit" && i?.metadata?.mimeType && this.editMedia(i), e.id === "share" && this.share(i), e.id === "download" && this.download(i), (i?.updated || i?.deleted) && await this.reload();
 	}
+	actionDialog({ title: e, message: t, value: n, accept: r = "JTOOLBAR_SAVE", destructive: i = !1 }) {
+		if (this.destroyed) return Promise.resolve(null);
+		let a = (e) => {
+			let t = document.createElement("textarea");
+			return t.innerHTML = e, t.value;
+		}, o = document.createElement("dialog");
+		o.className = "smartbrowser-editor smartbrowser-local-editor";
+		let s = document.createElement("form"), c = document.createElement("h3");
+		c.textContent = a(this.translate(e)), s.append(c);
+		let l;
+		if (n !== void 0) {
+			let e = document.createElement("label");
+			e.textContent = a(this.translate("COM_SMARTBROWSER_NAME")), l = document.createElement("input"), l.type = "text", l.className = "form-control", l.value = n, l.required = !0, e.append(l), s.append(e);
+		} else {
+			let e = document.createElement("p");
+			e.textContent = a(t || ""), s.append(e);
+		}
+		let u = document.createElement("div");
+		u.className = "smartbrowser-local-editor-actions";
+		let d = document.createElement("button");
+		d.type = "submit", d.className = i ? "btn btn-danger" : "btn btn-primary", d.textContent = a(this.translate(r));
+		let f = document.createElement("button");
+		return f.type = "button", f.className = "btn btn-danger", f.textContent = a(this.translate("JCANCEL")), u.append(d, f), s.append(u), o.append(s), f.addEventListener("click", () => o.close()), window.SmartBrowserDialogDismiss?.install(o, () => l ? l.value !== n : !1), new Promise((e) => {
+			this.ownDialog(o, () => {
+				o.remove(), e(null);
+			}), s.addEventListener("submit", (t) => {
+				t.preventDefault(), s.reportValidity() && !this.destroyed && (e(!l || l.value), o.close());
+			}), o.showModal(), l ? (l.focus(), l.select()) : f.focus();
+		});
+	}
+	async selectionEditor(e, t) {
+		if (!this.selectionHost || this.destroyed) return;
+		let n = document.createElement("dialog");
+		n.className = "smartbrowser-editor smartbrowser-local-editor";
+		let r = document.createElement("form"), i = (e) => {
+			let t = document.createElement("textarea");
+			return t.innerHTML = this.translate(e), t.value;
+		}, a = document.createElement("h3");
+		a.textContent = i(e.label), r.append(a);
+		let o = /* @__PURE__ */ new Map();
+		for (let t of e.fields || []) {
+			if (t.type === "hidden") {
+				let e = document.createElement("input");
+				e.type = "hidden", e.value = t.contextValue ? this.selectionHost.editorContext?.[t.contextValue] || t.value || "" : t.value || "", o.set(t.name, e), r.append(e);
+				continue;
+			}
+			if (t.type === "segmented") {
+				let e = document.createElement("fieldset");
+				e.className = "smartbrowser-local-editor-modes";
+				let n = document.createElement("legend");
+				n.textContent = i(t.label), e.append(n);
+				let a = document.createElement("input");
+				a.type = "hidden", a.value = t.value || "", e.append(a), o.set(t.name, a);
+				let s = document.createElement("div");
+				s.className = "btn-group", e.append(s);
+				for (let e of t.options || []) {
+					let t = document.createElement("button");
+					t.type = "button", t.className = "btn btn-outline-primary", t.textContent = i(e.label), t.dataset.value = e.value, t.setAttribute("aria-pressed", String(e.value === a.value)), t.addEventListener("click", () => {
+						a.value = e.value;
+						for (let e of s.children) e.setAttribute("aria-pressed", String(e.dataset.value === a.value));
+						a.dispatchEvent(new Event("input", { bubbles: !0 }));
+					}), s.append(t);
+				}
+				r.append(e);
+				continue;
+			}
+			let e = document.createElement("label");
+			e.textContent = i(t.label);
+			let n = document.createElement(t.type === "select" ? "select" : "input");
+			if (n.className = "form-control", t.type === "select") for (let e of t.options || []) {
+				let t = document.createElement("option");
+				t.value = e.value, t.textContent = i(e.label), n.append(t);
+			}
+			else n.type = "text";
+			if (n.value = t.value || "", n.required = t.required === !0, n.maxLength = t.maxlength || 2048, e.append(n), r.append(e), o.set(t.name, n), t.placeholder && (n.placeholder = t.placeholder), t.hint) {
+				let n = document.createElement("small");
+				n.className = "text-muted", n.textContent = i(t.hint), e.append(n);
+			}
+			if (t.warningPattern) {
+				let r = document.createElement("p");
+				r.className = "alert alert-warning", r.textContent = i("COM_SMARTBROWSER_LINK_WEB_WARNING");
+				let a = () => {
+					r.hidden = !n.value || !new RegExp(t.warningPattern, "i").test(n.value);
+				};
+				n.addEventListener("input", a), a(), e.append(r);
+			}
+		}
+		for (let t of e.fields || []) {
+			if (t.placeholderFrom && !t.computedPlaceholder) {
+				let e = o.get(t.placeholderFrom);
+				e?.addEventListener("input", () => {
+					o.get(t.name).placeholder = e.value;
+				});
+			}
+			if (t.type === "select" && t.dependsOn) {
+				let e = o.get(t.name), n = () => {
+					let n = e.value;
+					e.replaceChildren();
+					for (let n of t.options || []) {
+						if (n.parent !== o.get(t.dependsOn)?.value) continue;
+						let r = document.createElement("option");
+						r.value = n.value, r.textContent = i(n.label), e.append(r);
+					}
+					[...e.options].some((e) => e.value === n) && (e.value = n);
+				};
+				n(), o.get(t.dependsOn)?.addEventListener("change", n);
+			}
+			if (!t.suggestions) continue;
+			let e = document.createElement("datalist");
+			e.id = `smartbrowser-suggestions-${Math.random().toString(36).slice(2)}`, o.get(t.name).setAttribute("list", e.id), r.append(e);
+			let n = () => {
+				let n = typeof t.suggestions == "string" ? this.selectionHost.editorContext?.suggestions?.[t.suggestions] : t.suggestionsBy ? t.suggestions[o.get(t.suggestionsBy)?.value] : t.suggestions;
+				e.replaceChildren();
+				for (let t of Array.isArray(n) ? n.slice(0, 500) : []) {
+					let n = document.createElement("option");
+					n.value = typeof t == "string" ? t : t.value, typeof t == "object" && t.label && (n.label = t.label), e.append(n);
+				}
+			};
+			n(), t.suggestionsBy && o.get(t.suggestionsBy)?.addEventListener("input", n);
+		}
+		let s = document.createElement("p");
+		s.className = "text-danger", s.setAttribute("role", "alert"), r.append(s);
+		let c = document.createElement("div");
+		c.className = "smartbrowser-local-editor-actions";
+		let l = document.createElement("button");
+		l.type = "submit", l.className = "btn btn-primary", l.textContent = i("JTOOLBAR_SAVE");
+		let u = document.createElement("button");
+		u.type = "button", u.className = "btn btn-danger", u.textContent = i("JCANCEL"), c.append(l, u), r.append(c), n.append(r), u.addEventListener("click", () => n.close());
+		let d = new Map([...o].map(([e, t]) => [e, t.value]));
+		window.SmartBrowserDialogDismiss?.install(n, () => [...o].some(([e, t]) => t.value !== d.get(e)));
+		let f, p = 0, m = e.fields?.find((e) => e.computedPlaceholder), h = () => {
+			clearTimeout(f);
+			let t = ++p;
+			m && !o.get(m.name).value && (o.get(m.name).placeholder = "", f = setTimeout(async () => {
+				if (!this.destroyed && n.isConnected) try {
+					let r = {
+						nodeId: e.nodeId,
+						...Object.fromEntries([...o].map(([e, t]) => [e, t.value])),
+						[m.name]: ""
+					}, i = await this.api.execute(e.action, [], r);
+					t === p && n.isConnected && !this.destroyed && (o.get(m.name).placeholder = i.resource.title);
+				} catch {}
+			}, 300));
+		};
+		return m && r.addEventListener("input", h), new Promise((i) => {
+			this.ownDialog(n, () => {
+				clearTimeout(f), p++, n.remove(), i();
+			}), r.addEventListener("submit", async (i) => {
+				if (i.preventDefault(), r.reportValidity()) {
+					l.disabled = !0, s.textContent = "";
+					try {
+						let r = {
+							nodeId: e.nodeId,
+							...Object.fromEntries([...o].map(([e, t]) => [e, t.value]))
+						}, i = await this.api.execute(e.action, [], r);
+						if (this.destroyed) return;
+						let a = this.selectionHost.replace({
+							...i.resource,
+							adapter: this.api.options.adapter.replace(/^flat-/, "")
+						}, t);
+						n.close(), await this.reload(), this.state.focusedId = a.selectionKey || a.id;
+					} catch (e) {
+						s.textContent = this.translate(e.message);
+					} finally {
+						l.disabled = !1;
+					}
+				}
+			}), n.showModal(), [...o.values()].find((e) => e.type !== "hidden")?.focus(), h();
+		});
+	}
 	canPreview(e) {
-		return !e?.metadata?.mimeType || !!Ge(e);
+		return !e?.metadata?.mimeType || !!We(e);
 	}
 	openEditor(e) {
 		if (this.destroyed) return;
@@ -852,7 +1039,12 @@ var ee = (e, t, n, r = null, i = null) => {
 				} catch (e) {
 					if (e.status !== 409) throw e;
 					let t = this.translate("COM_MEDIA_FILE_EXISTS_AND_OVERRIDE").replace(/%[sS]/, n.name);
-					if (!window.confirm(t)) continue;
+					if (!await this.actionDialog({
+						title: "COM_SMARTBROWSER_ACTION_UPLOAD",
+						message: t,
+						accept: "JYES",
+						destructive: !0
+					})) continue;
 					await this.api.execute("upload", [], {
 						...r,
 						override: !0
@@ -875,7 +1067,7 @@ var ee = (e, t, n, r = null, i = null) => {
 		});
 	}
 	previewMedia(e) {
-		let t = e.metadata?.url, n = Ge(e);
+		let t = e.metadata?.url, n = We(e);
 		return n === "image" ? `<img data-preview-media src="${this.escapeAttribute(t)}" alt="${this.escapeAttribute(e.title)}">` : n === "video" ? `<video data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></video>` : n === "audio" ? `<audio data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></audio>` : n === "pdf" ? `<iframe data-preview-media src="${this.escapeAttribute(t)}" title="${this.escapeAttribute(e.title)}"></iframe>` : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(e.icon || "fas fa-file")}" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_PREVIEW_UNAVAILABLE"))}</span></div>`;
 	}
 	previewUrl(e, t) {
@@ -1015,21 +1207,27 @@ var ee = (e, t, n, r = null, i = null) => {
 };
 //#endregion
 //#region resources/js/services/ResourceApi.js
-function Ke(e, t = 0, n = (e) => e) {
+function Ge(e, t = 0, n = (e) => e) {
 	let r = e?.messages && typeof e.messages == "object" ? Object.values(e.messages).flat() : [], i = [...new Set([e?.message, ...r].filter((e) => typeof e == "string" && e.trim()).map((e) => e.trim()))];
 	return i.length ? i.join("; ") : t === 413 ? n("COM_SMARTBROWSER_ERROR_REQUEST_TOO_LARGE") : t ? n("COM_SMARTBROWSER_ERROR_REQUEST_HTTP").replace("%s", String(t)) : n("COM_SMARTBROWSER_ERROR_REQUEST_NETWORK");
 }
-var qe = class {
+var Ke = class {
 	constructor(e) {
 		this.options = e, this.pending = /* @__PURE__ */ new Map();
 	}
 	async getResources(e, t = {}) {
 		let n = new URL(`${this.options.apiBaseUrl}&task=api.resources&adapter=${encodeURIComponent(this.options.adapter)}`);
-		return n.searchParams.set("mode", this.options.mode || "manage"), this.options.browseRoot && n.searchParams.set("browseRoot", this.options.browseRoot), this.options.flatScope && n.searchParams.set("flatScope", this.options.flatScope), n.searchParams.set("node", e), t.search && n.searchParams.set("search", t.search), t.sortBy && n.searchParams.set("sortBy", t.sortBy), t.sortDirection && n.searchParams.set("sortDirection", t.sortDirection), t.filters && n.searchParams.set("filters", JSON.stringify(t.filters)), n.searchParams.set("showContextResources", this.options.showContextResources ? "1" : "0"), this.request(n);
+		return n.searchParams.set("mode", this.options.mode || "manage"), this.options.browseRoot && n.searchParams.set("browseRoot", this.options.browseRoot), this.options.flatScope && n.searchParams.set("flatScope", this.options.flatScope), n.searchParams.set("node", e), this.options.adapterOptions && n.searchParams.set("adapterOptions", JSON.stringify(this.options.adapterOptions)), t.search && n.searchParams.set("search", t.search), t.sortBy && n.searchParams.set("sortBy", t.sortBy), t.sortDirection && n.searchParams.set("sortDirection", t.sortDirection), t.filters && n.searchParams.set("filters", JSON.stringify(t.filters)), n.searchParams.set("showContextResources", this.options.showContextResources ? "1" : "0"), this.options.selectionItems ? this.request(n, {
+			method: "POST",
+			body: JSON.stringify({
+				items: this.options.selectionItems(),
+				[this.options.csrfToken]: 1
+			})
+		}) : this.request(n);
 	}
 	async execute(e, t = [], n = {}) {
 		let r = new URL(`${this.options.apiBaseUrl}&task=api.action&adapter=${encodeURIComponent(this.options.adapter)}`);
-		return r.searchParams.set("mode", this.options.mode || "manage"), this.options.browseRoot && r.searchParams.set("browseRoot", this.options.browseRoot), this.options.flatScope && r.searchParams.set("flatScope", this.options.flatScope), this.request(r, {
+		return this.options.adapterOptions && r.searchParams.set("adapterOptions", JSON.stringify(this.options.adapterOptions)), r.searchParams.set("mode", this.options.mode || "manage"), this.options.browseRoot && r.searchParams.set("browseRoot", this.options.browseRoot), this.options.flatScope && r.searchParams.set("flatScope", this.options.flatScope), this.request(r, {
 			method: "POST",
 			body: JSON.stringify({
 				action: e,
@@ -1068,7 +1266,7 @@ var qe = class {
 					}
 					if (t.data?.authenticationRequired) this.redirectToLogin(t.data.loginUrl), i(Error(t.message));
 					else if (t.success === !1) {
-						let e = Error(Ke(t, Number(t.code) || 0, (e) => Joomla.Text?._(e, e) || e));
+						let e = Error(Ge(t, Number(t.code) || 0, (e) => Joomla.Text?._(e, e) || e));
 						e.status = Number(t.code) || 0, i(e);
 					} else r(t.data);
 				},
@@ -1079,7 +1277,7 @@ var qe = class {
 					} catch {
 						e.status === 401 && this.redirectToLogin();
 					}
-					let n = Ke(t, Number(e.status) || 0, (e) => Joomla.Text?._(e, e) || e), r = Error(n);
+					let n = Ge(t, Number(e.status) || 0, (e) => Joomla.Text?._(e, e) || e), r = Error(n);
 					r.status = Number(e.status) || 0, i(r);
 				}
 			}), n && this.pending.set(n, i);
@@ -1093,35 +1291,33 @@ var qe = class {
 		let t = e || this.options.loginUrl;
 		t && window.top.location.assign(t);
 	}
-}, Je = ["aria-label", "aria-busy"], Ye = { class: "resource-browser" }, Xe = {
-	key: 0,
-	class: "resource-toolbar sb-collection-toolbar"
-}, Ze = { class: "resource-view-controls" }, Qe = [
+}, qe = ["aria-label", "aria-busy"], Je = { class: "resource-browser" }, Ye = { class: "resource-toolbar sb-collection-toolbar" }, Xe = { class: "resource-view-controls" }, Ze = [
 	"disabled",
 	"title",
 	"aria-label"
-], $e = [
+], Qe = [
 	"disabled",
 	"title",
 	"aria-label"
-], et = ["aria-label", "value"], tt = { value: "collectionOrder" }, nt = ["value"], rt = ["title", "aria-label"], it = [
+], $e = ["aria-label", "value"], et = { value: "collectionOrder" }, tt = ["value"], nt = ["title", "aria-label"], rt = [
 	"title",
 	"aria-label",
+	"aria-pressed",
 	"onClick"
-], at = {
-	key: 1,
+], it = {
+	key: 0,
 	class: "alert alert-danger",
 	role: "alert"
+}, at = {
+	key: 1,
+	role: "status"
 }, ot = {
 	key: 2,
-	role: "status"
-}, st = {
-	key: 3,
 	class: "resource-empty-state"
-}, ct = {
-	key: 5,
+}, st = {
+	key: 4,
 	class: "sb-collection-count"
-}, lt = {
+}, ct = {
 	__name: "CollectionView",
 	props: {
 		model: Object,
@@ -1147,7 +1343,7 @@ var qe = class {
 		let g = new $(n.api, r, () => n.model.refresh(), n.t, n.config.editorMode || "modal", n.config.application), v = /* @__PURE__ */ new Map(), y = (e) => {
 			if (!e.adapter) return g;
 			if (!v.has(e.adapter)) {
-				let t = new qe({
+				let t = new Ke({
 					...n.config,
 					adapter: e.adapter,
 					mode: n.config.readOnly ? "readonly" : "manage"
@@ -1210,8 +1406,8 @@ var qe = class {
 			class: i(["smartbrowser smartbrowser-collection", { "is-compact": t.config.layout === "compact" }]),
 			"aria-label": t.t("COM_SMARTBROWSER_COLLECTION_TITLE"),
 			"aria-busy": d(r).loading || d(r).busy
-		}, [x("div", Ye, [
-			t.config.layout !== "compact" || t.model.canOrder || c.value ? (_(), S("header", Xe, [x("div", Ze, [
+		}, [x("div", Je, [
+			x("header", Ye, [x("div", Xe, [
 				t.model.canOrder ? (_(), C(P, {
 					key: 0,
 					enabled: !d(r).loading && !d(r).busy && d(r).selectedIds.length > 0 && d(r).sortBy === "collectionOrder",
@@ -1233,7 +1429,7 @@ var qe = class {
 				}, [...n[3] ||= [x("span", {
 					class: "fas fa-plus",
 					"aria-hidden": "true"
-				}, null, -1)]], 8, Qe)) : m("", !0),
+				}, null, -1)]], 8, Ze)) : m("", !0),
 				t.model.canRemove ? (_(), S("button", {
 					key: 2,
 					class: "resource-icon-button",
@@ -1245,42 +1441,40 @@ var qe = class {
 				}, [...n[4] ||= [x("span", {
 					class: "fas fa-minus",
 					"aria-hidden": "true"
-				}, null, -1)]], 8, $e)) : m("", !0),
-				t.config.layout === "compact" ? m("", !0) : (_(), S(h, { key: 3 }, [
-					x("select", {
-						"aria-label": t.t("COM_SMARTBROWSER_SORT_BY"),
-						value: d(r).sortBy,
-						onChange: n[1] ||= (e) => d(r).sortBy = e.target.value
-					}, [x("option", tt, f(t.t("JGRID_HEADING_ORDERING")), 1), (_(!0), S(h, null, a(M.value, (e) => (_(), S("option", {
-						key: e.id,
-						value: e.id
-					}, f(t.t(e.label)), 9, nt))), 128))], 40, et),
-					x("button", {
-						class: "resource-icon-button",
-						type: "button",
-						title: t.t("COM_SMARTBROWSER_SORT_DIRECTION"),
-						"aria-label": t.t("COM_SMARTBROWSER_SORT_DIRECTION"),
-						onClick: n[2] ||= (e) => d(r).sortDirection = d(r).sortDirection === "asc" ? "desc" : "asc"
-					}, [x("span", {
-						class: i(d(r).sortDirection === "asc" ? "fas fa-sort-amount-up" : "fas fa-sort-amount-down-alt"),
-						"aria-hidden": "true"
-					}, null, 2)], 8, rt),
-					(_(), S(h, null, a(F, (e) => x("button", {
-						key: e.id,
-						class: i(["resource-icon-button", { active: d(r).activeView === e.id }]),
-						type: "button",
-						title: t.t(e.label),
-						"aria-label": t.t(e.label),
-						onClick: (t) => d(r).activeView = e.id
-					}, [x("span", {
-						class: i(e.icon),
-						"aria-hidden": "true"
-					}, null, 2)], 10, it)), 64))
-				], 64))
-			])])) : m("", !0),
-			d(r).error ? (_(), S("p", at, f(d(r).error), 1)) : m("", !0),
-			d(r).loading ? (_(), S("p", ot, f(t.t("COM_SMARTBROWSER_LOADING")), 1)) : t.model.resources.value.length ? (_(), C(s(t.config.layout === "compact" || d(r).activeView === "details" ? Ue : ue), {
-				key: 4,
+				}, null, -1)]], 8, Qe)) : m("", !0),
+				t.config.layout === "compact" ? m("", !0) : (_(), S(h, { key: 3 }, [x("select", {
+					"aria-label": t.t("COM_SMARTBROWSER_SORT_BY"),
+					value: d(r).sortBy,
+					onChange: n[1] ||= (e) => d(r).sortBy = e.target.value
+				}, [x("option", et, f(t.t("JGRID_HEADING_ORDERING")), 1), (_(!0), S(h, null, a(M.value, (e) => (_(), S("option", {
+					key: e.id,
+					value: e.id
+				}, f(t.t(e.label)), 9, tt))), 128))], 40, $e), x("button", {
+					class: "resource-icon-button",
+					type: "button",
+					title: t.t("COM_SMARTBROWSER_SORT_DIRECTION"),
+					"aria-label": t.t("COM_SMARTBROWSER_SORT_DIRECTION"),
+					onClick: n[2] ||= (e) => d(r).sortDirection = d(r).sortDirection === "asc" ? "desc" : "asc"
+				}, [x("span", {
+					class: i(d(r).sortDirection === "asc" ? "fas fa-sort-amount-up" : "fas fa-sort-amount-down-alt"),
+					"aria-hidden": "true"
+				}, null, 2)], 8, nt)], 64)),
+				(_(), S(h, null, a(F, (e) => x("button", {
+					key: e.id,
+					class: i(["resource-icon-button", { active: d(r).activeView === e.id }]),
+					type: "button",
+					title: t.t(e.label),
+					"aria-label": t.t(e.label),
+					"aria-pressed": d(r).activeView === e.id,
+					onClick: (t) => d(r).activeView = e.id
+				}, [x("span", {
+					class: i(e.icon),
+					"aria-hidden": "true"
+				}, null, 2)], 10, rt)), 64))
+			])]),
+			d(r).error ? (_(), S("p", it, f(d(r).error), 1)) : m("", !0),
+			d(r).loading ? (_(), S("p", at, f(t.t("COM_SMARTBROWSER_LOADING")), 1)) : t.model.resources.value.length ? (_(), C(s(d(r).activeView === "details" ? Ue : ue), {
+				key: 3,
 				resources: t.model.resources.value,
 				"selected-ids": d(r).selectedIds,
 				"focused-id": d(r).focusedId,
@@ -1326,33 +1520,33 @@ var qe = class {
 				"onSelect",
 				"onSelectAll",
 				"onFocus"
-			])) : (_(), S("p", st, f(t.t("COM_SMARTBROWSER_COLLECTION_EMPTY")), 1)),
-			t.config.showCount === !1 ? m("", !0) : (_(), S("footer", ct, f(t.t("COM_SMARTBROWSER_COLLECTION_TITLE")) + ": " + f(t.model.getItems().length), 1))
-		])], 10, Je));
+			])) : (_(), S("p", ot, f(t.t("COM_SMARTBROWSER_COLLECTION_EMPTY")), 1)),
+			t.config.showCount === !1 ? m("", !0) : (_(), S("footer", st, f(t.t("COM_SMARTBROWSER_COLLECTION_TITLE")) + ": " + f(t.model.getItems().length), 1))
+		])], 10, qe));
 	}
-}, ut = (e, t) => (n, r) => {
+}, lt = (e, t) => (n, r) => {
 	let i = (t) => e === "title" ? String(t.title || "").toLocaleLowerCase() : e === "dimension" ? (t.metadata?.width || 0) * (t.metadata?.height || 0) : t.metadata?.[e], a = i(n), o = i(r), s = typeof a == "string" ? (a || "").localeCompare(o || "") : (a || 0) - (o || 0);
 	return t === "asc" ? s : -s;
 };
 //#endregion
 //#region resources/js/core/createBrowserState.js
-function dt({ options: e, api: t, persistence: n, viewRegistry: i }) {
-	let a = !!e.pickerContext?.collectionMode, o = a ? e.pickerContext.getCollectionSnapshot() : null, s = !!(a || e.pickerContext && (Object.keys(e.pickerContext.selectionProfile || {}).length || e.pickerContext.initialSelection?.length)), c = e.adapter?.replace(/^flat-/, ""), l = (e) => a ? {
+function ut({ options: e, api: t, persistence: n, viewRegistry: i }) {
+	let a = e.pickerContext || e.selectionHost, o = !!a?.collectionMode, s = o ? a.getCollectionSnapshot() : null, c = !!(o || e.selectionState || e.pickerContext && (Object.keys(e.pickerContext.selectionProfile || {}).length || e.pickerContext.initialSelection?.length)), l = e.adapter?.replace(/^flat-/, ""), u = (e) => o ? {
 		...e,
-		adapter: c,
+		adapter: l,
 		selection: {
-			adapter: c,
+			adapter: l,
 			id: e.id
 		},
 		selectionKey: E({
-			adapter: c,
+			adapter: l,
 			id: e.id
 		})
-	} : e, u = (t) => a && e.pickerContext.homogeneous && g.selectedIds.length && (g.selectedResources[g.selectedIds[0]]?.selection?.adapter || o.items.find((e) => E(e.selection) === g.selectedIds[0])?.selection.adapter) !== t.selection?.adapter, d = new Set(e.allowedResourceTypes || []), f = (t) => e.mode === "readonly" || u(t) || d.size && !d.has(t.type) ? {
+	} : e, d = (t) => o && e.multiple && a.homogeneous && _.selectedIds.length && (_.selectedResources[_.selectedIds[0]]?.selection?.adapter || s.items.find((e) => E(e.selection) === _.selectedIds[0])?.selection.adapter) !== t.selection?.adapter, f = new Set(e.allowedResourceTypes || []), m = (t) => e.mode === "readonly" || d(t) || f.size && !f.has(t.type) ? {
 		...t,
 		selectable: !1,
 		bulkSelectable: !1
-	} : t, m = {
+	} : t, h = {
 		selectedNode: e.currentNode || e.initialNode || e.roots[0]?.id || "",
 		activeView: e.defaultView || "grid",
 		viewOptions: {
@@ -1366,13 +1560,13 @@ function dt({ options: e, api: t, persistence: n, viewRegistry: i }) {
 		sortDirection: e.defaultSortDirection || "",
 		showInfo: !1,
 		filters: {}
-	}, h = n.load(m);
-	h.filters = {
-		...h.filters || {},
+	}, g = n.load(h);
+	g.filters = {
+		...g.filters || {},
 		...e.initialFilters || {}
-	}, Array.isArray(h.hiddenColumns) || (h.hiddenColumns = []), Array.isArray(h.shownColumns) || (h.shownColumns = []), e.currentNode && (h.selectedNode = e.currentNode), e.defaultView && (h.activeView = e.defaultView), i.has(h.activeView) || (h.activeView = "grid");
-	let g = w({
-		...h,
+	}, Array.isArray(g.hiddenColumns) || (g.hiddenColumns = []), Array.isArray(g.shownColumns) || (g.shownColumns = []), e.currentNode && (g.selectedNode = e.currentNode), e.defaultView && (g.activeView = e.defaultView), i.has(g.activeView) || (g.activeView = "grid");
+	let _ = w({
+		...g,
 		roots: e.roots,
 		nodes: [],
 		items: [],
@@ -1382,119 +1576,178 @@ function dt({ options: e, api: t, persistence: n, viewRegistry: i }) {
 		presentation: e.presentation || {},
 		currentResource: null,
 		focusedId: null,
-		selectedIds: o ? o.items.map((e) => E(e.selection)) : [],
-		selectedResources: o?.resources || {},
+		selectedIds: s ? s.items.map((e) => E(e.selection)) : [],
+		selectedResources: s?.resources || {},
+		virtualResources: s?.virtualResources || {},
 		search: "",
 		loading: !1,
 		busy: !1,
 		error: ""
-	}), _ = p(() => {
-		let e = g.search.trim().toLocaleLowerCase(), t = (t) => !e || [
-			t.title,
-			t.subtitle,
-			t.metadata?.alias
-		].some((t) => String(t || "").toLocaleLowerCase().includes(e)), n = g.nodes.map(l).map(L).map(f).filter(t), r = g.items.map(l).map(L).map(f).filter(t), i = g.contextItems.map(R);
-		return g.sortBy ? [
-			...n.sort(ut(g.sortBy, g.sortDirection)),
-			...r.sort(ut(g.sortBy, g.sortDirection)),
-			...i
-		] : [
-			...n,
-			...r,
-			...i
-		];
 	}), v = p(() => {
-		let t = e.selectionTarget || "both";
-		return _.value.filter((e) => V(e, t));
+		let t = _.search.trim().toLocaleLowerCase(), n = (e) => !t || [
+			e.title,
+			e.subtitle,
+			e.metadata?.alias
+		].some((e) => String(e || "").toLocaleLowerCase().includes(t)), r = _.nodes.map(u).map(L).map(m).filter(n), i = (_.presentation.selectionScoped && e.selectionState ? Object.values(_.virtualResources).filter((e) => e && (e.selection?.adapter || e.adapter || l) === l && e.parentId === _.selectedNode) : _.items).map(u).map(L).map(m).filter(n), a = _.contextItems.map(R);
+		return _.sortBy ? [
+			...r.sort(lt(_.sortBy, _.sortDirection)),
+			...i.sort(lt(_.sortBy, _.sortDirection)),
+			...a
+		] : [
+			...r,
+			...i,
+			...a
+		];
 	}), y = p(() => {
 		let t = e.selectionTarget || "both";
-		return _.value.filter((e) => H(e, t));
-	}), b = p(() => s ? g.selectedIds.map((e) => _.value.find((t) => T(t) === e) || g.selectedResources[e]).filter(Boolean) : _.value.filter((e) => g.selectedIds.includes(T(e)))), x = p(() => _.value.find((e) => T(e) === g.focusedId) || (s ? g.selectedResources[g.focusedId] : null) || null);
-	async function S(n = g.selectedNode) {
-		g.loading = !0, g.error = "", s || (g.selectedIds = []), g.focusedId = null;
+		return v.value.filter((e) => V(e, t));
+	}), b = p(() => {
+		let t = e.selectionTarget || "both";
+		return v.value.filter((e) => H(e, t));
+	}), x = p(() => c ? _.selectedIds.map((e) => v.value.find((t) => T(t) === e) || _.selectedResources[e]).filter(Boolean) : v.value.filter((e) => _.selectedIds.includes(T(e)))), S = p(() => v.value.find((e) => T(e) === _.focusedId) || (c ? _.selectedResources[_.focusedId] : null) || null);
+	async function C(n = _.selectedNode) {
+		_.loading = !0, _.error = "", c || (_.selectedIds = []), _.focusedId = null;
 		try {
 			let r = await t.getResources(n, {
-				search: g.search,
-				sortBy: g.sortBy,
-				sortDirection: g.sortDirection,
-				filters: g.filters
+				search: _.search,
+				sortBy: _.sortBy,
+				sortDirection: _.sortDirection,
+				filters: _.filters
 			});
-			if (g.selectedNode = n, g.nodes = r.nodes, g.items = r.items, s) for (let e of [...r.nodes, ...r.items]) {
-				let t = l(e);
-				g.selectedIds.includes(T(t)) && (g.selectedResources[T(t)] = f(L(t)));
+			if (_.selectedNode = n, _.nodes = r.nodes, _.items = r.items, r.presentation?.selectionScoped) for (let e of r.items) {
+				let t = u(e);
+				_.virtualResources[T(t)] = L(t);
 			}
-			g.contextItems = r.contextItems || [], g.breadcrumb = r.breadcrumb, g.actions = e.mode === "readonly" ? [] : r.actions, g.presentation = r.presentation || g.presentation, g.sortBy && !(g.presentation.sortFields || []).some((e) => e.id === g.sortBy) && (g.sortBy = "", g.sortDirection = ""), (g.presentation.filters || []).forEach((e) => {
-				g.filters[e.id] === void 0 && (g.filters[e.id] = e.default);
-			}), g.currentResource = r.currentResource || null;
+			if (c) for (let e of [...r.nodes, ...r.items]) {
+				let t = u(e);
+				_.selectedIds.includes(T(t)) && (_.selectedResources[T(t)] = m(L(t)));
+			}
+			_.contextItems = r.contextItems || [], _.breadcrumb = r.breadcrumb, _.actions = e.mode === "readonly" ? [] : r.actions, _.presentation = r.presentation || _.presentation, _.sortBy && !(_.presentation.sortFields || []).some((e) => e.id === _.sortBy) && (_.sortBy = "", _.sortDirection = ""), (_.presentation.filters || []).forEach((e) => {
+				_.filters[e.id] === void 0 && (_.filters[e.id] = e.default);
+			}), _.currentResource = r.currentResource || null;
 			let i = new URL(window.location.href);
 			i.searchParams.set("node", n), window.history.replaceState({}, "", i);
 		} catch (t) {
 			if (n !== e.initialNode && [403, 404].includes(t.status)) {
-				g.selectedNode = e.initialNode, await S(e.initialNode);
+				_.selectedNode = e.initialNode, await C(e.initialNode);
 				return;
 			}
-			g.error = t.message, Joomla.renderMessages({ error: [t.message] });
+			_.error = t.message, Joomla.renderMessages({ error: [t.message] });
 		} finally {
-			g.loading = !1;
+			_.loading = !1;
 		}
 	}
-	function C(t, n = !0) {
-		if (D(t), !V(t, e.selectionTarget || "both") || u(t)) return;
+	function D(t, n = !0) {
+		if (O(t), !V(t, e.selectionTarget || "both") || d(t)) return;
 		let r = T(t);
-		s && (g.selectedResources[r] = t);
-		let i = g.selectedIds.includes(r);
-		!e.multiple || !n ? g.selectedIds = i ? [] : [r] : g.selectedIds = i ? g.selectedIds.filter((e) => e !== r) : [...g.selectedIds, r];
+		c && (_.selectedResources[r] = t);
+		let i = _.selectedIds.includes(r);
+		!e.multiple || !n ? _.selectedIds = i ? [] : [r] : _.selectedIds = i ? _.selectedIds.filter((e) => e !== r) : [..._.selectedIds, r];
 	}
-	function D(e) {
-		B(e) && (g.focusedId = T(e));
-	}
-	function O() {
-		s && y.value.forEach((e) => {
-			g.selectedResources[T(e)] = e;
-		});
-		let t = y.value.map(T);
-		if (a && !e.multiple) {
-			let e = t[0];
-			g.selectedIds = e && !g.selectedIds.includes(e) ? [e] : [];
-			return;
-		}
-		let n = t.length > 0 && t.every((e) => g.selectedIds.includes(e));
-		g.selectedIds = n ? g.selectedIds.filter((e) => !t.includes(e)) : [.../* @__PURE__ */ new Set([...g.selectedIds, ...t])];
+	function O(e) {
+		B(e) && (_.focusedId = T(e));
 	}
 	function k() {
-		s && y.value.forEach((e) => {
-			g.selectedResources[T(e)] = e;
+		c && b.value.forEach((e) => {
+			_.selectedResources[T(e)] = e;
 		});
-		let e = y.value.map(T), t = new Set(g.selectedIds);
-		e.forEach((e) => t.has(e) ? t.delete(e) : t.add(e)), g.selectedIds = [...t];
+		let t = b.value.map(T);
+		if (o && !e.multiple) {
+			let e = t[0];
+			_.selectedIds = e && !_.selectedIds.includes(e) ? [e] : [];
+			return;
+		}
+		let n = t.length > 0 && t.every((e) => _.selectedIds.includes(e));
+		_.selectedIds = n ? _.selectedIds.filter((e) => !t.includes(e)) : [.../* @__PURE__ */ new Set([..._.selectedIds, ...t])];
 	}
-	return r(() => [
-		g.selectedNode,
-		g.activeView,
-		g.viewOptions,
-		g.hiddenColumns,
-		g.shownColumns,
-		g.sortBy,
-		g.sortDirection,
-		g.showInfo,
-		g.filters
-	], () => n.save(g), { deep: !0 }), {
-		state: g,
-		resources: _,
-		selectableResources: v,
-		bulkSelectableResources: y,
-		selection: b,
-		focusedResource: x,
-		load: S,
-		focus: D,
-		toggle: C,
-		selectAll: O,
-		invertSelection: k
+	function A() {
+		c && b.value.forEach((e) => {
+			_.selectedResources[T(e)] = e;
+		});
+		let e = b.value.map(T), t = new Set(_.selectedIds);
+		e.forEach((e) => t.has(e) ? t.delete(e) : t.add(e)), _.selectedIds = [...t];
+	}
+	r(() => [
+		_.selectedNode,
+		_.activeView,
+		_.viewOptions,
+		_.hiddenColumns,
+		_.shownColumns,
+		_.sortBy,
+		_.sortDirection,
+		_.showInfo,
+		_.filters
+	], () => n.save(_), { deep: !0 });
+	function j(t, n) {
+		if (!e.selectionState || e.mode === "readonly" || e.selectionTarget === "node" || f.size && !f.has(n)) return !1;
+		let r = _.selectedResources[_.selectedIds[0]]?.selection?.adapter || s?.items.find((e) => E(e.selection) === _.selectedIds[0])?.selection.adapter;
+		return !(e.multiple && a?.homogeneous && r && r !== t);
+	}
+	function M(t) {
+		return !(!e.selectionState || e.mode === "readonly" || e.selectionTarget === "node" || f.size && !f.has(t));
+	}
+	function N(t, n = null) {
+		let r = t.adapter || l, i = {
+			adapter: r,
+			id: t.id
+		}, a = o ? E(i) : t.id, c = n ? T(n) : null;
+		if (n && !_.selectedIds.includes(c) && !_.virtualResources[c]) throw Error("COM_SMARTBROWSER_LINK_SELECTION_FULL");
+		if ((_.selectedIds.includes(a) || _.virtualResources[a]) && a !== c) throw Error("COM_SMARTBROWSER_LINK_DUPLICATE");
+		if (t.uniquenessId) for (let e of /* @__PURE__ */ new Set([..._.selectedIds, ...Object.keys(_.virtualResources)])) {
+			if (e === c) continue;
+			let n = _.virtualResources[e] || _.selectedResources[e], i = n?.selection || (n ? {
+				adapter: n.adapter || l,
+				id: n.id
+			} : s?.items.find((t) => E(t.selection) === e)?.selection);
+			if (i?.adapter === r && (i.id === t.uniquenessId || i.id.startsWith(t.uniquenessId + "."))) throw Error("COM_SMARTBROWSER_LINK_DUPLICATE");
+		}
+		if (!n && !M(t.type)) throw Error("COM_SMARTBROWSER_LINK_SELECTION_FULL");
+		let u = L({
+			...t,
+			adapter: r,
+			...o ? {
+				selection: i,
+				selectionKey: a
+			} : {}
+		});
+		return _.selectedResources[a] = u, _.virtualResources[a] = u, _.selectedIds = n ? _.selectedIds.map((e) => e === c ? a : e) : j(r, t.type) ? e.multiple ? [..._.selectedIds, a] : [a] : _.selectedIds, c && c !== a && (delete _.selectedResources[c], delete _.virtualResources[c]), _.focusedId = a, u;
+	}
+	function P(e) {
+		for (let t of e) {
+			let e = T(t);
+			_.virtualResources[e] && (_.selectedIds = _.selectedIds.filter((t) => t !== e), delete _.selectedResources[e], delete _.virtualResources[e], _.focusedId === e && (_.focusedId = null));
+		}
+	}
+	return t.options && e.selectionState && (t.options.selectionItems = () => [.../* @__PURE__ */ new Set([..._.selectedIds, ...Object.keys(_.virtualResources)])].map((e) => {
+		let t = _.virtualResources[e] || _.selectedResources[e];
+		return t ? {
+			selection: t.selection || {
+				adapter: t.adapter || l,
+				id: t.id
+			},
+			usage: {}
+		} : s?.items.find((t) => E(t.selection) === e);
+	}).filter(Boolean)), {
+		state: _,
+		resources: v,
+		selectableResources: y,
+		bulkSelectableResources: b,
+		selection: x,
+		focusedResource: S,
+		load: C,
+		focus: O,
+		toggle: D,
+		selectAll: k,
+		invertSelection: A,
+		canAddSelection: j,
+		canCreateSelectionResource: M,
+		replaceSelectionResource: N,
+		deleteVirtualResources: P
 	};
 }
 //#endregion
 //#region resources/js/core/viewRegistry.js
-var ft = () => {
+var dt = () => {
 	let e = /* @__PURE__ */ new Map();
 	return {
 		register(t) {
@@ -1516,135 +1769,143 @@ var ft = () => {
 			return e.has(t);
 		}
 	};
-}, pt = (e) => {
+}, ft = (e) => {
 	if (!Array.isArray(e)) throw TypeError("Collection items must be an array.");
 	let t = e.map((e) => e && typeof e == "object" ? e.id : e);
 	if (t.some((e) => !["string", "number"].includes(typeof e) || String(e) === "")) throw TypeError("Invalid collection identifier.");
 	return [...new Set(t.map(String))];
 };
-function mt({ config: e, api: t, notify: n, translate: r }) {
-	let i = e.referenceItems === !0 || !e.adapter || (e.items || []).some((e) => e?.selection || e?.adapter), a = (t) => i ? D(t, e) : pt(t), o = (e) => i ? E(e.selection) : e, s = () => i ? JSON.parse(JSON.stringify(m)) : [...m], l = c(), u = w({
+function pt({ config: e, api: t, notify: n, translate: r }) {
+	let i = e.referenceItems === !0 || !e.adapter || (e.items || []).some((e) => e?.selection || e?.adapter), a = (t) => i ? D(t, e) : ft(t), o = (e) => i ? E(e.selection) : e, s = () => i ? JSON.parse(JSON.stringify(v)) : [...v], l = c(), u = e.viewPreferenceKey || "supjx.smartbrowser.collection.view", d;
+	try {
+		d = window.localStorage.getItem(u);
+	} catch {}
+	let f = ["grid", "details"].includes(d) ? d : e.layout === "compact" ? "details" : e.layout || "grid", m = w({
 		...e,
 		roots: [],
 		actions: [],
 		multiple: !0,
 		selectionTarget: "both",
 		mode: e.readOnly ? "readonly" : "manage",
-		defaultView: e.layout === "compact" ? "details" : e.layout || "grid"
-	}), d = l.run(() => dt({
-		options: u,
+		defaultView: f
+	}), h = {
+		load: (e) => e,
+		save(e) {
+			try {
+				window.localStorage.setItem(u, e.activeView);
+			} catch {}
+		}
+	}, g = l.run(() => ut({
+		options: m,
 		api: t,
-		persistence: {
-			load: (e) => e,
-			save() {}
-		},
-		viewRegistry: ft().register({
+		persistence: h,
+		viewRegistry: dt().register({
 			id: "grid",
 			component: {}
 		}).register({
 			id: "details",
 			component: {}
 		})
-	})), { state: f } = d, m = a(e.items || []), h = 0, g = !1, _ = !e.readOnly, v = _ && e.allowRemove !== !1, y = _ && e.allowOrdering !== !1, b = (t) => t.map((t) => ({
+	})), { state: _ } = g, v = a(e.items || []), y = 0, b = !1, x = !e.readOnly, S = x && e.allowRemove !== !1, C = x && e.allowOrdering !== !1, O = (t) => t.map((t) => ({
 		...t,
-		selectable: _ && (v || y),
-		bulkSelectable: _ && (v || y),
-		focusable: _,
-		actionable: _,
+		selectable: x && (S || C),
+		bulkSelectable: x && (S || C),
+		focusable: x,
+		actionable: x,
 		navigable: !1,
 		activatable: !1,
-		interactiveOverlays: _ && e.contextActions === !0,
+		interactiveOverlays: x && e.contextActions === !0,
 		capabilities: {
 			...t.capabilities,
-			collectionRemove: v
+			collectionRemove: S
 		}
-	})), x = (t) => n({
+	})), k = (t) => n({
 		adapter: e.adapter,
 		mode: "collection",
 		items: s(),
-		resources: [...f.items],
+		resources: [..._.items],
 		reason: t
 	});
-	async function S() {
-		if (g) return;
-		let n = ++h;
-		f.loading = !0, f.error = "";
+	async function A() {
+		if (b) return;
+		let n = ++y;
+		_.loading = !0, _.error = "";
 		try {
-			let r = await t.collection(m, i ? {
+			let r = await t.collection(v, i ? {
 				referenceItems: !0,
 				homogeneous: e.homogeneous === !0
 			} : void 0);
-			if (g || n !== h) return;
-			let s = new Map(i ? m.map((e) => [o(e), e.usage]) : []);
-			m = i ? a(r.items).map((e) => ({
+			if (b || n !== y) return;
+			let s = new Map(i ? v.map((e) => [o(e), e.usage]) : []);
+			v = i ? a(r.items).map((e) => ({
 				...e,
 				usage: s.get(o(e)) || e.usage
-			})) : [...r.identifiers], f.items = b(r.resources), f.actions = [...r.actions || [], ...f.items.flatMap((e) => e.collectionActions || [])].filter((e, t, n) => n.findIndex((t) => t.id === e.id) === t && e.requiresSelection && !e.currentNode && ![
+			})) : [...r.identifiers], _.items = O(r.resources), _.actions = [...r.actions || [], ..._.items.flatMap((e) => e.collectionActions || [])].filter((e, t, n) => n.findIndex((t) => t.id === e.id) === t && e.requiresSelection && !e.currentNode && ![
 				"reorder",
 				"removeFromGroup",
 				"batch",
 				"activate",
 				"select"
-			].includes(e.id)), f.presentation = r.presentation || {}, u.visualSettings = r.visualSettings, u.imageBackground = r.imageBackground, f.selectedIds = f.selectedIds.filter((e) => m.some((t) => o(t) === e));
+			].includes(e.id)), _.presentation = r.presentation || {}, m.visualSettings = r.visualSettings, m.imageBackground = r.imageBackground, _.selectedIds = _.selectedIds.filter((e) => v.some((t) => o(t) === e));
 		} catch (e) {
-			if (!g && n === h) throw f.error = e.message, e;
+			if (!b && n === y) throw _.error = e.message, e;
 		} finally {
-			!g && n === h && (f.loading = !1);
+			!b && n === y && (_.loading = !1);
 		}
 	}
-	async function C(e) {
-		if (g) throw Error("Collection is destroyed.");
-		let t = a(e), n = i && t.length === m.length && t.every((e, t) => o(e) === o(m[t]));
-		m = t, (!n || f.items.length !== m.length || f.error) && (f.selectedIds = [], f.items = [], f.sortBy = "collectionOrder", f.sortDirection = "asc", await S());
+	async function j(e) {
+		if (b) throw Error("Collection is destroyed.");
+		let t = a(e), n = i && t.length === v.length && t.every((e, t) => o(e) === o(v[t]));
+		v = t, (!n || _.items.length !== v.length || _.error) && (_.selectedIds = [], _.items = [], _.sortBy = "collectionOrder", _.sortDirection = "asc", await A());
 	}
-	function O(e) {
-		if (!v || g || f.loading || f.busy) return;
-		++h;
-		let t = new Set(e), n = m.filter((e) => !t.has(o(e)));
-		n.length !== m.length && (m = n, f.items = f.items.filter((e) => !t.has(T(e))), f.selectedIds = f.selectedIds.filter((e) => !t.has(e)), x("remove"));
+	function M(e) {
+		if (!S || b || _.loading || _.busy) return;
+		++y;
+		let t = new Set(e), n = v.filter((e) => !t.has(o(e)));
+		n.length !== v.length && (v = n, _.items = _.items.filter((e) => !t.has(T(e))), _.selectedIds = _.selectedIds.filter((e) => !t.has(e)), k("remove"));
 	}
-	async function k(n) {
-		if (!y || g || f.busy || f.loading || !f.selectedIds.length || !["up", "down"].includes(n) || f.sortBy && f.sortBy !== "collectionOrder") return;
-		let r = ++h;
-		f.busy = !0;
+	async function N(n) {
+		if (!C || b || _.busy || _.loading || !_.selectedIds.length || !["up", "down"].includes(n) || _.sortBy && _.sortBy !== "collectionOrder") return;
+		let r = ++y;
+		_.busy = !0;
 		try {
-			let s = f.sortDirection === "desc" ? n === "up" ? "down" : "up" : n, c = await t.collection(m, {
+			let s = _.sortDirection === "desc" ? n === "up" ? "down" : "up" : n, c = await t.collection(v, {
 				...i ? {
 					referenceItems: !0,
 					homogeneous: e.homogeneous === !0
 				} : {},
 				operation: "reorder",
-				selection: [...f.selectedIds],
+				selection: [..._.selectedIds],
 				direction: s
 			});
-			if (g || r !== h) return;
-			m = a(c.items);
-			let l = new Map(f.items.map((e) => [T(e), e]));
-			f.items = m.map((e) => l.get(o(e))).filter(Boolean), x("reorder");
+			if (b || r !== y) return;
+			v = a(c.items);
+			let l = new Map(_.items.map((e) => [T(e), e]));
+			_.items = v.map((e) => l.get(o(e))).filter(Boolean), k("reorder");
 		} catch (e) {
-			!g && r === h && (f.error = e.message);
+			!b && r === y && (_.error = e.message);
 		} finally {
-			g || (f.busy = !1);
+			b || (_.busy = !1);
 		}
 	}
 	return {
-		options: u,
-		browser: d,
-		resources: l.run(() => p(() => f.sortBy === "collectionOrder" ? f.sortDirection === "desc" ? [...f.items].reverse() : f.items : d.resources.value)),
-		canRemove: v,
-		canOrder: y,
-		refresh: S,
-		setItems: C,
-		remove: O,
-		move: k,
+		options: m,
+		browser: g,
+		resources: l.run(() => p(() => _.sortBy === "collectionOrder" ? _.sortDirection === "desc" ? [..._.items].reverse() : _.items : g.resources.value)),
+		canRemove: S,
+		canOrder: C,
+		refresh: A,
+		setItems: j,
+		remove: M,
+		move: N,
 		getItems: s,
 		async addItems(e) {
-			await C(a([...m, ...e])), x("add");
+			await j(a([...v, ...e])), k("add");
 		},
 		destroy() {
-			g = !0, h++, t.destroy?.(), l.stop();
+			b = !0, y++, t.destroy?.(), l.stop();
 		}
 	};
 }
 //#endregion
-export { qe as a, ue as c, W as d, L as f, A as h, lt as i, K as l, P as m, ft as n, $ as o, V as p, dt as r, Ue as s, mt as t, G as u };
+export { Ke as a, ue as c, W as d, L as f, A as h, ct as i, K as l, P as m, dt as n, $ as o, V as p, ut as r, Ue as s, pt as t, G as u };

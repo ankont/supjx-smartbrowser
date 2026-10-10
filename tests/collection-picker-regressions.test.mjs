@@ -13,7 +13,7 @@ test('normal browser exports collection language strings to iframe Picker instan
   for (const suffix of ['TITLE', 'REMOVE', 'EMPTY', 'UNAVAILABLE']) assert.ok(support.includes('COM_SMARTBROWSER_COLLECTION_' + suffix));
 });
 test('flat views are not adapter descriptors and mixed Picker keeps adapter navigation in flat mode', () => {
-  const registry = read('package/component/admin/src/Adapter/AdapterRegistry.php').split('public function descriptors()')[1].split('private function canUse')[0];
+  const registry = read('package/component/admin/src/Adapter/AdapterRegistry.php').split('public function descriptors(')[1].split('private function canUse')[0];
   assert.ok(!registry.includes("'id' => 'flat-"));
   const app = read('resources/js/components/SmartBrowserApp.vue');
   assert.ok(app.includes('(!flatActive || collectionMode) && !treeCollapsed'));
@@ -23,7 +23,7 @@ test('optional generic Add command is in the collection toolbar before Remove, i
   const view = read('resources/js/components/CollectionView.vue');
   assert.ok(view.indexOf('v-if="canAdd" class="resource-icon-button"') < view.indexOf('v-if="model.canRemove" class="resource-icon-button"'));
   assert.ok(view.includes("typeof props.config.onAdd === 'function'"));
-  assert.ok(view.includes("config.layout !== 'compact' || model.canOrder || canAdd"));
+  assert.ok(view.includes('<header class="resource-toolbar sb-collection-toolbar">'));
   assert.ok(read('resources/js/selection-field.js').includes('onAdd: () => pick()'));
   assert.ok(!read('package/component/admin/src/Field/SmartbrowserpickerField.php').includes('data-sb-select'));
 });

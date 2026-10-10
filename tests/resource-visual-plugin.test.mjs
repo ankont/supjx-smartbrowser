@@ -137,7 +137,7 @@ test('independent sizes apply to every mode and badges retain their smaller scal
 
 test('media breadcrumb nodes preserve folder identity when opened in the tree', async () => {
   const breadcrumbView = await readFile(new URL('../resources/js/components/ResourceBreadcrumb.vue', import.meta.url), 'utf8');
-  assert.match(breadcrumbView, /v-if="index === 0" :class="rootIcon"/);
+  assert.match(breadcrumbView, /v-if="index === 0" :class="crumb.useResourceIcon \? crumb.openIcon \|\| crumb.icon : rootIcon"/);
   assert.doesNotMatch(breadcrumbView, /v-if="crumb.icon"/);
   const adapter = await readFile(new URL('../package/component/admin/src/Adapter/MediaAdapter.php', import.meta.url), 'utf8');
   const breadcrumb = adapter.slice(adapter.indexOf('public function getBreadcrumb'), adapter.indexOf('public function configureBrowseRoot'));

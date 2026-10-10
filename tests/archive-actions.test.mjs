@@ -15,7 +15,7 @@ test('archive action follows publish state through article, category, and tag ad
     assert.match(source, /'archive' => (?:\$this->setState\(\$selection, 2\)|2)/);
     assert.match(source, /'unarchive' => (?:\$this->setState\(\$selection, 0\)|0)/);
   }
-  assert.match(byTag, /\['publish', 'unpublish', 'archive', 'unarchive', 'trash'\]/);
+  assert.match(byTag, /\['publish', 'unpublish', 'archive', 'unarchive', 'trash', 'restore', 'delete'\]/);
   assert.match(content, /'archive' => \$canArchive && in_array\(\$state, \[0, 1\], true\)/);
   assert.match(content, /'unarchive' => \$canUnpublish && \$state === 2/);
   assert.match(content, /2 => 'archive'/);

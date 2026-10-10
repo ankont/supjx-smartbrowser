@@ -27,8 +27,11 @@ function i(n, { adapter: r, allowedAdapters: i = [], homogeneous: a = !1 } = {})
 			usage: JSON.parse(JSON.stringify(a))
 		};
 	}).filter((e) => {
-		let n = t(e.selection);
-		return !o.has(n) && (o.add(n), !0);
+		let n = e.selection, r = t(/^uri:[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)?$/.test(n.id) ? {
+			...n,
+			id: n.id.split(".")[0]
+		} : n);
+		return !o.has(r) && (o.add(r), !0);
 	});
 	if (a && new Set(s.map((e) => e.selection.adapter)).size > 1) throw TypeError("This collection requires one adapter.");
 	return s;

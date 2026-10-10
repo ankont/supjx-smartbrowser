@@ -12,6 +12,12 @@ $config = Support::configuration(['adapter' => 'media', 'multiple' => '1', 'sele
 check($config['editorDisplay'] === 'collection' && $config['ordering'], 'Multiple Auto');
 check(Support::configuration(['adapter' => 'articles'])['editorDisplay'] === 'compact', 'Single Auto');
 check(Support::configuration(['editor_display' => 'collection'])['editorDisplay'] === 'collection', 'Explicit single Collection');
+check(Support::configuration([])['anchorSuggestions'] === 'none', 'Anchor suggestions default');
+foreach (['none', 'anchors', 'all'] as $mode) check(Support::configuration(['anchor_suggestions' => $mode])['anchorSuggestions'] === $mode, 'Anchor suggestions configuration');
+fails(fn () => Support::configuration(['anchor_suggestions' => 'invalid']));
+check(Support::configuration([])['phoneCountryPrefix'] === '', 'No country default');
+check(Support::configuration(['phone_country_prefix'=>'+30'])['phoneCountryPrefix'] === '+30', 'Phone country configuration');
+fails(fn () => Support::configuration(['phone_country_prefix'=>'30']));
 fails(fn () => Support::configuration(['selection_profile' => '[]']));
 fails(fn () => Support::configuration(['allowed_resource_types' => 'image,<script>']));
 fails(fn () => Support::configuration(['adapter' => '../media']));

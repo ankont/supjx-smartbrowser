@@ -116,5 +116,5 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
     }
     return { valid: !Object.keys(errors).length, errors, profileErrors, usage };
   }
-  return { definitions, get, set, validate };
+  return { definitions, get, set, validate, forget(resource) { values.delete(resourceKey(resource)); } };
 }

@@ -34,6 +34,7 @@ final class AdapterRegistry
     private function create(string $id, ?string $browseRoot = null, ?string $flatScope = null): ResourceAdapterInterface
     {
         $adapter = match ($id) {
+            'direct-links' => new DirectLinksAdapter($this->app),
             'media'    => new MediaAdapter($this->app),
             'articles' => new ArticleAdapter($this->app),
             'flat-articles' => new FlatArticleAdapter($this->app),
@@ -58,12 +59,13 @@ final class AdapterRegistry
         return $adapter;
     }
 
-    public function descriptors(): array
+    public function descriptors(bool $selectionState = false): array
     {
         return array_map(static function (array $descriptor): array {
             $icons = IconOptions::forAdapter($descriptor['id']);
             return [...$descriptor, 'icon' => $icons['adapter'], 'nodeIcon' => $icons['node'], 'nodeOpenIcon' => $icons['open']];
         }, array_values(array_filter([
+            $selectionState && $this->canUse('direct-links') ? ['id'=>'direct-links','title'=>Text::_('COM_SMARTBROWSER_ADAPTER_DIRECT_LINKS'),'icon'=>'fas fa-link','selectionScoped'=>true] : null,
             $this->canUse('media') ? ['id' => 'media', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_MEDIA'), 'icon' => 'fas fa-photo-video'] : null,
             $this->canUse('articles')
                 ? ['id' => 'articles', 'title' => Text::_('COM_SMARTBROWSER_ADAPTER_ARTICLES'), 'icon' => 'fas fa-book-open']
@@ -95,6 +97,7 @@ final class AdapterRegistry
         if ($identity->guest) return false;
         if (!$this->app->isClient('site')) {
             return match ($id) {
+                'direct-links' => true,
                 'media', 'flat-media' => true,
                 'articles', 'flat-articles', 'featured-articles', 'categories', 'flat-categories' => $identity->authorise('core.manage', 'com_content'),
                 'tags', 'flat-tags' => $identity->authorise('core.manage', 'com_tags'),
@@ -118,6 +121,7 @@ final class AdapterRegistry
             $content = $service !== null && $service->canCreateInAnyCategory((int) $identity->id);
         }
         return match ($id) {
+            'direct-links' => true,
             'media', 'flat-media' => true,
             'articles', 'flat-articles', 'featured-articles', 'categories', 'flat-categories' => $content,
             'tags', 'flat-tags' => $allowed('com_tags', ['core.manage', 'core.create', 'core.edit', 'core.edit.state']),

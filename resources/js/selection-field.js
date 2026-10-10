@@ -1,5 +1,6 @@
 import { mountCollection } from './collection.js';
 import { selectionFieldValue, fieldPickerResult } from './core/selectionFieldValue.js';
+import { articleAnchorSuggestions } from './core/articleAnchors.js';
 
 const mounted = new WeakMap();
 export function mountSelectionField(root) {
@@ -46,6 +47,10 @@ export function mountSelectionField(root) {
     try {
       const adapter = resource?.selection.adapter || current.items[0]?.selection.adapter || adapters[0];
       const result = await window.SmartBrowserPicker.open({ ...config, url: config.pickerUrl, adapter,
+        selectionEditorContext: { ...config.selectionEditorContext, suggestions: {
+          ...config.selectionEditorContext?.suggestions,
+          anchors: articleAnchorSuggestions(input.form, config.anchorSuggestions)
+        }, phoneCountryPrefix: config.phoneCountryPrefix || '' },
         browseRoot: adapter === config.adapter ? config.browseRoot : '',
         allowedAdapters: adapters, homogeneous: config.multiple && config.homogeneous,
         multiple: resource ? false : config.multiple, resultFormat: 'collection',

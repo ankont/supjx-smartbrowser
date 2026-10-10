@@ -39,6 +39,9 @@
     <button v-if="batchAvailable" type="button" class="btn btn-outline-secondary resource-batch-toggle" :disabled="!selection?.length" :title="t('COM_SMARTBROWSER_BATCH_ACTIONS')" :aria-label="t('COM_SMARTBROWSER_BATCH_ACTIONS')" @click="$emit('batch')">
       <span class="fas fa-magic" aria-hidden="true" /> <span class="resource-action-label">{{ t('COM_SMARTBROWSER_BATCH') }}</span>
     </button>
+    <button v-if="canCancel" type="button" class="btn btn-outline-secondary resource-picker-cancel" :title="t('JCANCEL')" :aria-label="t('JCANCEL')" @click="$emit('cancel')">
+      <span class="fas fa-times" aria-hidden="true" /> <span class="resource-action-label">{{ t('JCANCEL') }}</span>
+    </button>
     <div v-if="filters?.length" class="resource-filter-buttons">
       <button type="button" class="btn resource-filter-toggle" :class="{ active: filtersOpen }" :aria-expanded="filtersOpen" :title="t('COM_SMARTBROWSER_FILTER_OPTIONS')" :aria-label="t('COM_SMARTBROWSER_FILTER_OPTIONS')" @click="$emit('toggle-filters')">
         <span class="fas fa-filter" aria-hidden="true" /> <span class="resource-action-label">{{ t('COM_SMARTBROWSER_FILTER_OPTIONS') }}</span>
@@ -74,8 +77,8 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, onUpdated, ref } from 'vue';
 
-const props = defineProps({ actions: Array, available: Function, selection: Array, batchAvailable: Boolean, flatAvailable: Boolean, flatActive: Boolean, filtersOpen: Boolean, filters: Array, filterValues: Object, managerUrl: String, managerNewTab: Boolean, dashboardUrl: String, integrated: Boolean, selectionMode: Boolean, allowNoUser: Boolean, canComplete: Boolean, t: Function });
-defineEmits(['action', 'batch', 'toggle-flat', 'toggle-filters', 'filter', 'clear-filters', 'complete', 'no-user']);
+const props = defineProps({ actions: Array, available: Function, selection: Array, batchAvailable: Boolean, canCancel: Boolean, flatAvailable: Boolean, flatActive: Boolean, filtersOpen: Boolean, filters: Array, filterValues: Object, managerUrl: String, managerNewTab: Boolean, dashboardUrl: String, integrated: Boolean, selectionMode: Boolean, allowNoUser: Boolean, canComplete: Boolean, t: Function });
+defineEmits(['action', 'batch', 'cancel', 'toggle-flat', 'toggle-filters', 'filter', 'clear-filters', 'complete', 'no-user']);
 const showActions = ref(false);
 const actionMenu = ref(null);
 const actionRow = ref(null);
@@ -104,14 +107,18 @@ const optionLabel = (filter, option) => props.t(option.label);
 const visibleActions = computed(() => {
   const renderedGroups = new Set();
   const result = [];
-  props.actions.filter((action) => action.id !== 'checkin' || props.available(action)).forEach((action) => {
+  const trashed = props.filterValues?.state === 'trashed' || props.selection?.length && props.selection.every(resource => resource.status === -2);
+  const eligible = props.actions.filter((action) => (action.id !== 'checkin' || props.available(action))
+    && !(action.id === 'trash' && trashed)
+    && (!action.trashedOnly || props.filterValues?.state === 'trashed' || props.selection?.some(resource => resource.status === -2)));
+  eligible.forEach((action) => {
     if (!action.exclusiveGroup) {
       result.push(action);
       return;
     }
     if (renderedGroups.has(action.exclusiveGroup)) return;
     renderedGroups.add(action.exclusiveGroup);
-    const actions = props.actions.filter((candidate) => candidate.exclusiveGroup === action.exclusiveGroup);
+    const actions = eligible.filter((candidate) => candidate.exclusiveGroup === action.exclusiveGroup);
     const applicable = actions.filter((action) => props.available(action));
     const overlayAction = props.selection?.length === 1
       ? props.selection[0].overlays?.find((overlay) => actions.some((candidate) => candidate.id === overlay.action))?.action

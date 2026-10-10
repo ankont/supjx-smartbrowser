@@ -32,6 +32,7 @@ export function columnCatalog(presentation, adapter) {
   const defaults = presentation?.columns || [];
   const result = defaults.map((column) => ({ ...column, defaultVisible: true }));
   const ids = new Set(defaults.map((column) => column.id));
+  const sources = new Set(defaults.map((column) => column.source).filter(Boolean));
   const baseAdapter = adapter.replace(/^flat-/, '') === 'articles-by-tag' ? 'articles' : adapter.replace(/^flat-/, '');
   const candidates = [...(presentation?.infoFields || []), ...(optionalFields[baseAdapter] || []).map(([id, label, format]) => ({
     id: columnId(id), label, source: `metadata.${id}`, format,
@@ -40,9 +41,10 @@ export function columnCatalog(presentation, adapter) {
   for (const field of candidates) {
     if (!field.source || !field.label || field.source === 'metadata.locationPath') continue;
     const id = field.id || columnId(field.source);
-    if (ids.has(id) || (hasDateGroup && ['created', 'modified'].includes(id))) continue;
+    if (ids.has(id) || sources.has(field.source) || (hasDateGroup && ['created', 'modified'].includes(id))) continue;
     ids.add(id);
-    result.push({ id, label: field.label, source: field.source, format: field.format, defaultVisible: false });
+    sources.add(field.source);
+    result.push({ id, label: field.label, source: field.source, format: field.format, sortField: field.sortField, defaultVisible: false });
   }
   return result;
 }

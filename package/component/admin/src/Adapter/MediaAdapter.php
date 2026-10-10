@@ -389,7 +389,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             'selectable'   => true,
             'navigable'    => $isNode,
             'hasChildren'  => $isNode,
-            'capabilities' => $this->capabilities($isNode),
+            'capabilities' => [...$this->capabilities($isNode), 'extract' => !$isNode && strtolower(pathinfo((string) $resource->name, PATHINFO_EXTENSION)) === 'zip' && $this->app->getIdentity()->authorise('core.create', 'com_media')],
             'selectionCapabilities' => \SuperSoft\Component\Smartbrowser\Administrator\Support\MediaSelectionCapabilities::forResource($isNode, $mime),
             'metadata'     => [
                 'id'           => (string) $resource->path,

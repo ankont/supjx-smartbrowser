@@ -1699,7 +1699,7 @@ button.resource-status-icon:focus-visible { box-shadow: 0 0 0 2px rgba(37, 107, 
   border: 1px solid var(--sb-border-soft);
 }
 
-.resource-info-panel h3 { margin-bottom: 2px; font-size: 1.12rem; overflow-wrap: anywhere; }
+.resource-info-panel h3 { margin-bottom: 10px; font-size: 1.12rem; overflow-wrap: anywhere; }
 .resource-info-tabs { display: flex; gap: 2px; margin-block: 8px; border-bottom: 1px solid var(--sb-border); }
 .resource-info-tabs button { flex: 1; padding: 5px 3px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: inherit; font-size: .8rem; line-height: 1.3; }
 .resource-info-tabs button[aria-selected="true"] { border-bottom-color: var(--sb-primary, #386ca1); font-weight: 700; }
@@ -1717,7 +1717,7 @@ button.resource-status-icon:focus-visible { box-shadow: 0 0 0 2px rgba(37, 107, 
 .resource-usage-reference > span { width: 100%; font-size: .83rem; overflow-wrap: anywhere; }
 .resource-usage-reference .btn, .resource-info-preview-actions .btn { font-size: .82rem; padding: 5px 8px; }
 .resource-info-timezone { margin: 2px 0 0; color: hsl(var(--hue, 210), 8%, 48%); font-size: .72rem; font-weight: 400; }
-.resource-info-panel dl { display: grid; gap: 12px; margin: 0; }
+.resource-info-panel dl { display: grid; gap: 12px; margin: 0 0 12px; }
 .resource-info-panel dl > div { display: grid; gap: 1px; }
 .resource-info-panel dt { margin: 0; color: hsl(var(--hue, 210), 7%, 51%); font-size: .78rem; font-weight: 400; }
 .resource-info-panel dt > :is(.fas, .far, .fab, [class^="icon-"]) { display: inline-block; width: 1.2em; margin-inline-end: .35rem; text-align: center; }
@@ -2280,9 +2280,8 @@ dialog:is(.smartbrowser-editor, .smartbrowser-preview, .smartbrowser-picker, .co
 .smartbrowser-dashboard-item > :is(.fas, .far, .fab, [class^="icon-"]) { grid-row: 1 / 3; color: var(--link-color, #1a5fb4); font-size: 1.6rem; }
 .smartbrowser-dashboard-item > span:last-child { color: var(--secondary-color, #66717d); font-size: .9rem; }
 .smartbrowser-dashboard-item:hover { border-color: var(--link-color, #1a5fb4); background: #f5f8fb; }
-.smartbrowser-picker { width: min(1440px, 96vw); max-width: 96vw; height: min(900px, 94vh); max-height: 94vh; padding: 36px 0 0; box-sizing: border-box; overflow: hidden; border: 1px solid var(--sb-border, #ccd3db); }
+.smartbrowser-picker { width: min(1440px, 96vw); max-width: 96vw; height: min(900px, 94vh); max-height: 94vh; padding: 0; box-sizing: border-box; overflow: hidden; border: 1px solid var(--sb-border, #ccd3db); border-radius: 8px; }
 .smartbrowser-picker iframe { display: block; width: 100%; height: 100%; border: 0; }
-.smartbrowser-picker .btn-close { position: absolute; top: 10px; inset-inline-end: 10px; }
 html body dialog.smartbrowser-picker.is-maximized { position: fixed !important; width: 100vw !important; height: 100dvh !important; max-width: none !important; max-height: none !important; margin: 0 !important; inset: 0 !important; transform: none !important; border-radius: 0; box-sizing: border-box; }
 .resource-info-panel.showing-usage .resource-info-preview { width: 96px; min-height: 0; margin: 10px auto 14px; }
 .resource-info-panel.showing-usage h3 { text-align: center; }
@@ -2363,3 +2362,12 @@ html body dialog.smartbrowser-picker.is-maximized { position: fixed !important; 
 .resource-picker-collection > summary:focus-visible { outline: 2px solid var(--sb-accent); outline-offset: 2px; }
 .resource-picker-collection[open] > summary .resource-picker-collection-chevron { transform: rotate(90deg); }
 .resource-lightweight-icon.with-thumbnail { position: absolute; bottom: 4px; left: 4px; font-size: 22px; }
+html body dialog.smartbrowser-editor.smartbrowser-local-editor { width: min(560px, calc(100vw - 32px)); height: fit-content !important; min-height: 0 !important; max-height: calc(100dvh - 32px); margin: auto; inset: 0; overflow: auto; }
+.smartbrowser-local-editor form { padding: 20px; height: auto; min-height: 0; margin: 0; }
+.smartbrowser-local-editor label { display: block; margin-bottom: 12px; }
+.smartbrowser-local-editor-modes { border: 0; padding: 0; margin: 0 0 16px; min-width: 0; }
+.smartbrowser-local-editor-modes legend { float: none; width: auto; font-size: inherit; margin-bottom: 8px; }
+.smartbrowser-local-editor-modes .btn-group { display: flex; flex-wrap: wrap; }
+.smartbrowser-local-editor-modes .btn { flex: 1 1 120px; white-space: normal; }
+.smartbrowser-local-editor-modes .btn[aria-pressed="true"] { color: #fff; background: var(--sb-primary, #466f9e); border-color: var(--sb-primary, #466f9e); }
+.smartbrowser-local-editor-actions { display: flex; gap: 8px; justify-content: flex-end; }

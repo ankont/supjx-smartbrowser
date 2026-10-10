@@ -1,10 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { defaultResourceAction, resourcePreviewAction } from '../resources/js/core/defaultResourceAction.js';
+import { defaultResourceAction, resourcePreviewAction, modifiedResourceAction } from '../resources/js/core/defaultResourceAction.js';
 import { itemMenuActions } from '../resources/js/core/itemMenuActions.js';
 
 const edit = { id: 'edit', requiresSelection: true };
 const item = { kind: 'item', actionable: true, activatable: true, selectable: true };
+
+test('adapter-declared Ctrl action reuses italic menu indication and respects permissions', () => {
+  const action = { ...edit, modifiedDefault: true };
+  const primary = defaultResourceAction(item, 'select', [action], () => true);
+  const secondary = modifiedResourceAction(item, 'select', [action], () => true);
+  assert.equal(secondary, action);
+  assert.equal(itemMenuActions([action], item, () => true, primary, secondary).find(entry => entry.id === 'edit').isModified, true);
+  assert.equal(modifiedResourceAction(item, 'select', [action], () => false), null);
+  assert.equal(modifiedResourceAction(item, 'readonly', [action], () => true), null);
+  assert.equal(modifiedResourceAction({ ...item, actionable: false }, 'select', [action], () => true), null);
+});
 test('navigation and picker defaults appear even without adapter context actions', () => {
   const open = defaultResourceAction({ navigable: true }, 'manage', [], () => false);
   assert.equal(open.id, 'browseOpen');

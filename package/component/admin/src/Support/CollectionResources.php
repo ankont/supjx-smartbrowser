@@ -23,12 +23,16 @@ final class CollectionResources
                 || !is_string($reference['id'] ?? null) || (!empty($constraints['allowedAdapters']) && !in_array($reference['adapter'], $constraints['allowedAdapters'], true))) throw new \InvalidArgumentException('Invalid collection reference.', 400);
             $reference = ['adapter' => $reference['adapter'], 'id' => self::identifiers($reference['adapter'], [$reference['id']])[0]];
             $key = self::key($reference);
-            if (isset($seen[$key])) continue;
+            // URI references may carry a label suffix; labels do not make a second URI resource.
+            $uniqueReference = $reference;
+            if (preg_match('/^uri:[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)?$/D', $reference['id'])) $uniqueReference['id'] = explode('.', $reference['id'], 2)[0];
+            $uniqueKey = self::key($uniqueReference);
+            if (isset($seen[$uniqueKey])) continue;
             $usage = $item['usage'] ?? [];
             if (!is_array($usage) || ($usage && array_is_list($usage)) || count($usage) > 100 || strlen(json_encode($usage, JSON_THROW_ON_ERROR)) > 65536) throw new \InvalidArgumentException('Invalid collection usage.', 400);
             foreach ($usage as $usageKey => $value) if (!is_string($usageKey) || !preg_match('/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/D', $usageKey)) throw new \InvalidArgumentException('Invalid usage key.', 400);
             $entries[] = ['selection' => $reference, 'usage' => $usage];
-            $seen[$key] = true; $adapters[$reference['adapter']] = true;
+            $seen[$uniqueKey] = true; $adapters[$reference['adapter']] = true;
         }
         if (!empty($constraints['homogeneous']) && count($adapters) > 1) throw new \InvalidArgumentException('This collection requires one adapter.', 400);
         return $entries;

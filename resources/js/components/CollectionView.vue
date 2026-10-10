@@ -1,7 +1,7 @@
 <template>
   <section class="smartbrowser smartbrowser-collection" :class="{ 'is-compact': config.layout === 'compact' }" :aria-label="t('COM_SMARTBROWSER_COLLECTION_TITLE')" :aria-busy="state.loading || state.busy">
     <div class="resource-browser">
-      <header v-if="config.layout !== 'compact' || model.canOrder || canAdd" class="resource-toolbar sb-collection-toolbar">
+      <header class="resource-toolbar sb-collection-toolbar">
         <div class="resource-view-controls">
           <ResourceOrderingControls v-if="model.canOrder" :enabled="!state.loading && !state.busy && state.selectedIds.length > 0 && state.sortBy === 'collectionOrder'" :t="t" @reorder="model.move" />
           <button v-if="canAdd" class="resource-icon-button" type="button" :disabled="adding || state.loading || state.busy" :title="t(config.addLabel || 'COM_SMARTBROWSER_COLLECTION_ADD')" :aria-label="t(config.addLabel || 'COM_SMARTBROWSER_COLLECTION_ADD')" @click="add"><span class="fas fa-plus" aria-hidden="true" /></button>
@@ -9,14 +9,14 @@
           <template v-if="config.layout !== 'compact'">
             <select :aria-label="t('COM_SMARTBROWSER_SORT_BY')" :value="state.sortBy" @change="state.sortBy = $event.target.value"><option value="collectionOrder">{{ t('JGRID_HEADING_ORDERING') }}</option><option v-for="field in sortFields" :key="field.id" :value="field.id">{{ t(field.label) }}</option></select>
             <button class="resource-icon-button" type="button" :title="t('COM_SMARTBROWSER_SORT_DIRECTION')" :aria-label="t('COM_SMARTBROWSER_SORT_DIRECTION')" @click="state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc'"><span :class="state.sortDirection === 'asc' ? 'fas fa-sort-amount-up' : 'fas fa-sort-amount-down-alt'" aria-hidden="true" /></button>
-            <button v-for="view in views" :key="view.id" class="resource-icon-button" type="button" :class="{ active: state.activeView === view.id }" :title="t(view.label)" :aria-label="t(view.label)" @click="state.activeView = view.id"><span :class="view.icon" aria-hidden="true" /></button>
           </template>
+          <button v-for="view in views" :key="view.id" class="resource-icon-button" type="button" :class="{ active: state.activeView === view.id }" :title="t(view.label)" :aria-label="t(view.label)" :aria-pressed="state.activeView === view.id" @click="state.activeView = view.id"><span :class="view.icon" aria-hidden="true" /></button>
         </div>
       </header>
       <p v-if="state.error" class="alert alert-danger" role="alert">{{ state.error }}</p>
       <p v-if="state.loading" role="status">{{ t('COM_SMARTBROWSER_LOADING') }}</p>
       <p v-else-if="!model.resources.value.length" class="resource-empty-state">{{ t('COM_SMARTBROWSER_COLLECTION_EMPTY') }}</p>
-      <component v-else :is="config.layout === 'compact' || state.activeView === 'details' ? ResourceDetails : ResourceGrid"
+      <component v-else :is="state.activeView === 'details' ? ResourceDetails : ResourceGrid"
         :resources="model.resources.value" :selected-ids="state.selectedIds" :focused-id="state.focusedId" :all-selected="allSelected"
         :selection-controls="model.canRemove || model.canOrder" :options="state.viewOptions" :actions="actions" :action-available="available"
         :default-action="resourceDefault" :preview-action="resourcePreview"

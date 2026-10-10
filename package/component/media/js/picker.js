@@ -20,6 +20,8 @@
       allowedResourceTypes: (config.allowedResourceTypes || []).join(','), tmpl: 'component',
       allowNoUser: config.allowNoUser ? '1' : '0',
       Itemid: '0',
+      selectionState: '1',
+      adapterOptions: JSON.stringify(config.adapterOptions || {}),
     };
     if (config.resultFormat === 'collection') values.showAdapterSwitcher = !config.allowedAdapters?.length || config.allowedAdapters.length > 1 ? '1' : '0';
     Object.entries(values).forEach(([key, value]) => { if (value !== '') url.searchParams.set(key, value); });
@@ -48,9 +50,9 @@
       if (!instance || instance.frame.contentWindow !== source) return null;
       return { ...instance.context, ...(instance.snapshot ? {
         getCollectionSnapshot: () => clone(instance.snapshot),
-        commitCollection: snapshot => { instance.snapshot = { items: contract.collectionEntries(snapshot.items, instance.constraints), resources: clone(snapshot.resources || {}) }; },
+        commitCollection: snapshot => { instance.snapshot = { items: contract.collectionEntries(snapshot.items, instance.constraints), resources: clone(snapshot.resources || {}), virtualResources: clone(snapshot.virtualResources || {}) }; },
         initialUsage: Object.fromEntries(instance.snapshot.items.map(entry => [contract.referenceKey(entry.selection), entry.usage])),
-      } : {}), editors: { ...editors }, previewActions: [...previewActions.values()], toggleSize: () => instance.size?.toggle() || false, isMaximized: () => instance.size?.isMaximized() || false };
+      } : {}), editors: { ...editors }, previewActions: [...previewActions.values()], cancel: () => instance.close(), toggleSize: () => instance.size?.toggle() || false, isMaximized: () => instance.size?.isMaximized() || false };
     },
     open(config = {}) {
       const collectionMode = config.resultFormat === 'collection';
@@ -70,7 +72,7 @@
         }
         const dialog = document.createElement('dialog');
         dialog.className = 'smartbrowser-picker';
-        dialog.innerHTML = '<iframe title="SmartBrowser"></iframe><button type="button" class="btn-close" aria-label="Close"></button>';
+        dialog.innerHTML = '<iframe title="SmartBrowser"></iframe>';
         const frame = dialog.querySelector('iframe');
         const instanceId = `sb-picker-${Date.now()}-${++sequence}`;
         let closed = false;
@@ -105,8 +107,9 @@
         };
         const url = new URL(buildUrl(config.url || Joomla.getOptions('com_smartbrowser.picker', {}).url || 'index.php?option=com_smartbrowser', config));
         url.searchParams.set('pickerInstance', instanceId);
-        instances.set(instanceId, { frame, snapshot, constraints, context: clone({
+        instances.set(instanceId, { frame, snapshot, constraints, close, context: clone({
           selectionProfile: config.selectionProfile || {}, initialUsage: config.initialUsage || {},
+          selectionEditorContext: config.selectionEditorContext || {},
           initialSelection: config.initialSelection || [],
           allowedAdapters: config.allowedAdapters || [],
           initialAdapter: config.adapter || 'media',
@@ -117,7 +120,6 @@
         window.SmartBrowserDialogDismiss.install(dialog, () => false, () => close());
         document.addEventListener('smartbrowser:select', selected);
         frame.src = url.toString();
-        dialog.querySelector('.btn-close').addEventListener('click', () => close());
         dialog.addEventListener('close', () => close());
         try {
           document.body.appendChild(dialog);

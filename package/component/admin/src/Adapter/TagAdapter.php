@@ -84,7 +84,9 @@ final class TagAdapter extends ContentAdapter implements ContextResourceProvider
             $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),
             $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),
             $this->action('unarchive', 'COM_SMARTBROWSER_ACTION_UNARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),
-            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true),
+            $this->action('trash', 'COM_SMARTBROWSER_ACTION_TRASH', 'fas fa-trash', 'node', false, true, false, false, false, 'trashState'),
+            $this->action('restore', 'COM_SMARTBROWSER_ACTION_RESTORE', 'fas fa-undo', 'node', false, true, false, false, false, 'trashState'),
+            [...$this->action('delete', 'JACTION_DELETE', 'fas fa-trash-alt', 'node', false, true), 'trashedOnly' => true],
         ]));
     }
 
@@ -108,7 +110,7 @@ final class TagAdapter extends ContentAdapter implements ContextResourceProvider
             return $this->editorResponse('index.php?option=com_tags&task=tag.add&parent_id=' . ($tagId ?: $this->tagRootId()));
         }
 
-        if (!in_array($action, ['edit', 'preview', 'publish', 'unpublish', 'archive', 'unarchive', 'trash'], true)) {
+        if (!in_array($action, ['edit', 'preview', 'publish', 'unpublish', 'archive', 'unarchive', 'trash', 'restore', 'delete'], true)) {
             throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_UNKNOWN_ACTION'), 400);
         }
         $this->assertBrowseScope($selection);
@@ -141,8 +143,9 @@ final class TagAdapter extends ContentAdapter implements ContextResourceProvider
             throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
         }
 
+        if ($action === 'delete') return $this->deleteTrashed($selection);
         $this->assertModelResult($this->tagModel(), 'publish', [$ids, match ($action) {
-            'publish' => 1, 'unpublish' => 0, 'archive' => 2, 'unarchive' => 0, 'trash' => -2,
+            'publish' => 1, 'unpublish', 'restore' => 0, 'archive' => 2, 'unarchive' => 0, 'trash' => -2,
         }]);
 
         return ['updated' => array_values($selection)];

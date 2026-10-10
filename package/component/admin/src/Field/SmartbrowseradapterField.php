@@ -16,7 +16,7 @@ final class SmartbrowseradapterField extends ListField
         $app = Factory::getApplication();
         $app->getLanguage()->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $options = [];
-        foreach ((new AdapterRegistry($app))->descriptors() as $adapter) {
+        foreach ((new AdapterRegistry($app))->descriptors(true) as $adapter) {
             if (str_starts_with($adapter['id'], 'flat-')) continue;
             $options[] = HTMLHelper::_('select.option', $adapter['id'], $adapter['title']);
         }

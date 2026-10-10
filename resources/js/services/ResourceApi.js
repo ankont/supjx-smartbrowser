@@ -21,17 +21,20 @@ export default class ResourceApi {
     if (this.options.browseRoot) url.searchParams.set('browseRoot', this.options.browseRoot);
     if (this.options.flatScope) url.searchParams.set('flatScope', this.options.flatScope);
     url.searchParams.set('node', nodeId);
+    if (this.options.adapterOptions) url.searchParams.set('adapterOptions', JSON.stringify(this.options.adapterOptions));
     if (options.search) url.searchParams.set('search', options.search);
     if (options.sortBy) url.searchParams.set('sortBy', options.sortBy);
     if (options.sortDirection) url.searchParams.set('sortDirection', options.sortDirection);
     if (options.filters) url.searchParams.set('filters', JSON.stringify(options.filters));
     url.searchParams.set('showContextResources', this.options.showContextResources ? '1' : '0');
 
+    if (this.options.selectionItems) return this.request(url, { method: 'POST', body: JSON.stringify({ items: this.options.selectionItems(), [this.options.csrfToken]: 1 }) });
     return this.request(url);
   }
 
   async execute(action, selection = [], payload = {}) {
     const url = new URL(`${this.options.apiBaseUrl}&task=api.action&adapter=${encodeURIComponent(this.options.adapter)}`);
+    if (this.options.adapterOptions) url.searchParams.set('adapterOptions', JSON.stringify(this.options.adapterOptions));
     url.searchParams.set('mode', this.options.mode || 'manage');
     if (this.options.browseRoot) url.searchParams.set('browseRoot', this.options.browseRoot);
     if (this.options.flatScope) url.searchParams.set('flatScope', this.options.flatScope);

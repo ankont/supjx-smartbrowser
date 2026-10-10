@@ -16,8 +16,15 @@ export function createCollectionState({ config, api, notify, translate }) {
   const itemKey = item => referenceItems ? referenceKey(item.selection) : item;
   const copyItems = () => referenceItems ? JSON.parse(JSON.stringify(items)) : [...items];
   const scope = effectScope();
-  const options = reactive({ ...config, roots: [], actions: [], multiple: true, selectionTarget: 'both', mode: config.readOnly ? 'readonly' : 'manage', defaultView: config.layout === 'compact' ? 'details' : config.layout || 'grid' });
-  const browser = scope.run(() => createBrowserState({ options, api, persistence: { load: defaults => defaults, save() {} }, viewRegistry: createViewRegistry().register({ id: 'grid', component: {} }).register({ id: 'details', component: {} }) }));
+  const viewPreferenceKey = config.viewPreferenceKey || 'supjx.smartbrowser.collection.view';
+  let preferredView;
+  try { preferredView = window.localStorage.getItem(viewPreferenceKey); } catch {}
+  const defaultView = ['grid', 'details'].includes(preferredView) ? preferredView : config.layout === 'compact' ? 'details' : config.layout || 'grid';
+  const options = reactive({ ...config, roots: [], actions: [], multiple: true, selectionTarget: 'both', mode: config.readOnly ? 'readonly' : 'manage', defaultView });
+  const persistence = { load: defaults => defaults, save(state) {
+    try { window.localStorage.setItem(viewPreferenceKey, state.activeView); } catch {}
+  } };
+  const browser = scope.run(() => createBrowserState({ options, api, persistence, viewRegistry: createViewRegistry().register({ id: 'grid', component: {} }).register({ id: 'details', component: {} }) }));
   const { state } = browser;
   let items = normalize(config.items || []), generation = 0, destroyed = false;
   const editable = !config.readOnly;

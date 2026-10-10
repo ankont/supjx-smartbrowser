@@ -5,12 +5,13 @@ import { compareResources as compare } from './resourceSort.js';
 import { referenceKey, resourceKey } from './selectionIdentity.js';
 
 export default function createBrowserState({ options, api, persistence, viewRegistry }) {
-  const collectionMode = Boolean(options.pickerContext?.collectionMode);
-  const snapshot = collectionMode ? options.pickerContext.getCollectionSnapshot() : null;
-  const preserveSelection = Boolean(collectionMode || options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
+  const selectionContext = options.pickerContext || options.selectionHost;
+  const collectionMode = Boolean(selectionContext?.collectionMode);
+  const snapshot = collectionMode ? selectionContext.getCollectionSnapshot() : null;
+  const preserveSelection = Boolean(collectionMode || options.selectionState || options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
   const adapter = options.adapter?.replace(/^flat-/, '');
   const identify = resource => collectionMode ? { ...resource, adapter, selection: { adapter, id: resource.id }, selectionKey: referenceKey({ adapter, id: resource.id }) } : resource;
-  const foreignAdapter = resource => collectionMode && options.pickerContext.homogeneous && state.selectedIds.length
+  const foreignAdapter = resource => collectionMode && options.multiple && selectionContext.homogeneous && state.selectedIds.length
     && (state.selectedResources[state.selectedIds[0]]?.selection?.adapter || snapshot.items.find(entry => referenceKey(entry.selection) === state.selectedIds[0])?.selection.adapter) !== resource.selection?.adapter;
   const allowedTypes = new Set(options.allowedResourceTypes || []);
   const applySelectionConstraints = (resource) => options.mode === 'readonly' || foreignAdapter(resource) || (allowedTypes.size && !allowedTypes.has(resource.type))
@@ -48,6 +49,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     focusedId: null,
     selectedIds: snapshot ? snapshot.items.map(entry => referenceKey(entry.selection)) : [],
     selectedResources: snapshot?.resources || {},
+    virtualResources: snapshot?.virtualResources || {},
     search: '',
     loading: false,
     busy: false,
@@ -59,7 +61,10 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     const matches = (item) => !query || [item.title, item.subtitle, item.metadata?.alias]
       .some((value) => String(value || '').toLocaleLowerCase().includes(query));
     const nodes = state.nodes.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
-    const items = state.items.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
+    const sourceItems = state.presentation.selectionScoped && options.selectionState
+      ? Object.values(state.virtualResources).filter(resource => resource && (resource.selection?.adapter || resource.adapter || adapter) === adapter && resource.parentId === state.selectedNode)
+      : state.items;
+    const items = sourceItems.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
     const contextItems = state.contextItems.map(asContextualResource);
     if (!state.sortBy) return [...nodes, ...items, ...contextItems];
     return [
@@ -97,6 +102,12 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       state.selectedNode = nodeId;
       state.nodes = data.nodes;
       state.items = data.items;
+      if (data.presentation?.selectionScoped) {
+        for (const item of data.items) {
+          const resource = identify(item);
+          state.virtualResources[resourceKey(resource)] = asPrimaryResource(resource);
+        }
+      }
       if (preserveSelection) {
         for (const item of [...data.nodes, ...data.items]) {
           const resource = identify(item);
@@ -170,5 +181,61 @@ export default function createBrowserState({ options, api, persistence, viewRegi
 
   watch(() => [state.selectedNode, state.activeView, state.viewOptions, state.hiddenColumns, state.shownColumns, state.sortBy, state.sortDirection, state.showInfo, state.filters], () => persistence.save(state), { deep: true });
 
-  return { state, resources, selectableResources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection };
+  function canAddSelection(targetAdapter, type) {
+    if (!options.selectionState || options.mode === 'readonly'
+      || options.selectionTarget === 'node' || allowedTypes.size && !allowedTypes.has(type)) return false;
+    const first = state.selectedResources[state.selectedIds[0]]?.selection?.adapter || snapshot?.items.find(entry => referenceKey(entry.selection) === state.selectedIds[0])?.selection.adapter;
+    return !(options.multiple && selectionContext?.homogeneous && first && first !== targetAdapter);
+  }
+
+  function canCreateSelectionResource(type) {
+    return Boolean(options.selectionState && options.mode !== 'readonly' && options.selectionTarget !== 'node'
+      && (!allowedTypes.size || allowedTypes.has(type)));
+  }
+
+  function replaceSelectionResource(resource, previous = null) {
+    const targetAdapter = resource.adapter || adapter;
+    const reference = { adapter: targetAdapter, id: resource.id };
+    const key = collectionMode ? referenceKey(reference) : resource.id;
+    const oldKey = previous ? resourceKey(previous) : null;
+    if (previous && !state.selectedIds.includes(oldKey) && !state.virtualResources[oldKey]) throw new Error('COM_SMARTBROWSER_LINK_SELECTION_FULL');
+    if ((state.selectedIds.includes(key) || state.virtualResources[key]) && key !== oldKey) throw new Error('COM_SMARTBROWSER_LINK_DUPLICATE');
+    if (resource.uniquenessId) {
+      for (const candidateKey of new Set([...state.selectedIds, ...Object.keys(state.virtualResources)])) {
+        if (candidateKey === oldKey) continue;
+        const candidate = state.virtualResources[candidateKey] || state.selectedResources[candidateKey];
+        const candidateReference = candidate?.selection || (candidate ? { adapter: candidate.adapter || adapter, id: candidate.id }
+          : snapshot?.items.find(entry => referenceKey(entry.selection) === candidateKey)?.selection);
+        if (candidateReference?.adapter === targetAdapter && (candidateReference.id === resource.uniquenessId || candidateReference.id.startsWith(resource.uniquenessId + '.'))) throw new Error('COM_SMARTBROWSER_LINK_DUPLICATE');
+      }
+    }
+    if (!previous && !canCreateSelectionResource(resource.type)) throw new Error('COM_SMARTBROWSER_LINK_SELECTION_FULL');
+    const normalized = asPrimaryResource({ ...resource, adapter: targetAdapter, ...(collectionMode ? { selection: reference, selectionKey: key } : {}) });
+    state.selectedResources[key] = normalized;
+    state.virtualResources[key] = normalized;
+    state.selectedIds = previous ? state.selectedIds.map(id => id === oldKey ? key : id)
+      : !canAddSelection(targetAdapter, resource.type) ? state.selectedIds : options.multiple ? [...state.selectedIds, key] : [key];
+    if (oldKey && oldKey !== key) { delete state.selectedResources[oldKey]; delete state.virtualResources[oldKey]; }
+    state.focusedId = key;
+    return normalized;
+  }
+
+  function deleteVirtualResources(resources) {
+    for (const resource of resources) {
+      const key = resourceKey(resource);
+      if (!state.virtualResources[key]) continue;
+      state.selectedIds = state.selectedIds.filter(id => id !== key);
+      delete state.selectedResources[key];
+      delete state.virtualResources[key];
+      if (state.focusedId === key) state.focusedId = null;
+    }
+  }
+
+  if (api.options && options.selectionState) api.options.selectionItems = () => [...new Set([...state.selectedIds, ...Object.keys(state.virtualResources)])].map(key => {
+    const resource = state.virtualResources[key] || state.selectedResources[key];
+    return resource ? { selection: resource.selection || { adapter: resource.adapter || adapter, id: resource.id }, usage: {} }
+      : snapshot?.items.find(entry => referenceKey(entry.selection) === key);
+  }).filter(Boolean);
+
+  return { state, resources, selectableResources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection, canAddSelection, canCreateSelectionResource, replaceSelectionResource, deleteVirtualResources };
 }

@@ -56,6 +56,7 @@ test('existing file prompts for replacement and retries with override', async ()
       COM_MEDIA_FILE_EXISTS_AND_OVERRIDE: '%s already exists. Replace it?',
       COM_MEDIA_UPLOAD_SUCCESS: 'Item uploaded.',
     })[key] || key);
+    driver.actionDialog = async ({ message }) => window.confirm(message);
     driver.read = async () => 'YQ==';
     await driver.uploadFiles([{ name: 'photo.jpg' }]);
     assert.equal(calls.length, 2);
@@ -82,6 +83,7 @@ test('Greek replacement prompt fills Joomla uppercase placeholder', async () => 
       async () => {},
       () => 'Το %S υπάρχει ήδη. Θέλετε να αντικατασταθεί;',
     );
+    driver.actionDialog = async ({ message }) => window.confirm(message);
     driver.read = async () => 'YQ==';
     await driver.uploadFiles([{ name: 'photo.jpg' }]);
     assert.equal(question, 'Το photo.jpg υπάρχει ήδη. Θέλετε να αντικατασταθεί;');
@@ -101,6 +103,7 @@ test('declining replacement leaves the existing file untouched', async () => {
   try {
     const api = { execute: async () => { calls++; throw Object.assign(new Error('Exists'), { status: 409 }); } };
     const driver = new MediaActionDriver(api, { selectedNode: 'local-images:/' }, async () => {}, () => '%s exists');
+    driver.actionDialog = async ({ message }) => window.confirm(message);
     driver.read = async () => 'YQ==';
     await driver.uploadFiles([{ name: 'photo.jpg' }]);
     assert.equal(calls, 1);

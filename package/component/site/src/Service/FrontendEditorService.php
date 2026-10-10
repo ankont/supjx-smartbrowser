@@ -101,6 +101,13 @@ final class FrontendEditorService
             $form->setFieldAttribute('alias', 'label', 'COM_SMARTBROWSER_ALIAS_LABEL');
             $form->setFieldAttribute('alias', 'description', 'COM_SMARTBROWSER_ALIAS_DESC');
         }
+        if ($type === 'article') {
+            foreach (['featured_up' => 'COM_SMARTBROWSER_FEATURED_START', 'featured_down' => 'COM_SMARTBROWSER_FEATURED_END',
+                'publish_up' => 'COM_SMARTBROWSER_PUBLISH_START', 'publish_down' => 'COM_SMARTBROWSER_PUBLISH_END'] as $name => $label) {
+                $form->setFieldAttribute($name, 'label', $label);
+            }
+            $this->prepareArticlePublishingFields($form, $model, $id, true);
+        }
         if ($type === 'menu-item' && $id > 0 && !$this->app->getInput()->getBool('menuTypeSelected')) {
             $storedType = $this->storedMenuItemType($id);
             if (in_array($storedType, ['heading', 'url', 'separator', 'alias', 'container'], true)) {
@@ -130,6 +137,7 @@ final class FrontendEditorService
         $model = $this->model($type, $id);
         $form = $model->getForm($data, false);
         if (!$form) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
+        if ($type === 'article') $this->prepareArticlePublishingFields($form, $model, $id, false);
         $valid = $model->validate($form, $data);
         if ($valid === false) throw new \RuntimeException(implode("\n", array_map('strval', $model->getErrors())), 400);
         $valid['id'] = $id;
@@ -160,6 +168,35 @@ final class FrontendEditorService
         }
         if (!$model->save($valid)) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
         return (int) $model->getState($model->getName() . '.id', $id);
+    }
+
+    private function prepareArticlePublishingFields(object $form, object $model, int $id, bool $loadData): void
+    {
+        $path = JPATH_ADMINISTRATOR . '/components/com_content/forms/article.xml';
+        if (!is_file($path)) return;
+        $definition = simplexml_load_file($path);
+        if (!$definition) throw new \RuntimeException(Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
+        $item = $loadData ? $model->getItem($id) : null;
+        $canChangeAuthor = $this->app->getIdentity()->authorise('core.manage', 'com_users');
+        $readOnly = ['modified', 'modified_by', 'version', 'hits'];
+        foreach (['created', 'created_by', 'created_by_alias', ...$readOnly] as $name) {
+            $fields = $definition->xpath('./fieldset/field[@name="' . $name . '"]');
+            if (!$fields) continue;
+            $field = new \SimpleXMLElement($fields[0]->asXML());
+            // Reuse installed Joomla definitions, but never accept client-supplied audit values.
+            if (in_array($name, $readOnly, true) || $name === 'created_by' && !$canChangeAuthor) {
+                $field['readonly'] = 'true';
+                $field['filter'] = 'unset';
+            }
+            $value = $form->getValue($name);
+            $form->setField($field);
+            if ($loadData) {
+                if (in_array($name, $readOnly, true) || $name === 'created_by' && !$canChangeAuthor || $value === null) {
+                    $value = $item->$name ?? ($name === 'created_by' && $id === 0 ? (int) ($this->app->getIdentity()->id ?? 0) : null);
+                }
+                $form->setValue($name, null, $value);
+            }
+        }
     }
 
     private function articleCategoryId(int $id): int

@@ -30,8 +30,12 @@ final class SelectionFieldSupport
         if (count($types) > 50 || array_filter($types, static fn ($type) => !preg_match('/^[a-z][a-z0-9_-]*$/D', $type))) throw new \InvalidArgumentException('Invalid resource types.');
         $root = (string) ($params['browse_root'] ?? '');
         if (strlen($root) > 2048) throw new \InvalidArgumentException('Invalid browse root.');
+        $anchors = (string) ($params['anchor_suggestions'] ?? 'none');
+        if (!in_array($anchors, ['none', 'anchors', 'all'], true)) throw new \InvalidArgumentException('Invalid anchor suggestions.');
+        $phonePrefix=trim((string) ($params['phone_country_prefix'] ?? ''));
+        if ($phonePrefix !== '' && !preg_match('/^\+[1-9][0-9]{0,2}$/D', $phonePrefix)) throw new \InvalidArgumentException('Invalid country prefix.');
         return ['adapter' => $adapter, 'allowedAdapters' => $allowed, 'homogeneous' => in_array($params['homogeneous'] ?? '1', [true, 1, '1', 'true'], true), 'browseRoot' => $root, 'multiple' => $multiple, 'ordering' => $multiple && in_array($params['ordering'] ?? '1', [true, 1, '1', 'true'], true),
-            'editorDisplay' => $display === 'auto' ? ($multiple ? 'collection' : 'compact') : $display,
+            'editorDisplay' => $display === 'auto' ? ($multiple ? 'collection' : 'compact') : $display, 'anchorSuggestions' => $anchors, 'phoneCountryPrefix'=>$phonePrefix,
             'selectionTarget' => $target, 'allowedResourceTypes' => $types, 'selectionProfile' => $decoded];
     }
 

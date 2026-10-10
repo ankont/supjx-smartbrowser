@@ -371,7 +371,9 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'unarchive' => $id !== null && $state === 2 && $identity->authorise('core.edit.state', $asset),
             'createChild' => $identity->authorise('core.create', $asset),
             'newArticle' => $id !== null && $this->canCreateArticle(),
-            'trash' => $id !== null && $identity->authorise('core.delete', $asset),
+            'trash' => $id !== null && $state !== -2 && $identity->authorise('core.delete', $asset),
+            'delete' => $id !== null && $state === -2 && $identity->authorise('core.delete', $asset),
+            'restore' => $id !== null && $state === -2 && $identity->authorise('core.edit.state', $asset),
         ];
     }
 
@@ -582,6 +584,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
                 'unarchive' => $canUnpublish && $state === 2,
                 'feature' => $canFeature && !$isFeatured, 'unfeature' => $canFeature && $isFeatured,
                 'trash' => $canTrash && $state !== -2,
+                'delete' => $state === -2 && $this->app->getIdentity()->authorise('core.delete', 'com_content.article.' . $id),
                 'restore' => $state === -2 && ($canUnpublish || $canTrash),
                 'checkin' => $canCheckin,
             ],
@@ -632,7 +635,9 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'unarchive' => $id !== null && $state === 2 && $identity->authorise('core.edit.state', $asset),
             'createChild' => $identity->authorise('core.create', $asset),
             'newArticle' => $id !== null && $canCreateArticle,
-            'trash' => $id !== null && $identity->authorise('core.delete', $asset),
+            'trash' => $id !== null && $state !== -2 && $identity->authorise('core.delete', $asset),
+            'delete' => $id !== null && $state === -2 && $identity->authorise('core.delete', $asset),
+            'restore' => $id !== null && $state === -2 && $identity->authorise('core.edit.state', $asset),
         ];
     }
 
@@ -654,7 +659,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         if ($groups['categories']) {
             foreach ($groups['categories'] as $id) {
                 $resource = $this->getResource('category:' . $id);
-                $action = match ($state) { -2 => 'trash', 1 => 'publish', 2 => 'archive', default => (int) ($resource['status'] ?? 0) === 2 ? 'unarchive' : 'unpublish' };
+                $action = match ($state) { -2 => 'trash', 1 => 'publish', 2 => 'archive', default => match ((int) ($resource['status'] ?? 0)) { 2 => 'unarchive', -2 => 'restore', default => 'unpublish' } };
                 if (empty($resource['capabilities'][$action])) {
                     throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
                 }
@@ -662,6 +667,28 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             $this->assertModelResult($this->categoryModel(), 'publish', [$groups['categories'], $state]);
         }
         return ['updated' => array_values($selection)];
+    }
+
+    protected function deleteTrashed(array $selection): array
+    {
+        if (!$selection) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+        $groups = [];
+        foreach ($selection as $reference) {
+            $resource = $this->getResource($reference);
+            if (($resource['status'] ?? null) !== -2 || empty($resource['capabilities']['delete'])) {
+                throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+            }
+            [$type, $id] = explode(':', $reference, 2);
+            if (!in_array($type, ['article', 'category', 'tag'], true) || !ctype_digit($id)) {
+                throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+            }
+            $groups[$type][] = (int) $id;
+        }
+        foreach ($groups as $type => $ids) {
+            $model = match ($type) { 'article' => $this->contentModel('Article'), 'category' => $this->categoryModel(), 'tag' => $this->tagModel() };
+            $this->assertModelResult($model, 'delete', [$ids]);
+        }
+        return ['deleted' => array_values($selection)];
     }
 
     protected function setFeatured(array $selection, int $state): array

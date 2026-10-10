@@ -37,9 +37,9 @@ test('upgrade is gated before 2.0 and registered in the component manifest', asy
   assert.match(await read('package/component/smartbrowser.xml'), /<scriptfile>script.php<\/scriptfile>/);
 });
 
-test('tree roots use adapter symbols and breadcrumb starts with a closed node', async () => {
-  assert.match(await read('resources/js/components/ResourceTree.vue'), /resource-tree-root-icon" :class="adapter.icon"/);
-  assert.match(await read('resources/js/components/ResourceBreadcrumb.vue'), /v-if="index === 0" :class="rootIcon"/);
+test('adapter roots retain adapter symbols while virtual navigation roots can use their resource symbols', async () => {
+  assert.match(await read('resources/js/components/ResourceTree.vue'), /resource-tree-root-icon" :class="root.useResourceIcon \? root.icon : adapter.icon"/);
+  assert.match(await read('resources/js/components/ResourceBreadcrumb.vue'), /v-if="index === 0" :class="crumb.useResourceIcon \? crumb.openIcon \|\| crumb.icon : rootIcon"/);
   assert.match(await read('resources/js/components/SmartBrowserApp.vue'), /:root-icon="openNodeIcon"/);
   const registry = await read('package/component/admin/src/Adapter/AdapterRegistry.php');
   for (const icon of ['photo-video', 'book-open', 'boxes', 'hashtag', 'users']) assert.ok(registry.includes('fas fa-' + icon));

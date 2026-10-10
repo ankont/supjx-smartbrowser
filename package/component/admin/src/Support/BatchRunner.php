@@ -48,6 +48,7 @@ final class BatchRunner
             $contexts = $this->contexts($kind, $ids);
             $created = [];
             $done = false;
+            $sort = (array) ($payload['sort'] ?? []);
 
             $placement = (string) ($payload['placement'] ?? 'none');
             if (!in_array($placement, ['none', 'move', 'copy'], true)) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
@@ -92,6 +93,15 @@ final class BatchRunner
             }
             if ($kind === 'categories' && !empty($payload['flipOrdering'])) {
                 $this->apply($model, ['flip_ordering' => 1], $ids, $contexts);
+                $done = true;
+            }
+            if ($sort) {
+                $references = array_map(static fn ($id) => $prefix . $id, $ids);
+                if ($adapter->getId() === 'featured-articles') {
+                    (new FeaturedOrderingService($this->app))->sort($adapter, $references, (string) ($sort['field'] ?? ''), (string) ($sort['direction'] ?? ''));
+                } else {
+                    (new OrderingService($this->app))->sort($adapter, $references, (string) ($sort['field'] ?? ''), (string) ($sort['direction'] ?? ''), [rtrim($prefix, ':')]);
+                }
                 $done = true;
             }
             if (!$done) throw new \InvalidArgumentException(Text::_('JLIB_APPLICATION_ERROR_INSUFFICIENT_BATCH_INFORMATION'), 400);

@@ -134,6 +134,6 @@ test('compact node icons retain the folder behind a white badge', async () => {
   assert.match(css, /\.resource-visual-content\.visual-compact \{[^}]*width: 18px;[^}]*height: 18px;/s);
   assert.match(css, /\.resource-details-view \.resource-visual-content\.visual-compact \{[^}]*width: 24px;[^}]*height: 24px;/s);
   const tree = await readFile(new URL('../resources/js/components/ResourceTree.vue', import.meta.url), 'utf8');
-  assert.match(tree, /class="resource-tree-root-icon" :class="adapter.icon"/);
+  assert.match(tree, /class="resource-tree-root-icon" :class="root.useResourceIcon \? root.icon : adapter.icon"/);
   assert.match(tree, /:resource="crumb" :open="true"/);
 });

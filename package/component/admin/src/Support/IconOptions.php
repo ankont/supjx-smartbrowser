@@ -6,6 +6,7 @@ defined('_JEXEC') or die;
 final class IconOptions
 {
     public const DEFAULTS = [
+        'direct-links' => ['adapter'=>'fas fa-link','node'=>'fas fa-link','open'=>'fas fa-link','item'=>'fas fa-link'],
         'media' => ['adapter' => 'fas fa-photo-video', 'node' => 'fas fa-folder', 'open' => 'fas fa-folder-open', 'item' => 'fas fa-file', 'image' => 'fas fa-file-image', 'video' => 'fas fa-file-video', 'audio' => 'fas fa-file-audio', 'pdf' => 'fas fa-file-pdf', 'word' => 'fas fa-file-word', 'excel' => 'fas fa-file-excel', 'powerpoint' => 'fas fa-file-powerpoint', 'archive' => 'fas fa-file-archive', 'code' => 'fas fa-file-code', 'text' => 'fas fa-file-alt'],
         'articles' => ['adapter' => 'fas fa-book-open', 'node' => 'fas fa-box', 'open' => 'fas fa-box-open', 'item' => 'fas fa-newspaper'],
         'flat-articles' => ['adapter' => 'fas fa-book-open', 'node' => 'fas fa-box', 'open' => 'fas fa-box-open', 'item' => 'fas fa-newspaper'],

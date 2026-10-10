@@ -5,7 +5,7 @@
       <div v-if="adapter.id !== activeAdapter || treeHasContent" class="resource-adapter-roots">
         <section v-for="root in adapter.id === activeAdapter ? roots : []" :key="root.id" class="resource-tree-root" :class="{ 'root-hidden': root.visible === false }">
           <button v-if="root.visible !== false" type="button" :class="{ active: selectedNode === root.id }" @click="$emit('open', root.id)">
-            <span class="resource-tree-root-icon" :class="adapter.icon" aria-hidden="true" />
+            <span class="resource-tree-root-icon" :class="root.useResourceIcon ? root.icon : adapter.icon" aria-hidden="true" />
             <span>{{ root.title }}</span>
           </button>
           <div v-if="belongsTo(root)" class="resource-tree-branch">
