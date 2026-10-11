@@ -310,7 +310,10 @@ export default class MediaActionDriver {
         destination.searchParams.set('sbpage', '1');
         destination.searchParams.delete('tmpl');
       } else {
-        if (destination.searchParams.has('view') && !destination.searchParams.has('task')) {
+        if (destination.searchParams.get('option') === 'com_smartbrowser' && destination.searchParams.get('view') === 'editor') {
+          destination.searchParams.set('sbpage', '1');
+          destination.searchParams.set('sbReturn', window.btoa(window.location.href));
+        } else if (destination.searchParams.has('view') && !destination.searchParams.has('task')) {
           destination.searchParams.set('layout', 'edit');
         } else {
           destination.searchParams.delete('layout');
@@ -335,11 +338,19 @@ export default class MediaActionDriver {
       try {
         const toolbar = iframe.contentDocument?.querySelector('.smartbrowser-editor-actions, #toolbar');
         if (toolbar) {
+          const tools = toolbar.querySelector('.smartbrowser-editor-tools');
+          const nativeLink = tools?.querySelector('.smartbrowser-editor-native');
+          if (nativeLink) {
+            const destination = new URL(nativeLink.href, window.location.href);
+            destination.searchParams.set('sbReturn', window.btoa(window.location.href));
+            destination.searchParams.set('return', window.btoa(window.location.href));
+            nativeLink.href = destination.toString();
+          }
           const button = iframe.contentDocument.createElement('button');
           button.type = 'button';
-          button.className = 'btn btn-outline-secondary ms-auto smartbrowser-editor-size';
+          button.className = `btn btn-outline-secondary ${tools ? '' : 'ms-auto '}smartbrowser-editor-size`;
           button.innerHTML = '<span class="fas fa-expand" aria-hidden="true"></span>';
-          toolbar.append(button);
+          (tools || toolbar).append(button);
           size.bind(button);
         }
       } catch {}

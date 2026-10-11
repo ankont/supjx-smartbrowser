@@ -62,10 +62,21 @@ final class FrontendEditorService
             }
         }
         $createDefaults = $this->articleCreateDefaults($type, $id);
+        if ($this->app->isClient('administrator')) {
+            $stateKey = match ($type) {
+                'article' => 'com_content.edit.article.data', 'category' => 'com_categories.edit.category.data',
+                'tag' => 'com_tags.edit.tag.data', 'menu-item' => 'com_menus.edit.item.data', 'user' => 'com_users.edit.user.data', default => '',
+            };
+            $previous = $stateKey !== '' ? (array) $this->app->getUserState($stateKey, []) : [];
+            if ($previous && (int) ($previous['id'] ?? 0) !== $id) $this->app->setUserState($stateKey, null);
+        }
         if ($type === 'menu-item' && $id === 0 && !$this->app->getInput()->getBool('menuTypeSelected')) {
             foreach (['type', 'link', 'data'] as $key) $this->app->setUserState('com_menus.edit.item.' . $key, null);
         }
         $model = $this->model($type, $id);
+        if ($id > 0 && method_exists($model, 'checkout') && !$model->checkout($id)) {
+            throw new \RuntimeException($model->getError() ?: Text::_('JLIB_APPLICATION_ERROR_CHECKOUT_FAILED'), 403);
+        }
         $form = $model->getForm([], true);
         if (!$form) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
         if ($createDefaults && !(int) $form->getValue('id') && !$form->getValue('title')
@@ -122,11 +133,21 @@ final class FrontendEditorService
             if ($menuType !== '') $form->setValue('menutype', null, $menuType);
             if ($parentId > 1) $form->setValue('parent_id', null, $parentId);
         }
+        if ($type === 'user') {
+            // Match the native User view: stored passwords must never prefill an edit form.
+            $form->setValue('password', null, '');
+            $form->setValue('password2', null, '');
+        }
         return $form;
     }
 
     public function save(string $type, int $id, array $data, bool $copy = false): int
     {
+        if ($type === 'article' && !empty($data['sb_links_list']) && is_array($data['urls'] ?? null)
+            && \Joomla\CMS\Component\ComponentHelper::getParams('com_smartbrowser')->get('article_links_layout', 'slots') === 'list') {
+            $data['urls'] = \SuperSoft\Component\Smartbrowser\Administrator\Support\ArticleMediaSelection::orderedLinks($data['urls']);
+        }
+        unset($data['sb_links_list']);
         $data['id'] = $id;
         if ($type === 'article' && $id === 0 && isset($data['catid'])) {
             $this->app->getInput()->set('catid', (int) $data['catid']);
@@ -252,18 +273,41 @@ final class FrontendEditorService
         $input = $this->app->getInput();
         $input->set('id', $id);
         $model = match ($type) {
-            'article' => $this->createSiteModel('com_content', 'Form', ['a_id' => $id]),
+            'article' => $this->app->isClient('administrator')
+                ? $this->createModel('com_content', 'Article')
+                : $this->createSiteModel('com_content', 'Form', ['a_id' => $id]),
             'category' => $this->createModel('com_categories', 'Category', ['extension' => 'com_content']),
             'tag' => $this->createModel('com_tags', 'Tag'),
             'menu-item' => $this->createModel('com_menus', 'Item'),
             'user' => $this->createModel('com_users', 'User'),
             default => throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400),
         };
+        if ($this->app->isClient('administrator')) {
+            $model->getState();
+            $model->setState($model->getName() . '.id', $id);
+        }
         if ($type === 'menu-item' && $id > 0) {
             $model->getState('item.id');
             $model->setState('item.type', $this->storedMenuItemType($id));
         }
+        if ($id > 0) {
+            $item = $model->getItem($id);
+            $owner = (int) ($item->checked_out ?? 0);
+            if ($owner > 0 && $owner !== (int) $this->app->getIdentity()->id) {
+                throw new \RuntimeException(Text::_('JLIB_APPLICATION_ERROR_CHECKOUT_USER_MISMATCH'), 403);
+            }
+        }
         return $model;
+    }
+
+    public function release(string $type, int $id): void
+    {
+        if ($id <= 0) return;
+        $model = $this->model($type, $id);
+        if ((int) ($model->getItem($id)->checked_out ?? 0) === 0) return;
+        if (method_exists($model, 'checkin') && $model->checkin($id) === false) {
+            throw new \RuntimeException($model->getError() ?: Text::_('JLIB_APPLICATION_ERROR_CHECKIN_FAILED'), 403);
+        }
     }
 
     private function loadLanguages(string $type): void
@@ -312,6 +356,13 @@ final class FrontendEditorService
     private function assertAllowed(string $type, int $id): void
     {
         $user = $this->app->getIdentity();
+        if ($this->app->isClient('administrator')) {
+            $component = match ($type) {
+                'article', 'category' => 'com_content', 'tag' => 'com_tags',
+                'menu-item' => 'com_menus', 'user' => 'com_users', default => '',
+            };
+            if ($component === '' || !$user->authorise('core.manage', $component)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
         $action = $id > 0 ? 'core.edit' : 'core.create';
         $asset = match ($type) {
             'article' => $id > 0

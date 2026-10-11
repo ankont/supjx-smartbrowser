@@ -63,7 +63,8 @@
         }
         if (config.initialSelection != null && !Array.isArray(config.initialSelection)) throw new TypeError('initialSelection must be an ordered array.');
         if (config.allowedAdapters != null && (!Array.isArray(config.allowedAdapters) || config.allowedAdapters.length > 50 || config.allowedAdapters.some(id => typeof id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(id)))) throw new TypeError('allowedAdapters must contain adapter IDs.');
-        const constraints = { allowedAdapters: config.allowedAdapters || [], homogeneous: config.homogeneous === true };
+        const constraints = { allowedAdapters: config.allowedAdapters || [], homogeneous: config.homogeneous === true, maxSelections: config.maxSelections ?? 500 };
+        if (!Number.isInteger(constraints.maxSelections) || constraints.maxSelections < 1 || constraints.maxSelections > 500) throw new TypeError('Invalid selection limit.');
         const snapshot = collectionMode ? { items: contract.collectionEntries(config.initialCollection || [], constraints), resources: {} } : null;
         if (snapshot && !config.multiple && snapshot.items.length > 1) throw new TypeError('Single selection accepts at most one resource.');
         if (collectionMode) {
@@ -99,6 +100,7 @@
           if (config.allowedAdapters?.length && event.detail.adapter && !config.allowedAdapters.includes(event.detail.adapter)) return;
           const allowed = new Set(config.allowedResourceTypes || []);
           const resources = (event.detail?.resources || []).filter((resource) => !allowed.size || allowed.has(resource.type));
+          if (resources.length > constraints.maxSelections) return;
           if (!resources.length) return;
           const selection = config.multiple ? resources : (resources[0] || null);
           const usage = Object.fromEntries((config.multiple ? resources : resources.slice(0, 1)).map(resource => [resource.id, event.detail?.usage?.[resource.id] || {}]));
@@ -115,7 +117,7 @@
           initialAdapter: config.adapter || 'media',
           initialBrowseRoot: config.browseRoot || '',
           collectionMode, homogeneous: config.homogeneous === true,
-          allowOrdering: config.allowOrdering !== false && config.ordering !== false,
+          allowOrdering: config.allowOrdering !== false && config.ordering !== false, maxSelections: constraints.maxSelections,
         }) });
         window.SmartBrowserDialogDismiss.install(dialog, () => false, () => close());
         document.addEventListener('smartbrowser:select', selected);

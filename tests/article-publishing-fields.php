@@ -14,6 +14,8 @@ define('_JEXEC', 1);
 define('JPATH_ADMINISTRATOR', __DIR__ . '/fixtures/publishing-native');
 define('JPATH_SITE', __DIR__ . '/fixtures');
 require __DIR__ . '/../package/component/site/src/Service/FrontendEditorService.php';
+require __DIR__ . '/fixtures/article-routing.php';
+require __DIR__ . '/../package/component/admin/src/Support/SiteArticleEditorRoute.php';
 use SuperSoft\Component\Smartbrowser\Site\Service\FrontendEditorService;
 function check($condition, $message) { if (!$condition) throw new \RuntimeException($message); }
 class PublishingForm {
@@ -47,6 +49,10 @@ class PublishingForm {
     public function renderControlFields() { return ''; }
 }
 class PublishingModel {
+    public string $modelName = 'form'; public array $states = [];
+    public function checkout($id) { $this->record['checked_out'] = 90; return true; }
+    public function checkin($id) { $this->record['checked_out'] = 0; return 1; }
+    public function setState($key, $value) { $this->states[$key] = $value; }
     public PublishingForm $form; public array $saved = [];
     public array $record = ['id'=>3,'created'=>'2026-02-14 01:26:26','created_by'=>7,'created_by_alias'=>'',
         'modified'=>'2026-10-05 21:21:33','modified_by'=>9,'version'=>13,'hits'=>132,'images'=>[],'urls'=>[]];
@@ -57,10 +63,12 @@ class PublishingModel {
         return $data;
     }
     public function save($data) { $this->saved = $data; return true; }
-    public function getName() { return 'form'; }
-    public function getState($key, $default = null) { return 3; }
+    public function getName() { return $this->modelName; }
+    public function getState($key = '', $default = null) { return 3; }
 }
 class PublishingApp implements \Joomla\CMS\Application\CMSApplicationInterface {
+    public bool $admin = false;
+    public function isClient($client) { return $client === ($this->admin ? 'administrator' : 'site'); }
     public PublishingModel $model; public object $input, $user;
     public function __construct(bool $manageUsers) {
         $this->model = new PublishingModel();
@@ -71,17 +79,26 @@ class PublishingApp implements \Joomla\CMS\Application\CMSApplicationInterface {
         };
         $this->user = new class($manageUsers) {
             public int $id = 90;
+            public bool $manageContent = true;
             public function __construct(private bool $manage) {}
-            public function authorise($action, $asset) { return $action === 'core.manage' && $asset === 'com_users' ? $this->manage : $action !== 'core.edit.state'; }
+            public function authorise($action, $asset) {
+                if ($action === 'core.manage' && $asset === 'com_content') return $this->manageContent;
+                return $action === 'core.manage' && $asset === 'com_users' ? $this->manage : $action !== 'core.edit.state';
+            }
         };
     }
     public function getInput() { return $this->input; } public function getIdentity() { return $this->user; }
     public function getUserState($key, $default = null) { return $default; }
+    public function setUserState($key, $value) {}
     public function getLanguage() { return new class { public function load(...$args) {} public function getTag() { return 'el-GR'; } }; }
     public function bootComponent($name) { return new class($this->model) {
         public function __construct(private object $model) {}
         public function getMVCFactory() { return new class($this->model) {
-            public function __construct(private object $model) {} public function createModel(...$args) { return $this->model; }
+            public function __construct(private object $model) {}
+            public function createModel($name, $client, ...$args) {
+                $this->model->modelName = $client === 'Administrator' ? strtolower($name) : 'form';
+                return $this->model;
+            }
         }; }
     }; }
 }
@@ -115,5 +132,18 @@ foreach ([false, true] as $manage) {
     check(isset($app->model->saved['created_by']) === $manage, 'Creator ACL not enforced on save');
     foreach (['modified','modified_by','version','hits'] as $name) check(!isset($app->model->saved[$name]), 'Client audit metadata accepted: '.$name);
 }
+$app = new PublishingApp(true); $app->admin = true;
+$service = new FrontendEditorService($app);
+$service->getForm('article', 3);
+check($app->model->modelName === 'article' && ($app->model->states['article.id'] ?? null) === 3, 'Administrator did not use exact native Article model identity');
+check($app->model->record['checked_out'] === 90, 'Editor did not checkout');
+$service->release('article', 3);
+check($app->model->record['checked_out'] === 0, 'Editor did not release checkout');
+$app->model->record['checked_out'] = 91;
+try { $service->getForm('article', 3); throw new \LogicException('Foreign checkout allowed'); }
+catch (\RuntimeException $error) { check($error->getCode() === 403, 'Wrong lock failure'); }
+$app->model->record['checked_out'] = 0; $app->user->manageContent = false;
+try { $service->getForm('article', 3); throw new \LogicException('Administrator component ACL skipped'); }
+catch (\RuntimeException $error) { check($error->getCode() === 403, 'Wrong administrator ACL failure'); }
 echo "Publishing fields, native definitions, read-only audit values, author ACL, save/reload data and presentation independence OK\n";
 }

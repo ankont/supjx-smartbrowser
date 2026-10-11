@@ -1,5 +1,5 @@
 import { l as e } from "./visual-runtime-DVMDRhTu.js";
-import { a as t, i as n, t as r } from "./visual-runtime-Dv7lQ9di.js";
+import { a as t, i as n, t as r } from "./visual-runtime-EwHcw_pv.js";
 //#region resources/js/collection.js
 var i = /* @__PURE__ */ new WeakMap();
 function a(a, o = {}) {
@@ -19,7 +19,7 @@ function a(a, o = {}) {
 	let l = c.translate || ((e) => window.Joomla?.Text?._(e, e) || e), u = new t({
 		...c,
 		mode: c.readOnly ? "readonly" : "manage"
-	}), d = !1, f = r({
+	}), d = !1, f = /* @__PURE__ */ new Map(), p = r({
 		config: c,
 		api: u,
 		notify: (e) => {
@@ -29,26 +29,37 @@ function a(a, o = {}) {
 			})), c.onChange?.(e));
 		},
 		translate: l
-	}), p = e(n, {
-		model: f,
+	}), m = e(n, {
+		model: p,
 		api: u,
 		config: c,
 		t: l
-	}).provide("smartBrowserOptions", f.options);
-	p.mount(s);
-	let m = f.refresh();
-	m.catch((e) => c.onError?.(e));
-	let h = {
-		ready: m,
-		getItems: f.getItems,
-		setItems: (e) => f.setItems(e),
-		addItems: (e) => f.addItems(e),
-		refresh: () => f.refresh(),
+	}).provide("smartBrowserOptions", p.options);
+	m.mount(s);
+	let h = p.refresh();
+	h.catch((e) => c.onError?.(e));
+	let g = {
+		ready: h,
+		getItems: p.getItems,
+		setItems: (e) => p.setItems(e),
+		addItems: (e) => p.addItems(e),
+		refresh: () => p.refresh(),
+		addToolbarButton(e) {
+			if (d || !(e instanceof HTMLElement) || !e.matches("button, [role=\"button\"]")) throw TypeError("A toolbar button element is required.");
+			if (!f.has(e)) {
+				let t = document.createComment("SmartBrowser toolbar button");
+				e.before(t), f.set(e, t), s.querySelector(".sb-collection-extra-buttons").append(e);
+			}
+			return () => {
+				let t = f.get(e);
+				t && (t.replaceWith(e), f.delete(e));
+			};
+		},
 		destroy() {
-			d || (d = !0, f.destroy(), p.unmount(), i.delete(s));
+			d || (f.forEach((e, t) => e.replaceWith(t)), f.clear(), d = !0, p.destroy(), m.unmount(), i.delete(s));
 		}
 	};
-	return i.set(s, h), h;
+	return i.set(s, g), g;
 }
 window.SmartBrowser = {
 	...window.SmartBrowser,

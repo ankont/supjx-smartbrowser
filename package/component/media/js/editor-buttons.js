@@ -65,3 +65,13 @@ JoomlaEditorButton.registerAction('smartbrowser-article', run(async editor => {
   link.textContent = resource.title;
   editor.replaceSelection(link.outerHTML);
 }));
+JoomlaEditorButton.registerAction('smartbrowser-menu', run(async editor => {
+  const resource = await window.SmartBrowserPicker.open({ url: settings().url, adapter: 'menus', selectionTarget: 'node', allowedResourceTypes: ['menu-item'] });
+  if (!resource) return;
+  const id = /^menu-item:([1-9]\d*)$/.exec(resource.id)?.[1];
+  if (!id) throw new Error('Invalid menu reference.');
+  const link = document.createElement('a');
+  link.href = new URL(`index.php?Itemid=${id}`, settings().siteUrl).href;
+  link.textContent = resource.title;
+  editor.replaceSelection(link.outerHTML);
+}));

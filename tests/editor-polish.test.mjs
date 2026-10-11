@@ -6,7 +6,7 @@ const source = async (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
 test('frontend associations reuse Joomla language handling', async () => {
   const view = await source('../package/component/site/src/View/Editor/HtmlView.php');
-  const template = await source('../package/component/site/tmpl/editor/modal.php');
+  const template = await source('../package/component/site/tmpl/editor/resource-native.php');
   assert.match(view, /useScript\('com_smartbrowser\.associations'\)/);
   assert.match(view, /Text::script\('JGLOBAL_ASSOC_NOT_POSSIBLE'\)/);
   assert.doesNotMatch(view, /getScriptOptions\('joomla\.jtext'\)/);

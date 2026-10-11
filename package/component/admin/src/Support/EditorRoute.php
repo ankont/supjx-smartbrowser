@@ -9,6 +9,16 @@ final class EditorRoute
     {
         parse_str((string) parse_url($administratorUrl, PHP_URL_QUERY), $query);
         $option = (string) ($query['option'] ?? '');
+        $type = match ($option) {
+            'com_content' => 'article', 'com_categories' => 'category', 'com_tags' => 'tag',
+            'com_menus' => 'menu-item', 'com_users' => 'user', default => null,
+        };
+        $key = $type ? IntegrationOptions::editorKey($type, $app->isClient('site')) : null;
+        if ($key && IntegrationOptions::enabled($key)) {
+            $url = 'index.php?option=com_smartbrowser&view=editor&layout=modal&tmpl=component&type=' . $type . '&id=' . (int) ($query['id'] ?? 0);
+            foreach (['extension', 'parent_id', 'menutype', 'catid', 'sbTagId', 'sbGroupId'] as $key) if (isset($query[$key]) && $query[$key] !== '') $url .= '&' . $key . '=' . rawurlencode((string) $query[$key]);
+            return $app->isClient('site') ? Route::_($url, false) : AdministratorRoute::link($app, $url);
+        }
         if (!$app->isClient('site')) {
             $newForms = [
                 'com_content:article.add' => ['article', 'modal', 'com_content.edit.article.data'],

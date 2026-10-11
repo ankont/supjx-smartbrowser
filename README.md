@@ -499,6 +499,23 @@ collection.destroy();
 ```
 
 The module `media/com_smartbrowser/js/collection.js` also exports `mountCollection`.
+
+Selection and Collection callers can attach an existing `button` or `role="button"` element with
+`instance.addToolbarButton(button)`. This retains its event handlers and returns
+a function that restores its original position. Disposal restores attached buttons
+automatically. Selection callers can obtain the instance with
+`SmartBrowser.mountSelectionField(fieldRoot)` after loading `selection-field.js`.
+Callers own the button's label, icon, permissions and click handler; use
+`type="button"` for commands that should not submit the enclosing form.
+
+The Image Selectors integration converts compatible native `joomla-field-media`
+image-only fields in administrator and frontend forms. It is independent of Media
+Manager replacement and always active in SmartBrowser editors. The shared renderer
+preserves native input names/storage and previews; known Article/Category companion
+fields become opt-in Selection Profile properties. Unsupported values, mixed media
+fields and locked controls keep their native UI. Dynamic subform fields are detected
+without double mounting. Presentation of these selectors is centralized in
+`resources/js/image-selectors.js` and the shared native selection bridge.
 An optional `onAdd()` callback exposes the common toolbar Add button before Remove; it may open the existing Picker and update the collection. The button is omitted in read-only views or without a callback. `addLabel` can override its translated tooltip. Compact and empty collections also expose this action when supplied.
 Every container has its own state, renderer, transport and listeners. `destroy()`
 aborts pending requests and removes owned dialogs/listeners. `onError(error)` handles
@@ -608,7 +625,7 @@ foreach ($selection['items'] as $selected) {
 }
 ```
 
-Prepared data is resolved, not stored; it can differ by user permissions and must not be cached across users without appropriate access isolation. No image size, alignment, layout, link target, popup or rendering policy is configured/stored by this field.
+Prepared data is resolved, not stored; it can differ by user permissions and must not be cached across users without appropriate access isolation. Consumers may opt into image caption/classes (`media.caption`, `media.class`) and Direct Links text/target (`link.text`, `link.target`) through their Selection Profile. These usage properties do not change resource identity. The Article editor maps temporary selections back to native Joomla `images`/`urls` values rather than storing selection JSON. Picker and embedded collection callers may pass `maxSelections` (1–500) to bound a collection.
 
 The public Collection View accepts `layout: 'compact'`, optional `resourceActions`, `defaultResourceActionId` and `onResourceAction(action, resource)` for generic host commands. Compact and normal collections share grid/details buttons; the chosen view is remembered in local storage without persisting selections or order. `viewPreferenceKey` optionally isolates a caller's view preference. The field uses the core `resultFormat: 'collection'` API directly. Legacy callers may request `includeAdapter: true` with `resultFormat: 'usage'` to add the actual resolving adapter to that result envelope; existing callers/results are unchanged.
 # Stored Selection Read Access
@@ -640,17 +657,16 @@ and alias targets. Verified content/tag destinations receive frontend URLs; unkn
 destinations expose only the visible menu title, not their raw link or parameters.
 
 Media read resolution uses registered Joomla filesystem providers. The exact native LocalAdapter
-is supported after checking file existence, web-root containment, and an anonymous bounded GET
-whose bytes match the local file. No cookies, credentials or redirects are used. Restricted files,
-unknown/custom providers, folders, unverifiable responses or HTTP/TLS failures remain unavailable.
-The probe reads at most 512 bytes with a three-second timeout. Checks are memoized only within
-the current application/request, keyed by reader/view levels and file stat; failures are cached too.
-The connection is pinned to `SERVER_ADDR`/`SERVER_PORT`, never DNS-resolved from a Host header.
-TLS still verifies the original site hostname. No cross-request or cross-reader cache is used.
-Outbound/loopback restrictions, TLS failures, and reverse proxies whose public port differs from
-the backend listening port cause safe unavailable results. Filesystem/Joomla configuration alone
-cannot establish web-server authentication or access rules, so the HTTP check cannot safely be
-removed without an authoritative provider read-access contract.
+supplies metadata and URLs as in com_media, after native resource lookup, URL validation, file
+existence and realpath web-root containment checks. Missing resources, unsafe paths/URLs,
+unknown/custom providers and folders remain unavailable. The adapter returns no file contents
+and retains its safe metadata whitelist. No HTTP/TLS, DNS or loopback requests are performed;
+reverse-proxy ports, server addresses and outbound restrictions do not affect this resolution.
+This is a native media descriptor contract, not certification of anonymous HTTP reachability:
+Apache/nginx authentication and delivery rules still govern the visitor's actual file request.
+A file protected solely by web-server rules can have a resolved descriptor/URL; SmartBrowser
+neither bypasses those rules nor marks the descriptor unavailable based on them. There is no
+verification result cache or cross-reader cache. Picker browsing/editing ACL is unchanged.
 Media thumbnail overrides pass the same checks; an unavailable override retains the natural visual.
 
 User descriptors expose only `name` and numeric ID, never account metadata. They require a

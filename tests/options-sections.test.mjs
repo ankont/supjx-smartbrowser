@@ -2,23 +2,23 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
-test('component Options group editors, grid sizes, then reset in one display tab', async () => {
+test('component Options separate resource/icon appearance and group browser settings by client', async () => {
   const config = await readFile(new URL('../package/component/admin/config.xml', import.meta.url), 'utf8');
-  const tab = config.match(/<fieldset name="preferences"[^>]*>([\s\S]*?)<\/fieldset>\s*<fieldset name="context"/);
+  const tab = config.match(/<fieldset name="icons"[^>]*>([\s\S]*?)<\/fieldset>\s*<fieldset name="context"/);
   assert.ok(tab);
-  assert.ok(tab[1].indexOf('name="preferences_editors"') < tab[1].indexOf('name="preferences_display"'));
-  assert.ok(tab[1].indexOf('name="preferences_editors"') < tab[1].indexOf('name="preferences_grid"'));
-  assert.ok(tab[1].indexOf('name="preferences_grid"') < tab[1].indexOf('name="preferences_display"'));
+  assert.ok(tab[1].indexOf('name="icon_profiles"') < tab[1].indexOf('name="preferences_grid"'));
+  assert.ok(config.indexOf('name="image_background"') < config.indexOf('name="visual_global"'));
   for (const size of ['sm', 'md', 'lg', 'xl']) {
     assert.match(config, new RegExp(`name="grid_width_${size}" type="gridwidth" parentclass="sb-grid-width-row" filter="integer"`));
   }
   for (const name of ['editor_admin', 'editor_site', 'preferences_reset_token']) {
     assert.equal((config.match(new RegExp(`name="${name}"`, 'g')) || []).length, 1);
   }
-  assert.ok(config.indexOf('name="preferences"') < config.indexOf('name="context"'));
-  assert.ok(config.indexOf('name="preferences"') < config.indexOf('name="visuals"'));
+  assert.doesNotMatch(config, /name="preferences_editors"/);
+  assert.ok(config.indexOf('name="visuals"') < config.indexOf('name="icons"'));
   assert.ok(config.indexOf('name="visuals"') < config.indexOf('name="context"'));
-  assert.match(config, /name="context_hint" type="note" label="COM_SMARTBROWSER_CONTEXT_HINT" description="COM_SMARTBROWSER_OPTIONS_CONTEXT_DESC"/);
+  assert.match(config, /name="context"[^>]*description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC"/);
+  assert.doesNotMatch(config, /name="context_(?:site_)?hint"/);
   assert.ok(config.indexOf('name="context"') < config.indexOf('name="integration"'));
   assert.ok(config.indexOf('name="integration"') < config.indexOf('name="permissions"'));
 });

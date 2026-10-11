@@ -15,7 +15,7 @@ test('featured navigation has its own integration toggle and native Joomla manag
   const manager = await readFile(new URL('../package/component/admin/src/Support/ManagerUrlProvider.php', import.meta.url), 'utf8');
   const config = await readFile(new URL('../package/component/admin/config.xml', import.meta.url), 'utf8');
   assert.match(plugin, /\$query\['filter'\]\['featured'\] \?\? ''/);
-  assert.match(plugin, /if \(\$featured\) return .*get\('replace_featured_articles', 0\) \? 'featured-articles'/);
+  assert.match(plugin, /if \(\$featured\) return IntegrationOptions::enabled\('replace_featured_articles'\) \? 'featured-articles'/);
   assert.match(plugin, /'com_content:articles' => \['articles', 'replace_articles'\]/);
   assert.match(plugin, /\$replacements = \['replace_articles', 'replace_featured_articles'/);
   assert.match(config, /name="replace_featured_articles"[^>]*default="0"/);
@@ -86,7 +86,7 @@ test('new child resources and users inherit the current node in both clients', a
     'package/component/admin/src/Support/EditorRoute.php',
     'package/component/admin/src/Adapter/UsersAdapter.php',
     'package/component/site/src/Service/FrontendEditorService.php',
-    'package/component/site/tmpl/editor/modal.php',
+    'package/component/site/tmpl/editor/resource-native.php',
   ].map((path) => readFile(new URL(`../${path}`, import.meta.url), 'utf8')));
   for (const form of ['com_categories:category.add', 'com_tags:tag.add', 'com_menus:item.add', 'com_users:user.add']) {
     assert.ok(route.includes(form));
@@ -102,12 +102,8 @@ test('new child resources and users inherit the current node in both clients', a
   assert.match(template, /access\.usergroups', 'jform\[groups\]'/);
 });
 
-test('menu selection is the first publishing field in the frontend menu editor', async () => {
-  const template = await readFile(new URL('../package/component/site/tmpl/editor/modal.php', import.meta.url), 'utf8');
-  const field = "$renderField('menutype')";
-  const publishing = template.indexOf("'smartbrowser-publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')", template.indexOf("$this->resourceType === 'menu-item') : ?>", template.indexOf('smartbrowser-editor-menu-link')));
-  assert.equal(template.split(field).length - 1, 1);
-  assert.ok(publishing > template.indexOf('smartbrowser-editor-menu-link'));
-  assert.ok(template.indexOf(field) > publishing);
-  assert.ok(template.indexOf(field) < template.indexOf("$renderField($name); ?>", publishing));
+test('menu selection precedes placement and publishing fields in the shared menu sidebar', async () => {
+  const template = await readFile(new URL('../package/component/site/tmpl/editor/resource-native.php', import.meta.url), 'utf8');
+  assert.match(template, /'menutype', 'parent_id', 'menuordering', 'published'/);
+  assert.match(template, /col-lg-3[\s\S]*joomla.edit.global/);
 });

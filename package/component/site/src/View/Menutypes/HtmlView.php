@@ -9,7 +9,7 @@ use SuperSoft\Component\Smartbrowser\Administrator\Support\SiteAuthentication;
 
 defined('_JEXEC') or die;
 
-final class HtmlView extends BaseHtmlView
+class HtmlView extends BaseHtmlView
 {
     public array $types = [];
     public int $recordId = 0;

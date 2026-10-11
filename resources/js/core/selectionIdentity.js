@@ -8,7 +8,8 @@ export const referenceKey = reference => JSON.stringify([reference.adapter, refe
 export const resourceKey = resource => resource?.selectionKey || resource?.id;
 export const resourceReference = (resource, adapter) => normalizeReference(resource?.selection || { adapter: resource?.adapter || adapter, id: resource?.id });
 
-export function collectionEntries(items, { adapter, allowedAdapters = [], homogeneous = false } = {}) {
+export function collectionEntries(items, { adapter, allowedAdapters = [], homogeneous = false, maxSelections = 500 } = {}) {
+  if (!Number.isInteger(maxSelections) || maxSelections < 1 || maxSelections > 500) throw new TypeError('Invalid selection limit.');
   if (!Array.isArray(items) || items.length > 500) throw new TypeError('A collection supports at most 500 entries.');
   const seen = new Set();
   const entries = items.map(item => {
@@ -26,5 +27,6 @@ export function collectionEntries(items, { adapter, allowedAdapters = [], homoge
     seen.add(key); return true;
   });
   if (homogeneous && new Set(entries.map(entry => entry.selection.adapter)).size > 1) throw new TypeError('This collection requires one adapter.');
+  if (entries.length > maxSelections) throw new TypeError('Selection limit exceeded.');
   return entries;
 }

@@ -15,6 +15,8 @@ final class CollectionResources
 
     public static function entries(array $items, array $constraints = []): array
     {
+        $limit = $constraints['maxSelections'] ?? 500;
+        if (!is_int($limit) || $limit < 1 || $limit > 500) throw new \InvalidArgumentException('Invalid selection limit.', 400);
         if (count($items) > 500) throw new \InvalidArgumentException('A collection supports at most 500 resources.', 400);
         $entries = []; $seen = []; $adapters = [];
         foreach ($items as $item) {
@@ -35,6 +37,7 @@ final class CollectionResources
             $seen[$uniqueKey] = true; $adapters[$reference['adapter']] = true;
         }
         if (!empty($constraints['homogeneous']) && count($adapters) > 1) throw new \InvalidArgumentException('This collection requires one adapter.', 400);
+        if (count($entries) > $limit) throw new \InvalidArgumentException('Selection limit exceeded.', 400);
         return $entries;
     }
 

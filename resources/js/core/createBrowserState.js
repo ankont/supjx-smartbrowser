@@ -7,6 +7,8 @@ import { referenceKey, resourceKey } from './selectionIdentity.js';
 export default function createBrowserState({ options, api, persistence, viewRegistry }) {
   const selectionContext = options.pickerContext || options.selectionHost;
   const collectionMode = Boolean(selectionContext?.collectionMode);
+  const selectionLimit = (collectionMode || options.mode === 'select') && options.multiple === false
+    ? 1 : selectionContext?.maxSelections ?? options.maxSelections ?? 500;
   const snapshot = collectionMode ? selectionContext.getCollectionSnapshot() : null;
   const preserveSelection = Boolean(collectionMode || options.selectionState || options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
   const adapter = options.adapter?.replace(/^flat-/, '');
@@ -149,6 +151,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     const key = resourceKey(resource);
     if (preserveSelection) state.selectedResources[key] = resource;
     const exists = state.selectedIds.includes(key);
+    if (!exists && options.multiple && additive && state.selectedIds.length >= selectionLimit) return;
     if (!options.multiple || !additive) state.selectedIds = exists ? [] : [key];
     else state.selectedIds = exists ? state.selectedIds.filter((id) => id !== key) : [...state.selectedIds, key];
   }
@@ -165,10 +168,12 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       state.selectedIds = first && !state.selectedIds.includes(first) ? [first] : [];
       return;
     }
-    const allSelected = bulkIds.length > 0 && bulkIds.every((id) => state.selectedIds.includes(id));
+    const selectedOutside = state.selectedIds.filter(id => !bulkIds.includes(id)).length;
+    const selectableCount = Math.min(bulkIds.length, Math.max(0, selectionLimit - selectedOutside));
+    const allSelected = selectableCount > 0 && bulkIds.filter(id => state.selectedIds.includes(id)).length >= selectableCount;
     state.selectedIds = allSelected
       ? state.selectedIds.filter((id) => !bulkIds.includes(id))
-      : [...new Set([...state.selectedIds, ...bulkIds])];
+      : [...new Set([...state.selectedIds, ...bulkIds])].slice(0, selectionLimit);
   }
 
   function invertSelection() {
@@ -176,12 +181,13 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     const visibleIds = bulkSelectableResources.value.map(resourceKey);
     const selected = new Set(state.selectedIds);
     visibleIds.forEach((id) => selected.has(id) ? selected.delete(id) : selected.add(id));
-    state.selectedIds = [...selected];
+    state.selectedIds = [...selected].slice(0, selectionLimit);
   }
 
   watch(() => [state.selectedNode, state.activeView, state.viewOptions, state.hiddenColumns, state.shownColumns, state.sortBy, state.sortDirection, state.showInfo, state.filters], () => persistence.save(state), { deep: true });
 
   function canAddSelection(targetAdapter, type) {
+    if (options.multiple && state.selectedIds.length >= selectionLimit) return false;
     if (!options.selectionState || options.mode === 'readonly'
       || options.selectionTarget === 'node' || allowedTypes.size && !allowedTypes.has(type)) return false;
     const first = state.selectedResources[state.selectedIds[0]]?.selection?.adapter || snapshot?.items.find(entry => referenceKey(entry.selection) === state.selectedIds[0])?.selection.adapter;

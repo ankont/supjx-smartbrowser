@@ -56,7 +56,7 @@ export default class ResourceApi {
     url.searchParams.set('mode', this.options.mode || 'manage');
     if (this.options.browseRoot) url.searchParams.set('browseRoot', this.options.browseRoot);
     if (this.options.flatScope) url.searchParams.set('flatScope', this.options.flatScope);
-    return this.request(url, { method: 'POST', body: JSON.stringify({ ...options, items, [this.options.csrfToken]: 1 }) });
+    return this.request(url, { method: 'POST', body: JSON.stringify({ ...(this.options.maxSelections ? { maxSelections: this.options.maxSelections } : {}), ...options, items, [this.options.csrfToken]: 1 }) });
   }
 
   request(url, init = {}) {

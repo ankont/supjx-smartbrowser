@@ -6,9 +6,9 @@ defined('_JEXEC') or die;
 final class IconOptions
 {
     public const DEFAULTS = [
-        'direct-links' => ['adapter'=>'fas fa-link','node'=>'fas fa-link','open'=>'fas fa-link','item'=>'fas fa-link'],
+        'direct-links' => ['adapter'=>'fas fa-link','node'=>'fas fa-link','open'=>'fas fa-link','item'=>'fas fa-link', 'web'=>'fas fa-globe', 'mail'=>'fas fa-at', 'tel'=>'fas fa-phone', 'fragment'=>'fas fa-anchor', 'joomla'=>'fab fa-joomla'],
         'media' => ['adapter' => 'fas fa-photo-video', 'node' => 'fas fa-folder', 'open' => 'fas fa-folder-open', 'item' => 'fas fa-file', 'image' => 'fas fa-file-image', 'video' => 'fas fa-file-video', 'audio' => 'fas fa-file-audio', 'pdf' => 'fas fa-file-pdf', 'word' => 'fas fa-file-word', 'excel' => 'fas fa-file-excel', 'powerpoint' => 'fas fa-file-powerpoint', 'archive' => 'fas fa-file-archive', 'code' => 'fas fa-file-code', 'text' => 'fas fa-file-alt'],
-        'articles' => ['adapter' => 'fas fa-book-open', 'node' => 'fas fa-box', 'open' => 'fas fa-box-open', 'item' => 'fas fa-newspaper'],
+        'articles' => ['adapter' => 'fas fa-book-open', 'node' => 'fas fa-box', 'open' => 'fas fa-box-open', 'item' => 'fas fa-newspaper', 'featured' => 'fas fa-star'],
         'flat-articles' => ['adapter' => 'fas fa-book-open', 'node' => 'fas fa-box', 'open' => 'fas fa-box-open', 'item' => 'fas fa-newspaper'],
         'featured-articles' => ['adapter' => 'fas fa-star', 'node' => 'fas fa-star', 'open' => 'fas fa-star', 'item' => 'fas fa-newspaper'],
         'categories' => ['adapter' => 'fas fa-boxes', 'node' => 'fas fa-box', 'open' => 'fas fa-box-open', 'item' => 'fas fa-newspaper'],
@@ -36,6 +36,13 @@ final class IconOptions
 
     public static function forAdapter(string $adapter, ?array $saved = null): array
     {
+        if (in_array($adapter, ['flat-articles', 'featured-articles'], true)) {
+            $icons = self::forAdapter('articles', $saved);
+            if ($adapter === 'featured-articles') {
+                $icons['adapter'] = $icons['node'] = $icons['open'] = $icons['featured'];
+            }
+            return $icons;
+        }
         $adapter = match ($adapter) { 'flat-categories' => 'categories', 'flat-media' => 'media', default => $adapter };
         if ($saved === null) {
             self::$saved ??= class_exists(ComponentHelper::class) ? self::normalize(ComponentHelper::getParams('com_smartbrowser')->get('icon_profiles', [])) : [];
@@ -50,6 +57,17 @@ final class IconOptions
         $defaults = self::DEFAULTS[$adapter] ?? self::DEFAULTS['media'];
         $icons = self::forAdapter($adapter, $saved);
         $icon = $resource['icon'] ?? '';
+        if ($adapter === 'direct-links') {
+            $type = $resource['metadata']['uriType'] ?? '';
+            if (in_array($type, ['web', 'mail', 'tel', 'fragment', 'joomla'], true) && $icon === $defaults[$type]) {
+                $resource['icon'] = $icons[$type];
+                if (($resource['kind'] ?? '') === 'node') {
+                    $resource['closedIcon'] = $icons[$type];
+                    $resource['openIcon'] = $icons[$type];
+                }
+                return $resource;
+            }
+        }
         $role = ($resource['kind'] ?? 'node') === 'item' ? 'item' : 'node';
         if ($adapter === 'menus' && ($resource['type'] ?? '') === 'menu-item') {
             foreach (['heading', 'heading_node', 'separator'] as $special) {

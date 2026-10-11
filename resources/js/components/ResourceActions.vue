@@ -39,7 +39,7 @@
     <button v-if="batchAvailable" type="button" class="btn btn-outline-secondary resource-batch-toggle" :disabled="!selection?.length" :title="t('COM_SMARTBROWSER_BATCH_ACTIONS')" :aria-label="t('COM_SMARTBROWSER_BATCH_ACTIONS')" @click="$emit('batch')">
       <span class="fas fa-magic" aria-hidden="true" /> <span class="resource-action-label">{{ t('COM_SMARTBROWSER_BATCH') }}</span>
     </button>
-    <button v-if="canCancel" type="button" class="btn btn-outline-secondary resource-picker-cancel" :title="t('JCANCEL')" :aria-label="t('JCANCEL')" @click="$emit('cancel')">
+    <button v-if="canCancel" type="button" class="btn btn-danger resource-picker-cancel" :title="t('JCANCEL')" :aria-label="t('JCANCEL')" @click="$emit('cancel')">
       <span class="fas fa-times" aria-hidden="true" /> <span class="resource-action-label">{{ t('JCANCEL') }}</span>
     </button>
     <div v-if="filters?.length" class="resource-filter-buttons">

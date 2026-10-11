@@ -61,6 +61,12 @@ final class DirectLinksAdapter implements ResourceAdapterInterface, ReadableReso
         if ($customName !== '') $title = $customName;
         return ResourceDescriptor::complete(['id'=>$id,'title'=>$title,'subtitle'=>$uri,'kind'=>'item','type'=>'uri',
             'uniquenessId'=>explode('.', $id, 2)[0],
+            'selectionCapabilities' => [
+                ['key'=>'link.text', 'type'=>'string', 'editor'=>'text', 'label'=>'COM_CONTENT_FIELD_URLA_LINK_TEXT_LABEL', 'default'=>'', 'validation'=>['maxLength'=>2048]],
+                ['key'=>'link.target', 'type'=>'string', 'editor'=>'select', 'label'=>'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'default'=>'', 'options'=>[
+                    ['value'=>'', 'label'=>'JGLOBAL_USE_GLOBAL'], ['value'=>'0', 'label'=>'JBROWSERTARGET_PARENT'], ['value'=>'1', 'label'=>'JBROWSERTARGET_NEW'],
+                    ['value'=>'2', 'label'=>'JBROWSERTARGET_POPUP'], ['value'=>'3', 'label'=>'JBROWSERTARGET_MODAL']]],
+            ],
             'parentId'=>'direct-links:'.$type,'icon'=>self::ICONS[$type],'image'=>null,'selectable'=>true,'navigable'=>false,
             'capabilities'=>['edit'=>true, 'renameVirtual'=>true, 'delete'=>true], 'metadata'=>['uri'=>$uri,'url'=>$uri,'linkName'=>$customName,
                 'effectiveAddress'=>in_array($type, ['web','joomla'], true) && $this->app !== null ? DirectLinkUri::webAddress($uri, 'absolute', Uri::root()) : $uri,

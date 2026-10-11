@@ -70,7 +70,7 @@ test('toolbar cancellation closes only its Picker instance and returns no select
   assert.equal(context(0),null);assert.ok(context(1));assert.ok(!dialogs[1].removed);
   context(1).cancel();assert.equal(await second,null);assert.equal(listeners.size,0);
   const actions = read('resources/js/components/ResourceActions.vue');
-  assert.ok(actions.indexOf('class="btn btn-outline-secondary resource-picker-cancel"') > actions.indexOf('resource-batch-toggle'));
+  assert.ok(actions.indexOf('class="btn btn-danger resource-picker-cancel"') > actions.indexOf('resource-batch-toggle'));
   assert.ok(actions.indexOf('resource-picker-cancel') < actions.indexOf('class="resource-filter-buttons"'));
   assert.ok(!read('package/component/media/js/picker.js').includes('class="btn-close"'));
 });

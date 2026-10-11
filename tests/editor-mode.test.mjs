@@ -56,6 +56,19 @@ test('administrator new article opens the native edit layout in page mode', () =
   }
 });
 
+test('administrator SmartBrowser page editor retains its shared layout and guarded return', () => {
+  const originalWindow = globalThis.window;
+  let destination;
+  globalThis.window = { location: { href: 'https://example.test/administrator/index.php?option=com_smartbrowser', assign: url => { destination = new URL(url); } }, btoa };
+  try {
+    new MediaActionDriver(null, null, null, null, 'page', 'administrator').openEditor('/administrator/index.php?option=com_smartbrowser&view=editor&layout=modal&tmpl=component');
+    assert.equal(destination.searchParams.get('layout'), 'modal');
+    assert.equal(destination.searchParams.get('sbpage'), '1');
+    assert.equal(destination.searchParams.get('sbReturn'), btoa(window.location.href));
+    assert.equal(destination.searchParams.has('tmpl'), false);
+  } finally { globalThis.window = originalWindow; }
+});
+
 test('administrator new child forms retain native edit layouts in page mode', () => {
   const originalWindow = globalThis.window;
   const destinations = [];
@@ -76,7 +89,8 @@ test('administrator new child forms retain native edit layouts in page mode', ()
 
 test('backend menu editor carries a guarded SmartBrowser return through native save', async () => {
   const plugin = await readFile(new URL('../package/plugins/system/smartbrowserintegration/src/Extension/Smartbrowserintegration.php', import.meta.url), 'utf8');
-  assert.match(plugin, /onAfterRoute' => 'returnFromMenuEditor'/);
+  assert.match(plugin, /onAfterRoute' => 'routeEditors'/);
+  assert.match(plugin, /\$this->returnFromMenuEditor\(\)/);
   assert.match(plugin, /in_array\(\$input->getCmd\('task'\), \['item.save', 'item.cancel', 'item.apply', 'item.save2copy'\]/);
   assert.match(plugin, /Uri::isInternal\(\$url\)/);
   assert.match(plugin, /getCmd\('view', 'items'\) === 'items'/);

@@ -12,7 +12,7 @@ test('each supported adapter has independent administrator and frontend defaults
   const english = await readFile(new URL('../package/component/admin/language/en-GB/com_smartbrowser.ini', import.meta.url), 'utf8');
   assert.match(config, /<fieldset name="context"/);
   assert.match(config, /<fieldset name="context_admin" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_ADMIN">/);
-  assert.match(config, /<fieldset name="context_site" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_SITE">/);
+  assert.match(config, /<fieldset name="context_site" label="COM_SMARTBROWSER_OPTIONS_CONTEXT_SITE"[^>]*>/);
   assert.match(english, /^COM_SMARTBROWSER_CONFIGURATION=/m);
   for (const adapter of ['categories', 'tags', 'menus']) {
     for (const client of ['admin', 'site']) assert.match(config, new RegExp(`name="context_${adapter}_${client}"[^>]*default="0"`));

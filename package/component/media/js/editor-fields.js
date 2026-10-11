@@ -1,6 +1,66 @@
 (() => {
   const form = document.getElementById('adminForm');
   if (!form) return;
+  if (form.closest('.is-admin-article-page, .is-admin-category-page, .is-admin-resource-page')) {
+    document.addEventListener('joomla-dialog:open', event => {
+      const popup = event.target;
+      if (!popup.JoomlaDialogTrigger?.closest('#toolbar-preview') || popup.classList.contains('sb-article-preview')) return;
+      popup.classList.add('sb-article-preview');
+      const close = popup.querySelector('.button-close');
+      if (!close) return;
+      const maximize = document.createElement('button');
+      maximize.type = 'button';
+      maximize.className = 'btn sb-preview-maximize';
+      const update = () => {
+        const expanded = popup.classList.contains('is-maximized');
+        maximize.title = Joomla.Text._(expanded ? 'COM_SMARTBROWSER_EDITOR_RESTORE' : 'COM_SMARTBROWSER_EDITOR_MAXIMIZE');
+        maximize.setAttribute('aria-label', maximize.title);
+        maximize.setAttribute('aria-pressed', String(expanded));
+        maximize.innerHTML = `<span class="icon-${expanded ? 'contract' : 'expand'}" aria-hidden="true"></span>`;
+      };
+      maximize.addEventListener('click', () => { popup.classList.toggle('is-maximized'); update(); });
+      update();
+      close.before(maximize);
+    });
+    const submitbutton = Joomla.submitbutton;
+    Joomla.submitbutton = (task, ...args) => {
+      if (!task?.startsWith('smartbrowser.')) return submitbutton?.(task, ...args);
+      const action = task.slice('smartbrowser.'.length);
+      if (action === 'cancel') return form.querySelector('.smartbrowser-editor-actions button.btn-danger')?.click();
+      const button = form.querySelector(`button[name="editorAction"][value="${action}"]`);
+      if (button) form.requestSubmit(button);
+    };
+    const toolbar = document.getElementById('toolbar');
+    const actions = form.querySelector('.smartbrowser-editor-actions');
+    if (toolbar && actions) {
+      const tools = actions.querySelector('.smartbrowser-editor-tools');
+      const versions = actions.querySelector('.smartbrowser-editor-versions');
+      if (versions && !document.getElementById('toolbar-versions')) toolbar.append(versions);
+      if (tools) toolbar.append(tools);
+      const close = toolbar.querySelector('[task="smartbrowser.cancel"] button');
+      if (close) {
+        close.classList.remove('btn-primary', 'btn-secondary');
+        close.classList.add('btn-danger');
+      }
+      actions.hidden = true;
+    }
+  }
+  const nativeLink = document.querySelector('.smartbrowser-editor-native');
+  if (nativeLink) {
+    try {
+      const destination = new URL(nativeLink.href, window.location.href);
+      const remembered = window.sessionStorage.getItem('supjx.smartbrowser.editorReturn');
+      if (!destination.searchParams.has('sbReturn') && remembered) {
+        const origin = new URL(remembered, window.location.href);
+        if (origin.origin === window.location.origin) {
+          const encoded = window.btoa(origin.href);
+          destination.searchParams.set('sbReturn', encoded);
+          destination.searchParams.set('return', encoded);
+          nativeLink.href = destination.toString();
+        }
+      }
+    } catch {}
+  }
 
   const busy = document.querySelector('.smartbrowser-editor-busy');
   form.addEventListener('submit', (event) => {

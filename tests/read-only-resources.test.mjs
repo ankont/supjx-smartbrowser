@@ -7,9 +7,16 @@ test('reader visibility is independent of authoring ACL and fails closed per ite
   const result = spawnSync('php', ['tests/read-only-resources.php'], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
-test('media/menu/tag policies support public guests and reject restricted resources', () => {
+test('native media descriptors and menu/tag visibility retain reader boundaries', () => {
   const result = spawnSync('php', ['tests/read-adapter-policies.php'], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
+});
+
+test('native Media URL resolution is independent of HTTPS/proxy endpoints and rejects unsafe resources', () => {
+  const result=spawnSync('php', ['tests/media-native-url.php'], {encoding:'utf8'});
+  assert.equal(result.status,0,result.stdout+result.stderr);
+  const source=readFileSync('package/component/admin/src/Adapter/MediaReadVisibility.php','utf8');
+  assert.doesNotMatch(source, /fopen\(|stream_context_create|SERVER_ADDR|SERVER_PORT|WeakMap/);
 });
 test('user display names require a verified stored visible host and never expose account metadata', () => {
   const result = spawnSync('php', ['tests/stored-user-read.php'], { encoding: 'utf8' });

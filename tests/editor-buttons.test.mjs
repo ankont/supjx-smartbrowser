@@ -38,3 +38,16 @@ test('article button inserts a link from normalized identity', async () => {
   await f.actions.get('smartbrowser-article')(f.editor);
   assert.equal(f.inserted[0].href, 'https://site.test/index.php?option=com_content&view=article&id=42');
 });
+
+test('menu button inserts a native Itemid link and rejects non-menu references', async () => {
+  const f = fixture({ id: 'menu-item:42', title: 'Menu title' });
+  await f.actions.get('smartbrowser-menu')(f.editor);
+  assert.equal(f.config().adapter, 'menus');
+  assert.equal(f.config().selectionTarget, 'node');
+  assert.equal(f.inserted[0].href, 'https://site.test/index.php?Itemid=42');
+  assert.equal(f.inserted[0].text, 'Menu title');
+  const invalid = fixture({ id: 'menu:main', title: 'Menu root' });
+  await invalid.actions.get('smartbrowser-menu')(invalid.editor);
+  assert.equal(invalid.inserted.length, 0);
+  assert.equal(invalid.errors.length, 1);
+});

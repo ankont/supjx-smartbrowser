@@ -46,7 +46,16 @@ export function mountSelectionField(root) {
     const current = value;
     try {
       const adapter = resource?.selection.adapter || current.items[0]?.selection.adapter || adapters[0];
+      const previous = resource ? current.items.find(entry => entry.selection.adapter === resource.selection.adapter && entry.selection.id === resource.id)
+        : !config.multiple ? current.items[0] : null;
+      const profile = { ...config.selectionProfile };
+      if (config.preserveUsageOnReplace && previous) {
+        for (const [key, policy] of Object.entries(profile)) {
+          if (policy !== false && Object.prototype.hasOwnProperty.call(previous.usage, key)) profile[key] = { ...(typeof policy === 'object' ? policy : {}), default: previous.usage[key] };
+        }
+      }
       const result = await window.SmartBrowserPicker.open({ ...config, url: config.pickerUrl, adapter,
+        selectionProfile: profile,
         selectionEditorContext: { ...config.selectionEditorContext, suggestions: {
           ...config.selectionEditorContext?.suggestions,
           anchors: articleAnchorSuggestions(input.form, config.anchorSuggestions)
@@ -57,7 +66,9 @@ export function mountSelectionField(root) {
         initialNode: resource?.parentId || '',
         initialCollection: resource ? current.items.filter(entry => entry.selection.adapter === resource.selection.adapter && entry.selection.id === resource.id) : current.items });
       if (!result || disposed || current !== value) return;
-      value = fieldPickerResult(current, result, adapters, config.multiple, resource?.selection, config.homogeneous);
+      const next = fieldPickerResult(current, result, adapters, config.multiple, resource?.selection, config.homogeneous);
+      if (config.maxSelections && next.items.length > config.maxSelections) throw new Error('Selection limit exceeded.');
+      value = next;
       persist();
       await render();
     } catch (error) { if (!disposed) showError(error); }
@@ -67,11 +78,18 @@ export function mountSelectionField(root) {
   const clearClick = () => { if (config.readOnly || disposed) return; value = selectionFieldValue('', adapters); persist(); render().catch(showError); };
   const reset = () => setTimeout(() => { if (disposed) return; input.value = initialValue; try { value = selectionFieldValue(input.value, adapters, config.multiple, config.homogeneous); render().catch(showError); showError(null); } catch (error) { showError(error); } }, 0);
   select?.addEventListener('click', selectClick); clear?.addEventListener('click', clearClick); input.form?.addEventListener('reset', reset);
-  const instance = { destroy() { if (disposed) return; disposed = true; select?.removeEventListener('click', selectClick); clear?.removeEventListener('click', clearClick); input.form?.removeEventListener('reset', reset); collection.destroy(); mounted.delete(root); } };
+  const instance = { addToolbarButton: button => collection.addToolbarButton(button), destroy() { if (disposed) return; disposed = true; select?.removeEventListener('click', selectClick); clear?.removeEventListener('click', clearClick); input.form?.removeEventListener('reset', reset); collection.destroy(); mounted.delete(root); } };
   mounted.set(root, instance);
+  instance.setItems = items => {
+    if (disposed || config.readOnly) return;
+    value = selectionFieldValue({ version: 1, items }, adapters, config.multiple, config.homogeneous);
+    persist();
+    return render();
+  };
   return instance;
 }
 const initialize = target => { if (target.matches?.('[data-sb-field]')) mountSelectionField(target); target.querySelectorAll?.('[data-sb-field]').forEach(mountSelectionField); };
+window.SmartBrowser = { ...window.SmartBrowser, mountSelectionField };
 initialize(document);
 document.addEventListener('joomla:updated', event => initialize(event.target));
 const observer = new MutationObserver(records => records.forEach(record => {

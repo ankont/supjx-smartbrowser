@@ -19,11 +19,13 @@ final class IconprofilesField extends FormField
         $escape = static fn($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
         $html = '<div class="sb-icon-settings"><input data-icon-value type="hidden" id="' . $escape($this->id) . '" name="' . $escape($this->name) . '" value="' . $escape(json_encode($saved, JSON_THROW_ON_ERROR)) . '">';
         foreach (IconOptions::DEFAULTS as $adapter => $roles) {
+            if (in_array($adapter, ['flat-articles', 'featured-articles'], true)) continue;
             $title = Text::_('COM_SMARTBROWSER_ADAPTER_' . strtoupper(str_replace('-', '_', $adapter)));
             $html .= '<details class="sb-icon-adapter"><summary>' . $escape($title) . '</summary><div class="sb-icon-fields">';
             foreach ($roles as $role => $default) {
+                if ($adapter === 'direct-links' && in_array($role, ['node', 'open', 'item'], true)) continue;
                 $value = $saved[$adapter][$role] ?? '';
-                $label = Text::_('COM_SMARTBROWSER_ICON_' . strtoupper($role));
+                $label = Text::_(($adapter === 'direct-links' && $role !== 'adapter' ? 'COM_SMARTBROWSER_LINK_' : 'COM_SMARTBROWSER_ICON_') . strtoupper($role));
                 $id = $this->id . '-' . $adapter . '-' . $role;
                 $html .= '<div class="sb-icon-row"><label for="' . $escape($id) . '">' . $escape($label) . '</label><span data-icon-preview class="' . $escape($value ?: $default) . '" aria-hidden="true"></span><input id="' . $escape($id) . '" type="text" data-adapter="' . $escape($adapter) . '" data-role="' . $escape($role) . '" data-default="' . $escape($default) . '" value="' . $escape($value) . '" placeholder="' . $escape($default) . '" aria-label="' . $escape($title . ': ' . $label) . '"><button type="button" class="btn btn-outline-secondary" data-icon-reset title="' . $escape(Text::_('COM_SMARTBROWSER_ICON_RESET')) . '" aria-label="' . $escape(Text::_('COM_SMARTBROWSER_ICON_RESET') . ': ' . $label) . '"><span class="fas fa-undo" aria-hidden="true"></span></button></div>';
             }

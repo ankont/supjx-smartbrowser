@@ -124,7 +124,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         [$adapter, $path] = $this->splitId($resourceId);
         $provider = $this->apiModel->getAdapter($adapter);
         $file = $this->withAllMediaTypes(fn () => $this->apiModel->getFile($adapter, $path, ['url' => false, 'content' => false]));
-        $file->url = MediaReadVisibility::assertPublic($provider, $path, $file);
+        $file->url = MediaReadVisibility::assertNativeUrl($provider, $path, $file);
         $resource = $this->normalize($file);
         $resource['capabilities'] = [];
         $resource['metadata'] = array_intersect_key($resource['metadata'], array_flip([

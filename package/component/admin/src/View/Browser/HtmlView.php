@@ -46,7 +46,7 @@ final class HtmlView extends BaseHtmlView
         } : ['SuperSoftJx - SmartBrowser', 'folder-open'];
         ToolbarHelper::title($title, $icon);
         if ($component !== 'com_smartbrowser'
-            && ComponentHelper::getParams('com_smartbrowser')->get('hide_component_menu', 0)
+            && \SuperSoft\Component\Smartbrowser\Administrator\Support\IntegrationOptions::enabled('hide_component_menu')
             && ($this->getCurrentUser()->authorise('core.admin', 'com_smartbrowser')
                 || $this->getCurrentUser()->authorise('core.options', 'com_smartbrowser'))) {
             ToolbarHelper::preferences('com_smartbrowser', alt: 'COM_SMARTBROWSER_OPTIONS_BUTTON');

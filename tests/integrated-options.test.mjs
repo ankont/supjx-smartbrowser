@@ -15,7 +15,7 @@ test('integrated browser Options target the original Joomla component and its AC
   }
   assert.match(view, /authorise\('core\.options', \$component\)/);
   assert.match(view, /ToolbarHelper::preferences\(\$component\)/);
-  assert.match(view, /get\('hide_component_menu', 0\)/);
+  assert.match(view, /IntegrationOptions::enabled\('hide_component_menu'\)/);
   assert.match(view, /ToolbarHelper::preferences\('com_smartbrowser', alt: 'COM_SMARTBROWSER_OPTIONS_BUTTON'\)/);
   assert.ok(view.indexOf("ToolbarHelper::preferences('com_smartbrowser', alt:") < view.indexOf('ToolbarHelper::preferences($component)'));
   assert.match(view, /COM_CONTENT_ARTICLES_TITLE/);

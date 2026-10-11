@@ -679,7 +679,7 @@ test('frontend editor bridge reuses Joomla forms and enforces ACL at load and sa
   const layout = await readFile(new URL('../package/component/site/tmpl/editor/modal.php', import.meta.url), 'utf8');
   assert.match(service, /createModel\(\$name, 'Administrator'/);
   assert.match(service, /createModel\(\$name, 'Site'/);
-  assert.match(service, /'article' => \$this->createSiteModel\('com_content', 'Form'/);
+  assert.match(service, /'article' => \$this->app->isClient\('administrator'\)[\s\S]*\? \$this->createModel\('com_content', 'Article'\)[\s\S]*: \$this->createSiteModel\('com_content', 'Form'/);
   assert.match(service, /assertAllowed\(\$type, \$id\)/);
   assert.match(service, /authorise\(\$action, \$asset\)/);
   assert.match(service, /getForm\(/);
@@ -692,11 +692,13 @@ test('frontend editor bridge reuses Joomla forms and enforces ACL at load and sa
   assert.match(view, /\$editorComplete = false/);
   assert.doesNotMatch(view, /public bool \$done/);
   assert.match(layout, /id="adminForm"/);
-  assert.match(layout, /uitab\.startTabSet/);
+  const siteLayout = await readFile(new URL('../package/component/site/tmpl/editor/article-site.php', import.meta.url), 'utf8');
+  const resourceLayout = await readFile(new URL('../package/component/site/tmpl/editor/resource-native.php', import.meta.url), 'utf8');
+  assert.match(siteLayout, /uitab\.startTabSet/);
   assert.match(layout, /\$renderedFields\[\$key\]/);
-  assert.match(layout, /\$renderField\('title'\)/);
-  assert.match(layout, /\$renderField\('alias'\)/);
-  assert.match(layout, /\$renderField\('description'\)/);
+  assert.match(siteLayout, /\$renderField\('title'\)/);
+  assert.match(siteLayout, /\$renderField\('alias'\)/);
+  assert.match(resourceLayout, /getInput\('description'\)/);
   assert.match(layout, /renderControlFields\(\)/);
   assert.doesNotMatch(layout, /<h1/);
 });
@@ -785,7 +787,7 @@ test('trash actions and trashed state use distinct SmartBrowser labels', async (
 test('frontend editor keeps responsive control rows', async () => {
   const layout = await readFile(new URL('../package/component/site/tmpl/editor/modal.php', import.meta.url), 'utf8');
   const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
-  assert.match(layout, /smartbrowser-editor-description/);
+  assert.match(layout, /is-aligned-editor/);
   assert.match(css, /\.com-smartbrowser-editor \.smartbrowser-editor-tab \.control-group \{[^}]*display: block/s);
   assert.match(css, /\.com-smartbrowser-editor \.smartbrowser-editor-tab :is\(\.control-label, \.controls\) \{[^}]*float: none;[^}]*width: 100% !important/s);
 });
@@ -795,7 +797,8 @@ test('frontend menu item editor is responsive and uses a site-side Joomla menu t
   const controller = await readFile(new URL('../package/component/site/src/Controller/EditorController.php', import.meta.url), 'utf8');
   const chooser = await readFile(new URL('../package/component/site/src/View/Menutypes/HtmlView.php', import.meta.url), 'utf8');
   const chooserLayout = await readFile(new URL('../package/component/site/tmpl/menutypes/default.php', import.meta.url), 'utf8');
-  assert.match(layout, /resourceType === 'menu-item'[\s\S]*smartbrowser-editor-primary[\s\S]*smartbrowser-editor-menu-link/);
+  const resourceLayout = await readFile(new URL('../package/component/site/tmpl/editor/resource-native.php', import.meta.url), 'utf8');
+  assert.match(resourceLayout, /col-lg-9[\s\S]*renderMenuTypeField\(\)[\s\S]*col-lg-3/);
   assert.match(layout, /view=menutypes/);
   assert.match(chooser, /createModel\('Menutypes', 'Administrator'/);
   assert.match(chooserLayout, /data-content-type="com_menus\.menutype"/);
@@ -837,15 +840,15 @@ test('menu type chooser uses the editor picker instead of a nested Joomla dialog
 });
 
 test('frontend editor groups tag and menu publishing fields and frames media options', async () => {
-  const layout = await readFile(new URL('../package/component/site/tmpl/editor/modal.php', import.meta.url), 'utf8');
+  const layout = await readFile(new URL('../package/component/site/tmpl/editor/resource-native.php', import.meta.url), 'utf8');
+  const media = await readFile(new URL('../package/component/site/tmpl/editor/article-media.php', import.meta.url), 'utf8');
   const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
-  assert.match(layout, /smartbrowser-editor-image-row/);
-  assert.match(layout, /\['image-intro', 'image-fulltext'\]/);
-  assert.match(layout, /resourceType === 'tag'[\s\S]*smartbrowser-publishing[\s\S]*'parent_id', 'published', 'access'/);
-  assert.match(layout, /resourceType === 'menu-item'[\s\S]*smartbrowser-publishing[\s\S]*'parent_id', 'menuordering', 'published'/);
+  assert.match(media, /smartbrowser-editor-image-row/);
+  assert.match(layout, /\$type === 'tag'[\s\S]*joomla.edit.publishingdata/);
+  assert.match(layout, /'parent_id', 'menuordering', 'published'/);
   assert.match(css, /smartbrowser-editor-media-grid, \.smartbrowser-editor-fieldsets/);
   assert.match(css, /:is\(input, select, textarea\):disabled/);
-  assert.match(layout, /COM_SMARTBROWSER_EDITOR_MENU_BASICS[\s\S]*renderMenuTypeField\(\)[\s\S]*\['request', 'aliasoptions'\][\s\S]*COM_SMARTBROWSER_EDITOR_MENU_LINK/);
+  assert.match(layout, /renderMenuTypeField\(\)[\s\S]*\['request', 'aliasoptions'\][\s\S]*\['link', 'browserNav', 'template_style_id'\]/);
 });
 
 test('frontend editor picker routes supported Joomla selectors through SmartBrowser', async () => {

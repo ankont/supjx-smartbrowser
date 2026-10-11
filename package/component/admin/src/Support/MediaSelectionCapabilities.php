@@ -9,6 +9,8 @@ final class MediaSelectionCapabilities
     {
         if ($isNode) return [];
         if (str_starts_with($mime, 'image/')) return [
+            ['key' => 'media.caption', 'type' => 'string', 'editor' => 'text', 'label' => 'COM_CONTENT_FIELD_IMAGE_CAPTION_LABEL', 'default' => '', 'validation' => ['maxLength' => 4096]],
+            ['key' => 'media.class', 'type' => 'string', 'editor' => 'text', 'label' => 'COM_CONTENT_FIELD_IMAGE_CLASS_LABEL', 'default' => '', 'validation' => ['maxLength' => 2048]],
             ['key' => 'media.alt', 'type' => 'string', 'editor' => 'text', 'label' => 'COM_SMARTBROWSER_USAGE_ALT', 'default' => '', 'disabledWhen' => ['key' => 'media.decorative', 'equals' => true], 'inactiveValue' => '', 'validation' => ['maxLength' => 2048]],
             ['key' => 'media.decorative', 'type' => 'boolean', 'editor' => 'boolean', 'label' => 'COM_SMARTBROWSER_USAGE_DECORATIVE', 'default' => false],
             ['key' => 'media.loading', 'type' => 'string', 'editor' => 'select', 'label' => 'COM_SMARTBROWSER_USAGE_LOADING', 'default' => 'auto', 'options' => [

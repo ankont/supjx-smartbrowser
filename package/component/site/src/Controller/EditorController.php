@@ -9,7 +9,7 @@ use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
 use SuperSoft\Component\Smartbrowser\Site\Service\FrontendEditorService;
 defined('_JEXEC') or die;
-final class EditorController extends BaseController
+class EditorController extends BaseController
 {
     public function save(): void
     {
@@ -24,6 +24,8 @@ final class EditorController extends BaseController
         try {
             if (!Session::checkToken()) throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
             $savedId = (new FrontendEditorService($this->app))->save($type, $id, $data, $copy);
+            if (!$apply) (new FrontendEditorService($this->app))->release($type, $savedId);
+            if ($copy) (new FrontendEditorService($this->app))->release($type, $id);
             $url = ($apply || $copy)
                 ? $this->editorUrl($type, $savedId, $data)
                 : $this->completionUrl($type);
@@ -42,6 +44,7 @@ final class EditorController extends BaseController
     public function cancel(): void
     {
         if (!Session::checkToken()) throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+        (new FrontendEditorService($this->app))->release($this->input->getCmd('type'), $this->input->getInt('id'));
         if ($this->input->getCmd('type') === 'menu-item') (new FrontendEditorService($this->app))->clearMenuItemState();
         $this->setRedirect($this->completionUrl($this->input->getCmd('type'), true));
     }
@@ -84,21 +87,43 @@ final class EditorController extends BaseController
         $url = 'index.php?option=com_smartbrowser&view=editor&layout=modal' . ($this->input->getBool('sbpage') ? '' : '&tmpl=component') . '&type=menu-item&menuTypeSelected=1&id=' . (int) ($selection->id ?? 0) . '&selectedType=' . rawurlencode($type);
         if ($this->input->getBool('sbpage')) $url .= '&sbpage=1';
         foreach (['parent_id', 'menutype'] as $key) if (!empty($data[$key])) $url .= '&' . $key . '=' . rawurlencode((string) $data[$key]);
-        $this->setRedirect(Route::_($url, false));
+        $this->setRedirect(Route::_($url . $this->returnQuery(), false));
     }
 
     private function completionUrl(string $type, bool $cancelled = false): string
     {
-        return Route::_('index.php?option=com_smartbrowser&view=editor&layout=modal' . ($this->input->getBool('sbpage') ? '' : '&tmpl=component') . '&done=1&type=' . $type . ($cancelled ? '&cancelled=1' : '') . ($this->input->getBool('sbpage') ? '&sbpage=1' : ''), false);
+        if ($type === 'article' && $this->app->isClient('site') && $this->input->getBool('sbEditor')) {
+            return $this->articleEditorUrl($this->input->getInt('id'), ['done'=>1, 'cancelled'=>$cancelled ? 1 : 0]);
+        }
+        return Route::_('index.php?option=com_smartbrowser&view=editor&layout=modal' . ($this->input->getBool('sbpage') ? '' : '&tmpl=component') . '&done=1&type=' . $type . ($cancelled ? '&cancelled=1' : '') . ($this->input->getBool('sbpage') ? '&sbpage=1' : '') . $this->returnQuery(), false);
     }
 
     private function editorUrl(string $type, int $id, array $data): string
     {
+        if ($type === 'article' && $this->app->isClient('site') && $this->input->getBool('sbEditor')) {
+            return $this->articleEditorUrl($id, [], $data);
+        }
         $url = 'index.php?option=com_smartbrowser&view=editor&layout=modal' . ($this->input->getBool('sbpage') ? '' : '&tmpl=component') . '&type=' . rawurlencode($type) . '&id=' . $id;
         if ($this->input->getBool('sbpage')) $url .= '&sbpage=1';
         foreach (['parent_id', 'menutype'] as $key) {
             if (!empty($data[$key])) $url .= '&' . $key . '=' . rawurlencode((string) $data[$key]);
         }
-        return Route::_($url, false);
+        return Route::_($url . $this->returnQuery(), false);
+    }
+
+    private function returnQuery(): string
+    {
+        $encoded = $this->input->getString('sbReturn');
+        $url = strlen($encoded) <= 4096 ? base64_decode($encoded, true) : false;
+        return $url && Uri::isInternal($url) ? '&sbReturn=' . rawurlencode($encoded) : '';
+    }
+
+    private function articleEditorUrl(int $id, array $query = [], array $data = []): string
+    {
+        if ($this->returnQuery() !== '') $query['sbReturn'] = $this->input->getString('sbReturn');
+        return \SuperSoft\Component\Smartbrowser\Administrator\Support\SiteArticleEditorRoute::editor(
+            $this->app, $id, (int) ($data['catid'] ?? $this->input->getInt('catid')),
+            (string) ($data['language'] ?? '*'), $query
+        );
     }
 }

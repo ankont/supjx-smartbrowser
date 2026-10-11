@@ -28,6 +28,7 @@ namespace {
         public function getErrors() { return ['Native validation failed']; }
     }
     final class DefaultsApp implements \Joomla\CMS\Application\CMSApplicationInterface {
+        public function isClient($client) { return $client === 'site'; }
         public object $input, $user; public array $state = []; public DefaultsModel $model;
         public function __construct(array $payload) {
             $this->model = new DefaultsModel();

@@ -5,8 +5,8 @@ require __DIR__ . '/../package/component/admin/src/Support/ResourceDescriptor.ph
 use SuperSoft\Component\Smartbrowser\Administrator\Support\MediaSelectionCapabilities;
 function check($value, $message) { if (!$value) throw new RuntimeException($message); }
 $images = MediaSelectionCapabilities::forResource(false, 'image/png');
-check(array_column($images, 'key') === ['media.alt', 'media.decorative', 'media.loading'], 'Image capabilities');
-check($images[2]['default'] === 'auto' && array_column($images[2]['options'], 'value') === ['auto', 'lazy', 'eager'], 'Loading strategy');
+check(array_column($images, 'key') === ['media.caption', 'media.class', 'media.alt', 'media.decorative', 'media.loading'], 'Image capabilities');
+check($images[4]['default'] === 'auto' && array_column($images[4]['options'], 'value') === ['auto', 'lazy', 'eager'], 'Loading strategy');
 $pdf = \SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceDescriptor::visualCapabilities();
 check(count($pdf) === 2 && $pdf[0]['key'] === 'visual.thumbnailOverride' && $pdf[1]['key'] === 'visual.iconOverride', 'Generic visual capabilities');
 check($pdf[0]['type'] === 'resource' && $pdf[0]['default'] === null && $pdf[0]['picker']['allowedResourceTypes'] === ['image'], 'PDF reference contract');

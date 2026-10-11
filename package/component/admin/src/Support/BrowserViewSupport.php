@@ -24,6 +24,8 @@ final class BrowserViewSupport
         $language->load('joomla', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
+        $language->load('com_content', JPATH_ADMINISTRATOR, null, true);
+        foreach (['COM_CONTENT_FIELD_IMAGE_CAPTION_LABEL', 'COM_CONTENT_FIELD_IMAGE_CLASS_LABEL', 'COM_CONTENT_FIELD_URLA_LINK_TEXT_LABEL', 'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'JGLOBAL_USE_GLOBAL', 'JBROWSERTARGET_PARENT', 'JBROWSERTARGET_NEW', 'JBROWSERTARGET_POPUP', 'JBROWSERTARGET_MODAL'] as $key) Text::script($key);
         foreach ($this->languageKeys() as $key) Text::script($key);
         foreach (['web','mail','tel','fragment','joomla'] as $type) {
             Text::script('COM_SMARTBROWSER_LINK_'.strtoupper($type));

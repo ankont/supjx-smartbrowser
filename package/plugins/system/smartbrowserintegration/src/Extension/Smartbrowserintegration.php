@@ -6,6 +6,7 @@ use Joomla\CMS\Event\Menu\PreprocessMenuItemsEvent;
 use Joomla\CMS\Event\Model\PrepareDataEvent;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Uri\Uri;
@@ -13,6 +14,7 @@ use Joomla\Event\SubscriberInterface;
 use Joomla\Event\Priority;
 use Joomla\CMS\Session\Session;
 use Throwable;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\IntegrationOptions;
 
 defined('_JEXEC') or die;
 
@@ -22,15 +24,147 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
 
     public static function getSubscribedEvents(): array
     {
-        return ['onEditorButtonsSetup' => ['replaceEditorButtons', Priority::LOW], 'onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onAfterRoute' => 'returnFromMenuEditor', 'onContentPrepareData' => 'prefillArticleContext'];
+        return ['onEditorButtonsSetup' => ['replaceEditorButtons', Priority::LOW], 'onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onBeforeRender' => 'prepareOptionsToolbar', 'onAfterRoute' => 'routeEditors', 'onContentPrepareData' => 'prefillArticleContext'];
+    }
+
+    public function routeEditors(): void
+    {
+        $this->returnFromNativeEditor();
+        $this->replaceNativeEditor();
+        $this->returnFromMenuEditor();
+    }
+
+    public function returnFromNativeEditor(): void
+    {
+        $app = $this->getApplication();
+        $input = $app->getInput();
+        $option = $input->getCmd('option', '');
+        $key = 'com_smartbrowser.editor.native_return';
+        $prefix = match ($option) {
+            'com_content' => 'article', 'com_categories' => 'category', 'com_tags' => 'tag',
+            'com_menus' => 'item', 'com_users' => 'user', default => null,
+        };
+        if ($prefix && $input->getBool('sbNative') && $input->getMethod() === 'GET') {
+            $encoded = $input->getString('sbReturn', '');
+            $url = strlen($encoded) <= 4096 ? base64_decode($encoded, true) : false;
+            $app->setUserState($key, $url && Uri::isInternal($url) ? ['option'=>$option, 'url'=>$url, 'pending'=>false] : null);
+            return;
+        }
+        $context = $app->getUserState($key);
+        if (!is_array($context)) return;
+        if ($option !== $context['option']) {
+            $app->setUserState($key, null);
+            return;
+        }
+        $task = $input->getCmd('task', '');
+        if ($input->getMethod() === 'POST' && in_array($task, [$prefix . '.save', $prefix . '.cancel'], true) && Session::checkToken('request')) {
+            $context['pending'] = true;
+            $app->setUserState($key, $context);
+            return;
+        }
+        $finishedViews = $app->isClient('site') ? ['article', 'category', 'featured'] : ['articles', 'featured', 'categories', 'tags', 'items', 'users'];
+        if ($input->getMethod() === 'GET' && $task === '' && !empty($context['pending'])
+            && in_array($input->getCmd('view', ''), $finishedViews, true)) {
+            $app->setUserState($key, null);
+            $app->setUserState('com_smartbrowser.editor.native', null);
+            if (Uri::isInternal($context['url'])) {
+                $app->redirect($context['url']);
+                $app->close();
+            }
+        }
+    }
+
+    public function replaceNativeEditor(): void
+    {
+        $app = $this->getApplication();
+        $input = $app->getInput();
+        $option = $input->getCmd('option', '');
+        $site = $app->isClient('site');
+        if ($site && $option === 'com_content' && $input->getBool('sbEditor')
+            && IntegrationOptions::enabled('replace_editor_article_site')) {
+            $task = $input->getCmd('task', '');
+            if (!in_array($task, ['', 'editor.save', 'editor.cancel'], true)) return;
+            $id = $input->getInt('a_id');
+            if ($id <= 0) return;
+            $app->setUserState('com_smartbrowser.editor.native', null);
+            $input->set('option', 'com_smartbrowser');
+            $input->set('view', 'editor');
+            $input->set('layout', 'modal');
+            $input->set('type', 'article');
+            $input->set('id', $id);
+            return;
+        }
+        $type = match ($option) {
+            'com_content' => 'article', 'com_categories' => 'category', 'com_tags' => 'tag',
+            'com_menus' => 'menu-item', 'com_users' => 'user', default => null,
+        };
+        $id = $input->getInt('id', $input->getInt('a_id'));
+        $requestedTask = $input->getCmd('task', '');
+        $creating = $type && $requestedTask === ($type === 'menu-item' ? 'item' : $type) . '.add';
+        if ($site && $type === 'article') $id = $input->getInt('a_id');
+        if ($creating) $id = 0;
+        if ($id <= 0 && !$creating) {
+            $ids = $input->get('cid', [], 'array');
+            if (isset($ids[0]) && is_scalar($ids[0])) $id = max(0, (int) $ids[0]);
+        }
+        $stateKey = 'com_smartbrowser.editor.native';
+        if ($input->getBool('sbNative') && $type) {
+            $app->setUserState($stateKey, [$option, $id]);
+            return;
+        }
+        $view = $input->getCmd('view', '');
+        $task = $input->getCmd('task', '');
+        $editView = match ($type) { 'article' => $site ? 'form' : 'article', 'category' => 'category', 'tag' => 'tag', 'menu-item' => 'item', 'user' => 'user', default => '' };
+        $taskPrefix = $type === 'menu-item' ? 'item' : ($type ?? '');
+        $entry = in_array($task, [$taskPrefix . '.edit', $taskPrefix . '.add'], true)
+            || ($task === '' && $editView !== '' && $view === $editView);
+        if ($task === '' && $entry && $id > 0 && $app->getUserState($stateKey) === [$option, 0]) {
+            // Native Apply can assign a new record ID while staying in the fallback editor.
+            $app->setUserState($stateKey, [$option, $id]);
+            return;
+        }
+        if ($app->getUserState($stateKey) === [$option, $id] && ($entry || $input->getMethod() === 'POST')) return;
+        $app->setUserState($stateKey, null);
+        $navigationPost = $input->getMethod() === 'POST' && in_array($task, [$taskPrefix . '.edit', $taskPrefix . '.add'], true)
+            && Session::checkToken('request');
+        if (!$type || !$entry || ($input->getMethod() !== 'GET' && !$navigationPost) || $app->getIdentity()->guest
+            || ($type === 'category' && $input->getCmd('extension', 'com_content') !== 'com_content')) return;
+        $key = IntegrationOptions::editorKey($type, $site);
+        if (!$key || !IntegrationOptions::enabled($key)) return;
+        $url = 'index.php?option=com_smartbrowser&view=editor&layout=modal&type=' . $type . '&id=' . $id;
+        $url .= $input->getCmd('tmpl') === 'component' ? '&tmpl=component' : '&sbpage=1';
+        foreach (['extension', 'parent_id', 'menutype', 'catid', 'Itemid'] as $name) {
+            $value = $input->getString($name, '');
+            if ($value !== '') $url .= '&' . $name . '=' . rawurlencode($value);
+        }
+        $return = $site ? ($id > 0 ? 'index.php?option=com_content&view=article&id=' . $id : 'index.php') : 'index.php?option=com_smartbrowser&view=dashboard';
+        $encoded = $input->getString('return', '');
+        $requested = strlen($encoded) <= 4096 ? base64_decode($encoded, true) : false;
+        if ($requested && Uri::isInternal($requested)) $return = $requested;
+        $url .= '&sbReturn=' . rawurlencode(base64_encode($return));
+        $app->redirect(\Joomla\CMS\Router\Route::_($url, false));
+        $app->close();
+    }
+
+    public function prepareOptionsToolbar(): void
+    {
+        $app = $this->getApplication();
+        if (!$app->isClient('administrator') || $app->getInput()->getCmd('option') !== 'com_config'
+            || $app->getInput()->getCmd('component') !== 'com_smartbrowser') return;
+        $document = $app->getDocument();
+        if (!method_exists($document, 'getToolbar')) return;
+        $toolbar = $document->getToolbar();
+        $toolbar->setItems(array_values(array_filter($toolbar->getItems(), static fn ($button): bool =>
+            !$button instanceof \Joomla\CMS\Toolbar\Button\HelpButton)));
     }
 
     public function replaceEditorButtons($event): void
     {
         $params = ComponentHelper::getParams('com_smartbrowser');
         $replacements = [];
-        if ($params->get('replace_media', 0) || $params->get('replace_media_field', 0)) $replacements['image'] = 'smartbrowser-media';
-        if ($params->get('replace_articles', 0)) $replacements['article'] = 'smartbrowser-article';
+        if (IntegrationOptions::enabled('replace_editor_media', $params)) $replacements['image'] = 'smartbrowser-media';
+        if (IntegrationOptions::enabled('replace_editor_articles', $params)) $replacements['article'] = 'smartbrowser-article';
+        if (IntegrationOptions::enabled('replace_editor_menus', $params)) $replacements['menu'] = 'smartbrowser-menu';
         $buttons = array_filter($event->getButtonsRegistry()->getAll(), static fn ($button) => isset($replacements[$button->getButtonName()]));
         if (!$buttons) return;
         $app = $this->getApplication();
@@ -111,9 +245,26 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         $event->updateItems($items);
     }
 
+    public function prepareArticleEditLinks(): void
+    {
+        $app = $this->getApplication();
+        if (!$app->isClient('site') || $app->getIdentity()->guest
+            || !IntegrationOptions::enabled('replace_editor_article_site')
+            || ComponentHelper::getParams('com_smartbrowser')->get('editor_site', 'modal') !== 'modal'
+            || $app->getInput()->getCmd('tmpl', '') === 'component') return;
+        $document = $app->getDocument();
+        if (!method_exists($document, 'getWebAssetManager')) return;
+        $assets = $document->getWebAssetManager();
+        $assets->getRegistry()->addExtensionRegistryFile('com_smartbrowser');
+        $assets->registerScript('com_smartbrowser.article-edit-links', 'com_smartbrowser/article-edit-links.js', [], ['type' => 'module'], ['core', 'com_smartbrowser.dialog-dismiss']);
+        $assets->useStyle('com_smartbrowser.app')->useScript('com_smartbrowser.article-edit-links');
+        foreach (['COM_SMARTBROWSER_WORKING', 'COM_SMARTBROWSER_EDITOR_MAXIMIZE', 'COM_SMARTBROWSER_EDITOR_RESTORE'] as $key) Text::script($key);
+    }
+
     public function preparePickers(): void
     {
         $app = $this->getApplication();
+        $this->prepareArticleEditLinks();
         if ($app->isClient('administrator') && $app->getInput()->getCmd('option') === 'com_menus'
             && $app->getInput()->getCmd('view') === 'item') {
             $encoded = $app->getInput()->getString('return');
@@ -128,7 +279,14 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
                 }
             }
         }
-        $mediaPicker = (bool) ComponentHelper::getParams('com_smartbrowser')->get('replace_media_field', 0);
+        $mediaPicker = IntegrationOptions::enabled('replace_media_field');
+        if (IntegrationOptions::enabled('replace_image_selectors')) {
+            try {
+                \SuperSoft\Component\Smartbrowser\Administrator\Support\ImageSelectorSupport::prepare($app->getDocument());
+            } catch (Throwable $error) {
+                Log::add('SmartBrowser image selectors could not be loaded.', Log::ERROR, 'smartbrowser');
+            }
+        }
         $smartAuthorsUsers = $app->isClient('administrator')
             && $app->getInput()->getCmd('option') === 'com_categories'
             && $app->getInput()->getCmd('extension', 'com_content') === 'com_content'
@@ -183,9 +341,9 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     {
         $params = ComponentHelper::getParams('com_smartbrowser');
         $replacements = ['replace_articles', 'replace_featured_articles', 'replace_categories', 'replace_tags', 'replace_media', 'replace_menus', 'replace_users'];
-        $integrated = (bool) array_filter($replacements, static fn (string $key): bool => (bool) $params->get($key, 0));
+        $integrated = (bool) array_filter($replacements, static fn (string $key): bool => IntegrationOptions::enabled($key, $params));
         foreach ($items as $item) {
-            if ($integrated && $params->get('hide_component_menu', 0) && $this->isComponentMenu((string) ($item->link ?? ''))) {
+            if ($integrated && IntegrationOptions::enabled('hide_component_menu', $params) && $this->isComponentMenu((string) ($item->link ?? ''))) {
                 $item->getParams()->set('menu_show', 0);
                 continue;
             }
@@ -220,7 +378,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         $featured = ($query['option'] ?? '') === 'com_content'
             && (($query['view'] ?? '') === 'featured'
                 || (($query['view'] ?? '') === 'articles' && (string) ($query['filter']['featured'] ?? '') === '1'));
-        if ($featured) return ComponentHelper::getParams('com_smartbrowser')->get('replace_featured_articles', 0) ? 'featured-articles' : null;
+        if ($featured) return IntegrationOptions::enabled('replace_featured_articles') ? 'featured-articles' : null;
         $map = [
             'com_content:articles' => ['articles', 'replace_articles'],
             'com_content:' => ['articles', 'replace_articles'],
@@ -231,7 +389,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
             'com_users:users' => ['users', 'replace_users'],
         ];
         $key = ($query['option'] ?? '') . ':' . ($query['view'] ?? '');
-        if (!isset($map[$key]) || !ComponentHelper::getParams('com_smartbrowser')->get($map[$key][1], 0)) return null;
+        if (!isset($map[$key]) || !IntegrationOptions::enabled($map[$key][1])) return null;
         if (($query['option'] ?? '') === 'com_categories' && ($query['extension'] ?? 'com_content') !== 'com_content') return null;
         return $map[$key][0];
     }

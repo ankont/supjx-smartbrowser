@@ -230,6 +230,60 @@ dialog.com-smartbrowser-editor-picker .btn-close {
   border-color: #0064d2;
 }
 
+joomla-dialog.sb-article-preview > dialog {
+  width: 90vw !important;
+  max-width: 90vw !important;
+  height: 90vh !important;
+  max-height: 90vh;
+}
+
+joomla-dialog.sb-article-preview > dialog::backdrop {
+  background: rgb(0 0 0 / 40%);
+  backdrop-filter: blur(4px);
+}
+
+html:has(joomla-dialog.sb-article-preview.is-maximized > dialog[open]),
+html:has(joomla-dialog.sb-article-preview.is-maximized > dialog[open]) body {
+  overflow: hidden !important;
+}
+
+joomla-dialog.sb-article-preview.is-maximized > dialog {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+}
+
+joomla-dialog.sb-article-preview .joomla-dialog-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+joomla-dialog.sb-article-preview .joomla-dialog-body {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+joomla-dialog.sb-article-preview .iframe-content {
+  width: 100%;
+  height: 100% !important;
+  min-height: 0;
+  border: 0;
+}
+
+joomla-dialog.sb-article-preview .sb-preview-maximize {
+  color: inherit;
+  background: transparent;
+  border: 0;
+}
+
 body .calendar-container table tbody td.day.selected {
   color: #fff !important;
   background: #0d6efd !important;
@@ -245,6 +299,10 @@ body .calendar-container table tbody td.day.selected {
 
 .com-smartbrowser-editor .smartbrowser-editor-link-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-image-row {
+  align-items: stretch;
 }
 
 .com-smartbrowser-editor .smartbrowser-editor-image-row > .options-form,
@@ -332,6 +390,17 @@ html.sb-editor-modal-document #smartbrowserEditorTabs:not([view="tabs"]) { heigh
   background: #fff;
 }
 
+.com-smartbrowser-editor .smartbrowser-editor-actions .smartbrowser-editor-tools {
+  flex: 0 0 auto;
+  width: auto;
+  justify-content: flex-end;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-tools > .btn {
+  flex: 0 0 auto;
+  margin-inline: 0 !important;
+}
+
 .com-smartbrowser-editor .smartbrowser-editor-actions > button[value="apply"]:hover {
   color: #fff;
   background: #198754;
@@ -364,6 +433,48 @@ html.sb-editor-modal-document #smartbrowserEditorTabs:not([view="tabs"]) { heigh
   margin-inline: auto;
   padding: 20px 16px 36px !important;
   overflow: visible;
+}
+
+.com-smartbrowser-editor.is-aligned-editor.is-page.container-fluid { width: 100%; padding: 0 0 24px !important; }
+.com-smartbrowser-editor.is-aligned-editor #smartbrowserEditorTabs > joomla-tab-element { padding: 16px; }
+.com-smartbrowser-editor.is-aligned-editor .options-form {
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  padding: 12px 16px;
+  margin-block-end: 12px;
+}
+
+.com-smartbrowser-editor.is-aligned-editor .options-form > legend {
+  float: none;
+  width: auto;
+  max-width: 100%;
+  padding: 0 12px;
+  margin: 0 0 12px;
+  border: 0;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+.com-smartbrowser-editor.is-aligned-editor #smartbrowserEditorTabs .row { --gutter-x: 24px; }
+.com-smartbrowser-editor.is-aligned-editor #smartbrowserEditorTabs .row > * + * { border-inline-start: 0; }
+.com-smartbrowser-editor.is-aligned-editor .smartbrowser-editor-media-grid .options-form > legend { margin-bottom: 8px; }
+.com-smartbrowser-editor.is-aligned-editor .smartbrowser-editor-actions[hidden] { display: none !important; }
+.com-smartbrowser-editor.is-aligned-editor joomla-tab[view="tabs"] > div[role="tablist"] { padding-inline: 0; }
+#toolbar > .smartbrowser-editor-tools { margin-inline-start: auto; flex: 0 0 auto; }
+.com-smartbrowser-editor[data-resource-type="article"] .options-form { min-width: 0; }
+.com-smartbrowser-editor [data-sb-native-media] .control-group[hidden],
+.com-smartbrowser-editor[data-resource-type="category"] .control-group[hidden] { display: none !important; }
+.com-smartbrowser-editor .smartbrowser-editor-link-row.is-link-collection { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) {
+  .com-smartbrowser-editor.is-aligned-editor .options-form .control-group { display: flex; flex-direction: row; align-items: start; }
+  .com-smartbrowser-editor.is-aligned-editor .options-form .control-group > .controls { flex: 1 1 0; min-width: 0; min-inline-size: 0; }
+  .com-smartbrowser-editor.is-aligned-editor .options-form .control-group > .control-label { flex: 0 0 240px; inline-size: 240px; padding: .3rem 1rem .3rem 0; }
+  .com-smartbrowser-editor.is-aligned-editor .col-lg-3 .control-group { flex-direction: column; }
+  .com-smartbrowser-editor.is-aligned-editor .col-lg-3 .control-group > .control-label { flex: 0 0 auto; inline-size: 100%; padding: 0 0 6px; }
+  .com-smartbrowser-editor.is-aligned-editor .col-lg-3 .control-group > .controls { flex: 0 0 auto; inline-size: 100%; }
+  .com-smartbrowser-editor.is-aligned-editor .col-lg-3 .switcher { width: 9rem; max-width: 100%; }
 }
 
 .com-smartbrowser-editor.is-page.container-fluid:has(#smartbrowserEditorTabs[view="tabs"]) {

@@ -28,7 +28,7 @@ class ApiController extends BaseController
             if (!is_array($body['items'] ?? null)) throw new \InvalidArgumentException('Invalid collection.', 400);
             if (!empty($body['referenceItems'])) {
                 $collection = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::class;
-                $entries = $collection::entries($body['items'], ['homogeneous' => !empty($body['homogeneous'])]);
+                $entries = $collection::entries($body['items'], ['homogeneous' => !empty($body['homogeneous']), 'maxSelections' => $body['maxSelections'] ?? 500]);
                 if (($body['operation'] ?? 'resolve') === 'reorder') {
                     if ($this->input->getCmd('mode') === 'readonly') throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
                     $keys = array_map(static fn ($entry) => $collection::key($entry['selection']), $entries);

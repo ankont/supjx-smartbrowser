@@ -81,7 +81,8 @@ $identity = new class {
     public int $id = 0;
     public bool $guest = true;
     public array $levels = [1];
-    public function authorise(...$args) { return false; }
+    public bool $manageMenus = false;
+    public function authorise(...$args) { return $this->manageMenus && $args === ['core.manage', 'com_menus']; }
     public function getAuthorisedViewLevels() { return $this->levels; }
 };
 $tags = [1=>(object)['id'=>1,'published'=>1,'access'=>1,'parent_id'=>0,'title'=>'ROOT','alias'=>'root'],
@@ -141,15 +142,19 @@ try {
     $check(!isset($resource['metadata']['content']) && !$resource['capabilities'], 'Media private metadata leaked');
     $requests=\Joomla\CMS\Http\HttpFactory::$requests;
     $media->getReadableResource('local-images:'.$mediaPath);
-    $check(\Joomla\CMS\Http\HttpFactory::$requests===$requests,'Repeated preparation did not reuse request cache');
-    $_SERVER['SERVER_PORT']='9443'; $denied(fn () => $media->getReadableResource('local-images:'.$mediaPath));
-    $check(\Joomla\CMS\Http\HttpFactory::$requests===$requests,'Untrusted port was contacted');
+    $check($requests === 0 && \Joomla\CMS\Http\HttpFactory::$requests === 0, 'Native resolution performed HTTP verification');
+    $_SERVER['SERVER_PORT']='7080';
+    $check(isset($media->getReadableResource('local-images:'.$mediaPath)['metadata']['url']), 'HTTPS proxy/backend port broke native resolution');
     $_SERVER['SERVER_PORT']='443';
-    foreach ([403,302,404] as $code) { \Joomla\CMS\Http\HttpFactory::$code=$code; $denied(fn () => $media->getReadableResource('local-images:' . $mediaPath)); }
+    foreach ([403,302,404] as $code) {
+        \Joomla\CMS\Http\HttpFactory::$code=$code;
+        $check(isset($media->getReadableResource('local-images:'.$mediaPath)['metadata']['url']), 'Descriptor incorrectly certifies web-server access');
+    }
     \Joomla\CMS\Http\HttpFactory::$code=200;
-    \Joomla\CMS\Http\HttpFactory::$type='text/html'; $denied(fn () => $media->getReadableResource('local-images:' . $mediaPath));
+    \Joomla\CMS\Http\HttpFactory::$type='text/html';
     \Joomla\CMS\Http\HttpFactory::$type='image/png';
-    \Joomla\CMS\Http\HttpFactory::$bytes='denied!'; $denied(fn () => $media->getReadableResource('local-images:' . $mediaPath));
+    \Joomla\CMS\Http\HttpFactory::$bytes='denied!';
+    $check(isset($media->getReadableResource('local-images:'.$mediaPath)['metadata']['url']) && \Joomla\CMS\Http\HttpFactory::$requests === 0, 'Native descriptor fetched HTTP content');
     \Joomla\CMS\Http\HttpFactory::$bytes='fixture';
     \Joomla\Component\Media\Administrator\Model\ApiModel::$provider = new class { public function getUrl($path) { return 'https://site.example/private.png'; } };
     $denied(fn () => $media->getReadableResource('remote-images:' . $mediaPath));
@@ -167,6 +172,17 @@ try {
     $denied(fn () => $tagReader->getReadableResource('tag:2'));
     $menu->items[2]=(object)['id'=>2,'published'=>1,'access'=>1,'parent_id'=>1,'title'=>'Public menu','type'=>'url','link'=>'https://example.org/'];
     $menus = new \SuperSoft\Component\Smartbrowser\Administrator\Adapter\MenuAdapter($app);
+    $canViewMenu = new \ReflectionMethod($menus, 'canView');
+    $guestOnlyItem = (object) ['access'=>9];
+    $check(!$canViewMenu->invoke($menus, $guestOnlyItem), 'Guest inspected restricted menu');
+    $identity->guest=false;
+    $check(!$canViewMenu->invoke($menus, $guestOnlyItem), 'Non-manager inspected restricted menu');
+    $identity->manageMenus=true;
+    $check($canViewMenu->invoke($menus, $guestOnlyItem), 'Menu manager cannot inspect Guest access items');
+    $check(!$identity->authorise('core.edit', 'com_menus.menu.1'), 'Browse permission granted editing');
+    $menu->items[9]=(object)['id'=>9,'published'=>1,'access'=>9,'parent_id'=>1,'title'=>'Guest only','type'=>'url','link'=>'https://example.org/'];
+    $denied(fn () => $menus->getReadableResource('menu-item:9'));
+    $identity->manageMenus=false; $identity->guest=true;
     $check($menus->getReadableResource('menu-item:2')['metadata']['url'] === 'https://example.org/', 'Guest menu failed');
     foreach (['publish_up'=>'future','publish_down'=>'past','access'=>9,'published'=>0] as $key=>$value) {
         $old=$menu->items[2]->$key ?? null; $menu->items[2]->$key=$value;

@@ -589,7 +589,13 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         return implode(' / ', array_values(array_filter([$query['option'] ?? '', $query['view'] ?? '', $query['layout'] ?? ''])));
     }
 
-    private function canView(object $item): bool { return in_array((int) $item->access, $this->app->getIdentity()->getAuthorisedViewLevels(), true); }
+    private function canView(object $item): bool
+    {
+        $identity = $this->app->getIdentity();
+        // Menu managers inspect all access levels; action permissions remain separate.
+        return (!$identity->guest && $identity->authorise('core.manage', 'com_menus'))
+            || in_array((int) $item->access, $identity->getAuthorisedViewLevels(), true);
+    }
     private function canCreate(string $menuType): bool { return $this->app->getIdentity()->authorise('core.create', 'com_menus.menu.' . (int) $this->menu($menuType)->id); }
     private function matchesState(int $state, string $filter): bool { return match ($filter) { 'published' => $state === 1, 'unpublished' => $state === 0, 'trashed' => $state === -2, 'all' => true, default => in_array($state, [0, 1], true) }; }
     private function itemId(string $id): int { return str_starts_with($id, 'menu-item:') ? (int) substr($id, 10) : 0; }

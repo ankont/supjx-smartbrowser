@@ -15,6 +15,7 @@ export function mountCollection(container, configuration = {}) {
   const t = config.translate || (key => window.Joomla?.Text?._(key, key) || key);
   const api = new ResourceApi({ ...config, mode: config.readOnly ? 'readonly' : 'manage' });
   let destroyed = false;
+  const toolbarButtons = new Map();
   const notify = detail => {
     if (destroyed) return;
     target.dispatchEvent(new CustomEvent('smartbrowser:collection-change', { detail, bubbles: true }));
@@ -30,8 +31,25 @@ export function mountCollection(container, configuration = {}) {
     setItems: items => model.setItems(items),
     addItems: items => model.addItems(items),
     refresh: () => model.refresh(),
+    addToolbarButton(button) {
+      if (destroyed || !(button instanceof HTMLElement) || !button.matches('button, [role="button"]')) throw new TypeError('A toolbar button element is required.');
+      if (!toolbarButtons.has(button)) {
+        const marker = document.createComment('SmartBrowser toolbar button');
+        button.before(marker);
+        toolbarButtons.set(button, marker);
+        target.querySelector('.sb-collection-extra-buttons').append(button);
+      }
+      return () => {
+        const marker = toolbarButtons.get(button);
+        if (!marker) return;
+        marker.replaceWith(button);
+        toolbarButtons.delete(button);
+      };
+    },
     destroy() {
       if (destroyed) return;
+      toolbarButtons.forEach((marker, button) => marker.replaceWith(button));
+      toolbarButtons.clear();
       destroyed = true; model.destroy(); app.unmount(); mounted.delete(target);
     },
   };
