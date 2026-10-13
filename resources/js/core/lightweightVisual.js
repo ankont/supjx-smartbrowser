@@ -12,3 +12,10 @@ export function lightweightImage(resource) {
   return resource.thumbnail || resource.metadata?.thumbnail || resource.metadata?.poster || resource.image
     || (resource.type === 'image' ? resource.metadata?.url : '') || '';
 }
+
+export async function resolveThumbnail(definition, value, resolveReference) {
+  const resource = await resolveReference(value, definition.picker);
+  if (!resource || resource.unavailable || resource.selectable === false || !lightweightImage(resource)
+    || definition.picker?.allowedResourceTypes?.length && !definition.picker.allowedResourceTypes.includes(resource.type)) throw new Error('COM_SMARTBROWSER_USAGE_INVALID');
+  return lightweightImage(resource);
+}

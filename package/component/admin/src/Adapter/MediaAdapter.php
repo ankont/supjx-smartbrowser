@@ -224,8 +224,8 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             $this->action('preview', 'COM_SMARTBROWSER_ACTION_PREVIEW', 'fas fa-eye', 'item', false, true, true, true),
             $canEdit ? $this->action('rename', 'COM_SMARTBROWSER_RENAME', 'fa fa-i-cursor', 'resource', false, true, true) : null,
             $canDelete ? $this->action('delete', 'JACTION_DELETE', 'fas fa-trash', 'selection', false, true) : null,
-            $this->action('download', 'COM_SMARTBROWSER_ACTION_DOWNLOAD', 'fas fa-download', 'item', false, true, false, true),
-            $this->action('share', 'COM_SMARTBROWSER_ACTION_SHARE', 'fas fa-share-alt', 'item', false, true, false, true),
+            $this->action('download', 'COM_SMARTBROWSER_ACTION_DOWNLOAD', 'fas fa-download', 'item', false, true, true, true),
+            $this->action('share', 'COM_SMARTBROWSER_ACTION_SHARE', 'fas fa-share-alt', 'item', false, true, true, true),
         ]));
     }
 

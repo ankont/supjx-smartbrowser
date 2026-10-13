@@ -60,6 +60,15 @@ $check(count($adapter->getRoots())===5,'Node count changed');
 $check(DirectLinkUri::webAddress('https://example.com/site/page?a=1&b=2', 'auto', 'https://example.com/site/') === '/site/page?a=1&b=2', 'Internal auto conversion');
 $check(DirectLinkUri::webAddress('page#part', 'absolute', 'https://example.com/site/') === 'https://example.com/site/page#part', 'Absolute conversion');
 $check(DirectLinkUri::webAddress('https://external.example/page', 'auto', 'https://example.com/') === 'https://external.example/page', 'External destination changed');
+$check(DirectLinkUri::webAddress('www.sch.gr/page?q=1#part', 'absolute', 'https://example.com/') === 'https://www.sch.gr/page?q=1#part', 'External website missing scheme was not completed');
+foreach (['www.sch.gr', 'sch.gr/path?q=1#part', 'example.com:8443/page'] as $website) {
+    $check(DirectLinkUri::webAddress($website, 'auto', 'https://local.example/') === DirectLinkUri::normalize('web', 'https://' . $website), 'Automatic website completion failed');
+}
+foreach (['index.php?option=com_content', 'contact.html', 'document.pdf', 'images/photo.png', '/contact', '?id=42'] as $relative) {
+    $resolved = DirectLinkUri::webAddress($relative, 'auto', 'https://local.example/');
+    $check(!str_contains($resolved, '://'), 'Automatic completion changed a relative address into a website');
+}
+$check(DirectLinkUri::webAddress('sch.gr/path', 'relative', 'https://local.example/') === '/sch.gr/path', 'Relative mode must not infer a scheme');
 $check(DirectLinkUri::webAddress('https://external.example/', 'relative', 'https://example.com/') === '/', 'Explicit relative conversion failed');
 $check(DirectLinkUri::webAddress('https://external.example/Page?a=1&b=2#part', 'relative', 'https://example.com/') === '/Page?a=1&b=2#part', 'Relative conversion lost URI data');
 $check(DirectLinkUri::webAddress('https://localhost:8089/', 'auto', 'http://localhost:8089/') === '/', 'Same local site was not recognized across schemes');

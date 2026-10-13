@@ -10,9 +10,11 @@
 <script setup>
 import { computed, inject, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue';
 import { resolveResourceVisual } from '../core/resourceVisual.js';
-import { allocateVisualId, visualStyleRegistry } from '../core/visualStyleVariables.js';
+import { allocateVisualId, informationVisualLayers, visualStyleRegistry } from '../core/visualStyleVariables.js';
 const visualId = allocateVisualId();
-const props = defineProps({ resource: Object, settings: Object, background: String, availableAssets: Object, variant: { type: String, default: 'grid' }, allowImage: { type: Boolean, default: true }, open: Boolean, alignBaseStart: Boolean });
+const props = defineProps({ resource: Object, settings: Object, background: String, availableAssets: Object, variant: { type: String, default: 'grid' }, allowImage: { type: Boolean, default: true }, open: Boolean, alignBaseStart: Boolean, fitContent: Boolean });
+const fitContent = computed(() => props.fitContent);
+const extent = ref({ width: 180, height: 180 });
 const options = inject('smartBrowserOptions', {});
 const failedImage = ref(null), dimensions = ref({ url: '', ratio: 1 }), surface = ref(null), side = ref(props.variant === 'compact' ? 18 : 180);
 const iconRatios = ref({}), observedIcons = new Set();
@@ -25,7 +27,10 @@ onMounted(() => {
   syncVariables();
   observer = new ResizeObserver((entries) => {
     for (const entry of entries) {
-      if (entry.target === surface.value) side.value = Math.min(entry.contentRect.width, entry.contentRect.height);
+      if (entry.target === surface.value) {
+        side.value = Math.min(entry.contentRect.width, entry.contentRect.height);
+        extent.value = { width: entry.contentRect.width, height: entry.contentRect.height };
+      }
       else if (entry.contentRect.width && entry.contentRect.height) {
         const icon = entry.target.dataset.visualIcon, ratio = Math.round(entry.contentRect.width / entry.contentRect.height * 100) / 100;
         if (Math.abs((iconRatios.value[icon] || 0) - ratio) > .001) iconRatios.value = { ...iconRatios.value, [icon]: ratio };
@@ -48,6 +53,10 @@ const visual = computed(() => resolveResourceVisual(props.resource, {
   imageFailed: Boolean(props.resource.image && failedImage.value === props.resource.image),
   imageRatio: crop.value?.ratio || (dimensions.value.url === props.resource.image ? dimensions.value.ratio : 1),
 }));
-const syncVariables = () => visualStyleRegistry().update(visualId, visual.value.layers.map(layer => ({ ...layer, crop: layer.src ? crop.value : null })), side.value);
-watch([visual, side], () => { if (surface.value) syncVariables(); }, { flush: 'post' });
+const syncVariables = () => {
+  const fitted = fitContent.value ? informationVisualLayers(visual.value.layers, extent.value.width) : { layers: visual.value.layers, side: side.value };
+  // Font sizing follows physical layer height, independently of the rectangular host.
+  visualStyleRegistry().update(visualId, fitted.layers.map(layer => ({ ...layer, crop: layer.src ? crop.value : null })), fitContent.value ? fitted.height : fitted.side, fitContent.value ? fitted.height : undefined);
+};
+watch([visual, side, extent, fitContent], () => { if (surface.value) syncVariables(); }, { flush: 'post' });
 </script>

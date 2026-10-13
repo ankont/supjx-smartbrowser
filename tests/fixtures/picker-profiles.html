@@ -23,6 +23,10 @@
 <div id="smartbrowser-app" class="smartbrowser"></div>
 <script>
 const labels = {
+  COM_SMARTBROWSER_COLLECTION_REPLACE: 'Replace', COM_SMARTBROWSER_COLLECTION_ADD: 'Add', COM_SMARTBROWSER_SELECT_RESOURCE: 'Select resource', COM_SMARTBROWSER_SELECTION_PATH: 'Path / identifier', COM_SMARTBROWSER_TYPE: 'Type', COM_SMARTBROWSER_STATUS: 'Status', COM_SMARTBROWSER_COPY_PATH: 'Copy path', COM_SMARTBROWSER_SELECTION_INFO_EMPTY: 'Select an entry to see its information.', COM_SMARTBROWSER_PREVIEW_UNAVAILABLE: 'No content preview available.', COM_SMARTBROWSER_SELECT_THUMBNAIL: 'Select thumbnail', COM_SMARTBROWSER_USE_THUMBNAIL: 'Use as thumbnail', COM_SMARTBROWSER_ADAPTER_MEDIA: 'Files & Media', COM_SMARTBROWSER_ADAPTER_ARTICLES: 'Articles',
+  COM_SMARTBROWSER_GRID: 'Grid', COM_SMARTBROWSER_DETAILS: 'List', COM_SMARTBROWSER_TOGGLE_INFO: 'Toggle information', JCANCEL: 'Cancel', JYES: 'Yes', JNO: 'No',
+  COM_SMARTBROWSER_USAGE_CHANGE_THUMBNAIL: 'Change thumbnail', COM_SMARTBROWSER_USAGE_ADD_THUMBNAIL: 'Add thumbnail', COM_SMARTBROWSER_USAGE_CLEAR: 'Clear',
+  COM_SMARTBROWSER_URI: 'URI',
   PLG_FIELDS_SMARTBROWSERPICKER_EDIT: 'Change selection / usage', PLG_FIELDS_SMARTBROWSERPICKER_SELECT: 'Select resources', PLG_FIELDS_SMARTBROWSERPICKER_CLEAR: 'Clear selection', PLG_FIELDS_SMARTBROWSERPICKER_INVALID: 'Invalid field selection',
   COM_SMARTBROWSER_COLLECTION_TITLE: 'Selected resources', COM_SMARTBROWSER_COLLECTION_REMOVE: 'Remove', COM_SMARTBROWSER_COLLECTION_EMPTY: 'No resources selected', COM_SMARTBROWSER_ACTIONS: 'Actions', COM_SMARTBROWSER_NAME: 'Name', COM_SMARTBROWSER_LOADING: 'Loading',
   COM_SMARTBROWSER_USAGE_ALT: 'Alternative text', COM_SMARTBROWSER_USAGE_DECORATIVE: 'Decorative image', COM_SMARTBROWSER_USAGE_LOADING: 'Loading',
@@ -45,7 +49,7 @@ const resources = [
   { id: 'local-images:/report.pdf', title: 'Report PDF', kind: 'item', type: 'document', icon: 'fas fa-file-pdf', selectable: true, metadata: { mimeType: 'application/pdf' }, selectionCapabilities: [{ key: 'visual.thumbnailOverride', type: 'resource', editor: 'resource', visualRole: 'thumbnail', label: 'COM_SMARTBROWSER_USAGE_THUMBNAIL', default: null, picker: { adapter: 'media', allowedResourceTypes: ['image'], selectionTarget: 'item' } }] },
   { id: 'article:1', title: 'Article', kind: 'item', type: 'article', icon: 'fas fa-newspaper', selectable: true, metadata: {}, selectionCapabilities: [{ key: 'example.label', type: 'string', editor: 'example.label', label: 'Display label', default: '' }] },
 ];
-window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'Media', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'Articles', icon: 'fas fa-book-open' }], application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
+window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'COM_SMARTBROWSER_ADAPTER_MEDIA', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'COM_SMARTBROWSER_ADAPTER_ARTICLES', icon: 'fas fa-book-open' }], application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
   allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
 window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; document.body.prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
   request(config) {
@@ -70,7 +74,7 @@ if (params.get('view') === 'browser') {
   await import('/package/component/media/js/smartbrowser.js');
 } else if (params.has('fieldFixture')) {
   document.getElementById('host').remove(); document.getElementById('smartbrowser-app').remove();
-  const form = document.createElement('form'); form.style.cssText = 'padding:20px;max-width:860px;margin:auto';
+  const form = document.createElement('form'); form.style.cssText = 'padding:20px;width:100%;max-width:860px;margin:auto';
   const profile = { 'media.alt': {}, 'media.decorative': {}, 'media.loading': {}, 'visual.thumbnailOverride': {} };
   const scenarios = [
     ['Image compact', 'media', false, 'compact', ['local-images:/a.png'], { 'local-images:/a.png': { 'media.alt': 'Stored alternative text' } }],
@@ -82,7 +86,7 @@ if (params.get('view') === 'browser') {
     const heading = document.createElement('h3'); heading.textContent = title; form.append(heading);
     const field = document.createElement('div'); field.className = 'sb-selection-field';
     field.dataset.sbField = JSON.stringify({ adapter, allowedAdapters: adapter === 'articles' || multiple ? ['articles', 'media'] : [adapter], multiple, editorDisplay, ordering: multiple, selectionTarget: 'item', readOnly: false,
-      selectionProfile: adapter === 'articles' ? {} : profile, apiBaseUrl: location.origin + '/index.php', pickerUrl: location.origin + '/index.php', csrfToken: 'test' });
+      selectionUseData: params.get('usageMode') || 'readonly', informationPanelPosition: params.get('panelPosition') || 'auto', selectionProfile: adapter === 'articles' ? {} : profile, apiBaseUrl: location.origin + '/index.php', pickerUrl: location.origin + '/index.php', csrfToken: 'test' });
     field.innerHTML = '<input type="hidden" data-sb-value><div data-sb-collection></div><p data-sb-error hidden></p><div class="sb-selection-field-controls"><button type="button" class="btn btn-outline-primary" data-sb-select>Select resources</button><button type="button" class="btn btn-outline-secondary" data-sb-clear>Clear</button></div>';
     field.querySelector('input').value = JSON.stringify({ version: 1, items: ids.map(id => ({ selection: { adapter, id }, usage: usage[id] || {} })) }); form.append(field);
     const debug = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Stored value'; debug.append(summary);

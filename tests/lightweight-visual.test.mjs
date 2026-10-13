@@ -45,7 +45,7 @@ test('Info visual stays separate from card/full preview and uses the existing di
   assert.ok(visual.includes('initialSelection:'));
   assert.ok(visual.includes('fas fa-eye'));
   assert.ok(visual.includes("props.editable ? thumbnailDefinitions.value.filter(definition => definition.presentation !== 'hidden') : []"));
-  assert.ok(info.includes(':editable="tab === \'usage\'"'));
+  assert.ok(info.includes(':editable="selectionOnly ? usageMode === \'editable\' : tab === \'usage\'"'));
   assert.ok(info.includes("available ? preferredTab.value : 'info'"));
   assert.ok(info.includes("selectTab('info')"));
   assert.ok(visual.indexOf('  </div>') < visual.indexOf('class="resource-lightweight-actions'), 'Actions are outside the image surface');
@@ -55,7 +55,7 @@ test('Info visual stays separate from card/full preview and uses the existing di
   assert.ok(general.includes('height: 150px'));
   assert.ok(!/(?:^|;)\s*width:/.test(general));
   assert.ok(general.includes('background: transparent'));
-  assert.match(css, /\.resource-lightweight-preview-action \{ inset-inline-start: 4px; inset-inline-end: auto;/);
+  assert.match(css, /\.resource-lightweight-preview-action \{ top: 4px; inset-inline-start: 4px; inset-inline-end: auto;/);
   assert.match(css, /\.resource-info-panel\.showing-usage \.resource-lightweight-visual \{[^}]*width: 144px; height: 112px/);
 });
 

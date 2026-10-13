@@ -12,3 +12,9 @@ export const fieldIcons = {
 export const iconForField = (field) => field.icon || field.headerIcon
   || fieldIcons[field.id || String(field.source || '').split('.').pop()]
   || (field.format === 'date' ? 'fas fa-calendar' : 'fas fa-info');
+
+export const iconForUsage = definition => definition.icon || ({
+  'media.caption': 'fas fa-comment', 'media.class': 'fas fa-code', 'media.alt': 'fas fa-font',
+  'media.decorative': 'fas fa-image', 'media.loading': 'fas fa-clock',
+  'link.text': 'fas fa-font', 'link.target': 'fas fa-external-link-alt',
+}[definition.key]) || 'fas fa-info';

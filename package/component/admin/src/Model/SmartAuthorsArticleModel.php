@@ -12,6 +12,12 @@ final class SmartAuthorsArticleModel extends ArticleModel
 {
     private ?int $targetState = null;
 
+    protected function getReorderConditions($table)
+    {
+        $conditions = parent::getReorderConditions($table);
+        return is_array($conditions) ? implode(' AND ', $conditions) : $conditions;
+    }
+
     public function publish(&$pks, $value = 1)
     {
         $this->targetState = (int) $value;

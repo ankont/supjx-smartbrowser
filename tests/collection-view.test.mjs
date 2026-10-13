@@ -7,6 +7,18 @@ const resource = id => ({ id, title: id, kind: 'item', type: 'article', metadata
 const result = ids => ({ identifiers: ids, resources: ids.map(resource), actions: [], presentation: {} });
 const model = (options = {}, api = { collection: async ids => result(ids) }, notify = () => {}) => createCollectionState({ config: { adapter: 'articles', items: ['article:2', 'article:1'], ...options }, api, notify });
 
+test('external preview actions can update the displayed address', async () => {
+  const source = await readFile(new URL('../resources/js/components/CollectionView.vue', import.meta.url), 'utf8');
+  const callback = source.match(/setAddress: (\(value\) => \{ props\.config\.nativeAddress = String\(value \|\| ''\); \})/);
+  assert.ok(callback, 'preview context exposes setAddress');
+  const props = { config: { nativeAddress: 'original' } };
+  const setAddress = new Function('props', `return (${callback[1]});`)(props);
+  setAddress('images/cropped.png');
+  assert.equal(props.config.nativeAddress, 'images/cropped.png');
+  setAddress(null);
+  assert.equal(props.config.nativeAddress, '');
+});
+
 test('collections reuse browser selection, preserve host order and isolate instances', async () => {
   const changes = [], a = model({}, undefined, detail => changes.push(detail));
   const b = model({ adapter: 'media', items: ['local-images:/one.png'] });
@@ -88,6 +100,7 @@ test('public embedded API has no browser mount or singleton instance assumptions
   assert.match(source, /new WeakMap/); assert.match(source, /export function mountCollection/);
   for (const method of ['setItems', 'getItems', 'refresh', 'destroy']) assert.match(source, new RegExp(method));
   assert.match(source, /smartbrowser:collection-change/);
-  assert.doesNotMatch(view, /ResourceTree|ResourceBreadcrumb|browseRoot/);
+  assert.doesNotMatch(view, /ResourceTree|ResourceBreadcrumb/);
+  assert.match(view, /resolveReference/); // Resolving a preview reference is not browsing.
   for (const component of ['ResourceGrid', 'ResourceDetails', 'ResourceOrderingControls']) assert.match(view, new RegExp(component));
 });

@@ -62,7 +62,7 @@ final class DirectLinksAdapter implements ResourceAdapterInterface, ReadableReso
         return ResourceDescriptor::complete(['id'=>$id,'title'=>$title,'subtitle'=>$uri,'kind'=>'item','type'=>'uri',
             'uniquenessId'=>explode('.', $id, 2)[0],
             'selectionCapabilities' => [
-                ['key'=>'link.text', 'type'=>'string', 'editor'=>'text', 'label'=>'COM_CONTENT_FIELD_URLA_LINK_TEXT_LABEL', 'default'=>'', 'validation'=>['maxLength'=>2048]],
+                ['key'=>'link.text', 'type'=>'string', 'editor'=>'text', 'label'=>'COM_SMARTBROWSER_LINK_TEXT', 'default'=>'', 'validation'=>['maxLength'=>2048]],
                 ['key'=>'link.target', 'type'=>'string', 'editor'=>'select', 'label'=>'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'default'=>'', 'options'=>[
                     ['value'=>'', 'label'=>'JGLOBAL_USE_GLOBAL'], ['value'=>'0', 'label'=>'JBROWSERTARGET_PARENT'], ['value'=>'1', 'label'=>'JBROWSERTARGET_NEW'],
                     ['value'=>'2', 'label'=>'JBROWSERTARGET_POPUP'], ['value'=>'3', 'label'=>'JBROWSERTARGET_MODAL']]],
@@ -109,7 +109,7 @@ final class DirectLinksAdapter implements ResourceAdapterInterface, ReadableReso
             if ($type==='tel') $value=preg_replace('/^tel:/','',$value);
             if ($type==='fragment') $value=rawurldecode(ltrim($value,'#'));
             $fields=[['name'=>'value','label'=>'COM_SMARTBROWSER_LINK_'.strtoupper($type),'type'=>'text','value'=>$value,'required'=>true,'maxlength'=>1400]];
-            if ($type === 'web') $fields[0]['warningPattern']='\\s|^(?!(?:https?://|/|\\?|\\.))';
+            if ($type === 'web') $fields[0]['warningPattern']='\\s';
             if ($type === 'tel') $fields[]=['name'=>'countryPrefix','type'=>'hidden','contextValue'=>'phoneCountryPrefix','value'=>''];
             if ($type === 'fragment') $fields[0]['suggestions'] = 'anchors';
             if ($type === 'web') $fields[] = ['name'=>'addressMode','label'=>'COM_SMARTBROWSER_LINK_ADDRESS_MODE','type'=>'segmented','value'=>'auto', 'options'=>array_map(static fn ($mode) => ['value'=>$mode,'label'=>'COM_SMARTBROWSER_LINK_MODE_'.strtoupper($mode)], ['auto','absolute','relative'])];

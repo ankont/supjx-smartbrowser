@@ -107,6 +107,29 @@ test('profile usage envelope preserves identity and removes listeners on native 
   assert.equal(f.picker.context(instance, dialog.frame.contentWindow), null);
 });
 
+test('late preview actions notify external controls and open Picker contexts with removable subscriptions', () => {
+  const f = fixture();
+  const externalUpdates = [], pickerUpdates = [];
+  const unsubscribe = f.picker.subscribePreviewActions(actions => externalUpdates.push(actions.map(action => action.id)));
+  f.picker.open();
+  const dialog = f.dialogs[0];
+  const context = f.picker.context(f.id(dialog), dialog.frame.contentWindow);
+  const unsubscribePicker = context.subscribePreviewActions(actions => pickerUpdates.push(actions.map(action => action.id)));
+  const remove = f.picker.registerPreviewAction({ id: 'example.late', run() {} });
+  assert.deepEqual(externalUpdates.map(ids => [...ids]), [['example.late']]);
+  assert.deepEqual(pickerUpdates.map(ids => [...ids]), [['example.late']]);
+  remove();
+  assert.equal(externalUpdates[1].length, 0);
+  assert.equal(pickerUpdates[1].length, 0);
+  remove();
+  assert.equal(externalUpdates.length, 2);
+  unsubscribe(); unsubscribePicker();
+  f.picker.registerPreviewAction({ id: 'example.after', run() {} });
+  assert.equal(externalUpdates.length, 2);
+  assert.equal(pickerUpdates.length, 2);
+  dialog.dismiss();
+});
+
 test('custom editor and preview action registrations are generic and removable', () => {
   const f = fixture();
   const unEditor = f.picker.registerUsageEditor('example.editor', { mount() {}, validate() {} });

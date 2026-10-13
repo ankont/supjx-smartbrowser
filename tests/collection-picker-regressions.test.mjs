@@ -29,7 +29,8 @@ test('optional generic Add command is in the collection toolbar before Remove, i
 });
 test('collection count is a footer, while Picker has one actionable summary with colon and no duplicate count', () => {
   const view = read('resources/js/components/CollectionView.vue');
-  assert.ok(view.includes('<footer v-if="config.showCount !== false"'));
+  assert.ok(view.includes('<footer v-if="config.showCount !== false && !collapsible"'));
+  assert.ok(view.indexOf('sb-collection-count-toggle') < view.indexOf('sb-collection-toolbar'));
   assert.ok(view.indexOf('<footer') > view.indexOf('<component v-else'));
   const app = read('resources/js/components/SmartBrowserApp.vue');
   assert.ok(app.includes('showCount: false'));

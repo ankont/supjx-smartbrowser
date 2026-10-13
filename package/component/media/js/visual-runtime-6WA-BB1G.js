@@ -3297,13 +3297,31 @@ var Q = [
 	"base",
 	"identity",
 	"image"
-], ns = 0, rs, is = () => `sbv${++ns}`, $ = (e) => Number.isFinite(e) ? Math.round(e * 1e3) / 1e3 : 0, as = (e, t, n) => {
+], ns = 0, rs, is = () => `sbv${++ns}`, $ = (e) => Number.isFinite(e) ? Math.round(e * 1e3) / 1e3 : 0, as = (e, t, n = 180) => {
+	let r = e.find((e) => e.src), i = Math.max(26, ...e.filter((e) => !e.src).map((e) => n * e.box.height / 100)), a = Math.min(n, t) / 100, o = (e) => r && e.style === "badge" && (e.anchor === "image" || e.anchor === (r.style === "center" ? "center" : `${r.style}:${r.position}`)), s = r ? Math.max(0, ...e.filter(o).map((e) => Math.max(r.box.y - e.box.y, e.box.y + e.box.height - r.box.y - r.box.height) * a)) : 0, c = Math.max(i, r ? Math.max(Math.min(n, t) * Math.min(1, r.box.height / r.box.width), r.box.height * a + s * 2) : Math.min(n, t));
+	return {
+		height: c,
+		layers: e.map((e) => {
+			let i = e.box, s = i.width * a, l = i.height * a, u = Math.min(t, n), d = e.src ? (t - s) / 2 : (t - u) / 2 + i.x / Math.max(1, 100 - i.width) * Math.max(0, u - s), f = e.src ? (c - l) / 2 : o(e) ? (c - r.box.height * a) / 2 + (i.y - r.box.y) * a : i.y / Math.max(1, 100 - i.height) * Math.max(0, c - l);
+			return {
+				...e,
+				fontHeight: e.src ? void 0 : n * i.height / 100,
+				box: {
+					x: d / t * 100,
+					y: f / c * 100,
+					width: s / t * 100,
+					height: l / c * 100
+				}
+			};
+		})
+	};
+}, os = (e, t, n) => {
 	if (!/^sbv\d+$/.test(e)) throw Error("Invalid visual style ID");
 	return t.filter((e) => ts.includes(e.asset)).map((t) => {
-		let r = t.box, i = n * r.height / 100 * (t.style === "badge" ? .65 : 1);
+		let r = t.box, i = (t.fontHeight ?? n * r.height / 100) * (t.style === "badge" ? .65 : 1);
 		return t.crop ? `[data-sb-visual="${e}"] > .asset-${t.asset} { --sb-visual-x: ${$(r.x)}%; --sb-visual-y: ${$(r.y)}%; --sb-visual-width: ${$(r.width)}%; --sb-visual-height: ${$(r.height)}%; --sb-visual-level: ${$(t.z)}; --sb-visual-font-size: ${$(i)}px; --sb-crop-x: ${$(t.crop.x)}%; --sb-crop-y: ${$(t.crop.y)}%; --sb-crop-width: ${$(t.crop.width)}%; --sb-crop-height: ${$(t.crop.height)}%; }` : `[data-sb-visual="${e}"] > .asset-${t.asset} { --sb-visual-x: ${$(r.x)}%; --sb-visual-y: ${$(r.y)}%; --sb-visual-width: ${$(r.width)}%; --sb-visual-height: ${$(r.height)}%; --sb-visual-level: ${$(t.z)}; --sb-visual-font-size: ${$(i)}px; }`;
 	}).join("\n");
-}, os = (e) => {
+}, ss = (e) => {
 	let t = /* @__PURE__ */ new Map(), n, r = !1, i = () => {
 		r || (r = !0, queueMicrotask(() => {
 			if (r = !1, !t.size) {
@@ -3314,15 +3332,15 @@ var Q = [
 		}));
 	};
 	return {
-		update(e, n, r) {
-			let a = as(e, n, r);
-			t.get(e) !== a && (t.set(e, a), i());
+		update(e, n, r, a) {
+			let o = os(e, n, r) + (a === void 0 ? "" : `\n[data-sb-visual="${e}"] { position: relative; inset: auto; width: 100%; height: ${$(a)}px; }`);
+			t.get(e) !== o && (t.set(e, o), i());
 		},
 		remove(e) {
 			t.delete(e) && i();
 		}
 	};
-}, ss = () => rs ||= os(document), cs = ["data-sb-visual"], ls = ["src"], us = ["data-visual-icon"], ds = {
+}, cs = () => rs ||= ss(document), ls = ["data-sb-visual"], us = ["src"], ds = ["data-visual-icon"], fs = {
 	__name: "ResourceVisual",
 	props: {
 		resource: Object,
@@ -3338,84 +3356,102 @@ var Q = [
 			default: !0
 		},
 		open: Boolean,
-		alignBaseStart: Boolean
+		alignBaseStart: Boolean,
+		fitContent: Boolean
 	},
 	setup(e) {
-		let t = is(), n = e, r = kn("smartBrowserOptions", {}), i = /* @__PURE__ */ Gt(null), a = /* @__PURE__ */ Gt({
+		let t = is(), n = e, r = ya(() => n.fitContent), i = /* @__PURE__ */ Gt({
+			width: 180,
+			height: 180
+		}), a = kn("smartBrowserOptions", {}), o = /* @__PURE__ */ Gt(null), s = /* @__PURE__ */ Gt({
 			url: "",
 			ratio: 1
-		}), o = /* @__PURE__ */ Gt(null), s = /* @__PURE__ */ Gt(n.variant === "compact" ? 18 : 180), c = /* @__PURE__ */ Gt({}), l = /* @__PURE__ */ new Set(), u, d = () => {
-			for (let e of l) o.value.contains(e) || (u.unobserve(e), l.delete(e));
-			for (let e of o.value.querySelectorAll("[data-visual-icon]")) l.has(e) || (u.observe(e), l.add(e));
+		}), c = /* @__PURE__ */ Gt(null), l = /* @__PURE__ */ Gt(n.variant === "compact" ? 18 : 180), u = /* @__PURE__ */ Gt({}), d = /* @__PURE__ */ new Set(), f, p = () => {
+			for (let e of d) c.value.contains(e) || (f.unobserve(e), d.delete(e));
+			for (let e of c.value.querySelectorAll("[data-visual-icon]")) d.has(e) || (f.observe(e), d.add(e));
 		};
 		nr(() => {
-			h(), u = new ResizeObserver((e) => {
-				for (let t of e) if (t.target === o.value) s.value = Math.min(t.contentRect.width, t.contentRect.height);
+			_(), f = new ResizeObserver((e) => {
+				for (let t of e) if (t.target === c.value) l.value = Math.min(t.contentRect.width, t.contentRect.height), i.value = {
+					width: t.contentRect.width,
+					height: t.contentRect.height
+				};
 				else if (t.contentRect.width && t.contentRect.height) {
 					let e = t.target.dataset.visualIcon, n = Math.round(t.contentRect.width / t.contentRect.height * 100) / 100;
-					Math.abs((c.value[e] || 0) - n) > .001 && (c.value = {
-						...c.value,
+					Math.abs((u.value[e] || 0) - n) > .001 && (u.value = {
+						...u.value,
 						[e]: n
 					});
 				}
-			}), u.observe(o.value), d();
+			}), f.observe(c.value), p();
 		}), ir(() => {
-			u && d();
+			f && p();
 		}), ar(() => {
-			u?.disconnect(), ss().remove(t);
+			f?.disconnect(), cs().remove(t);
 		});
-		let f = (e) => {
-			a.value = {
+		let m = (e) => {
+			s.value = {
 				url: n.resource.image,
 				ratio: e.target.naturalWidth / e.target.naturalHeight
 			};
-		}, p = ya(() => n.resource.imageCrop?.source === n.resource.image ? n.resource.imageCrop : null), m = ya(() => es(n.resource, {
-			settings: n.settings ?? n.resource.collectionVisualSettings ?? r.visualSettings ?? {},
+		}, h = ya(() => n.resource.imageCrop?.source === n.resource.image ? n.resource.imageCrop : null), g = ya(() => es(n.resource, {
+			settings: n.settings ?? n.resource.collectionVisualSettings ?? a.visualSettings ?? {},
 			allowImage: n.allowImage,
 			open: n.open,
-			background: n.background ?? n.resource.collectionImageBackground ?? r.imageBackground ?? "auto",
+			background: n.background ?? n.resource.collectionImageBackground ?? a.imageBackground ?? "auto",
 			availableAssets: n.availableAssets,
 			compact: n.variant === "compact",
 			alignBaseStart: n.alignBaseStart,
-			iconRatios: c.value,
-			imageFailed: !!(n.resource.image && i.value === n.resource.image),
-			imageRatio: p.value?.ratio || (a.value.url === n.resource.image ? a.value.ratio : 1)
-		})), h = () => ss().update(t, m.value.layers.map((e) => ({
-			...e,
-			crop: e.src ? p.value : null
-		})), s.value);
-		return Mn([m, s], () => {
-			o.value && h();
+			iconRatios: u.value,
+			imageFailed: !!(n.resource.image && o.value === n.resource.image),
+			imageRatio: h.value?.ratio || (s.value.url === n.resource.image ? s.value.ratio : 1)
+		})), _ = () => {
+			let e = r.value ? as(g.value.layers, i.value.width) : {
+				layers: g.value.layers,
+				side: l.value
+			};
+			cs().update(t, e.layers.map((e) => ({
+				...e,
+				crop: e.src ? h.value : null
+			})), r.value ? e.height : e.side, r.value ? e.height : void 0);
+		};
+		return Mn([
+			g,
+			l,
+			i,
+			r
+		], () => {
+			c.value && _();
 		}, { flush: "post" }), (n, r) => (Ni(), Ri("span", {
 			ref_key: "surface",
-			ref: o,
+			ref: c,
 			class: k(["resource-visual-content", `visual-${e.variant}`]),
 			"data-sb-visual": Jt(t),
 			"aria-hidden": "true"
-		}, [(Ni(!0), Ri(G, null, gr(m.value.layers, (t) => (Ni(), Ri("span", {
+		}, [(Ni(!0), Ri(G, null, gr(g.value.layers, (t) => (Ni(), Ri("span", {
 			key: t.asset,
 			class: k(["resource-visual-layer", [
 				`asset-${t.asset}`,
 				`style-${t.style}`,
 				{
 					"resource-node-visual-symbol": t.style === "badge",
-					"has-image-crop": t.src && p.value
+					"has-image-crop": t.src && h.value
 				}
 			]])
 		}, [t.src ? (Ni(), Ri("img", {
 			key: 0,
-			class: k(["resource-visual-image", { "image-background": m.value.background === "checkerboard" }]),
+			class: k(["resource-visual-image", { "image-background": g.value.background === "checkerboard" }]),
 			src: t.src,
 			alt: "",
 			loading: "lazy",
-			onLoad: f,
-			onError: r[0] ||= (t) => i.value = e.resource.image
-		}, null, 42, ls)) : (Ni(), Ri("span", {
+			onLoad: m,
+			onError: r[0] ||= (t) => o.value = e.resource.image
+		}, null, 42, us)) : (Ni(), Ri("span", {
 			key: 1,
 			class: k(["resource-visual-icon", t.icon]),
 			"data-visual-icon": t.icon
-		}, null, 10, us))], 2))), 128))], 10, cs));
+		}, null, 10, ds))], 2))), 128))], 10, ls));
 	}
 };
 //#endregion
-export { ir as A, Gt as B, J as C, mn as D, Qi as E, Mn as F, k as H, Tn as I, En as L, gr as M, _r as N, ar as O, pr as P, Oe as R, Ji as S, kn as T, ue as U, Jt as V, we as W, ya as _, Jo as a, Yi as b, Fo as c, vo as d, ho as f, G as g, To as h, Yo as i, Ni as j, nr as k, jo as l, Do as m, Ho as n, Go as o, Pa as p, qo as r, Io as s, ds as t, go as u, Wi as v, ba as w, Ri as x, zi as y, It as z };
+export { ir as A, Gt as B, J as C, mn as D, Qi as E, Mn as F, k as H, Tn as I, En as L, gr as M, _r as N, ar as O, pr as P, Oe as R, Ji as S, kn as T, ue as U, Jt as V, we as W, ya as _, Jo as a, Yi as b, Fo as c, vo as d, ho as f, G as g, To as h, Yo as i, Ni as j, nr as k, jo as l, Do as m, Ho as n, Go as o, Pa as p, qo as r, Io as s, fs as t, go as u, Wi as v, ba as w, Ri as x, zi as y, It as z };

@@ -1,5 +1,6 @@
 <template>
   <div class="smartbrowser-shell" :style="gridWidthStyle">
+    <div v-if="pickerContext" class="resource-picker-titlebar"><strong>{{ pickerTitle }}</strong><span v-if="pickerContext.subtitle" :title="pickerContext.subtitle">{{ pickerContext.subtitle }}</span></div>
     <div v-if="state.busy" class="smartbrowser-busy" role="status" aria-live="polite">
       <span class="spinner-border" aria-hidden="true" />
       <span>{{ t('COM_SMARTBROWSER_WORKING') }}</span>
@@ -22,6 +23,7 @@
       :selection-mode="options.mode === 'select'"
       :allow-no-user="options.allowNoUser"
       :can-complete="selection.length > 0 && !usageValidating"
+      :confirm-label="pickerContext?.confirmLabel"
       :t="t"
       @action="executeAction($event, selection)"
       @batch="batchDialog?.open()"
@@ -111,7 +113,7 @@
             :focused-id="state.focusedId"
             :all-selected="bulkSelectableResources.length > 0 && bulkSelectableResources.every((resource) => state.selectedIds.includes(resourceKey(resource)))"
             :options="state.viewOptions"
-            :selection-controls="options.mode !== 'select' || options.multiple"
+            :selection-controls="!pickerContext || options.multiple !== false"
             :actions="state.actions"
             :action-available="itemActionAvailable"
             :default-action="resourceDefault"
@@ -217,6 +219,7 @@ const executeAction = async (action, targets) => {
 onBeforeUnmount(() => itemDrivers.forEach(({ api, driver }) => { driver.destroy(); api.destroy(); }));
 let pickerCollection, updatingProjection = false;
 const pickerCollectionConfig = { referenceItems: true, homogeneous: pickerContext?.homogeneous === true, readOnly: false, showCount: false,
+  selectedResources: true, informationPanel: false, multiple: options.multiple,
   items: pickerContext?.getCollectionSnapshot?.().items || [], layout: 'compact', allowRemove: true, allowOrdering: options.multiple && pickerContext?.allowOrdering !== false,
   contextActions: false, resourceActions: [{ id: 'selectionFocus', label: 'COM_SMARTBROWSER_USAGE_OPTIONS', icon: 'fas fa-pen', requiresSelection: true }],
   defaultResourceActionId: 'selectionFocus', apiBaseUrl: options.apiBaseUrl, csrfToken: options.csrfToken, application: options.application,
@@ -279,17 +282,21 @@ if (collectionMode) {
   onBeforeUnmount(() => pickerCollection.destroy());
 }
 const pickerMaximized = ref(pickerContext?.isMaximized?.() || false);
+const pickerTitle = computed(() => {
+  if (pickerContext?.title) return pickerContext.title;
+  const adapter = options.adapters?.find(adapter => adapter.id === options.adapter.replace(/^flat-/, ''));
+  return `${t('COM_SMARTBROWSER_SELECT_RESOURCE')} \u2014 ${t(adapter?.title || 'COM_SMARTBROWSER_RESOURCE')}`;
+});
 const usageRevision = ref(0);
 const usageErrors = ref({});
 const usageValidating = ref(false);
 const usageDefinitions = computed(() => usage.definitions(focusedResource.value).filter(definition => definition.presentation !== 'hidden'));
 const usageValues = computed(() => { usageVersion.value; return usage.get(focusedResource.value); });
-const forceUsageInfo = computed(() => Boolean(pickerContext && usageDefinitions.value.length));
+const forceUsageInfo = computed(() => Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length));
 const hasUsageProfile = Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length);
-const pickerInfoOpen = ref(state.showInfo);
-const showInfo = computed(() => forceUsageInfo.value || (hasUsageProfile ? pickerInfoOpen.value : state.showInfo));
+const pickerInfoOpen = ref(Object.values(pickerContext?.selectionProfile || {}).some(policy => policy !== false && policy?.presentation !== 'hidden') || state.showInfo);
+const showInfo = computed(() => hasUsageProfile ? pickerInfoOpen.value : state.showInfo);
 const toggleInfo = () => {
-  if (forceUsageInfo.value) return;
   if (hasUsageProfile) pickerInfoOpen.value = !pickerInfoOpen.value;
   else state.showInfo = !state.showInfo;
 };
@@ -307,7 +314,10 @@ const previewContext = computed(() => {
     getValues: () => usage.get(resource), setValue: (key, value) => setResourceUsage(resource, key, value),
     refresh: () => load(), selectResource: config => window.SmartBrowserPicker.open(config) };
 });
-const previewActions = computed(() => (pickerContext?.previewActions || []).filter(action => {
+const registeredPreviewActions = ref(pickerContext?.previewActions || []);
+const unsubscribePreviewActions = pickerContext?.subscribePreviewActions?.(actions => { registeredPreviewActions.value = actions; });
+onBeforeUnmount(() => unsubscribePreviewActions?.());
+const previewActions = computed(() => registeredPreviewActions.value.filter(action => {
   try { return focusedResource.value && (!action.applies || action.applies(previewContext.value)); } catch { return false; }
 }));
 let unmounted = false;
@@ -407,7 +417,7 @@ const completeSelection = async (selected) => {
       Joomla.renderMessages({ error: [t('COM_SMARTBROWSER_USAGE_PROFILE_INVALID')] });
     }
     const editableError = Object.keys(result.errors).find(id => Object.keys(result.errors[id]).some(key => !result.profileErrors[id]?.[key]));
-    if (editableError) { state.focusedId = editableError; usageRevision.value++; }
+    if (editableError) { state.focusedId = editableError; usageRevision.value++; if (!showInfo.value) Joomla.renderMessages({ error: [t('COM_SMARTBROWSER_USAGE_INVALID')] }); }
     return;
   }
   const detail = { adapter: options.adapter.replace(/^flat-/, ''), mode: options.mode, resources: [...selected] };

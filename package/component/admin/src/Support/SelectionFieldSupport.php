@@ -33,9 +33,18 @@ final class SelectionFieldSupport
         $anchors = (string) ($params['anchor_suggestions'] ?? 'none');
         if (!in_array($anchors, ['none', 'anchors', 'all'], true)) throw new \InvalidArgumentException('Invalid anchor suggestions.');
         $phonePrefix=trim((string) ($params['phone_country_prefix'] ?? ''));
+        $panelPosition = (string) ($params['information_panel_position'] ?? 'auto');
+        $horizontalPosition = (string) ($params['information_panel_horizontal_position'] ?? (in_array($panelPosition, ['left', 'right'], true) ? $panelPosition : 'right'));
+        $verticalPosition = (string) ($params['information_panel_vertical_position'] ?? (in_array($panelPosition, ['top', 'bottom'], true) ? $panelPosition : 'top'));
+        if (!in_array($horizontalPosition, ['left', 'right'], true) || !in_array($verticalPosition, ['top', 'bottom'], true)) throw new \InvalidArgumentException('Invalid information panel axes.');
+        $usageMode = (string) ($params['selection_use_data'] ?? 'readonly');
+        if (!in_array($panelPosition, ['auto', 'top', 'bottom', 'left', 'right'], true) || !in_array($usageMode, ['hidden', 'readonly', 'editable'], true)) throw new \InvalidArgumentException('Invalid selection presentation.');
         if ($phonePrefix !== '' && !preg_match('/^\+[1-9][0-9]{0,2}$/D', $phonePrefix)) throw new \InvalidArgumentException('Invalid country prefix.');
         return ['adapter' => $adapter, 'allowedAdapters' => $allowed, 'homogeneous' => in_array($params['homogeneous'] ?? '1', [true, 1, '1', 'true'], true), 'browseRoot' => $root, 'multiple' => $multiple, 'ordering' => $multiple && in_array($params['ordering'] ?? '1', [true, 1, '1', 'true'], true),
             'editorDisplay' => $display === 'auto' ? ($multiple ? 'collection' : 'compact') : $display, 'anchorSuggestions' => $anchors, 'phoneCountryPrefix'=>$phonePrefix,
+            'informationPanel' => !in_array($params['information_panel'] ?? '1', [false, 0, '0', 'false'], true), 'informationPanelPosition' => $panelPosition, 'selectionUseData' => $usageMode,
+            'informationPanelHorizontalPosition' => $horizontalPosition, 'informationPanelVerticalPosition' => $verticalPosition,
+            'showLabel' => !in_array($params['show_label'] ?? '1', [false, 0, '0', 'false'], true), 'fullWidth' => in_array($params['full_width'] ?? '0', [true, 1, '1', 'true'], true),
             'selectionTarget' => $target, 'allowedResourceTypes' => $types, 'selectionProfile' => $decoded];
     }
 

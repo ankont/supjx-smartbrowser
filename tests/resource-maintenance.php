@@ -48,7 +48,7 @@ foreach ([[$entry('../escape.jpg')], [$entry('/absolute.jpg')], [$entry('a\\b.jp
     catch (\InvalidArgumentException $error) { check(in_array($error->getCode(), [400,413], true)); }
 }
 echo "Trashed-only native deletion ACL and ZIP path/expansion validation OK\n";
-foreach ([[1,2,3,4,5], [2,3,4,1,5]] as $siblings) {
+foreach ([[1,2,3,4,5], [2,3,4,1,5], [1,2,3,4,5,6]] as $siblings) {
     $selected = [4,2];
     $expected = $siblings; $index = 0;
     foreach ($expected as &$id) if (in_array($id, $selected, true)) $id = $selected[$index++];
@@ -60,4 +60,16 @@ foreach ([[1,2,3,4,5], [2,3,4,1,5]] as $siblings) {
     check($siblings === $expected);
 }
 echo "Native ordering move plans preserve unrelated sibling slots\n";
+foreach ([[4, 2, 1], [5, 3, 1], [6, 2, 4, 1]] as $selected) {
+    $siblings = [1,2,3,4,5,6];
+    $expected = $siblings; $index = 0;
+    foreach ($expected as &$id) if (in_array($id, $selected, true)) $id = $selected[$index++];
+    unset($id);
+    foreach (OrderingSteps::sortPlan($siblings, $selected) as $move) {
+        check(in_array($move['id'], $selected, true));
+        $position = array_search($move['id'], $siblings, true); $next = $position + $move['step'];
+        [$siblings[$position], $siblings[$next]] = [$siblings[$next], $siblings[$position]];
+    }
+    check($siblings === $expected);
+}
 }

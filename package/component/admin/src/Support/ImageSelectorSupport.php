@@ -32,7 +32,7 @@ final class ImageSelectorSupport
             'pickerUrl' => Uri::base() . 'index.php?option=com_smartbrowser&view=browser']);
         $assets = $document->getWebAssetManager();
         $assets->useScript('com_smartbrowser.picker');
-        $assets->registerScript('com_smartbrowser.image-selectors', 'com_smartbrowser/image-selectors.js', [], ['type' => 'module'], ['core', 'com_smartbrowser.picker']);
+        $assets->registerScript('com_smartbrowser.image-selectors', 'com_smartbrowser/image-selectors.js', ['version' => $assets->getAsset('script', 'com_smartbrowser.collection')->getVersion()], ['type' => 'module'], ['core', 'com_smartbrowser.picker']);
         $assets->useScript('com_smartbrowser.image-selectors');
     }
 }

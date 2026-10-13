@@ -1,4 +1,4 @@
-import { computed, effectScope, reactive } from 'vue';
+import { computed, effectScope, reactive, ref } from 'vue';
 import createBrowserState from './createBrowserState.js';
 import { createViewRegistry } from './viewRegistry.js';
 import { collectionEntries, referenceKey, resourceKey } from './selectionIdentity.js';
@@ -20,18 +20,19 @@ export function createCollectionState({ config, api, notify, translate }) {
   let preferredView;
   try { preferredView = window.localStorage.getItem(viewPreferenceKey); } catch {}
   const defaultView = ['grid', 'details'].includes(preferredView) ? preferredView : config.layout === 'compact' ? 'details' : config.layout || 'grid';
-  const options = reactive({ ...config, roots: [], actions: [], multiple: true, selectionTarget: 'both', mode: config.readOnly ? 'readonly' : 'manage', defaultView });
+  const options = reactive({ ...config, roots: [], actions: [], multiple: config.multiple !== false, selectionTarget: 'both', mode: config.readOnly ? 'readonly' : 'manage', defaultView });
   const persistence = { load: defaults => defaults, save(state) {
     try { window.localStorage.setItem(viewPreferenceKey, state.activeView); } catch {}
   } };
   const browser = scope.run(() => createBrowserState({ options, api, persistence, viewRegistry: createViewRegistry().register({ id: 'grid', component: {} }).register({ id: 'details', component: {} }) }));
   const { state } = browser;
   let items = normalize(config.items || []), generation = 0, destroyed = false;
+  const revision = ref(0);
   const editable = !config.readOnly;
   const canRemove = editable && config.allowRemove !== false;
   const canOrder = editable && config.allowOrdering !== false;
   const renderResources = resources => resources.map(resource => ({ ...resource,
-    selectable: editable && (canRemove || canOrder), bulkSelectable: editable && (canRemove || canOrder), focusable: editable,
+    selectable: editable && (canRemove || canOrder), bulkSelectable: editable && (canRemove || canOrder), focusable: true,
     actionable: editable, navigable: false, activatable: false, interactiveOverlays: editable && config.contextActions === true,
     capabilities: { ...resource.capabilities, collectionRemove: canRemove },
   }));
@@ -45,6 +46,7 @@ export function createCollectionState({ config, api, notify, translate }) {
       if (destroyed || request !== generation) return;
       const currentUsage = new Map(referenceItems ? items.map(item => [itemKey(item), item.usage]) : []);
       items = referenceItems ? normalize(result.items).map(item => ({ ...item, usage: currentUsage.get(itemKey(item)) || item.usage })) : [...result.identifiers];
+      revision.value++;
       state.items = renderResources(result.resources);
       state.actions = [...(result.actions || []), ...state.items.flatMap(resource => resource.collectionActions || [])].filter((action, index, all) => all.findIndex(candidate => candidate.id === action.id) === index && action.requiresSelection && !action.currentNode && !['reorder', 'removeFromGroup', 'batch', 'activate', 'select'].includes(action.id));
       state.presentation = result.presentation || {};
@@ -60,6 +62,7 @@ export function createCollectionState({ config, api, notify, translate }) {
     const normalized = normalize(next);
     const sameReferences = referenceItems && normalized.length === items.length && normalized.every((item, index) => itemKey(item) === itemKey(items[index]));
     items = normalized;
+    revision.value++;
     if (sameReferences && state.items.length === items.length && !state.error) return;
     state.selectedIds = []; state.items = []; state.sortBy = 'collectionOrder'; state.sortDirection = 'asc';
     await refresh();
@@ -71,19 +74,21 @@ export function createCollectionState({ config, api, notify, translate }) {
     const next = items.filter(item => !selected.has(itemKey(item)));
     if (next.length === items.length) return;
     items = next;
+    revision.value++;
     state.items = state.items.filter(resource => !selected.has(resourceKey(resource)));
     state.selectedIds = state.selectedIds.filter(id => !selected.has(id));
     emit('remove');
   }
-  async function move(direction) {
-    if (!canOrder || destroyed || state.busy || state.loading || !state.selectedIds.length || !['up', 'down'].includes(direction) || (state.sortBy && state.sortBy !== 'collectionOrder')) return;
+  async function move(direction, selectedIds = state.selectedIds) {
+    if (!canOrder || destroyed || state.busy || state.loading || !selectedIds.length || !['up', 'down'].includes(direction) || (state.sortBy && state.sortBy !== 'collectionOrder')) return;
     const request = ++generation;
     state.busy = true;
     try {
       const canonicalDirection = state.sortDirection === 'desc' ? (direction === 'up' ? 'down' : 'up') : direction;
-      const result = await api.collection(items, { ...(referenceItems ? { referenceItems: true, homogeneous: config.homogeneous === true } : {}), operation: 'reorder', selection: [...state.selectedIds], direction: canonicalDirection });
+      const result = await api.collection(items, { ...(referenceItems ? { referenceItems: true, homogeneous: config.homogeneous === true } : {}), operation: 'reorder', selection: [...selectedIds], direction: canonicalDirection });
       if (destroyed || request !== generation) return;
       items = normalize(result.items);
+      revision.value++;
       const byId = new Map(state.items.map(resource => [resourceKey(resource), resource]));
       state.items = items.map(item => byId.get(itemKey(item))).filter(Boolean);
       emit('reorder');
@@ -94,7 +99,14 @@ export function createCollectionState({ config, api, notify, translate }) {
     if (state.sortBy === 'collectionOrder') return state.sortDirection === 'desc' ? [...state.items].reverse() : state.items;
     return browser.resources.value;
   }));
-  return { options, browser, resources, canRemove, canOrder, refresh, setItems, remove, move,
+  return { options, browser, resources, canRemove, canOrder, refresh, setItems, remove, move, revision,
+    setUsage(resource, usage) {
+      if (!editable || destroyed || !referenceItems || state.loading || state.busy) return;
+      const key = resourceKey(resource);
+      items = items.map(item => itemKey(item) === key ? { ...item, usage: JSON.parse(JSON.stringify(usage)) } : item);
+      revision.value++;
+      emit('usage');
+    },
     getItems: copyItems,
     async addItems(next) { const combined = normalize([...items, ...next]); await setItems(combined); emit('add'); },
     destroy() { destroyed = true; generation++; api.destroy?.(); scope.stop(); },

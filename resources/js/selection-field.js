@@ -8,6 +8,11 @@ export function mountSelectionField(root) {
   const input = root.querySelector('[data-sb-value]');
   const initialValue = input.value;
   const config = JSON.parse(root.dataset.sbField);
+  const row = root.closest('.control-group');
+  const label = row?.querySelector(':scope > .control-label');
+  const labelWasHidden = label?.hidden;
+  if (config.showLabel === false && label) label.hidden = true;
+  if (config.fullWidth === true) row?.classList.add('sb-selection-full-width');
   const adapters = config.allowedAdapters || [config.adapter];
   const t = key => window.Joomla?.Text?._(key, key) || key;
   const message = root.querySelector('[data-sb-error]');
@@ -27,8 +32,9 @@ export function mountSelectionField(root) {
     items: value.items, layout: config.editorDisplay === 'compact' ? 'compact' : 'grid',
     readOnly: config.readOnly, allowOrdering: config.multiple && config.ordering, allowRemove: !config.readOnly, contextActions: false,
     onAdd: () => pick(),
-    resourceActions: [{ id: 'selectionUsageEdit', label: 'PLG_FIELDS_SMARTBROWSERPICKER_EDIT', icon: 'fas fa-pen', requiresSelection: true }],
-    defaultResourceActionId: 'selectionUsageEdit', onResourceAction: (_action, resource) => pick(resource),
+    selectedResources: true, informationPanel: config.informationPanel !== false,
+    onReplace: resource => pick(resource),
+    defaultResourceActionId: 'collectionReplace',
     onChange(detail) {
       value = selectionFieldValue({ version: 1, items: detail.items }, adapters, config.multiple, config.homogeneous);
       persist();
@@ -78,8 +84,9 @@ export function mountSelectionField(root) {
   const clearClick = () => { if (config.readOnly || disposed) return; value = selectionFieldValue('', adapters); persist(); render().catch(showError); };
   const reset = () => setTimeout(() => { if (disposed) return; input.value = initialValue; try { value = selectionFieldValue(input.value, adapters, config.multiple, config.homogeneous); render().catch(showError); showError(null); } catch (error) { showError(error); } }, 0);
   select?.addEventListener('click', selectClick); clear?.addEventListener('click', clearClick); input.form?.addEventListener('reset', reset);
-  const instance = { addToolbarButton: button => collection.addToolbarButton(button), destroy() { if (disposed) return; disposed = true; select?.removeEventListener('click', selectClick); clear?.removeEventListener('click', clearClick); input.form?.removeEventListener('reset', reset); collection.destroy(); mounted.delete(root); } };
+  const instance = { addToolbarButton: button => collection.addToolbarButton(button), attachPreview: element => collection.attachPreview(element), destroy() { if (disposed) return; disposed = true; select?.removeEventListener('click', selectClick); clear?.removeEventListener('click', clearClick); input.form?.removeEventListener('reset', reset); if (label) label.hidden = labelWasHidden; if (config.fullWidth === true) row?.classList.remove('sb-selection-full-width'); collection.destroy(); mounted.delete(root); } };
   mounted.set(root, instance);
+  instance.setNativeAddress = value => collection.setNativeAddress(value);
   instance.setItems = items => {
     if (disposed || config.readOnly) return;
     value = selectionFieldValue({ version: 1, items }, adapters, config.multiple, config.homogeneous);

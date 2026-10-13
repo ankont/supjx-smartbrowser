@@ -14,14 +14,14 @@ final class OrderingSteps
         foreach ($desired as &$id) if (isset($selected[$id])) $id = $orderedSelection[$index++];
         unset($id);
         foreach ($desired as $target => $id) {
-            if (!isset($selected[$id])) continue;
             $position = array_search($id, $siblings, true);
-            while ($position !== $target) {
+            while ($position > $target) {
                 if (count($moves) >= 2000) throw new \InvalidArgumentException('Ordering operation is too large', 413);
-                $step = $position > $target ? -1 : 1;
-                $moves[] = ['id' => $id, 'step' => $step];
-                [$siblings[$position], $siblings[$position + $step]] = [$siblings[$position + $step], $siblings[$position]];
-                $position += $step;
+                // Unselected siblings keep their slots; only selected rows issue native moves.
+                $moves[] = isset($selected[$id]) ? ['id' => $id, 'step' => -1]
+                    : ['id' => $siblings[$position - 1], 'step' => 1];
+                [$siblings[$position], $siblings[$position - 1]] = [$siblings[$position - 1], $siblings[$position]];
+                $position--;
             }
         }
         return $moves;

@@ -1,5 +1,5 @@
-import { r as e, t } from "./visual-runtime-1h24eaHt.js";
-import { mountCollection as n } from "./collection.js";
+import { r as e, t } from "./visual-runtime-1h24eaHt.js?v=3.6.22";
+import { mountCollection as n } from "./collection.js?v=3.6.22";
 //#region resources/js/core/selectionFieldValue.js
 function r(e, n, r = !0, i = !1) {
 	if (e === "" || e == null) return {
@@ -64,55 +64,53 @@ function o(e, t, n = window.Joomla?.editors?.instances) {
 var s = /* @__PURE__ */ new WeakMap();
 function c(e) {
 	if (s.has(e)) return s.get(e);
-	let t = e.querySelector("[data-sb-value]"), a = t.value, c = JSON.parse(e.dataset.sbField), l = c.allowedAdapters || [c.adapter], u = (e) => window.Joomla?.Text?._(e, e) || e, d = e.querySelector("[data-sb-error]"), f = (e) => {
-		d.textContent = e ? u("PLG_FIELDS_SMARTBROWSERPICKER_INVALID") : "", d.hidden = !e;
-	}, p, m = !1, h = !1;
+	let t = e.querySelector("[data-sb-value]"), a = t.value, c = JSON.parse(e.dataset.sbField), l = e.closest(".control-group"), u = l?.querySelector(":scope > .control-label"), d = u?.hidden;
+	c.showLabel === !1 && u && (u.hidden = !0), c.fullWidth === !0 && l?.classList.add("sb-selection-full-width");
+	let f = c.allowedAdapters || [c.adapter], p = (e) => window.Joomla?.Text?._(e, e) || e, m = e.querySelector("[data-sb-error]"), h = (e) => {
+		m.textContent = e ? p("PLG_FIELDS_SMARTBROWSERPICKER_INVALID") : "", m.hidden = !e;
+	}, g, _ = !1, v = !1;
 	try {
-		p = r(t.value, l, c.multiple, c.homogeneous);
+		g = r(t.value, f, c.multiple, c.homogeneous);
 	} catch (e) {
-		p = r("", l), f(e);
+		g = r("", f), h(e);
 	}
-	let g = () => {
-		t.value = p.items.length ? JSON.stringify(p) : "", t.dispatchEvent(new Event("change", { bubbles: !0 })), f(null);
-	}, _, v = async () => _ ? _.setItems(p.items) : (_ = n(e.querySelector("[data-sb-collection]"), {
+	let y = () => {
+		t.value = g.items.length ? JSON.stringify(g) : "", t.dispatchEvent(new Event("change", { bubbles: !0 })), h(null);
+	}, b, x = async () => b ? b.setItems(g.items) : (b = n(e.querySelector("[data-sb-collection]"), {
 		...c,
 		referenceItems: !0,
-		items: p.items,
+		items: g.items,
 		layout: c.editorDisplay === "compact" ? "compact" : "grid",
 		readOnly: c.readOnly,
 		allowOrdering: c.multiple && c.ordering,
 		allowRemove: !c.readOnly,
 		contextActions: !1,
-		onAdd: () => x(),
-		resourceActions: [{
-			id: "selectionUsageEdit",
-			label: "PLG_FIELDS_SMARTBROWSERPICKER_EDIT",
-			icon: "fas fa-pen",
-			requiresSelection: !0
-		}],
-		defaultResourceActionId: "selectionUsageEdit",
-		onResourceAction: (e, t) => x(t),
+		onAdd: () => w(),
+		selectedResources: !0,
+		informationPanel: c.informationPanel !== !1,
+		onReplace: (e) => w(e),
+		defaultResourceActionId: "collectionReplace",
 		onChange(e) {
-			p = r({
+			g = r({
 				version: 1,
 				items: e.items
-			}, l, c.multiple, c.homogeneous), g();
+			}, f, c.multiple, c.homogeneous), y();
 		},
-		onError: f
-	}), _.ready);
-	v().catch(f);
-	let y = e.querySelector("[data-sb-select]"), b = e.querySelector("[data-sb-clear]");
-	async function x(e = null) {
-		if (c.readOnly || h || m) return;
-		h = !0, y && (y.disabled = !0);
-		let n = p;
+		onError: h
+	}), b.ready);
+	x().catch(h);
+	let S = e.querySelector("[data-sb-select]"), C = e.querySelector("[data-sb-clear]");
+	async function w(e = null) {
+		if (c.readOnly || v || _) return;
+		v = !0, S && (S.disabled = !0);
+		let n = g;
 		try {
-			let r = e?.selection.adapter || n.items[0]?.selection.adapter || l[0], a = e ? n.items.find((t) => t.selection.adapter === e.selection.adapter && t.selection.id === e.id) : c.multiple ? null : n.items[0], s = { ...c.selectionProfile };
+			let r = e?.selection.adapter || n.items[0]?.selection.adapter || f[0], a = e ? n.items.find((t) => t.selection.adapter === e.selection.adapter && t.selection.id === e.id) : c.multiple ? null : n.items[0], s = { ...c.selectionProfile };
 			if (c.preserveUsageOnReplace && a) for (let [e, t] of Object.entries(s)) t !== !1 && Object.prototype.hasOwnProperty.call(a.usage, e) && (s[e] = {
 				...typeof t == "object" ? t : {},
 				default: a.usage[e]
 			});
-			let u = await window.SmartBrowserPicker.open({
+			let l = await window.SmartBrowserPicker.open({
 				...c,
 				url: c.pickerUrl,
 				adapter: r,
@@ -126,48 +124,49 @@ function c(e) {
 					phoneCountryPrefix: c.phoneCountryPrefix || ""
 				},
 				browseRoot: r === c.adapter ? c.browseRoot : "",
-				allowedAdapters: l,
+				allowedAdapters: f,
 				homogeneous: c.multiple && c.homogeneous,
 				multiple: !e && c.multiple,
 				resultFormat: "collection",
 				initialNode: e?.parentId || "",
 				initialCollection: e ? n.items.filter((t) => t.selection.adapter === e.selection.adapter && t.selection.id === e.id) : n.items
 			});
-			if (!u || m || n !== p) return;
-			let d = i(n, u, l, c.multiple, e?.selection, c.homogeneous);
-			if (c.maxSelections && d.items.length > c.maxSelections) throw Error("Selection limit exceeded.");
-			p = d, g(), await v();
+			if (!l || _ || n !== g) return;
+			let u = i(n, l, f, c.multiple, e?.selection, c.homogeneous);
+			if (c.maxSelections && u.items.length > c.maxSelections) throw Error("Selection limit exceeded.");
+			g = u, y(), await x();
 		} catch (e) {
-			m || f(e);
+			_ || h(e);
 		} finally {
-			h = !1, y && (y.disabled = c.readOnly);
+			v = !1, S && (S.disabled = c.readOnly);
 		}
 	}
-	let S = () => x(), C = () => {
-		c.readOnly || m || (p = r("", l), g(), v().catch(f));
-	}, w = () => setTimeout(() => {
-		if (!m) {
+	let T = () => w(), E = () => {
+		c.readOnly || _ || (g = r("", f), y(), x().catch(h));
+	}, D = () => setTimeout(() => {
+		if (!_) {
 			t.value = a;
 			try {
-				p = r(t.value, l, c.multiple, c.homogeneous), v().catch(f), f(null);
+				g = r(t.value, f, c.multiple, c.homogeneous), x().catch(h), h(null);
 			} catch (e) {
-				f(e);
+				h(e);
 			}
 		}
 	}, 0);
-	y?.addEventListener("click", S), b?.addEventListener("click", C), t.form?.addEventListener("reset", w);
-	let T = {
-		addToolbarButton: (e) => _.addToolbarButton(e),
+	S?.addEventListener("click", T), C?.addEventListener("click", E), t.form?.addEventListener("reset", D);
+	let O = {
+		addToolbarButton: (e) => b.addToolbarButton(e),
+		attachPreview: (e) => b.attachPreview(e),
 		destroy() {
-			m || (m = !0, y?.removeEventListener("click", S), b?.removeEventListener("click", C), t.form?.removeEventListener("reset", w), _.destroy(), s.delete(e));
+			_ || (_ = !0, S?.removeEventListener("click", T), C?.removeEventListener("click", E), t.form?.removeEventListener("reset", D), u && (u.hidden = d), c.fullWidth === !0 && l?.classList.remove("sb-selection-full-width"), b.destroy(), s.delete(e));
 		}
 	};
-	return s.set(e, T), T.setItems = (e) => {
-		if (!(m || c.readOnly)) return p = r({
+	return s.set(e, O), O.setNativeAddress = (e) => b.setNativeAddress(e), O.setItems = (e) => {
+		if (!(_ || c.readOnly)) return g = r({
 			version: 1,
 			items: e
-		}, l, c.multiple, c.homogeneous), g(), v();
-	}, T;
+		}, f, c.multiple, c.homogeneous), y(), x();
+	}, O;
 }
 var l = (e) => {
 	e.matches?.("[data-sb-field]") && c(e), e.querySelectorAll?.("[data-sb-field]").forEach(c);

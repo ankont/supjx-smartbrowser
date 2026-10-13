@@ -37,12 +37,12 @@ test('image selection retains and refreshes the native preview wrapper', async (
   const selection = { adapter: 'media', id: 'local-files:/images/photo.jpg' };
   const input = { form, value: JSON.stringify({ items: [{ selection }] }), addEventListener: (_, fn) => { change = fn; } };
   const root = { dataset: { sbArticleMedia: JSON.stringify({ group: 'images', role: 'intro' }), sbField: '{}' }, querySelector: () => input };
-  class ResourceApi { async collection() { return { resources: [{ selection }] }; } }
+  class ResourceApi { async collection() { return { resources: [{ selection, id: selection.id }] }; } }
   class CustomEvent extends Event { constructor(type, options) { super(type, options); this.detail = options.detail; } }
   vm.runInNewContext(readFileSync('resources/js/article-media.js', 'utf8').replace(/^import .*;\s*/gm, '').replace(/^export /gm, ''), {
-    mountSelectionField: () => ({ addToolbarButton: button => { if (!toolbarButtons.includes(button)) toolbarButtons.push(button); } }), ResourceApi, JSON, Map, Event, CustomEvent, MutationObserver,
+    mountSelectionField: () => ({ attachPreview: element => assert.equal(element, media), addToolbarButton: button => { if (!toolbarButtons.includes(button)) toolbarButtons.push(button); } }), ResourceApi, JSON, Map, Event, CustomEvent, MutationObserver,
     document: { querySelectorAll: () => [root] },
-    window: { addEventListener() {}, SmartBrowserMediaValue: { format: () => 'images/photo.jpg' } },
+    window: { addEventListener() {}, SmartBrowserMediaValue: { format: () => 'images/photo.jpg', parse: value => ({ resourceId: value.includes('#joomlaImage:') ? selection.id : null }) } },
     Joomla: { renderMessages() {} },
   });
   assert.deepEqual(hidden, names.slice(1), 'The native image control group must remain visible');
@@ -53,9 +53,13 @@ test('image selection retains and refreshes the native preview wrapper', async (
   assert.equal(previews, 1);
   assert.equal(media.validatedUrl, 'images/photo.jpg');
   assert.equal(events[0].detail.value, 'images/photo.jpg');
+  fields.image_intro.value = 'images/photo.jpg#joomlaImage://local-files/images/photo.jpg?crop=custom';
+  await change();
+  assert.equal(media.validatedUrl, fields.image_intro.value, 'Usage edits preserve plugin URI data for the same resource');
+  assert.ok(media.validatedUrl.includes('crop=custom'));
   input.value = '{"items":[]}';
   await change();
-  assert.equal(previews, 2);
+  assert.equal(previews, 3);
   assert.equal(media.validatedUrl, '');
 });
 

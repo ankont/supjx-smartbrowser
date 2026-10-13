@@ -30,8 +30,10 @@ test('details columns have a selector and separate view-mode group', async () =>
 test('info presents content hierarchies instead of navigation location', async () => {
   const panel = await readFile(new URL('../resources/js/components/ResourceInfoPanel.vue', import.meta.url), 'utf8');
   const content = await readFile(new URL('../package/component/admin/src/Adapter/ContentAdapter.php', import.meta.url), 'utf8');
-  assert.match(panel, /metadata\.categoryPath/);
-  assert.match(panel, /metadata\.tagPaths/);
+  const shared = await readFile(new URL('../resources/js/core/selectedPresentation.js', import.meta.url), 'utf8');
+  assert.match(panel, /supplementalInfoFields/);
+  assert.match(shared, /metadata\.categoryPath/);
+  assert.match(shared, /metadata\.tagPaths/);
   assert.match(panel, /!\['metadata\.locationPath'/);
   assert.match(content, /'categoryPath' => implode/);
   assert.match(content, /'tagPaths'\] = implode/);

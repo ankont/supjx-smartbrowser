@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { readdirSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, unlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+const version = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')).version;
 
 export default defineConfig({
   plugins: [vue({ template: { compilerOptions: { isCustomElement: (tag) => tag === 'joomla-field-fancy-select' } } }), {
@@ -11,6 +12,23 @@ export default defineConfig({
       for (const name of readdirSync(directory)) {
         if (/^visual-runtime(?:-[\w-]+)?\.js$/.test(name)) unlinkSync(fileURLToPath(new URL(name, directory)));
       }
+    },
+  }, {
+    name: 'version-browser-assets', apply: 'build',
+    buildStart() {
+      const path = new URL('./package/component/media/joomla.asset.json', import.meta.url);
+      const registry = JSON.parse(readFileSync(path, 'utf8'));
+      registry.version = version;
+      registry.assets.forEach(asset => { asset.version = version; });
+      writeFileSync(path, JSON.stringify(registry, null, 2) + '\n');
+    },
+    renderChunk(code) {
+      const imports = this.parse(code).body.filter(node => node.source && /^\.\.?\//.test(node.source.value) && node.source.value.endsWith('.js'));
+      let result = code;
+      for (const node of imports.sort((a, b) => b.source.start - a.source.start)) {
+        result = result.slice(0, node.source.start) + JSON.stringify(`${node.source.value}?v=${version}`) + result.slice(node.source.end);
+      }
+      return result === code ? null : { code: result, map: null };
     },
   }],
   define: {

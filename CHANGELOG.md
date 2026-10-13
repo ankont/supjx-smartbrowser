@@ -1,5 +1,131 @@
 # Changelog
 
+## 3.6.22 - 2026-10-13
+
+- Disable single-resource Media download/share for multiple selections, constrain batch control sizing, normalize Joomla article reorder conditions, and preserve unselected sibling slots during advanced Sort.
+
+- Keep the empty image name placeholder below the preview instead of inside it.
+- Show the compact empty-selection Add command only while Grid/List is collapsed.
+
+## 3.6.21 - 2026-10-13
+
+- Remove duplicate selection commands from side Information and move the helper Add command to empty Grid/List when Information is beside the list or hidden.
+- Show the native empty image message only once, shorten unavailable content previews, and add a regular-weight active-selection counter next to the resource name.
+- Label reusable link usage as Link Text rather than Link A Text in Picker and external controls.
+
+## 3.6.20 - 2026-10-13
+
+- Reactivate vertical Information when closing the selected-resource list, retaining and saving that state when reopening the list instead of restoring hidden Information.
+- Cycle Information in vertical, side, hidden order.
+
+## 3.6.19 - 2026-10-13
+
+- Match empty selection preview structure with a title and compact Add below the preview while retaining the right-side helper selection button.
+- Automatically show top Information while the list is collapsed, preserving the user's expanded-list Information state.
+- Reinforce native preview borders with explicit physical/logical borders and an inset bottom edge.
+
+## 3.6.18 - 2026-10-13
+
+- Cycle external Information through side, vertical and hidden states, with a distinct theme-aware vertical button background and persisted visibility/layout preference.
+- Preserve existing top/bottom and left/right configuration plus compatibility with previously saved two-state preferences.
+
+## 3.6.17 - 2026-10-13
+
+- Complete recognizable schemeless websites with HTTPS in Automatic Direct Links mode without network requests; preserve relative paths, queries and common local filenames.
+- Stop showing the missing-scheme warning for addresses that the existing resolver can normalize.
+
+## 3.6.16 - 2026-10-13
+
+- Use the same compact Add action for empty and filled selection panels, retaining bounded single-selection behavior and the existing Picker handler.
+- Complete schemeless website addresses with HTTPS in explicit External website mode without altering stored references or relative-address behavior.
+
+## 3.6.15 - 2026-10-13
+
+- Move gallery navigation into subdued side strips with hover/focus emphasis and no additional vertical space.
+- Add bounded Add and active-resource ordering to the preview quick toolbar, retaining existing collection actions and checkbox state.
+- Center quick-action icons without browser button padding and load native link-target translations in external controls.
+
+## 3.6.14 - 2026-10-13
+
+- Split Information position into independent horizontal and vertical settings, with legacy configuration compatibility.
+- Share collapsed/expanded and top/side presentation with multiple selections; add previous/next active-resource navigation in vertical panels without changing ordering or stored usage.
+- Enforce the native preview bottom border and remove duplicate empty-state selection commands from Grid/List.
+
+## 3.6.13 - 2026-10-13
+
+- Match Preview button top/left inset, restore the native preview bottom border, and give List action menus additional right-edge spacing.
+- Share empty/filled content preview sizing and remove Select resource from the Grid empty state.
+
+## 3.6.12 - 2026-10-13
+
+- Place single-selection quick actions below a larger preview, keep the count toggle above the list, and persist expanded and top/side Information preferences.
+- Use Information toggle to switch expanded single selections between top and side layouts while retaining visible information.
+- Remove the Decorative Image icon and align empty-state Add before information text in the controls column.
+
+## 3.6.11 - 2026-10-13
+
+- Place Address before readonly and editable usage, add shared usage label icons and Information-style control indentation.
+- Let external Information panels grow with their contents without internal scrolling.
+- Default single selections to top Information with side-by-side preview and controls on wide containers, collapsed lists toggled by the selection count, and direct Remove/Replace plus adapter-supported Preview actions.
+
+## 3.6.10 - 2026-10-13
+
+- Hide item and Select All checkboxes in single-selection Picker and external controls, preserving multiple-selection and normal Browser controls.
+- Align the Address textbox with other usage controls without definition-list indentation.
+
+## 3.6.9 - 2026-10-13
+
+- Synchronize native image Address display with plugin URI changes, place Address before editable usage, and share Information label styling with Picker usage fields.
+- Keep embedded toolbars on one row with overflow scroll arrows and use Picker single-selection checkbox state rules.
+
+## 3.6.8 - 2026-10-13
+
+- Load native content translations in embedded selections and unify editable usage label styling.
+- Show Address as a disabled single-line field with an inset copy button; place image and automatic panels on the right with pointer and keyboard width resizing.
+- Preserve native image URI extension data when usage changes without replacing the resource.
+
+## 3.6.7 - 2026-10-13
+
+- Offset Information file icons by 20px for thumbnail previews, reserving matching layout space and an additional filename gap.
+
+## 3.6.6 - 2026-10-13
+
+- Preserve Grid overhang for image-anchored Information badges, reserving space to avoid clipping without changing icon size or layer order.
+
+## 3.6.5 - 2026-10-13
+
+- Size Information icons from the Grid reference independently of image aspect ratio, center images vertically, and reduce wide-image preview height without altering configured layer order.
+
+## 3.6.4 - 2026-10-12
+
+- Preserve configured Information visual composition and layer order; adapt preview height to visible content without unnecessary empty space.
+
+## 3.6.3 - 2026-10-12
+
+- Keep Information thumbnail visuals centered with a small muted file badge, independent of Grid composition settings.
+- Keep Preview and thumbnail action buttons above the visual layers.
+
+## 3.6.2 - 2026-10-12
+
+- Fit Information visuals to their composed thumbnail and badge bounds inside a flexible rectangular preview, preserving space for wide images without detached file icons.
+
+## 3.6.1 - 2026-10-12
+
+- Place image previews on the left and keep the selection toolbar directly above Grid/List, aligned with the preview region.
+- Reuse normal Browser Grid metadata, selection checkboxes and square Information visuals; show Name, native URI and Status columns with header icons.
+- Prioritize resource titles and Usage Options in external panels, with editable usage for native image callers.
+- Initially open Picker panels for visible Usage profiles without selection-driven visibility changes.
+- Version Joomla asset URLs and generated ES module imports together to prevent old/new selection control assets from mixing after upgrades.
+
+## 3.6.0 - 2026-10-12
+
+- Share selected-resource presentation, Grid/List renderers, Information Panel and preview/usage integration between Picker collections and external form controls.
+- Add explicit Replace actions, bounded Add, stable empty states, responsive panel placement and readonly/editable/hidden Selection Use Data.
+- Retain native image preview DOM and caller toolbar buttons, with independent label visibility and full-width form layout.
+- Add compact caller-defined Picker titles, subtitles and confirmation labels, including direct nested thumbnail selection from external controls.
+- Stop selection-driven panel visibility changes and guard double-click activation against resource reflow.
+- Preserve resource references, storage format, ordering, replacement usage policy, adapter security checks and plugin extension points.
+
 ## 3.5.0 - 2026-10-12
 
 - Consolidate the accumulated 3.1.13-3.1.51 improvements into a feature release.

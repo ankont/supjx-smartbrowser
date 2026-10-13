@@ -1,10 +1,10 @@
 <template>
   <div class="resource-usage-field">
-    <label v-if="definition.editor !== 'boolean'" :for="fieldId">{{ t(definition.label) }}<span v-if="definition.required" aria-hidden="true"> *</span></label>
+    <label v-if="definition.editor !== 'boolean'" :for="fieldId"><span :class="iconForUsage(definition)" aria-hidden="true" />{{ t(definition.label) }}<span v-if="definition.required" aria-hidden="true"> *</span></label>
     <input v-if="definition.editor === 'text'" :id="fieldId" class="form-control" type="text" :value="value ?? ''" :disabled="inactive" :required="definition.required && !inactive" :aria-invalid="Boolean(error)" @input="change($event.target.value)">
     <textarea v-else-if="definition.editor === 'textarea'" :id="fieldId" class="form-control" rows="3" :value="value ?? ''" :required="definition.required" :aria-invalid="Boolean(error)" @input="change($event.target.value)" />
     <label v-else-if="definition.editor === 'boolean'" class="resource-usage-check">
-      <input :id="fieldId" class="form-check-input" type="checkbox" :checked="value === true" @change="change($event.target.checked)">{{ t(definition.label) }}
+      <input :id="fieldId" class="form-check-input" type="checkbox" :checked="value === true" @change="change($event.target.checked)"><span v-if="definition.key !== 'media.decorative'" :class="iconForUsage(definition)" aria-hidden="true" />{{ t(definition.label) }}
     </label>
     <select v-else-if="definition.editor === 'select'" :id="fieldId" class="form-select" :value="value" :aria-invalid="Boolean(error)" @change="change(definition.options.find(option => String(option.value) === $event.target.value)?.value)">
       <option v-if="!definition.required && !definition.options?.some(option => option.value === '')" value="">{{ t('COM_SMARTBROWSER_USAGE_CHOOSE') }}</option>
@@ -33,6 +33,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { capabilityDisabled, normalizeReference } from '../core/selectionUsage.js';
 import { resourceKey } from '../core/selectionIdentity.js';
+import { iconForUsage } from '../core/fieldIcons.js';
 const props = defineProps({ definition: Object, resource: Object, value: null, values: Object, error: String, t: Function, editors: Object, resolveReference: Function });
 const emit = defineEmits(['change']);
 const fieldId = `sb-usage-${Math.random().toString(36).slice(2)}`;

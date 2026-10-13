@@ -1,120 +1,213 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_smartbrowser",
-  "version": "3.0.9",
+  "version": "3.6.22",
   "description": "SuperSoftJx - SmartBrowser",
   "license": "GPL-2.0-or-later",
   "assets": [
     {
-      "name": "com_smartbrowser.selection-field", "type": "script", "uri": "com_smartbrowser/selection-field.js",
-      "dependencies": ["core", "messages", "com_smartbrowser.picker"], "attributes": {"type": "module"}
+      "name": "com_smartbrowser.selection-field",
+      "type": "script",
+      "uri": "com_smartbrowser/selection-field.js",
+      "dependencies": [
+        "core",
+        "messages",
+        "com_smartbrowser.picker"
+      ],
+      "attributes": {
+        "type": "module"
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.icon-settings",
       "type": "script",
       "uri": "com_smartbrowser/icon-settings.js",
-      "dependencies": ["core"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "core"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.collection",
       "type": "script",
       "uri": "com_smartbrowser/collection.js",
-      "dependencies": ["core", "messages", "com_smartbrowser.dialog-dismiss"],
-      "attributes": {"type": "module"}
+      "dependencies": [
+        "core",
+        "messages",
+        "com_smartbrowser.dialog-dismiss"
+      ],
+      "attributes": {
+        "type": "module"
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.visual-settings",
       "type": "style",
-      "uri": "com_smartbrowser/visual-settings.css"
+      "uri": "com_smartbrowser/visual-settings.css",
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.visual-settings",
       "type": "script",
       "uri": "com_smartbrowser/visual-settings.js",
-      "attributes": {"type": "module"}
+      "attributes": {
+        "type": "module"
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.app",
       "type": "style",
       "uri": "com_smartbrowser/smartbrowser.css",
-      "dependencies": ["fontawesome"]
+      "dependencies": [
+        "fontawesome"
+      ],
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.editor",
       "type": "style",
       "uri": "com_smartbrowser/editor.css",
-      "dependencies": ["com_smartbrowser.app"]
+      "dependencies": [
+        "com_smartbrowser.app"
+      ],
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.dialog-dismiss",
       "type": "script",
       "uri": "com_smartbrowser/dialog-dismiss.js",
-      "dependencies": ["core"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "core"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.app",
       "type": "script",
       "uri": "com_smartbrowser/smartbrowser.js",
-      "dependencies": ["core", "messages", "com_smartbrowser.dialog-dismiss", "webcomponent.field-fancy-select"],
-      "attributes": {"type": "module"}
+      "dependencies": [
+        "core",
+        "messages",
+        "com_smartbrowser.dialog-dismiss",
+        "webcomponent.field-fancy-select"
+      ],
+      "attributes": {
+        "type": "module"
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.media-value",
       "type": "script",
       "uri": "com_smartbrowser/media-value.js",
-      "dependencies": ["core"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "core"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.picker",
       "type": "script",
       "uri": "com_smartbrowser/picker.js",
-      "dependencies": ["core", "com_smartbrowser.dialog-dismiss", "com_smartbrowser.media-value"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "core",
+        "com_smartbrowser.dialog-dismiss",
+        "com_smartbrowser.media-value"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.media-field",
       "type": "script",
       "uri": "com_smartbrowser/media-field.js",
-      "dependencies": ["com_smartbrowser.picker"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "com_smartbrowser.picker"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.smartauthors-user-field",
       "type": "script",
       "uri": "com_smartbrowser/smartauthors-user-field.js",
-      "dependencies": ["com_smartbrowser.picker"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "com_smartbrowser.picker"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.editor-fields",
       "type": "script",
       "uri": "com_smartbrowser/editor-fields.js",
-      "dependencies": ["core", "com_smartbrowser.dialog-dismiss", "com_smartbrowser.media-value", "com_smartbrowser.editor-viewport"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "core",
+        "com_smartbrowser.dialog-dismiss",
+        "com_smartbrowser.media-value",
+        "com_smartbrowser.editor-viewport"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.editor-viewport",
       "type": "script",
       "uri": "com_smartbrowser/editor-viewport.js",
-      "dependencies": ["core"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "core"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.editor-buttons",
       "type": "script",
       "uri": "com_smartbrowser/editor-buttons.js",
-      "dependencies": ["core", "editors", "com_smartbrowser.picker", "messages"],
-      "attributes": {"type": "module"}
+      "dependencies": [
+        "core",
+        "editors",
+        "com_smartbrowser.picker",
+        "messages"
+      ],
+      "attributes": {
+        "type": "module"
+      },
+      "version": "3.6.22"
     },
     {
       "name": "com_smartbrowser.associations",
       "type": "script",
       "uri": "com_smartbrowser/associations.js",
-      "dependencies": ["com_associations.associations-edit"],
-      "attributes": {"defer": true}
+      "dependencies": [
+        "com_associations.associations-edit"
+      ],
+      "attributes": {
+        "defer": true
+      },
+      "version": "3.6.22"
     }
   ]
 }

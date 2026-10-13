@@ -7,6 +7,12 @@ final class DirectLinkUri
 {
     public static function webAddress(string $input, string $mode, string $siteRoot): string
     {
+        $input = trim($input);
+        $website = preg_match('/^([a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+)(?::[0-9]{1,5})?(?:[\/?#]|$)/i', $input, $host);
+        $fileExtension = $website ? strtolower(pathinfo($host[1], PATHINFO_EXTENSION)) : '';
+        // Bare filenames remain relative in Automatic mode; explicit External mode disambiguates them.
+        $relativeFile = in_array($fileExtension, ['php', 'html', 'htm', 'pdf', 'txt', 'json', 'xml', 'css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'zip'], true);
+        if ($website && ($mode === 'absolute' || $mode === 'auto' && !$relativeFile)) $input = 'https://' . $input;
         $uri = self::normalize('web', $input);
         if (!in_array($mode, ['auto', 'absolute', 'relative'], true)) throw new \InvalidArgumentException('Invalid address mode.', 400);
         $root = parse_url(self::normalize('web', $siteRoot));

@@ -1036,7 +1036,7 @@ test('media field integration is a component asset loaded after the generic pick
   assert.match(plugin, /useScript\('com_smartbrowser\.media-field'\)/);
   assert.match(plugin, /catch \(Throwable \$error\)/);
   assert.match(assets, /"name": "com_smartbrowser\.media-field"/);
-  assert.match(assets, /"dependencies": \["com_smartbrowser\.picker"\]/);
+  assert.deepEqual(JSON.parse(assets).assets.find(asset => asset.name === 'com_smartbrowser.media-field').dependencies, ['com_smartbrowser.picker']);
 });
 
 test('picker host is viewport-sized and isolated from the active site menu item', async () => {

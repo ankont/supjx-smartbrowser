@@ -22,12 +22,17 @@ export function mountNativeSelection(root) {
     root.remove();
     return;
   }
-  const selection = mountSelectionField(root);
-  mounted.add(root);
   if (categoryImage) {
     const controls = native(mapping.image).closest('.controls');
     if (controls) controls.append(root);
     else native(mapping.image).closest('.control-group')?.after(root);
+  }
+  const selection = mountSelectionField(root);
+  mounted.add(root);
+  if (image) {
+    const imageField = native(names[0]);
+    selection.setNativeAddress?.(imageField.value);
+    imageField.addEventListener?.('change', () => selection.setNativeAddress?.(imageField.value));
   }
   for (const name of names) {
     const field = native(name);
@@ -37,6 +42,7 @@ export function mountNativeSelection(root) {
       field.closest('.control-group')?.classList.add('sb-article-image-field');
       const moveToolbarButtons = () => media.querySelectorAll('.input-group > :is(button, [role="button"]):not(.button-select):not(.button-clear)').forEach(button => selection.addToolbarButton(button));
       moveToolbarButtons();
+      selection.attachPreview(media);
       const observer = new MutationObserver(moveToolbarButtons);
       observer.observe(media, { childList: true, subtree: true });
       window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
@@ -78,7 +84,10 @@ export function mountNativeSelection(root) {
       if (image) {
         const value = values[0];
         const prefix = categoryImage ? mapping.image : `image_${mapping.role}`;
-        write(prefix, value ? window.SmartBrowserMediaValue.format(value.resource, 'joomla') : '');
+        const existing = native(prefix).value;
+        const existingId = window.SmartBrowserMediaValue.parse?.(existing)?.resourceId;
+        const sameResource = value && existingId && existingId === value.resource.id;
+        write(prefix, value ? sameResource ? existing : window.SmartBrowserMediaValue.format(value.resource, 'joomla') : '');
         if (categoryImage) {
           for (const [key, name] of Object.entries(mapping.usageFields || { 'media.alt': 'image_alt', 'media.decorative': 'image_alt_empty' })) write(name, value?.usage[key] ?? (key === 'media.decorative' ? false : ''));
         } else {

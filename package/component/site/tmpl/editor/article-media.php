@@ -12,7 +12,7 @@ $document = Factory::getApplication()->getDocument();
 $baseConfig = CollectionViewSupport::prepare($document);
 $assets = $document->getWebAssetManager();
 $assets->useScript('com_smartbrowser.picker');
-$assets->registerScript('com_smartbrowser.article-media', 'com_smartbrowser/article-media.js', [], ['type' => 'module'], ['core', 'com_smartbrowser.picker']);
+$assets->registerScript('com_smartbrowser.article-media', 'com_smartbrowser/article-media.js', ['version' => $assets->getAsset('script', 'com_smartbrowser.collection')->getVersion()], ['type' => 'module'], ['core', 'com_smartbrowser.picker']);
 $assets->useScript('com_smartbrowser.article-media');
 Factory::getApplication()->getLanguage()->load('plg_fields_smartbrowserpicker', JPATH_ADMINISTRATOR, null, true);
 foreach (['INVALID', 'EDIT', 'SELECT', 'CLEAR'] as $key) Text::script('PLG_FIELDS_SMARTBROWSERPICKER_' . $key);
@@ -23,6 +23,7 @@ $picker = static function (array $entries, array $mapping, bool $multiple) use (
         'adapter' => $media ? 'media' : 'direct-links', 'allowedAdapters' => [$media ? 'media' : 'direct-links'],
         'allowedResourceTypes' => [$media ? 'image' : 'uri'], 'selectionTarget' => 'item', 'homogeneous' => true,
         'multiple' => $multiple, 'maxSelections' => $multiple ? 3 : 1, 'ordering' => $multiple, 'editorDisplay' => 'compact',
+        'fullWidth' => true, 'showLabel' => false, 'informationPanelPosition' => 'right', 'selectionUseData' => 'editable',
         'selectionProfile' => array_fill_keys($media ? ['media.alt', 'media.decorative', 'media.caption', 'media.class'] : ['link.text', 'link.target'], (object) []),
         'anchorSuggestions' => 'anchors', 'preserveUsageOnReplace' => true];
     if (!$multiple) {

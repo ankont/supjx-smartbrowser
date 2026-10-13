@@ -1,0 +1,121 @@
+async page => {
+  const check = (condition, message) => { if (!condition) throw new Error(message); };
+  page.setDefaultTimeout(10000);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('http://127.0.0.1:8791');
+  await page.evaluate(() => localStorage.removeItem('supjx.smartbrowser.collection.view.single-layout'));
+  await page.evaluate(() => localStorage.removeItem('supjx.smartbrowser.collection.view.multiple-layout'));
+  await page.goto('http://127.0.0.1:8791?fieldFixture=1');
+  await page.evaluate(() => localStorage.setItem('supjx.smartbrowser.collection.view', 'details'));
+  await page.reload();
+  const field = index => page.locator('.sb-selection-field').nth(index);
+  const stored = index => field(index).locator('[data-sb-value]').evaluate(input => JSON.parse(input.value || '{"items":[]}'));
+  const picker = () => page.frameLocator('dialog.smartbrowser-picker iframe');
+  await field(0).locator('.resource-info-panel').waitFor();
+  check(!await field(0).locator('.sb-selected-list').isVisible(), 'Single selection must initially collapse toolbar and list');
+  check(await field(0).getByRole('button', { name: 'Replace', exact: true }).isVisible(), 'Collapsed selection must expose Replace');
+  check(await field(0).getByRole('button', { name: 'Remove', exact: true }).isVisible(), 'Collapsed selection must expose Remove');
+  check(await field(0).locator('.resource-info-panel').evaluate(element => getComputedStyle(element).overflowY === 'visible'), 'External Information must not have internal scrolling');
+  if (!await field(0).locator('.sb-selected-list').isVisible()) await field(0).locator('.sb-collection-count-toggle').click();
+  await field(0).locator('.resource-details-view').waitFor();
+  check(await field(0).locator('.resource-row-select, .resource-details-select-all, .resource-item-select, .resource-grid-select-all').count() === 0, 'Single external selection must not show checkboxes');
+  const before = await stored(0);
+  check(await field(0).getByRole('button', { name: 'Add', exact: true }).isDisabled(), 'Single Add must be disabled when full');
+  check(!(await field(0).getByRole('button', { name: 'Remove', exact: true }).isDisabled()), 'Single Remove must be enabled when full');
+  await field(0).getByRole('button', { name: 'Replace', exact: true }).click();
+  await picker().locator('.resource-main .resource-browser-item.selected').waitFor();
+  check(await picker().locator('.resource-item-select, .resource-grid-select-all, .resource-row-select, .resource-details-select-all').count() === 0, 'Single Picker must not show checkboxes');
+  check(await picker().locator('.resource-main .resource-browser-item.selected .resource-item-title').innerText() === 'First image', 'Replace must preselect existing resource');
+  check(await picker().locator('.resource-picker-titlebar').innerText() === 'Select resource \u2014 Files & Media', 'Picker title must describe the adapter');
+  check(await picker().locator('.resource-info-panel').count() === 1, 'Usage Picker must start with the information panel open');
+  await picker().getByRole('button', { name: 'Toggle information', exact: true }).click();
+  await picker().locator('.resource-main .resource-item-title').getByText('Second image', { exact: true }).click();
+  check(await picker().locator('.resource-info-panel').count() === 0, 'Selection must not reopen a manually closed panel');
+  await picker().locator('.resource-picker-cancel').click();
+  await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+  check(JSON.stringify(await stored(0)) === JSON.stringify(before), 'Cancel changed selection');
+  await field(0).getByRole('button', { name: 'Replace', exact: true }).click();
+  await picker().locator('.resource-main .resource-browser-item.selected').waitFor();
+  await picker().locator('.resource-item-title').getByText('Second image', { exact: true }).dblclick();
+  await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+  await field(0).locator('.resource-title-cell').getByText('Second image', { exact: true }).waitFor();
+  check((await stored(0)).items[0].selection.id === 'local-images:/b.png', 'Replace failed');
+
+  for (const view of ['List', 'Grid']) {
+    await field(0).getByRole('button', { name: view, exact: true }).click();
+    for (let step = 0; step < 3 && await field(0).getByRole('button', { name: 'Information', exact: true }).getAttribute('aria-pressed') === 'true'; step++) await field(0).getByRole('button', { name: 'Information', exact: true }).click();
+    const height = () => field(0).locator('.sb-selected-items').evaluate(element => element.getBoundingClientRect().height);
+    const full = await height();
+    await field(0).locator(view === 'Grid' ? '.resource-browser-item' : '.resource-details-view tbody tr').click();
+    await field(0).getByRole('button', { name: 'Remove', exact: true }).click();
+    await field(0).locator('.sb-selection-empty').waitFor();
+    check(await height() === full, `${view} empty and single item heights differ`);
+    check(!(await field(0).getByRole('button', { name: 'Add', exact: true }).isDisabled()), 'Empty single Add must be enabled');
+    await field(0).getByRole('button', { name: 'Add', exact: true }).click();
+    await picker().locator('.resource-browser-item').first().waitFor();
+    await picker().locator('.resource-item-title').getByText('First image', { exact: true }).dblclick();
+    await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+    await field(0).locator(view === 'Grid' ? '.resource-browser-item' : '.resource-title-cell').first().waitFor();
+    check(await height() === full, `${view} Add changed geometry`);
+  }
+
+  if (!await field(3).locator('.sb-selected-list').isVisible()) await field(3).locator('.sb-collection-count-toggle').click();
+  await field(3).getByRole('button', { name: 'List', exact: true }).click();
+  const multipleBefore = await stored(3);
+  await field(3).locator('tbody tr').first().click();
+  await field(3).getByRole('button', { name: 'Replace', exact: true }).click();
+  await picker().locator('.resource-main .resource-browser-item.selected').waitFor();
+  await picker().locator('.resource-item-title').getByText('Report PDF', { exact: true }).dblclick();
+  await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+  await field(3).locator('.resource-title-cell').getByText('Report PDF', { exact: true }).waitFor();
+  const multipleAfter = await stored(3);
+  check(multipleAfter.items[0].selection.id === 'local-images:/report.pdf', 'Replacement moved its slot');
+  check(JSON.stringify(multipleAfter.items[1]) === JSON.stringify(multipleBefore.items[1]), 'Replacement changed sibling');
+  await field(3).locator('tbody tr').first().click();
+  await field(3).locator('.resource-ordering-moves button').last().click();
+  await field(3).locator('.resource-title-cell').first().getByText('First image', { exact: true }).waitFor();
+  check((await stored(3)).items[1].selection.id === 'local-images:/report.pdf', 'Ordering failed');
+
+  await page.goto('http://127.0.0.1:8791?fieldFixture=1&usageMode=editable');
+  await field(0).locator('.sb-collection-count-toggle').waitFor();
+  if (!await field(0).locator('.sb-selected-list').isVisible()) await field(0).locator('.sb-collection-count-toggle').click();
+  if (!await field(0).locator('.sb-selected-panel').isVisible()) await field(0).getByRole('button', { name: 'Information', exact: true }).click();
+  await field(0).locator('.resource-usage-editor input[type=text]').waitFor();
+  await field(0).locator('.resource-usage-editor input[type=text]').fill('Unsaved external description');
+  check((await stored(0)).items[0].usage['media.alt'] === 'Unsaved external description', 'External edits did not persist');
+  await field(0).getByRole('button', { name: 'Replace', exact: true }).click();
+  await picker().locator('.resource-picker-titlebar').waitFor();
+  if (!await picker().locator('.resource-info-panel').count()) await picker().getByRole('button', { name: 'Toggle information', exact: true }).click();
+  await picker().locator('.resource-usage-editor input[type=text]').waitFor();
+  check(await picker().locator('.resource-usage-editor input[type=text]').inputValue() === 'Unsaved external description', 'Picker lost external edits');
+  await picker().locator('.resource-usage-editor input[type=text]').fill('Picker description');
+  await picker().locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+  check((await stored(0)).items[0].usage['media.alt'] === 'Picker description', 'Picker edits did not sync back');
+  check(await field(0).locator('.resource-usage-editor input[type=text]').inputValue() === 'Picker description', 'External usage renderer stale');
+
+  if (!await field(1).locator('.sb-selected-panel').isVisible()) {
+    if (!await field(1).locator('.sb-selected-list').isVisible()) await field(1).locator('.sb-collection-count-toggle').click();
+    await field(1).getByRole('button', { name: 'Information', exact: true }).click();
+  }
+  await field(1).getByRole('button', { name: 'Change thumbnail', exact: true }).click();
+  await picker().locator('.resource-picker-titlebar').waitFor();
+  check(await picker().locator('.resource-picker-titlebar strong').innerText() === 'Select thumbnail', 'Nested thumbnail title missing');
+  check(await picker().locator('.resource-picker-titlebar > span').innerText() === 'Report PDF', 'Nested thumbnail subtitle missing');
+  await picker().locator('.resource-browser-item').first().waitFor();
+  await picker().locator('.resource-item-title').getByText('First image', { exact: true }).click();
+  await picker().locator('.resource-actions').getByRole('button', { name: 'Use as thumbnail', exact: true }).click();
+  await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+  check((await stored(1)).items[0].usage['visual.thumbnailOverride'].id === 'local-images:/a.png', 'Direct external thumbnail did not update');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(100);
+  check(await field(0).locator('.sb-selected-layout').evaluate(element => element.classList.contains('panel-top') || element.classList.contains('panel-bottom')), 'Single panel must adapt to its container');
+  const dimensions = await field(0).evaluate(element => ({ left: element.getBoundingClientRect().left, right: element.getBoundingClientRect().right }));
+  check(dimensions.left >= 0 && dimensions.right <= 390, 'Mobile control overflow');
+  await page.locator('.resource-info-panel').evaluateAll(panels => panels.forEach(panel => { panel.scrollTop = 0; }));
+  await page.screenshot({ path: 'build/selected-resources-mobile.png' });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.screenshot({ path: 'build/selected-resources-desktop.png' });
+  return 'Single/multiple, cancel, replace, ordering, Grid/List sizing, usage sync, direct thumbnail and responsive checks passed.';
+}

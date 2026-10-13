@@ -1,5 +1,5 @@
-import { t as e } from "./visual-runtime-CYo2liZM.js";
-import { mountNativeSelection as t } from "./article-media.js";
+import { t as e } from "./visual-runtime-Djrr_qeB.js?v=3.6.22";
+import { mountNativeSelection as t } from "./article-media.js?v=3.6.22";
 //#region resources/js/image-selectors.js
 var n = /* @__PURE__ */ new WeakSet(), r = Joomla.getOptions("com_smartbrowser.image-selectors", {});
 function i(e) {
@@ -68,6 +68,10 @@ function a(a) {
 		homogeneous: !0,
 		selectionTarget: "item",
 		editorDisplay: "compact",
+		informationPanelPosition: "right",
+		selectionUseData: "editable",
+		fullWidth: !0,
+		showLabel: !c.closest?.("[data-sb-native-media]"),
 		preserveUsageOnReplace: !0,
 		selectionProfile: Object.fromEntries(Object.entries(f).map(([e, t]) => [e, { default: t }]))
 	}), h.innerHTML = "<input type=\"hidden\" data-sb-value><div data-sb-collection></div><p class=\"text-danger\" data-sb-error role=\"alert\" hidden></p>", h.querySelector("[data-sb-value]").value = JSON.stringify({

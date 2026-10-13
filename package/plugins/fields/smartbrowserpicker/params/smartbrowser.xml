@@ -13,6 +13,12 @@
     <field name="editor_display" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_DISPLAY" default="auto" validate="options">
       <option value="auto">PLG_FIELDS_SMARTBROWSERPICKER_AUTO</option><option value="compact">PLG_FIELDS_SMARTBROWSERPICKER_COMPACT</option><option value="collection">PLG_FIELDS_SMARTBROWSERPICKER_COLLECTION</option>
     </field>
+    <field name="information_panel" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_FIELDS_SMARTBROWSERPICKER_INFO_PANEL" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="information_panel_horizontal_position" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_INFO_HORIZONTAL" default="right" validate="options" showon="information_panel:1"><option value="left">PLG_FIELDS_SMARTBROWSERPICKER_LEFT</option><option value="right">PLG_FIELDS_SMARTBROWSERPICKER_RIGHT</option></field>
+    <field name="information_panel_vertical_position" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_INFO_VERTICAL" default="top" validate="options" showon="information_panel:1"><option value="top">PLG_FIELDS_SMARTBROWSERPICKER_TOP</option><option value="bottom">PLG_FIELDS_SMARTBROWSERPICKER_BOTTOM</option></field>
+    <field name="selection_use_data" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_USE_DATA" default="readonly" validate="options"><option value="hidden">PLG_FIELDS_SMARTBROWSERPICKER_HIDDEN</option><option value="readonly">PLG_FIELDS_SMARTBROWSERPICKER_READONLY</option><option value="editable">PLG_FIELDS_SMARTBROWSERPICKER_EDITABLE</option></field>
+    <field name="show_label" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_FIELDS_SMARTBROWSERPICKER_SHOW_LABEL" default="1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="full_width" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_FIELDS_SMARTBROWSERPICKER_FULL_WIDTH" default="0"><option value="0">JNO</option><option value="1">JYES</option></field>
     <field name="selection_profile" type="textarea" label="PLG_FIELDS_SMARTBROWSERPICKER_PROFILE" description="PLG_FIELDS_SMARTBROWSERPICKER_PROFILE_DESC" rows="7" filter="raw" default="{}" />
     <field name="anchor_suggestions" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_ANCHORS" default="none" validate="options">
       <option value="none">PLG_FIELDS_SMARTBROWSERPICKER_ANCHORS_NONE</option>

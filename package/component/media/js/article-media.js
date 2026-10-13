@@ -1,5 +1,5 @@
-import { a as e } from "./visual-runtime-EwHcw_pv.js";
-import { t } from "./visual-runtime-CYo2liZM.js";
+import { a as e } from "./visual-runtime-hH3o4gop.js?v=3.6.22";
+import { t } from "./visual-runtime-Djrr_qeB.js?v=3.6.22";
 //#region resources/js/article-media.js
 var n = /* @__PURE__ */ new WeakSet();
 function r(r) {
@@ -28,17 +28,21 @@ function r(r) {
 		r.remove();
 		return;
 	}
-	let p = t(r);
-	if (n.add(r), o) {
+	if (o) {
 		let e = d(i.image).closest(".controls");
 		e ? e.append(r) : d(i.image).closest(".control-group")?.after(r);
+	}
+	let p = t(r);
+	if (n.add(r), s) {
+		let e = d(f[0]);
+		p.setNativeAddress?.(e.value), e.addEventListener?.("change", () => p.setNativeAddress?.(e.value));
 	}
 	for (let e of f) {
 		let t = d(e), n = s && e === f[0] ? t.closest("joomla-field-media") : null;
 		if (n) {
 			n.classList.add("sb-article-image-preview"), t.closest(".control-group")?.classList.add("sb-article-image-field");
 			let e = () => n.querySelectorAll(".input-group > :is(button, [role=\"button\"]):not(.button-select):not(.button-clear)").forEach((e) => p.addToolbarButton(e));
-			e();
+			e(), p.attachPreview(n);
 			let r = new MutationObserver(e);
 			r.observe(n, {
 				childList: !0,
@@ -78,8 +82,8 @@ function r(r) {
 				};
 			});
 			if (s) {
-				let e = a[0], t = o ? i.image : `image_${i.role}`;
-				if (_(t, e ? window.SmartBrowserMediaValue.format(e.resource, "joomla") : ""), o) for (let [t, n] of Object.entries(i.usageFields || {
+				let e = a[0], t = o ? i.image : `image_${i.role}`, n = d(t).value, r = window.SmartBrowserMediaValue.parse?.(n)?.resourceId, s = e && r && r === e.resource.id;
+				if (_(t, e ? s ? n : window.SmartBrowserMediaValue.format(e.resource, "joomla") : ""), o) for (let [t, n] of Object.entries(i.usageFields || {
 					"media.alt": "image_alt",
 					"media.decorative": "image_alt_empty"
 				})) _(n, e?.usage[t] ?? (t !== "media.decorative" && ""));

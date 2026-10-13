@@ -32,7 +32,7 @@
           :class="{ selected: selectedIds.includes(resourceKey(resource)), focused: focusedId === resourceKey(resource), focusable: canFocusResource(resource), contextual: isContextualResource(resource) }"
           :tabindex="canFocusResource(resource) ? 0 : undefined"
           :aria-current="focusedId === resourceKey(resource) ? 'true' : undefined"
-          @click.stop="openMenu = null; $emit('select', resource, $event.ctrlKey || $event.metaKey)"
+          @click.stop="clickGuard.click(resourceKey(resource), $event); openMenu = null; $emit('select', resource, $event.ctrlKey || $event.metaKey)"
       @dblclick.stop="performDefault(resource, $event)"
       @keydown.enter.prevent="performDefault(resource)"
         >
@@ -84,7 +84,7 @@
             <div v-if="openMenu === resourceKey(resource)" class="resource-item-menu resource-row-menu" @click.stop>
               <strong>{{ resource.title }}</strong>
               <button v-for="action in itemActions(resource)" :key="action.id" type="button" :class="[`resource-action-${action.id}`, { 'resource-default-action': action.isDefault, 'resource-modified-action': action.isModified }]" :title="action.isDefault ? t('COM_SMARTBROWSER_DOUBLE_CLICK') : action.isModified ? t('COM_SMARTBROWSER_CTRL_DOUBLE_CLICK') : undefined" :disabled="!actionAvailable(action, [resource])" @click="openMenu = null; $emit('action', action, resource)">
-                <span :class="action.icon" aria-hidden="true" />
+                <ResourceActionIcon :icon="action.icon" />
                 {{ t(action.label) }}
               </button>
             </div>
@@ -102,10 +102,14 @@ import { canActOnResource, canFocusResource, canSelectResource, isContextualReso
 import { itemMenuActions } from '../core/itemMenuActions.js';
 import { fieldIcons } from '../core/fieldIcons.js';
 import ResourceVisual from './ResourceVisual.vue';
+import ResourceActionIcon from './ResourceActionIcon.vue';
+import { createResourceClickGuard } from '../core/resourceClickGuard.js';
+const clickGuard = createResourceClickGuard();
 
 const props = defineProps({ defaultAction: Function, modifiedAction: Function, previewAction: Function, selectionControls: { type: Boolean, default: true }, resources: Array, selectedIds: Array, focusedId: String, allSelected: Boolean, options: Object, actions: Array, actionAvailable: Function, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, columns: Array, t: Function });
 const emit = defineEmits(['select', 'select-all', 'focus', 'open', 'activate', 'sort', 'action']);
 const performDefault = (resource, event) => {
+  if (!clickGuard.accepts(resourceKey(resource), event)) return;
   if ((event?.ctrlKey || event?.metaKey) && (props.modifiedAction || props.previewAction)) {
     const preview = props.modifiedAction ? props.modifiedAction(resource) : props.previewAction(resource);
     if (preview && props.actionAvailable(preview, [resource])) { emit('action', preview, resource); return; }

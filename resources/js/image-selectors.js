@@ -48,6 +48,8 @@ function initialize(media) {
   root.dataset.sbArticleMedia = JSON.stringify({ group: 'native', image: 'image', usageFields, nativeNames });
   root.dataset.sbField = JSON.stringify({ ...options, browseRoot, adapter: 'media', allowedAdapters: ['media'], allowedResourceTypes: ['image'],
     multiple: false, maxSelections: 1, homogeneous: true, selectionTarget: 'item', editorDisplay: 'compact',
+    informationPanelPosition: 'right', selectionUseData: 'editable', fullWidth: true,
+    showLabel: !row.closest?.('[data-sb-native-media]'),
     preserveUsageOnReplace: true, selectionProfile: Object.fromEntries(Object.entries(usage).map(([key, value]) => [key, { default: value }])) });
   root.innerHTML = '<input type="hidden" data-sb-value><div data-sb-collection></div><p class="text-danger" data-sb-error role="alert" hidden></p>';
   root.querySelector('[data-sb-value]').value = JSON.stringify({ version: 1, items: reference ? [{ selection: reference, usage }] : [] });

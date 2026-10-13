@@ -5,6 +5,15 @@ import { readFileSync } from 'node:fs';
 import { itemMenuActions } from '../resources/js/core/itemMenuActions.js';
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 
+test('single-resource media actions advertise their selection limit and article ordering normalizes Joomla conditions', () => {
+  const media = read('package/component/admin/src/Adapter/MediaAdapter.php');
+  for (const action of ['download', 'share']) {
+    assert.match(media, new RegExp(`\\$this->action\\('${action}'[^\\n]+false, true, true, true\\)`));
+  }
+  const model = read('package/component/admin/src/Model/SmartAuthorsArticleModel.php');
+  assert.ok(model.includes("is_array($conditions) ? implode(' AND ', $conditions) : $conditions"));
+});
+
 test('native permanent deletion preflights all selected states/ACL and ZIP entries reject traversal and bombs', () => {
   const result = spawnSync('php', ['tests/resource-maintenance.php'], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -18,8 +27,8 @@ test('permanent Delete is separate from Restore and hidden for non-trashed item 
   assert.deepEqual(itemMenuActions(actions,trashed,available).map(action=>action.id),['restore','delete']);
   assert.deepEqual(itemMenuActions(actions,{...trashed,capabilities:{delete:true}},available).map(action=>action.id),['restore','delete']);
 });
-test('single Picker hides row and header checkboxes, multiple and manage keep them', () => {
-  assert.ok(read('resources/js/components/SmartBrowserApp.vue').includes(':selection-controls="options.mode !== \'select\' || options.multiple"'));
+test('Picker and Browser keep the same row and header selection visuals', () => {
+  assert.ok(read('resources/js/components/SmartBrowserApp.vue').includes(':selection-controls="!pickerContext || options.multiple !== false"'));
   for (const view of ['ResourceGrid','ResourceDetails']) assert.ok(read(`resources/js/components/${view}.vue`).includes('v-if="selectionControls && canSelectResource(resource)"'));
 });
 test('trashed Articles retain category navigation and Direct Links have one URL info field', () => {

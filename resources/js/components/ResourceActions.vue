@@ -4,8 +4,8 @@
     <a v-if="dashboardUrl" class="btn resource-dashboard-link" :href="dashboardUrl" :title="t(integrated ? 'COM_SMARTBROWSER_DASHBOARD' : 'COM_SMARTBROWSER_BACK_TO_DASHBOARD')" :aria-label="t(integrated ? 'COM_SMARTBROWSER_DASHBOARD' : 'COM_SMARTBROWSER_BACK_TO_DASHBOARD')">
       <span class="fas fa-arrow-left" aria-hidden="true" /> <span class="resource-action-label">{{ t(integrated ? 'COM_SMARTBROWSER_DASHBOARD' : 'COM_SMARTBROWSER_BACK_TO_DASHBOARD') }}</span>
     </a>
-    <button v-if="selectionMode" type="button" class="btn btn-primary" :disabled="!canComplete" :title="t('COM_SMARTBROWSER_SELECT')" :aria-label="t('COM_SMARTBROWSER_SELECT')" @click="$emit('complete')">
-      <span class="fas fa-check" aria-hidden="true" /> <span class="resource-action-label">{{ t('COM_SMARTBROWSER_SELECT') }}</span>
+    <button v-if="selectionMode" type="button" class="btn btn-primary" :disabled="!canComplete" :title="confirmLabel || t('COM_SMARTBROWSER_SELECT')" :aria-label="confirmLabel || t('COM_SMARTBROWSER_SELECT')" @click="$emit('complete')">
+      <span class="fas fa-check" aria-hidden="true" /> <span class="resource-action-label">{{ confirmLabel || t('COM_SMARTBROWSER_SELECT') }}</span>
     </button>
     <button v-if="allowNoUser" type="button" class="btn btn-outline-secondary" :title="t('JOPTION_NO_USER')" :aria-label="t('JOPTION_NO_USER')" @click="$emit('no-user')">
       <span class="fas fa-user" aria-hidden="true" /> <span class="resource-action-label">{{ t('JOPTION_NO_USER') }}</span>
@@ -77,7 +77,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, onUpdated, ref } from 'vue';
 
-const props = defineProps({ actions: Array, available: Function, selection: Array, batchAvailable: Boolean, canCancel: Boolean, flatAvailable: Boolean, flatActive: Boolean, filtersOpen: Boolean, filters: Array, filterValues: Object, managerUrl: String, managerNewTab: Boolean, dashboardUrl: String, integrated: Boolean, selectionMode: Boolean, allowNoUser: Boolean, canComplete: Boolean, t: Function });
+const props = defineProps({ actions: Array, available: Function, selection: Array, batchAvailable: Boolean, canCancel: Boolean, flatAvailable: Boolean, flatActive: Boolean, filtersOpen: Boolean, filters: Array, filterValues: Object, managerUrl: String, managerNewTab: Boolean, dashboardUrl: String, integrated: Boolean, selectionMode: Boolean, allowNoUser: Boolean, canComplete: Boolean, confirmLabel: String, t: Function });
 defineEmits(['action', 'batch', 'cancel', 'toggle-flat', 'toggle-filters', 'filter', 'clear-filters', 'complete', 'no-user']);
 const showActions = ref(false);
 const actionMenu = ref(null);

@@ -1,12 +1,25 @@
 (function () {
   const scriptUrl = document.currentScript?.src;
-  const sizeModule = scriptUrl ? import(new URL('picker-size.js', scriptUrl).href) : Promise.resolve(null);
+  const sizeUrl = scriptUrl ? new URL('picker-size.js', scriptUrl) : null;
+  if (sizeUrl) sizeUrl.search = new URL(scriptUrl).search;
+  const sizeModule = sizeUrl ? import(sizeUrl.href) : Promise.resolve(null);
   let contract;
   sizeModule.then(module => { contract = module; }).catch(() => {});
   sizeModule.catch(() => {});
   const instances = new Map();
   const editors = Object.create(null);
   const previewActions = new Map();
+  const previewActionListeners = new Set();
+  const subscribePreviewActions = listener => {
+    if (typeof listener !== 'function') throw new TypeError('A preview action subscriber must be a function.');
+    previewActionListeners.add(listener);
+    return () => previewActionListeners.delete(listener);
+  };
+  const notifyPreviewActions = () => {
+    for (const listener of previewActionListeners) {
+      try { listener([...previewActions.values()]); } catch (error) { console.error(error); }
+    }
+  };
   let sequence = 0;
   const clone = value => JSON.parse(JSON.stringify(value));
   const buildUrl = (baseUrl, config) => {
@@ -33,6 +46,8 @@
   };
 
   window.SmartBrowserPicker = {
+    subscribePreviewActions,
+    extensions() { return { editors: { ...editors }, previewActions: [...previewActions.values()] }; },
     registerUsageEditor(id, definition) {
       if (!/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(id) || typeof definition?.mount !== 'function') throw new TypeError('A usage editor needs a namespaced ID and mount function.');
       if (editors[id]) throw new Error('Usage editor is already registered.');
@@ -43,12 +58,13 @@
       if (!/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(definition?.id || '') || typeof definition.run !== 'function') throw new TypeError('A preview action needs a namespaced ID and run function.');
       if (previewActions.has(definition.id)) throw new Error('Preview action is already registered.');
       previewActions.set(definition.id, definition);
-      return () => { previewActions.delete(definition.id); };
+      notifyPreviewActions();
+      return () => { if (previewActions.delete(definition.id)) notifyPreviewActions(); };
     },
     context(id, source) {
       const instance = instances.get(id);
       if (!instance || instance.frame.contentWindow !== source) return null;
-      return { ...instance.context, ...(instance.snapshot ? {
+      return { ...instance.context, subscribePreviewActions, ...(instance.snapshot ? {
         getCollectionSnapshot: () => clone(instance.snapshot),
         commitCollection: snapshot => { instance.snapshot = { items: contract.collectionEntries(snapshot.items, instance.constraints), resources: clone(snapshot.resources || {}), virtualResources: clone(snapshot.virtualResources || {}) }; },
         initialUsage: Object.fromEntries(instance.snapshot.items.map(entry => [contract.referenceKey(entry.selection), entry.usage])),
@@ -111,6 +127,7 @@
         url.searchParams.set('pickerInstance', instanceId);
         instances.set(instanceId, { frame, snapshot, constraints, close, context: clone({
           selectionProfile: config.selectionProfile || {}, initialUsage: config.initialUsage || {},
+          title: typeof config.title === 'string' ? config.title : '', subtitle: typeof config.subtitle === 'string' ? config.subtitle : '', confirmLabel: typeof config.confirmLabel === 'string' ? config.confirmLabel : '',
           selectionEditorContext: config.selectionEditorContext || {},
           initialSelection: config.initialSelection || [],
           allowedAdapters: config.allowedAdapters || [],
