@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="component" method="upgrade">
     <name>COM_SMARTBROWSER</name>
-    <version>3.6.22</version>
+    <version>4.0.0</version>
     <creationDate>2026-09</creationDate>
     <author>SuperSoft — Kontarinis Andreas</author>
     <copyright>(C) 2026 SuperSoft. All rights reserved.</copyright>
@@ -10,6 +10,7 @@
     <namespace path="src">SuperSoft\Component\Smartbrowser</namespace>
     <scriptfile>script.php</scriptfile>
     <files folder="site">
+        <folder>layouts</folder>
         <folder>src</folder>
         <folder>tmpl</folder>
     </files>

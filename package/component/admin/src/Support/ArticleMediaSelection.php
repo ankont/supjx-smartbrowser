@@ -26,7 +26,7 @@ final class ArticleMediaSelection
     public static function imageReference(string $value): ?array
     {
         if ($value === '') return null;
-        $marker = strpos($value, '#joomlaImage://');
+        $marker = strrpos($value, '#joomlaImage://');
         if ($marker !== false) {
             $parts = parse_url(substr($value, $marker + 1));
             if (!empty($parts['host']) && !empty($parts['path'])) {

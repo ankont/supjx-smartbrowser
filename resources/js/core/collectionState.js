@@ -57,9 +57,19 @@ export function createCollectionState({ config, api, notify, translate }) {
       if (!destroyed && request === generation) { state.error = error.message; throw error; }
     } finally { if (!destroyed && request === generation) state.loading = false; }
   }
-  async function setItems(next) {
+  async function setItems(next, { resolvedResources, reason } = {}) {
     if (destroyed) throw new Error('Collection is destroyed.');
     const normalized = normalize(next);
+    if (resolvedResources) {
+      if (!editable || state.busy || state.loading) throw new Error('The collection cannot be changed now.');
+      const resources = new Map(resolvedResources.map(resource => [resourceKey(resource), resource]));
+      if (normalized.some(item => !resources.has(itemKey(item)))) throw new TypeError('Incomplete resolved collection.');
+      ++generation; items = normalized; revision.value++;
+      state.items = renderResources(normalized.map(item => resources.get(itemKey(item))));
+      state.selectedIds = []; state.error = ''; state.sortBy = 'collectionOrder'; state.sortDirection = 'asc';
+      if (reason) emit(reason);
+      return;
+    }
     const sameReferences = referenceItems && normalized.length === items.length && normalized.every((item, index) => itemKey(item) === itemKey(items[index]));
     items = normalized;
     revision.value++;
@@ -97,9 +107,20 @@ export function createCollectionState({ config, api, notify, translate }) {
   }
   const resources = scope.run(() => computed(() => {
     if (state.sortBy === 'collectionOrder') return state.sortDirection === 'desc' ? [...state.items].reverse() : state.items;
+    if (config.selectedResources) return state.items;
     return browser.resources.value;
   }));
-  return { options, browser, resources, canRemove, canOrder, refresh, setItems, remove, move, revision,
+  return { options, browser, resources, referenceItems, canRemove, canOrder, refresh, setItems, remove, move, revision,
+    reorderItems(keys) {
+      if (!canOrder || destroyed || state.busy || state.loading) return;
+      if (!Array.isArray(keys) || keys.length !== items.length || new Set(keys).size !== items.length || keys.some(key => !items.some(item => itemKey(item) === key))) throw new TypeError('Invalid collection order.');
+      const entries = new Map(items.map(item => [itemKey(item), item]));
+      items = keys.map(key => entries.get(key));
+      const resourcesByKey = new Map(state.items.map(resource => [resourceKey(resource), resource]));
+      state.items = keys.map(key => resourcesByKey.get(key)).filter(Boolean);
+      revision.value++;
+      emit('reorder');
+    },
     setUsage(resource, usage) {
       if (!editable || destroyed || !referenceItems || state.loading || state.busy) return;
       const key = resourceKey(resource);

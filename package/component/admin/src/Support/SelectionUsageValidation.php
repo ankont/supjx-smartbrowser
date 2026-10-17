@@ -8,6 +8,7 @@ final class SelectionUsageValidation
 {
     public static function values(array $resource, array $profile, array $values, callable $resolve): array
     {
+        if (count($values) > 100 || strlen(json_encode($values, JSON_THROW_ON_ERROR, 32)) > 65536) throw new \InvalidArgumentException('Invalid usage size.');
         if (!empty($resource['unavailable'])) return $values;
         $definitions = [];
         foreach ($resource['selectionCapabilities'] ?? [] as $definition) {
@@ -17,7 +18,11 @@ final class SelectionUsageValidation
             $definitions[$key] = [...$definition, 'policy' => $policy, 'required' => ($policy['required'] ?? false) === true];
             if (!array_key_exists($key, $values)) $values[$key] = array_key_exists('default', $policy) ? $policy['default'] : ($definition['default'] ?? null);
         }
-        if (array_diff(array_keys($values), array_keys($definitions))) throw new \InvalidArgumentException('Unsupported usage property.');
+        foreach (array_diff(array_keys($values), array_keys($definitions)) as $key) {
+            if (!is_string($key) || !preg_match('/^ext\.[a-zA-Z][a-zA-Z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)*$/D', $key)) throw new \InvalidArgumentException('Unsupported usage property.');
+        }
+        if (isset($values['ext.address']) && (!is_string($values['ext.address']) || strlen($values['ext.address']) > 2048
+            || preg_match('/[\x00-\x1f\x7f]|^\s*(?:javascript|data|vbscript):/i', $values['ext.address']))) throw new \InvalidArgumentException('Invalid preview address.');
         foreach ($definitions as $key => $definition) {
             $dependency = $definition['disabledWhen'] ?? [];
             $disabled = isset($dependency['key']) && array_key_exists($dependency['key'], $values) && $values[$dependency['key']] === ($dependency['equals'] ?? null);

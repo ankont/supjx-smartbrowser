@@ -9,6 +9,43 @@
   const instances = new Map();
   const editors = Object.create(null);
   const previewActions = new Map();
+  const visualOverlays = new Map();
+  const previewRenderers = new Map();
+  const imagePresentations = new Map(), imagePresentationListeners = new Set();
+  const presentationDefinitions = () => [...imagePresentations.values()].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+  const subscribeImagePresentations = listener => {
+    if (typeof listener !== 'function') throw new TypeError('An image presentation subscriber must be a function.');
+    imagePresentationListeners.add(listener); return () => imagePresentationListeners.delete(listener);
+  };
+  const notifyImagePresentations = () => {
+    for (const listener of imagePresentationListeners) { try { listener(presentationDefinitions()); } catch (error) { console.error(error); } }
+  };
+  const unregisterImagePresentation = id => { if (imagePresentations.delete(id)) notifyImagePresentations(); };
+  const previewRendererListeners = new Set();
+  const rendererDefinitions = () => [...previewRenderers.values()].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+  const notifyPreviewRenderers = () => {
+    for (const listener of previewRendererListeners) {
+      try { listener(rendererDefinitions()); } catch (error) { console.error(error); }
+    }
+  };
+  const subscribePreviewRenderers = listener => {
+    if (typeof listener !== 'function') throw new TypeError('A preview renderer subscriber must be a function.');
+    previewRendererListeners.add(listener); return () => previewRendererListeners.delete(listener);
+  };
+  const unregisterPreviewRenderer = id => { if (previewRenderers.delete(id)) notifyPreviewRenderers(); };
+  const visualOverlayListeners = new Set();
+  const subscribeVisualOverlays = listener => {
+    if (typeof listener !== 'function') throw new TypeError('A visual overlay subscriber must be a function.');
+    visualOverlayListeners.add(listener);
+    return () => visualOverlayListeners.delete(listener);
+  };
+  const overlayDefinitions = () => [...visualOverlays.values()].sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
+  const notifyVisualOverlays = () => {
+    for (const listener of visualOverlayListeners) {
+      try { listener(overlayDefinitions()); } catch (error) { console.error(error); }
+    }
+  };
+  const unregisterVisualOverlay = id => { if (visualOverlays.delete(id)) notifyVisualOverlays(); };
   const previewActionListeners = new Set();
   const subscribePreviewActions = listener => {
     if (typeof listener !== 'function') throw new TypeError('A preview action subscriber must be a function.');
@@ -46,8 +83,40 @@
   };
 
   window.SmartBrowserPicker = {
+    subscribeImagePresentations,
+    getImagePresentations: presentationDefinitions,
+    unregisterImagePresentation,
+    registerImagePresentation(definition) {
+      if (!/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(definition?.id || '') || typeof definition.apply !== 'function'
+        || definition.order != null && !Number.isFinite(definition.order)
+        || !Array.isArray(definition.styles) || definition.styles.some(name => typeof name !== 'string' || !/^(?:--)?[a-z][a-z0-9-]*$/.test(name))
+        || definition.hasChanges != null && typeof definition.hasChanges !== 'function'
+        || definition.reset != null && typeof definition.reset !== 'function') throw new TypeError('An image presentation needs a namespaced ID, CSS styles and apply function.');
+      if (imagePresentations.has(definition.id)) throw new Error('Image presentation is already registered.');
+      imagePresentations.set(definition.id, definition); notifyImagePresentations();
+      return () => { if (imagePresentations.get(definition.id) === definition) unregisterImagePresentation(definition.id); };
+    },
+    subscribePreviewRenderers,
+    unregisterPreviewRenderer,
+    registerPreviewRenderer(definition) {
+      if (!/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(definition?.id || '') || typeof definition.mount !== 'function'
+        || definition.order != null && !Number.isFinite(definition.order)) throw new TypeError('A preview renderer needs a namespaced ID and mount function.');
+      if (previewRenderers.has(definition.id)) throw new Error('Preview renderer is already registered.');
+      previewRenderers.set(definition.id, definition); notifyPreviewRenderers();
+      return () => { if (previewRenderers.get(definition.id) === definition) unregisterPreviewRenderer(definition.id); };
+    },
+    subscribeVisualOverlays,
+    unregisterVisualOverlay,
+    registerVisualOverlay(definition) {
+      if (!/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(definition?.id || '') || typeof definition.mount !== 'function'
+        || definition.order != null && !Number.isFinite(definition.order)) throw new TypeError('A visual overlay needs a namespaced ID and mount function.');
+      if (visualOverlays.has(definition.id)) throw new Error('Visual overlay is already registered.');
+      visualOverlays.set(definition.id, definition);
+      notifyVisualOverlays();
+      return () => { if (visualOverlays.get(definition.id) === definition) unregisterVisualOverlay(definition.id); };
+    },
     subscribePreviewActions,
-    extensions() { return { editors: { ...editors }, previewActions: [...previewActions.values()] }; },
+    extensions() { return { editors: { ...editors }, previewActions: [...previewActions.values()], visualOverlays: overlayDefinitions(), previewRenderers: rendererDefinitions(), imagePresentations: presentationDefinitions() }; },
     registerUsageEditor(id, definition) {
       if (!/^[a-z][a-z0-9_-]*(?:\.[a-zA-Z][a-zA-Z0-9_-]*)+$/.test(id) || typeof definition?.mount !== 'function') throw new TypeError('A usage editor needs a namespaced ID and mount function.');
       if (editors[id]) throw new Error('Usage editor is already registered.');
@@ -64,7 +133,7 @@
     context(id, source) {
       const instance = instances.get(id);
       if (!instance || instance.frame.contentWindow !== source) return null;
-      return { ...instance.context, subscribePreviewActions, ...(instance.snapshot ? {
+      return { ...instance.context, addressContract: window.SmartBrowser?.SelectionAddress, subscribePreviewActions, subscribeVisualOverlays, visualOverlays: overlayDefinitions(), subscribePreviewRenderers, previewRenderers: rendererDefinitions(), subscribeImagePresentations, getImagePresentations: presentationDefinitions, imagePresentations: presentationDefinitions(), ...(instance.snapshot ? {
         getCollectionSnapshot: () => clone(instance.snapshot),
         commitCollection: snapshot => { instance.snapshot = { items: contract.collectionEntries(snapshot.items, instance.constraints), resources: clone(snapshot.resources || {}), virtualResources: clone(snapshot.virtualResources || {}) }; },
         initialUsage: Object.fromEntries(instance.snapshot.items.map(entry => [contract.referenceKey(entry.selection), entry.usage])),
@@ -132,6 +201,7 @@
           initialSelection: config.initialSelection || [],
           allowedAdapters: config.allowedAdapters || [],
           initialAdapter: config.adapter || 'media',
+          initialFocus: config.initialFocus || null, initialInfoOpen: config.initialInfoOpen === true,
           initialBrowseRoot: config.browseRoot || '',
           collectionMode, homogeneous: config.homogeneous === true,
           allowOrdering: config.allowOrdering !== false && config.ordering !== false, maxSelections: constraints.maxSelections,

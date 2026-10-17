@@ -2,14 +2,14 @@
   <dialog ref="dialog" class="resource-batch-dialog" :aria-label="t('COM_SMARTBROWSER_BATCH_ACTIONS')">
     <div class="resource-batch-body">
       <div class="resource-batch-heading" role="heading" aria-level="3">{{ t('COM_SMARTBROWSER_BATCH_SELECT_ACTIONS') }}</div>
-      <details v-if="orderingAvailable && items.every(item => item.capabilities?.reorder)" class="resource-batch-step" :open="sort.enabled">
+      <details v-if="orderingAvailable && (collectionOnly || items.every(item => item.capabilities?.reorder))" class="resource-batch-step" :open="sort.enabled">
         <summary @click.prevent="sort.enabled = !sort.enabled">{{ t('COM_SMARTBROWSER_BATCH_SORT') }}</summary>
         <div class="resource-batch-fields">
           <select v-model="sort.field" class="form-select" :aria-label="t('COM_SMARTBROWSER_BATCH_SORT')"><option v-for="field in sortFields" :key="field.id" :value="field.id">{{ t(field.label) }}</option></select>
           <select v-model="sort.direction" class="form-select" :aria-label="t('COM_SMARTBROWSER_SORT_DIRECTION')"><option value="asc">{{ t('COM_SMARTBROWSER_ASCENDING') }}</option><option value="desc">{{ t('COM_SMARTBROWSER_DESCENDING') }}</option></select>
         </div>
       </details>
-      <template v-if="isMedia">
+      <template v-if="isMedia && !collectionOnly">
         <details class="resource-batch-step" :open="media.placement !== 'none'">
           <summary @click.prevent="media.placement = media.placement === 'none' ? 'move' : 'none'">{{ t('COM_SMARTBROWSER_BATCH_PLACEMENT') }}</summary>
           <div class="resource-batch-fields">
@@ -41,7 +41,7 @@
           <div class="resource-batch-fields"><label class="resource-batch-check"><input v-model="media.deleteArchive" type="checkbox" class="form-check-input" :disabled="!items.every(item => item.capabilities?.delete)"> {{ t('COM_SMARTBROWSER_BATCH_EXTRACT_DELETE') }}</label></div>
         </details>
       </template>
-      <template v-else-if="isArticles">
+      <template v-else-if="isArticles && !collectionOnly">
         <details v-for="field in articleFields" :key="field.id" class="resource-batch-step" :open="article[field.enabled]">
           <summary @click.prevent="article[field.enabled] = !article[field.enabled]">{{ t(field.label) }}</summary>
           <div class="resource-batch-fields"><select v-model="article[field.id]" class="form-select" :aria-label="t(field.label)"><option value="">{{ t(field.placeholder) }}</option><option v-for="option in filterOptions(field.id)" :key="option.value" :value="option.value">{{ t(option.label) }}</option></select></div>
@@ -61,7 +61,7 @@
           </div>
         </details>
       </template>
-      <template v-else-if="isCategories || isTags || isMenus">
+      <template v-else-if="!collectionOnly && (isCategories || isTags || isMenus)">
         <details v-for="field in sharedFields" :key="field.id" class="resource-batch-step" :open="shared[field.enabled]">
           <summary @click.prevent="shared[field.enabled] = !shared[field.enabled]">{{ t(field.label) }}</summary>
           <div v-if="shared[field.enabled]" class="resource-batch-fields"><select v-model="shared[field.id]" class="form-select" :aria-label="t(field.label)"><option value="">{{ t(field.placeholder) }}</option><option v-for="option in filterOptions(field.id)" :key="option.value" :value="option.value">{{ t(option.label) }}</option></select></div>
@@ -91,7 +91,7 @@
           </div>
         </details>
       </template>
-      <template v-else-if="isUsers">
+      <template v-else-if="isUsers && !collectionOnly">
         <details class="resource-batch-step" :open="user.groupOpen">
           <summary @click.prevent="user.groupOpen = !user.groupOpen">{{ t('COM_SMARTBROWSER_BATCH_USER_GROUPS') }}</summary>
           <div v-if="user.groupOpen" class="resource-batch-fields">
@@ -148,7 +148,7 @@ import { computed, inject, onMounted, reactive, ref } from 'vue';
 import ResourceFancySelect from './ResourceFancySelect.vue';
 import ResourceBatchModeToggle from './ResourceBatchModeToggle.vue';
 
-const props = defineProps({ selection: { type: Array, required: true }, adapter: { type: String, required: true }, filters: { type: Array, default: () => [] }, batchOptions: { type: Object, default: () => ({}) }, sortFields: { type: Array, default: () => [] }, orderingAvailable: Boolean, t: { type: Function, required: true } });
+const props = defineProps({ selection: { type: Array, required: true }, adapter: { type: String, required: true }, filters: { type: Array, default: () => [] }, batchOptions: { type: Object, default: () => ({}) }, sortFields: { type: Array, default: () => [] }, orderingAvailable: Boolean, collectionOnly: Boolean, t: { type: Function, required: true } });
 const emit = defineEmits(['apply']);
 const api = inject('resourceApi');
 const busy = ref(false);
@@ -167,7 +167,7 @@ const isTags = computed(() => adapter.value === 'tags');
 const isMenus = computed(() => adapter.value === 'menus');
 const isUsers = computed(() => adapter.value === 'users');
 const selectionPrefix = computed(() => ({ articles: 'article:', 'articles-by-tag': 'article:', categories: 'category:', tags: 'tag:', menus: 'menu-item:', users: 'user:' })[adapter.value]);
-const items = computed(() => selectionPrefix.value ? props.selection.filter((item) => item.id.startsWith(selectionPrefix.value)) : props.selection);
+const items = computed(() => !props.collectionOnly && selectionPrefix.value ? props.selection.filter((item) => item.id.startsWith(selectionPrefix.value)) : props.selection);
 const mediaDefaults = { rename: false, find: '', replace: '', prefix: '', suffix: '', number: false, startAt: 1, placement: 'none', destination: '', zip: false, zipName: 'selection', extract: false, deleteArchive: false };
 const articleDefaults = { changeLanguage: false, language: '', changeAccess: false, access: '', tagsOpen: false, tagAdd: [], tagRemove: [], placement: 'none', category: '' };
 const sharedDefaults = { changeLanguage: false, language: '', changeAccess: false, access: '', tagsOpen: false, tagAdd: [], tagRemove: [], placement: 'none', category: '', flipOrdering: false, menuDestination: '' };
@@ -242,6 +242,7 @@ const canApply = computed(() => {
   return true;
 });
 const payload = () => {
+  if (props.collectionOnly) return {};
   if (isMedia.value) return { ...media, zipName: bareZipName.value };
   if (isArticles.value) return { language: article.changeLanguage ? article.language : '', access: article.changeAccess ? article.access : '', tagAdd: article.tagsOpen ? article.tagAdd : [], tagRemove: article.tagsOpen ? article.tagRemove : [], placement: article.placement, category: article.category };
   if (isUsers.value) return { group: user.groupOpen ? user.group : '', groupAction: user.groupAction === 'remove' ? 'del' : user.groupAction, reset: user.resetOpen ? user.reset : '' };
@@ -294,10 +295,10 @@ const open = () => {
   Object.assign(article, articleDefaults);
   Object.assign(shared, sharedDefaults);
   Object.assign(user, userDefaults);
-  Object.assign(sort, { enabled: false, field: props.sortFields[0]?.id || 'title', direction: 'asc' });
+  Object.assign(sort, { enabled: props.collectionOnly, field: props.sortFields[0]?.id || 'title', direction: 'asc' });
   folderOptions.value = [];
   dialog.value?.showModal();
-  if (isMedia.value) loadFolders();
+  if (isMedia.value && !props.collectionOnly) loadFolders();
 };
 const openPreview = () => previewDialog.value?.showModal();
 const closePreview = () => { if (previewDialog.value?.open) previewDialog.value.close(); };

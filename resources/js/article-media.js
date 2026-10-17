@@ -27,6 +27,8 @@ export function mountNativeSelection(root) {
     if (controls) controls.append(root);
     else native(mapping.image).closest('.control-group')?.after(root);
   }
+  if (image) root.dataset.sbField = JSON.stringify({ ...config, nativeImage: true,
+    nativeUsageKeys: categoryImage ? Object.keys(mapping.usageFields || { 'media.alt': '', 'media.decorative': '' }) : ['media.alt', 'media.decorative', 'media.caption', 'media.class'] });
   const selection = mountSelectionField(root);
   mounted.add(root);
   if (image) {
@@ -87,7 +89,7 @@ export function mountNativeSelection(root) {
         const existing = native(prefix).value;
         const existingId = window.SmartBrowserMediaValue.parse?.(existing)?.resourceId;
         const sameResource = value && existingId && existingId === value.resource.id;
-        write(prefix, value ? sameResource ? existing : window.SmartBrowserMediaValue.format(value.resource, 'joomla') : '');
+        write(prefix, value ? value.usage['ext.address'] ?? (sameResource ? existing : window.SmartBrowserMediaValue.format(value.resource, 'joomla')) : '');
         if (categoryImage) {
           for (const [key, name] of Object.entries(mapping.usageFields || { 'media.alt': 'image_alt', 'media.decorative': 'image_alt_empty' })) write(name, value?.usage[key] ?? (key === 'media.decorative' ? false : ''));
         } else {

@@ -3,10 +3,18 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { informationVisualLayers, visualVariableRules } from '../resources/js/core/visualStyleVariables.js';
 
+test('Information reuses raw Grid resources and generic preview percentage sizing does not collapse it', async () => {
+  const component = await readFile(new URL('../resources/js/components/LightweightResourceVisual.vue', import.meta.url), 'utf8');
+  const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
+  assert.match(component, /ResourceVisual v-if="!contentOnly" :resource="resource" :fit-content="resource.type === 'image'"/);
+  assert.match(css, /\.resource-lightweight-visual:not\(\.is-information-visual\) > \.resource-visual-content \{ width: 100%; height: 100%; \}/);
+  assert.match(css, /\.is-grid-information > \.resource-visual-content \{[^}]*position: relative;[^}]*aspect-ratio: 1;/);
+});
+
 test('Information badge offset reserves layout space and separation from the filename', async () => {
   const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
-  assert.match(css, /\.is-information-visual:has\(\.resource-visual-layer\.asset-image\) \{ padding-bottom: 20px; margin-bottom: 8px; \}/);
-  assert.match(css, /\.is-information-visual:has\(\.resource-visual-layer\.asset-image\) \.resource-visual-layer\.asset-base \{ margin-top: 20px; \}/);
+  assert.match(css, /\.is-information-visual:not\(\.is-grid-information\):has\(\.resource-visual-layer\.asset-image\) \{ padding-bottom: 20px; margin-bottom: 8px; \}/);
+  assert.match(css, /\.is-information-visual:not\(\.is-grid-information\):has\(\.resource-visual-layer\.asset-image\) \.resource-visual-layer\.asset-base \{ margin-top: 20px; \}/);
 });
 
 test('image-anchored badges retain the Grid overhang without clipping', () => {

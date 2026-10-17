@@ -37,6 +37,27 @@ export const selectionColumns = [
   { id: 'status', label: 'JSTATUS', format: 'status', overlays: true },
 ];
 export const selectionGridFields = selectionColumns.slice(1, 3);
+export const selectionColumnCatalog = [
+  ...selectionColumns.map(column => ({ ...column, defaultVisible: true })),
+  { id: 'selectionId', source: 'id', label: 'JGRID_HEADING_ID', headerIcon: 'fas fa-hashtag', defaultVisible: false },
+  { id: 'type', source: 'selectionType', label: 'COM_SMARTBROWSER_TYPE', headerIcon: 'fas fa-shapes', defaultVisible: false },
+  { id: 'created', source: 'metadata.created', label: 'JGLOBAL_FIELD_CREATED_LABEL', headerIcon: 'fas fa-calendar-plus', format: 'date', defaultVisible: false },
+  { id: 'modified', source: 'metadata.modified', label: 'JGLOBAL_FIELD_MODIFIED_LABEL', headerIcon: 'fas fa-calendar-alt', format: 'date', defaultVisible: false },
+];
+export const selectionSortFields = selectionColumnCatalog.filter(column => column.id !== 'status').map(column => ({ id: column.id, label: column.label }));
+export function sortSelectionResources(resources, field, direction = 'asc') {
+  const column = selectionColumnCatalog.find(column => column.id === field);
+  if (!column) return [...resources];
+  const value = resource => valueAt(resource, column.source || column.id);
+  return [...resources].sort((a, b) => {
+    const left = value(a), right = value(b);
+    const missingLeft = left == null || left === '', missingRight = right == null || right === '';
+    if (missingLeft || missingRight) return Number(missingLeft) - Number(missingRight);
+    const comparison = typeof left === 'number' && typeof right === 'number' ? left - right
+      : String(left).localeCompare(String(right), undefined, { numeric: true, sensitivity: 'base' });
+    return direction === 'desc' ? -comparison : comparison;
+  });
+}
 export function selectionTypeLabel(resource, translate) {
   const key = { image: 'COM_SMARTBROWSER_MEDIA_IMAGE', document: 'COM_SMARTBROWSER_MEDIA_DOCUMENT', video: 'COM_SMARTBROWSER_MEDIA_VIDEO', audio: 'COM_SMARTBROWSER_MEDIA_AUDIO', folder: 'COM_SMARTBROWSER_FOLDER' }[resource?.type];
   const type = resource?.metadata?.typeLabel || resource?.type || '';

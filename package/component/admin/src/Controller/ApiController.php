@@ -38,7 +38,7 @@ class ApiController extends BaseController
                     $byKey = array_combine($keys, $entries);
                     return ['items' => $collection::jsonEntries(array_map(static fn ($key) => $byKey[$key], $ordered))];
                 }
-                if (($body['operation'] ?? 'resolve') !== 'resolve') throw new \InvalidArgumentException('Invalid collection operation.', 400);
+                if (!in_array($body['operation'] ?? 'resolve', ['resolve', 'validate'], true)) throw new \InvalidArgumentException('Invalid collection operation.', 400);
                 $resources = $collection::resolveEntries($entries, function ($id, $ids) use ($collection) {
                     $root = $id === preg_replace('/^flat-/', '', $this->input->getCmd('adapter')) ? $this->input->getString('browseRoot') : '';
                     $adapter = (new AdapterRegistry($this->app))->get($id, $root ?: null);
@@ -52,6 +52,21 @@ class ApiController extends BaseController
                         'imageBackground' => $params->get('image_background', 'auto'),
                     ], $id);
                 });
+                if (($body['operation'] ?? '') === 'validate') {
+                    $profile = $body['selectionProfile'] ?? [];
+                    if (!is_array($profile) || count($profile) > 100 || strlen(json_encode($profile, JSON_THROW_ON_ERROR)) > 32768) throw new \InvalidArgumentException('Invalid selection profile.', 400);
+                    $errors = [];
+                    foreach ($entries as $index => $entry) {
+                        try {
+                            if (!empty($resources[$index]['unavailable']) || ($resources[$index]['selectable'] ?? true) === false) throw new \RuntimeException('Unavailable or disallowed resource.', 403);
+                            \SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionFieldSupport::usageValues($resources[$index], $entry['usage'], [
+                                'selectionProfile' => $profile, 'adapter' => $entry['selection']['adapter'],
+                                'browseRoot' => $entry['selection']['adapter'] === $this->input->getCmd('adapter') ? $this->input->getString('browseRoot') : '',
+                            ]);
+                        } catch (\Throwable $error) { $errors[] = ['index' => $index, 'message' => $error->getMessage()]; }
+                    }
+                    if ($errors) return ['errors' => $errors];
+                }
                 return ['items' => $collection::jsonEntries($entries), 'resources' => $resources, 'actions' => [], 'presentation' => ['columns' => [['id' => 'title', 'label' => 'COM_SMARTBROWSER_NAME']]]];
             }
             $adapter = $this->getAdapter();

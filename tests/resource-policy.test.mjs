@@ -313,7 +313,8 @@ test('MenuAdapter keeps hierarchy separate from lazily resolved contextual conte
 test('menu resources keep native images and icon classes as separate metadata', async () => {
   const adapter = await readFile(new URL('../package/component/admin/src/Adapter/MenuAdapter.php', import.meta.url), 'utf8');
   assert.match(adapter, /\$params\['menu_image'\]/);
-  assert.match(adapter, /HTMLHelper::_\('cleanImageURL', \$menuImage\)/);
+  assert.match(adapter, /HTMLHelper::_\('cleanImageURL', \$image\)/);
+  assert.match(adapter, /\$this->menuImage\(\(string\) \$params->get\('menu_image'/);
   assert.match(adapter, /'image' => \$menuImage \?: null/);
   assert.match(adapter, /'menuIcon' => trim\(\(string\) \(\$params\['menu_icon_css'\]/);
 });
@@ -885,8 +886,9 @@ test('editor-specific styles size nested pickers and keep tab and choice overlay
   assert.match(view, /useStyle\('com_smartbrowser\.editor'\)/);
   assert.match(assets, /com_smartbrowser\/editor\.css/);
   assert.match(css, /dialog\.com-smartbrowser-editor-picker[^}]+width: min\(1200px/s);
-  assert.match(css, /#smartbrowserEditorTabs\[view="tabs"\][^}]+display: flex;[^}]+flex-direction: column;/s);
-  assert.match(css, /#smartbrowserEditorTabs\[view="tabs"\] > :not\(\[role="tablist"\]\)[^}]+overflow-y: auto;/s);
+  assert.match(css, /\.com-smartbrowser-editor:not\(\.is-page\) > #adminForm[^}]+overflow-y: auto;/s);
+  assert.match(css, /#smartbrowserEditorTabs > :not\(\[role="tablist"\]\)[^}]+overflow: visible;/s);
+  assert.match(css, /\.com-smartbrowser-editor:not\(\.is-page\) \.smartbrowser-editor-actions[^}]+position: sticky;/s);
   assert.match(css, /\.com-smartbrowser-editor\.container-fluid \{[^}]*padding-top: 72px !important;/s);
   assert.match(css, /smartbrowser-tab-scroll[^}]+position: absolute !important;/s);
   assert.match(css, /choices\.is-open[^}]+z-index/s);

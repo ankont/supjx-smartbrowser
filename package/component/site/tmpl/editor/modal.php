@@ -132,6 +132,7 @@ $menuItemTypeTitleKey = match ($menuItemType) {
             <?php endif; ?>
             <?php if ($nativeUrl) : ?><div class="d-flex gap-2 ms-auto smartbrowser-editor-tools"><a class="btn btn-outline-secondary smartbrowser-editor-native" href="<?php echo $this->escape($nativeUrl); ?>" title="Joomla" aria-label="Joomla"><span class="fab fa-joomla" aria-hidden="true"></span></a></div><?php endif; ?>
         </div>
+        <div class="smartbrowser-editor-content">
         <?php if ($administrator && $this->resourceType === 'article') : ?>
             <?php require __DIR__ . '/article-admin.php'; ?>
         <?php elseif ($this->resourceType === 'article') : ?>
@@ -141,6 +142,7 @@ $menuItemTypeTitleKey = match ($menuItemType) {
         <?php else : ?>
             <?php require __DIR__ . '/resource-native.php'; ?>
         <?php endif; ?>
+        </div>
         <?php echo $form->renderControlFields(); ?>
         <?php if ($this->resourceType === 'category') echo $form->getInput('extension'); ?>
         <input type="hidden" name="type" value="<?php echo $this->escape($this->resourceType); ?>">

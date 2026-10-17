@@ -9,10 +9,10 @@ const model = (options = {}, api = { collection: async ids => result(ids) }, not
 
 test('external preview actions can update the displayed address', async () => {
   const source = await readFile(new URL('../resources/js/components/CollectionView.vue', import.meta.url), 'utf8');
-  const callback = source.match(/setAddress: (\(value\) => \{ props\.config\.nativeAddress = String\(value \|\| ''\); \})/);
+  const callback = source.match(/setAddress: (\(value\) => \{ if \(resourceKey\(focusedResource.value\) !== resourceKey\(resource\)\) return; props\.config\.nativeAddress = String\(value \|\| ''\); return setUsage\('ext.address', props.config.nativeAddress\); \})/);
   assert.ok(callback, 'preview context exposes setAddress');
   const props = { config: { nativeAddress: 'original' } };
-  const setAddress = new Function('props', `return (${callback[1]});`)(props);
+  const setAddress = new Function('props', 'resourceKey', 'focusedResource', 'resource', 'setUsage', `return (${callback[1]});`)(props, r => r.id, { value: { id: 'one' } }, { id: 'one' }, () => {});
   setAddress('images/cropped.png');
   assert.equal(props.config.nativeAddress, 'images/cropped.png');
   setAddress(null);

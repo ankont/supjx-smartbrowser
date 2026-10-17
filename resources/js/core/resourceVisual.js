@@ -147,7 +147,26 @@ export const resolveResourceVisual = (resource = {}, { settings = {}, background
     base: open ? (resource.openIcon && resource.closedIcon === resource.icon ? resource.openIcon : ({ 'fas fa-folder': 'fas fa-folder-open', 'fas fa-box': 'fas fa-box-open', 'fas fa-tag': 'fas fa-tags', 'fas fa-users-rectangle': 'fas fa-users-viewfinder', 'fas fa-diagram-predecessor': 'fas fa-diagram-successor', 'icon-folder': 'icon-folder-open' }[resource.icon] || resource.icon || 'fas fa-file')) : resource.icon || 'fas fa-file',
     identity: resource.badgeIcon || '', image: allowImage && !imageFailed ? resource.image || '' : '',
   };
+  if (resource.kind === 'item' && resource.typeIcon) {
+    assets.base = resource.typeIcon;
+    assets.identity = resource.badgeIcon || (resource.icon !== resource.typeIcon ? resource.icon : '') || '';
+  }
   for (const asset of visualAssets) if (availableAssets[asset] === false) assets[asset] = '';
+  const mode = resource.visualPresentation;
+  if (mode === 'icon') { assets.image = ''; assets.base = assets.identity || assets.base; }
+  if (mode === 'thumbnail' && assets.image) { assets.base = ''; assets.identity = ''; }
+  if (['thumbnail', 'icon', 'both'].includes(mode)) {
+    const rules = assets.image ? [
+      ...(mode === 'both' ? [{
+        ...(options.rules?.find(rule => rule.style === 'badge' && ['identity', 'base'].includes(rule.asset))
+          || (options.identity?.style === 'badge' ? options.identity : options.base?.style === 'badge' ? options.base : visualDefaults.identity)),
+        asset: 'base', style: 'badge', anchor: 'center', priority: 2,
+      }] : []),
+      { asset: 'image', style: 'center', size: 'large', position: 'top-left', priority: 1 },
+    ] : [{ asset: 'base', style: 'center', size: 'medium', position: 'top-left', z: 1 }];
+    if (mode === 'both') assets.base = assets.identity || assets.base;
+    options.rules = normalizeVisualRules(rules);
+  }
   if (options.rules) {
     const layers = selectVisualRules(options.rules, assets).map(rule => ({ ...rule, icon: rule.asset === 'image' ? '' : assets[rule.asset], src: rule.asset === 'image' ? assets.image : '' }));
     for (const layer of layers.filter(layer => layer.style !== 'badge')) {

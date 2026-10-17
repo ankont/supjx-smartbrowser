@@ -8,10 +8,10 @@ async page => {
   const before = await stored();
   await control.locator('.sb-selection-gallery-nav button').last().click();
   if (before !== await stored()) throw new Error('Gallery navigation changed selection storage');
-  if (await control.locator('.sb-preview-selection-actions button').count() !== 5) throw new Error('Incomplete quick toolbar');
-  await control.locator('.sb-preview-selection-actions button').first().click();
+  if (await control.locator('.sb-preview-selection-actions button').count() !== 6) throw new Error('Incomplete quick toolbar');
+  await control.locator('.sb-preview-selection-actions').getByRole('button', { name: 'COM_SMARTBROWSER_MOVE_UP', exact: true }).click();
   await page.waitForFunction(previous => document.querySelectorAll('.sb-selection-field')[3].querySelector('[data-sb-value]').value !== previous, before);
   const position = await control.locator('.sb-selection-gallery-nav').evaluate(element => getComputedStyle(element).position);
   if (position !== 'absolute') throw new Error('Gallery navigation consumes layout height');
-  return 'Gallery navigation preserves storage; quick ordering and five-button toolbar work without extra height.';
+  return 'Gallery navigation preserves storage; quick ordering and collection sorting work without extra height.';
 }

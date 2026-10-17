@@ -267,7 +267,7 @@
         arrows[1].disabled = list.scrollLeft + list.clientWidth >= list.scrollWidth - 1;
       };
       const revealDropdown = (choices) => {
-        const panel = choices.closest('[role="tabpanel"]');
+        const panel = form.closest('.com-smartbrowser-editor:not(.is-page)') ? form : choices.closest('[role="tabpanel"]');
         const dropdown = choices.querySelector('.choices__list--dropdown');
         if (!panel || !dropdown || !choices.classList.contains('is-open')) return;
         requestAnimationFrame(() => {

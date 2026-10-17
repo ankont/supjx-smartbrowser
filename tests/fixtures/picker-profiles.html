@@ -37,6 +37,7 @@ const labels = {
   COM_SMARTBROWSER_USAGE_PROFILE_INVALID: 'Hidden options configuration error',
 };
 const params = new URL(location.href).searchParams;
+Object.assign(labels, { COM_SMARTBROWSER_COLLECTION_SORT: 'Sort selection order', COM_SMARTBROWSER_BATCH_SORT: 'Sort', COM_SMARTBROWSER_BATCH_APPLY: 'Apply', COM_SMARTBROWSER_SORT_BY: 'Sort by', COM_SMARTBROWSER_COLUMNS: 'Columns', COM_SMARTBROWSER_ASCENDING: 'Ascending', COM_SMARTBROWSER_DESCENDING: 'Descending', COM_SMARTBROWSER_SORT_DIRECTION: 'Sort direction', JGRID_HEADING_ORDERING: 'Ordering', JGRID_HEADING_ID: 'ID', COM_SMARTBROWSER_RESOURCE_TYPE: 'Type', JGLOBAL_FIELD_CREATED_LABEL: 'Created', JGLOBAL_FIELD_MODIFIED_LABEL: 'Modified', COM_SMARTBROWSER_USAGE_DISPLAYED_NAME: 'Displayed name', COM_SMARTBROWSER_USAGE_VISUAL_PRESENTATION: 'Visual presentation', COM_SMARTBROWSER_USAGE_VISUAL_BOTH: 'Thumbnail and icon', COM_SMARTBROWSER_USAGE_ICON: 'Icon' });
 const roots = [{ id: 'local-images:/', title: 'Library', icon: 'fas fa-folder', kind: 'node', type: 'folder', selectable: false, navigable: true }];
 const imageCapabilities = [
   { key: 'media.alt', type: 'string', editor: 'text', label: 'COM_SMARTBROWSER_USAGE_ALT', default: '', validation: { maxLength: 2048 }, disabledWhen: { key: 'media.decorative', equals: true }, inactiveValue: '' },
@@ -49,6 +50,30 @@ const resources = [
   { id: 'local-images:/report.pdf', title: 'Report PDF', kind: 'item', type: 'document', icon: 'fas fa-file-pdf', selectable: true, metadata: { mimeType: 'application/pdf' }, selectionCapabilities: [{ key: 'visual.thumbnailOverride', type: 'resource', editor: 'resource', visualRole: 'thumbnail', label: 'COM_SMARTBROWSER_USAGE_THUMBNAIL', default: null, picker: { adapter: 'media', allowedResourceTypes: ['image'], selectionTarget: 'item' } }] },
   { id: 'article:1', title: 'Article', kind: 'item', type: 'article', icon: 'fas fa-newspaper', selectable: true, metadata: {}, selectionCapabilities: [{ key: 'example.label', type: 'string', editor: 'example.label', label: 'Display label', default: '' }] },
 ];
+const visualCapabilities = [{ key: 'visual.presentation', type: 'string', editor: 'select', label: 'COM_SMARTBROWSER_USAGE_VISUAL_PRESENTATION', default: null, options: [{ value: 'thumbnail', label: 'COM_SMARTBROWSER_USAGE_THUMBNAIL' }, { value: 'icon', label: 'COM_SMARTBROWSER_USAGE_ICON' }, { value: 'both', label: 'COM_SMARTBROWSER_USAGE_VISUAL_BOTH' }] }, { key: 'visual.iconOverride', type: 'string', editor: 'text', label: 'COM_SMARTBROWSER_USAGE_ICON', default: null }];
+if (params.has('nodePreviewFixture')) for (const [type, id, image, badgeIcon] of [
+  ['category', 'category:7', '/resources/images/visual-example.svg?category', ''],
+  ['tag', 'tag:2', '/resources/images/visual-example.svg?tag', ''],
+  ['menu-item', 'menu-item:3', '/resources/images/visual-example.svg?menu', 'fas fa-book'],
+  ['menu-item', 'menu-item:4', null, 'fas fa-heart'],
+]) resources.push({ type, id, title: id, kind: 'node', image, badgeIcon, icon: 'fas fa-folder', selectable: true, metadata: {}, selectionCapabilities: [...resources.find(r => r.type === 'document').selectionCapabilities] });
+for (const resource of resources) {
+  resource.typeIcon = resource.icon;
+  resource.selectionCapabilities.push(...visualCapabilities);
+}
+const articleResource = resources.find(r => r.type === 'article');
+articleResource.selectionCapabilities.push({ key: 'article.displayedName', type: 'string', editor: 'text', label: 'COM_SMARTBROWSER_USAGE_DISPLAYED_NAME', default: null }, ...resources.find(r => r.type === 'document').selectionCapabilities.filter(c => c.key === 'visual.thumbnailOverride'));
+articleResource.image = '/resources/images/visual-example.svg';
+articleResource.metadata.publicUrl = 'https://example.org/frontend/article.html';
+for (const resource of resources) {
+  if (resource.type === 'image') resource.metadata.url = '/resources/images/visual-example.svg';
+  for (const capability of resource.selectionCapabilities) {
+    if (capability.key === 'visual.iconOverride') capability.validation = { maxLength: 160, pattern: '^[a-zA-Z0-9_-]+(?: [a-zA-Z0-9_-]+)*$' };
+    const address = { 'article.displayedName': { name: 'titleOverride' }, 'visual.thumbnailOverride': { name: 'thumbnailOverride', codec: 'joomlaImage', alias: 't' }, 'visual.iconOverride': { name: 'iconOverride' }, 'visual.presentation': { name: 'presentation' } }[capability.key];
+    if (address) capability.address = address;
+  }
+}
+Object.assign(labels, { COM_SMARTBROWSER_COPY_ADDRESSES: 'Copy resource addresses', COM_SMARTBROWSER_IMPORT_ADDRESSES: 'Import resource addresses', COM_SMARTBROWSER_IMPORT: 'Import', COM_SMARTBROWSER_ADDRESS_APPEND: 'Add to existing selection', COM_SMARTBROWSER_ADDRESS_UNAVAILABLE: 'Address unavailable', COM_SMARTBROWSER_SEARCH: 'Search', COM_SMARTBROWSER_DEFAULT_SORTING: 'Unsorted' });
 window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'COM_SMARTBROWSER_ADAPTER_MEDIA', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'COM_SMARTBROWSER_ADAPTER_ARTICLES', icon: 'fas fa-book-open' }], application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
   allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
 window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; document.body.prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
@@ -60,10 +85,19 @@ window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptio
       ? body.operation === 'reorder' ? { items: [...body.items].reverse() } : body.referenceItems ? { items: body.items, resources: body.items.map(entry => ({ ...(resources.find(resource => resource.id === entry.selection.id) || { id: entry.selection.id, title: entry.selection.id, unavailable: true, metadata: {}, capabilities: {} }), adapter: entry.selection.adapter, selection: entry.selection, selectionKey: JSON.stringify([entry.selection.adapter, entry.selection.id]), collectionActions: [], collectionPresentation: { columns: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }], infoFields: [] } })) }
         : { identifiers: body.items, resources: body.items.map(id => resources.find(resource => resource.id === id) || { id, title: id, unavailable: true, metadata: {}, capabilities: {} }) }
       : { nodes: [], items, breadcrumb: roots, actions: [{ id: 'edit', label: 'Edit', requiresSelection: true, single: true, icon: 'fas fa-pen' }, { id: 'checkin', label: 'Check in', requiresSelection: true, icon: 'fas fa-lock' }] };
+    if (params.has('pickerAddressFixture') && request.searchParams.get('task') !== 'api.collection') response.presentation = { columns: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }] };
     const timer = setTimeout(() => config.onSuccess(JSON.stringify({ success: true, data: response })), 10);
     return { abort() { clearTimeout(timer); } };
   },
 };
+if (params.has('nodeInformationFixture')) {
+  resources.find(resource => resource.id === 'category:7').badgeIcon = 'fas fa-palette';
+  fixtureOptions.visualSettings = { nodes: { rules: [
+    { asset: 'identity', style: 'badge', size: 'small', position: 'bottom-right', anchor: 'center', priority: 1 },
+    { asset: 'image', style: 'center', size: 'large', position: 'top-left', priority: 2 },
+    { asset: 'base', style: 'corner', size: 'large', position: 'bottom-left', priority: 3 },
+  ] } };
+}
 </script>
 <script src="/package/component/media/js/dialog-dismiss.js"></script>
 <script src="/package/component/media/js/media-value.js"></script>
@@ -86,7 +120,7 @@ if (params.get('view') === 'browser') {
     const heading = document.createElement('h3'); heading.textContent = title; form.append(heading);
     const field = document.createElement('div'); field.className = 'sb-selection-field';
     field.dataset.sbField = JSON.stringify({ adapter, allowedAdapters: adapter === 'articles' || multiple ? ['articles', 'media'] : [adapter], multiple, editorDisplay, ordering: multiple, selectionTarget: 'item', readOnly: false,
-      selectionUseData: params.get('usageMode') || 'readonly', informationPanelPosition: params.get('panelPosition') || 'auto', selectionProfile: adapter === 'articles' ? {} : profile, apiBaseUrl: location.origin + '/index.php', pickerUrl: location.origin + '/index.php', csrfToken: 'test' });
+      selectionUseData: params.get('usageMode') || 'readonly', informationPanelPosition: params.get('panelPosition') || 'auto', selectionProfile: adapter === 'articles' ? params.has('presentationFixture') ? { 'article.displayedName': {}, 'visual.presentation': {}, 'visual.iconOverride': {}, 'visual.thumbnailOverride': {} } : {} : profile, apiBaseUrl: location.origin + '/index.php', pickerUrl: location.origin + '/index.php', csrfToken: 'test' });
     field.innerHTML = '<input type="hidden" data-sb-value><div data-sb-collection></div><p data-sb-error hidden></p><div class="sb-selection-field-controls"><button type="button" class="btn btn-outline-primary" data-sb-select>Select resources</button><button type="button" class="btn btn-outline-secondary" data-sb-clear>Clear</button></div>';
     field.querySelector('input').value = JSON.stringify({ version: 1, items: ids.map(id => ({ selection: { adapter, id }, usage: usage[id] || {} })) }); form.append(field);
     const debug = document.createElement('details'); const summary = document.createElement('summary'); summary.textContent = 'Stored value'; debug.append(summary);

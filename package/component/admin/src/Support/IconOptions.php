@@ -65,6 +65,7 @@ final class IconOptions
                     $resource['closedIcon'] = $icons[$type];
                     $resource['openIcon'] = $icons[$type];
                 }
+                $resource['typeIcon'] = $resource['icon'];
                 return $resource;
             }
         }
@@ -87,6 +88,7 @@ final class IconOptions
                 $resource['icon'] = $icons[$type]; break;
             }
         }
+        $resource['typeIcon'] = $resource['icon'] ?? $icons[$role];
         return $resource;
     }
 }

@@ -1,4 +1,5 @@
 import { collectionEntries, referenceKey } from './selectionIdentity.js';
+import { extensionValues } from './extensionMetadata.js';
 
 export function selectionFieldValue(value, adapters, multiple = true, homogeneous = false) {
   if (value === '' || value == null) return { version: 1, items: [] };
@@ -11,10 +12,13 @@ export function selectionFieldValue(value, adapters, multiple = true, homogeneou
   return { version: 1, items };
 }
 
-export function fieldPickerResult(current, result, adapters, multiple, editedReference = null, homogeneous = false) {
+export function fieldPickerResult(current, result, adapters, multiple, editedReference = null, homogeneous = false, preserveUsageOnReplace = false, operation = 'replace') {
   const entries = result.items || (Array.isArray(result.selection) ? result.selection : [result.selection]).map(resource => ({
     selection: { adapter: result.adapter || current.items[0]?.selection.adapter || (Array.isArray(adapters) ? adapters[0] : adapters), id: resource.id }, usage: result.usage?.[resource.id] || {},
   }));
-  const items = editedReference ? current.items.flatMap(entry => referenceKey(entry.selection) === referenceKey(editedReference) ? entries : [entry]) : entries;
+  const existing = new Set(current.items.map(entry => referenceKey(entry.selection)));
+  const items = operation === 'append' ? [...current.items, ...entries.filter(entry => !existing.has(referenceKey(entry.selection)))] : editedReference ? current.items.flatMap(entry => referenceKey(entry.selection) === referenceKey(editedReference)
+    ? entries.map(next => ({ ...next, usage: preserveUsageOnReplace || referenceKey(next.selection) === referenceKey(entry.selection)
+      ? { ...extensionValues(entry.usage), ...next.usage } : next.usage })) : [entry]) : entries;
   return selectionFieldValue({ version: 1, items: collectionEntries(items) }, adapters, multiple, homogeneous);
 }

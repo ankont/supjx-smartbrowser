@@ -63,7 +63,7 @@ final class DirectLinksAdapter implements ResourceAdapterInterface, ReadableReso
             'uniquenessId'=>explode('.', $id, 2)[0],
             'selectionCapabilities' => [
                 ['key'=>'link.text', 'type'=>'string', 'editor'=>'text', 'label'=>'COM_SMARTBROWSER_LINK_TEXT', 'default'=>'', 'validation'=>['maxLength'=>2048]],
-                ['key'=>'link.target', 'type'=>'string', 'editor'=>'select', 'label'=>'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'default'=>'', 'options'=>[
+                ['key'=>'link.target', 'type'=>'string', 'editor'=>'select', 'label'=>'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'default'=>'', 'address'=>['name'=>'target', 'values'=>[''=>'', '0'=>'_self', '1'=>'_blank', '2'=>'popup', '3'=>'modal']], 'options'=>[
                     ['value'=>'', 'label'=>'JGLOBAL_USE_GLOBAL'], ['value'=>'0', 'label'=>'JBROWSERTARGET_PARENT'], ['value'=>'1', 'label'=>'JBROWSERTARGET_NEW'],
                     ['value'=>'2', 'label'=>'JBROWSERTARGET_POPUP'], ['value'=>'3', 'label'=>'JBROWSERTARGET_MODAL']]],
             ],

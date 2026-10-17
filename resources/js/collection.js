@@ -2,6 +2,9 @@ import { createApp, reactive } from 'vue';
 import CollectionView from './components/CollectionView.vue';
 import ResourceApi from './services/ResourceApi.js';
 import { createCollectionState } from './core/collectionState.js';
+import createSelectionAddressService, { selectionAddressOperations } from './services/SelectionAddressService.js';
+import { selectionAddress } from './core/selectionAddress.js';
+import { createCollectionPicker } from './core/collectionPicker.js';
 
 const mounted = new WeakMap();
 export function mountCollection(container, configuration = {}) {
@@ -27,14 +30,28 @@ export function mountCollection(container, configuration = {}) {
     config.onChange?.(detail);
   };
   const model = createCollectionState({ config, api, notify, translate: t });
-  const app = createApp(CollectionView, { model, api, config, t }).provide('smartBrowserOptions', model.options);
+  const picker = createCollectionPicker({ config, model, api, open: options => window.SmartBrowserPicker.open(options), isDisposed: () => destroyed });
+  if (config.selectedResources && model.referenceItems && config.pickerUrl && !config.readOnly) {
+    if (config.onAdd === undefined && config.allowAdd !== false) config.onAdd = picker.add;
+    if (config.onReplace === undefined && config.allowReplace !== false) config.onReplace = picker.editSelection;
+    if (config.defaultResourceActionId === undefined && config.onReplace) config.defaultResourceActionId = 'collectionReplace';
+  }
+  const addresses = createSelectionAddressService({ api, config });
+  config.addressService = addresses;
+  Object.assign(config, selectionAddressOperations({ model, api, config, service: addresses, isDisposed: () => destroyed }));
+  const app = createApp(CollectionView, { model, api, config, t }).provide('smartBrowserOptions', model.options).provide('resourceApi', api);
   app.mount(target);
   const ready = model.refresh();
   ready.catch(error => config.onError?.(error));
   const instance = {
     ready, getItems: model.getItems,
+    add: () => !config.readOnly ? config.onAdd?.() : undefined,
+    editSelection: resource => !config.readOnly ? config.onReplace?.(resource || model.resources.value.find(item => item.selectionKey === model.browser.state.focusedId || item.id === model.browser.state.focusedId) || model.resources.value[0]) : undefined,
+    exportAddresses: options => config.exportAddresses(options),
+    importAddresses: (text, options) => config.importAddresses(text, options),
     setItems: items => model.setItems(items),
     addItems: items => model.addItems(items),
+    reorderItems: keys => model.reorderItems(keys),
     refresh: () => model.refresh(),
     setNativeAddress: value => { config.nativeAddress = String(value || ''); },
     attachPreview(element) {
@@ -67,11 +84,11 @@ export function mountCollection(container, configuration = {}) {
       toolbarButtons.forEach((marker, button) => marker.replaceWith(button));
       toolbarButtons.clear();
       if (attachedPreview) attachedPreview.marker.replaceWith(attachedPreview.element);
-      destroyed = true; model.destroy(); app.unmount(); mounted.delete(target);
+      destroyed = true; addresses.destroy(); model.destroy(); app.unmount(); mounted.delete(target);
     },
   };
   mounted.set(target, instance);
   return instance;
 }
-window.SmartBrowser = { ...window.SmartBrowser, mountCollection };
+window.SmartBrowser = { ...window.SmartBrowser, mountCollection, SelectionAddress: selectionAddress, createSelectionAddressService };
 document.dispatchEvent(new CustomEvent('smartbrowser:collection-ready'));

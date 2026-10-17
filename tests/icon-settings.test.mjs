@@ -12,6 +12,7 @@ test('icon settings are generic, optional and use one native decorations pipelin
   const read = p => readFile(new URL('../' + p, import.meta.url), 'utf8');
   assert.match(await read('package/component/admin/config.xml'), /name="icons"[\s\S]*name="icon_profiles" type="iconprofiles"/);
   const decoration = await read('package/component/admin/src/Support/ResourceVisualDecorator.php');
-  assert.ok(decoration.indexOf('IconOptions::resource') < decoration.indexOf("PluginHelper::importPlugin('smartvisuals'"));
+  const pipeline = decoration.slice(decoration.indexOf('public function decorate('));
+  assert.ok(pipeline.indexOf('IconOptions::resource') < pipeline.indexOf("PluginHelper::importPlugin('smartvisuals'"));
   assert.match(await read('package/component/admin/src/Adapter/AdapterRegistry.php'), /'nodeOpenIcon' => \$icons\['open'\]/);
 });

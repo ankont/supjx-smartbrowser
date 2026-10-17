@@ -4,6 +4,7 @@ const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringif
 const empty = value => value === null || value === undefined || typeof value === 'string' && !value.trim();
 const builtinEditors = new Set(['text', 'textarea', 'boolean', 'select', 'number', 'resource']);
 import { normalizeReference, resourceKey } from './selectionIdentity.js';
+import { extensionKey, extensionValues, metadataValue } from './extensionMetadata.js';
 export { normalizeReference } from './selectionIdentity.js';
 
 export const capabilityDisabled = (definition, values) => Boolean(definition.disabledWhen && own(values || {}, definition.disabledWhen.key) && values[definition.disabledWhen.key] === definition.disabledWhen.equals);
@@ -54,7 +55,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
   function get(resource) {
     if (!resource) return {};
     const key = resourceKey(resource);
-    if (!values.has(key)) values.set(key, resource.unavailable ? copy(initialUsage[key] || {}) : {});
+    if (!values.has(key)) values.set(key, resource.unavailable ? copy(initialUsage[key] || {}) : extensionValues(copy(initialUsage[key] || {})));
     const state = values.get(key);
     for (const definition of definitions(resource)) {
       if (!own(state, definition.key)) state[definition.key] = copy(own(initialUsage[key] || {}, definition.key)
@@ -66,7 +67,8 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
     return copy(state);
   }
   function set(resource, key, value) {
-    if (!definitions(resource).some(definition => definition.key === key)) return;
+    if (!extensionKey(key) && !definitions(resource).some(definition => definition.key === key)) return;
+    if (extensionKey(key)) value = metadataValue(value);
     get(resource);
     values.get(resourceKey(resource))[key] = copy(value);
     get(resource);
@@ -78,7 +80,7 @@ export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveR
     for (const resource of resources) {
       const key = resourceKey(resource);
       const current = get(resource);
-      const result = {};
+      const result = extensionValues(current);
       for (const definition of definitions(resource)) {
         const value = current[definition.key];
         let error = valueError(capabilityDisabled(definition, current) ? { ...definition, required: false } : definition, value);

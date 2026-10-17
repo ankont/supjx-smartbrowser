@@ -2,6 +2,7 @@
 define('_JEXEC', 1);
 require __DIR__ . '/../package/component/admin/src/Support/CollectionResources.php';
 require __DIR__ . '/../package/component/admin/src/Support/SelectionUsageValidation.php';
+require __DIR__ . '/../package/component/admin/src/Support/SelectionFieldValue.php';
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionUsageValidation as Usage;
 function usageFails(callable $callback) { try { $callback(); } catch (InvalidArgumentException $error) { return; } throw new RuntimeException('Expected usage rejection'); }
 $resource = ['selectionCapabilities' => [
@@ -22,3 +23,11 @@ usageFails(fn () => Usage::values($resource, $profile, ['example.cover' => $refe
 $resource['selectionCapabilities'][0] += ['disabledWhen' => ['key' => 'example.decorative', 'equals' => true], 'inactiveValue' => ''];
 if (Usage::values($resource, $profile, ['example.decorative' => true], $resolve)['example.label'] !== '') throw new RuntimeException('Dependent alt/decorative rule lost');
 echo "Server capability/profile validation, defaults, dependency, options and normalized resource ACL/type constraints OK\n";
+$metadata = ['ext.smartcrop.crop' => ['ratio' => '4:3', 'rect' => [0, 0, 100, 75]]];
+$stored = ['version' => 1, 'items' => [['selection' => ['adapter' => 'media', 'id' => 'local:/cover.png'], 'usage' => $metadata]]];
+$encoded = \SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionFieldValue::encode($stored);
+if (\SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionFieldValue::decode($encoded)['items'] !== $stored['items']) throw new RuntimeException('Metadata serialization lost');
+if (Usage::values($resource, $profile, $metadata, $resolve)['ext.smartcrop.crop'] !== $metadata['ext.smartcrop.crop']) throw new RuntimeException('Extension metadata lost');
+usageFails(fn () => Usage::values($resource, $profile, ['smartcrop.crop' => []], $resolve));
+usageFails(fn () => Usage::values($resource, $profile, ['ext.crop' => str_repeat('x', 65537)], $resolve));
+usageFails(fn () => Usage::values($resource, $profile, ['ext.address' => 'javascript:alert(1)'], $resolve));

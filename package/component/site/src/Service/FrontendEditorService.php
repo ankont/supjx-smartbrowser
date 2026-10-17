@@ -62,14 +62,12 @@ final class FrontendEditorService
             }
         }
         $createDefaults = $this->articleCreateDefaults($type, $id);
-        if ($this->app->isClient('administrator')) {
-            $stateKey = match ($type) {
-                'article' => 'com_content.edit.article.data', 'category' => 'com_categories.edit.category.data',
-                'tag' => 'com_tags.edit.tag.data', 'menu-item' => 'com_menus.edit.item.data', 'user' => 'com_users.edit.user.data', default => '',
-            };
-            $previous = $stateKey !== '' ? (array) $this->app->getUserState($stateKey, []) : [];
-            if ($previous && (int) ($previous['id'] ?? 0) !== $id) $this->app->setUserState($stateKey, null);
-        }
+        $stateKey = match ($type) {
+            'article' => 'com_content.edit.article.data', 'category' => 'com_categories.edit.category.data',
+            'tag' => 'com_tags.edit.tag.data', 'menu-item' => 'com_menus.edit.item.data', 'user' => 'com_users.edit.user.data', default => '',
+        };
+        $previous = $stateKey !== '' ? (array) $this->app->getUserState($stateKey, []) : [];
+        if ($previous && (int) ($previous['id'] ?? 0) !== $id) $this->app->setUserState($stateKey, null);
         if ($type === 'menu-item' && $id === 0 && !$this->app->getInput()->getBool('menuTypeSelected')) {
             foreach (['type', 'link', 'data'] as $key) $this->app->setUserState('com_menus.edit.item.' . $key, null);
         }

@@ -39,6 +39,7 @@ final class CollectionViewSupport
             'editorMode' => 'modal',
         ];
         $document->addScriptOptions('com_smartbrowser.collection', $options);
+        (new ResourceVisualDecorator($app))->preparePreviews($document);
         return $options;
     }
 }

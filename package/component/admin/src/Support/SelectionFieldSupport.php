@@ -68,6 +68,8 @@ final class SelectionFieldSupport
             $resource = ResourceDescriptor::complete($resources[$index]);
             $values = $entry['usage'];
             $thumbnail = self::image($resource);
+            $thumbnailResource = $resource;
+            $imageAddress = $thumbnail;
             foreach ($resource['selectionCapabilities'] ?? [] as $definition) {
                 if (($definition['visualRole'] ?? '') !== 'thumbnail' || ($definition['type'] ?? '') !== 'resource'
                     || empty($values[$definition['key']])) continue;
@@ -79,10 +81,26 @@ final class SelectionFieldSupport
                 if (!empty($resolved['unavailable']) || ($resolved['selectable'] ?? true) === false
                     || ($definition['picker']['allowedResourceTypes'] ?? []) && !in_array($resolved['type'] ?? '', $definition['picker']['allowedResourceTypes'], true)) continue;
                 $thumbnail = self::image($resolved) ?: $thumbnail;
+                if (self::image($resolved)) $thumbnailResource = $resolved;
+                $imageAddress = $thumbnail;
+                $preserved = $values['ext.selectionAddress']['compounds'][$definition['key']] ?? null;
+                if (is_string($preserved) && str_contains($preserved, '#joomlaImage://')) {
+                    try {
+                        $location = parse_url(substr($preserved, strrpos($preserved, '#joomlaImage://') + 1));
+                        if (!empty($location['host']) && !empty($location['path'])) {
+                            $imageReference = ArticleMediaSelection::imageReference($preserved);
+                            if ($imageReference['adapter'] === $override['adapter'] && $imageReference['id'] === $override['id']) $imageAddress = $preserved;
+                        }
+                    } catch (\Throwable $error) { /* Use the resolved image if retained address data are invalid. */ }
+                }
                 break;
             }
             $items[] = ['selection' => $reference, 'resource' => $resource, 'usage' => $values, 'effectiveThumbnail' => $thumbnail,
-                'effectiveIcon' => ResourceDescriptor::effectiveIcon($resource, $values), 'unavailable' => !empty($resource['unavailable'])];
+                'effectiveThumbnailResource' => $thumbnailResource,
+                'effectiveImageAddress' => $imageAddress,
+                'effectiveIcon' => ResourceDescriptor::effectiveIcon($resource, $values), 'displayedName' => ResourceDescriptor::displayedName($resource, $values),
+                'visualPresentation' => in_array($values['visual.presentation'] ?? null, ['thumbnail', 'icon', 'both'], true) ? $values['visual.presentation'] : null,
+                'unavailable' => !empty($resource['unavailable'])];
         }
         return [...$value, 'items' => $items, 'invalid' => false];
     }

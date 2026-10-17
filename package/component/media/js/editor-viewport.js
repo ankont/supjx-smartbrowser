@@ -3,16 +3,19 @@
   if (!editor) return;
   const root = document.documentElement;
   root.classList.add('sb-editor-modal-document');
+  const toolbar = editor.querySelector('.smartbrowser-editor-actions');
   let frame;
   const fit = () => {
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
+      if (toolbar) editor.style.setProperty('--sb-editor-toolbar-height', `${toolbar.getBoundingClientRect().height}px`);
       const available = Math.max(0, (window.visualViewport?.height || window.innerHeight) - Math.max(0, editor.getBoundingClientRect().top));
       editor.style.setProperty('--sb-editor-available-height', `${available}px`);
     });
   };
   const observer = new ResizeObserver(fit);
   observer.observe(document.body);
+  if (toolbar) observer.observe(toolbar);
   window.addEventListener('resize', fit);
   window.visualViewport?.addEventListener('resize', fit);
   window.addEventListener('pagehide', () => { observer.disconnect(); cancelAnimationFrame(frame); window.removeEventListener('resize', fit); window.visualViewport?.removeEventListener('resize', fit); }, { once: true });

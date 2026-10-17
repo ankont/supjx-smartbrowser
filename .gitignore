@@ -2,5 +2,7 @@ node_modules/
 build/stage/
 build/output/
 build/releases/
+build/diagnostics/
+build/*.png
 .playwright-mcp/
 build/test-install-*/

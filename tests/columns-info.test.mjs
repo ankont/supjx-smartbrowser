@@ -21,9 +21,13 @@ test('info icons cover column metadata rather than falling back to info', () => 
 test('details columns have a selector and separate view-mode group', async () => {
   const toolbar = await readFile(new URL('../resources/js/components/ResourceToolbar.vue', import.meta.url), 'utf8');
   const app = await readFile(new URL('../resources/js/components/SmartBrowserApp.vue', import.meta.url), 'utf8');
-  assert.match(toolbar, /resource-column-picker/);
+  const picker = await readFile(new URL('../resources/js/components/ResourceColumnPicker.vue', import.meta.url), 'utf8');
+  const popover = await readFile(new URL('../resources/js/components/ResourceToolbarPopover.vue', import.meta.url), 'utf8');
+  assert.match(toolbar, /ResourceColumnPicker v-if="hasControl\('dateField'\)/);
+  assert.match(picker, /resource-column-picker/);
   assert.match(toolbar, /resource-mode-controls/);
-  assert.match(toolbar, /pointerdown', closeColumnsOutside/);
+  assert.match(popover, /:popovertarget=/);
+  assert.match(popover, /pointerdown', outside/);
   assert.match(app, /:columns="visibleColumns"/);
 });
 

@@ -1,4 +1,4 @@
-import { t as e } from "./visual-runtime-CEVDGWRG.js?v=3.6.22";
+import { t as e } from "./visual-runtime-CEVDGWRG.js?v=4.0.0";
 //#region resources/js/adapters/MediaActionDriver.js
 var t = (e) => {
 	if (!e.metadata?.url) return null;

@@ -7,6 +7,16 @@ import { createResourceClickGuard } from '../resources/js/core/resourceClickGuar
 import { createCollectionState } from '../resources/js/core/collectionState.js';
 import { referenceKey } from '../resources/js/core/selectionIdentity.js';
 const read = path => readFileSync(path, 'utf8');
+
+test('selection position hints belong to gallery navigation rather than resource titles', () => {
+  const info = read('resources/js/components/ResourceInfoPanel.vue');
+  assert.ok(!info.includes('selectionPosition'));
+  assert.match(info, /class="sb-reference-readonly" readonly aria-readonly="true"/);
+  const view = read('resources/js/components/CollectionView.vue');
+  assert.ok(!view.includes(':selection-position'));
+  assert.match(view, /activeIndex > 0" aria-hidden="true">{{ activeIndex }}/);
+  assert.match(view, /aria-hidden="true">{{ activeIndex \+ 2 }}/);
+});
 test('Joomla selection controls validate presentation settings independently of storage', () => {
   assert.match(execFileSync('php', ['tests/selected-resource-config.php'], { encoding: 'utf8' }), /options OK/);
 });
@@ -96,13 +106,15 @@ test('shared hosts use the same information and preview renderer, with explicit 
   const app = read('resources/js/components/SmartBrowserApp.vue');
   const view = read('resources/js/components/CollectionView.vue');
   const panel = read('resources/js/components/ResourceInfoPanel.vue');
-  assert.match(app, /const showInfo = computed\(\(\) => hasUsageProfile \? pickerInfoOpen.value : state.showInfo\)/);
+  assert.match(app, /const showInfo = computed\(\(\) => hasUsageProfile \|\| pickerContext\?\.initialInfoOpen === true \? pickerInfoOpen.value : state.showInfo\)/);
   assert.doesNotMatch(app, /forceUsageInfo.value \|\|/);
   assert.match(view, /ResourceInfoPanel/);
   assert.match(view, /ResizeObserver/);
   assert.match(view, /selectionUseData \|\| 'readonly'/);
-  assert.match(panel, /!selectionOnly && usageDefinitions/);
-  assert.match(panel, /content-only="selectionOnly \|\| tab === 'usage'"/);
+  assert.match(panel, /!selectionOnly && hasUsage/);
+  assert.match(panel, /content-only="showUsage"/);
+  assert.match(panel, /overlay-context="showUsage \? previewContext : null"/);
+  assert.match(panel, /values="showUsage \? usageValues : \{\}"/);
   const field = read('resources/js/selection-field.js');
   assert.match(field, /config.showLabel === false/);
   assert.match(field, /config.fullWidth === true/);
