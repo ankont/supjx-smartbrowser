@@ -2,7 +2,7 @@
   const parse = (value) => {
     const original = String(value || '');
     const marker = '#joomlaImage://';
-    const index = original.indexOf(marker);
+    const index = original.lastIndexOf(marker);
     const path = index < 0 ? original : original.slice(0, index);
     const result = { path, filesystem: null, filesystemPath: null, resourceId: null, width: null, height: null };
     if (index < 0) return result;

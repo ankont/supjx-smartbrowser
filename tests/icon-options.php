@@ -10,9 +10,10 @@ if ($node['icon'] !== 'fas fa-cube' || $node['openIcon'] !== 'fas fa-cubes') thr
 $item = IconOptions::resource(['kind' => 'item', 'icon' => 'fas fa-newspaper'], 'articles', $saved);
 if ($item['icon'] !== 'far fa-newspaper') throw new RuntimeException('Item override failed');
 $special = ['kind' => 'node', 'icon' => 'fas fa-minus', 'badgeIcon' => 'fas fa-home'];
-if (IconOptions::resource($special, 'menus', $saved) !== $special) throw new RuntimeException('Special or identity icon changed');
+if (IconOptions::resource($special, 'menus', $saved) !== [...$special, 'typeIcon' => 'fas fa-minus']) throw new RuntimeException('Special or identity icon changed');
 $custom = ['kind' => 'node', 'icon' => 'fas fa-school'];
-if (IconOptions::resource($custom, 'articles', $saved) !== $custom) throw new RuntimeException('External icon changed');
+if (IconOptions::resource($custom, 'articles', $saved) !== [...$custom, 'typeIcon' => 'fas fa-school']) throw new RuntimeException('External icon changed');
+if ($node['typeIcon'] !== 'fas fa-cube' || $item['typeIcon'] !== 'far fa-newspaper') throw new RuntimeException('Configured preview type icon lost');
 if (IconOptions::resource(['kind' => 'item', 'icon' => 'fas fa-file-pdf'], 'media', $saved)['icon'] !== 'fas fa-book') throw new RuntimeException('Media type override failed');
 if (IconOptions::forAdapter('articles', [])['adapter'] !== 'fas fa-book-open') throw new RuntimeException('Default fallback failed');
 $menus = IconOptions::normalize(['menus' => ['heading' => 'fas fa-heading', 'heading_node' => 'fas fa-box', 'heading_open' => 'fas fa-box-open', 'separator' => 'fas fa-grip-lines']]);

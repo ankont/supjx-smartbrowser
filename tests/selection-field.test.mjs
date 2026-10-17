@@ -3,6 +3,16 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { selectionFieldValue, fieldPickerResult } from '../resources/js/core/selectionFieldValue.js';
 
+test('add appends only new identities and preserves all existing usage and ordering', () => {
+  const original = { selection: { adapter: 'articles', id: 'article:1' }, usage: { 'article.displayedName': 'Original', 'ext.smartcrop.crop': { ratio: '4:3' } } };
+  const added = { selection: { adapter: 'articles', id: 'article:2' }, usage: { 'article.displayedName': 'New' } };
+  const current = { version: 1, items: [original] };
+  const result = { items: [{ ...original, usage: {} }, added] };
+  assert.deepEqual(fieldPickerResult(current, result, ['articles'], true, null, false, false, 'append').items, [original, added]);
+  assert.deepEqual(fieldPickerResult(current, { items: [] }, ['articles'], true, null, false, false, 'append'), current);
+  assert.deepEqual(fieldPickerResult(current, { items: [added] }, ['articles'], true).items, [added]);
+});
+
 const value = (adapter, ids, usage = {}) => selectionFieldValue({ version: 1, items: ids.map(id => ({ selection: { adapter, id }, usage: usage[id] || {} })) }, adapter);
 test('single image/PDF/article values serialize only normalized references and usage', () => {
   for (const [adapter, id, usage] of [['media', 'local-images:/image.png', { 'media.alt': 'Alt', 'media.decorative': false }],
@@ -47,11 +57,9 @@ test('allowed adapter definitions support mixed values with an optional homogene
 test('field consumer delegates all rendering, picking and ordering to existing public APIs', () => {
   const source = readFileSync(new URL('../resources/js/selection-field.js', import.meta.url), 'utf8');
   assert.ok(source.includes('mountCollection('));
-  assert.ok(source.includes('window.SmartBrowserPicker.open('));
-  assert.ok(source.includes("resultFormat: 'collection'"));
-  assert.ok(source.includes('initialCollection:'));
-  assert.ok(source.includes('allowedAdapters: adapters'));
-  assert.ok(source.includes('multiple: resource ? false : config.multiple'));
+  assert.ok(source.includes('collection.editSelection()'));
+  assert.ok(!source.includes('window.SmartBrowserPicker.open('));
+  assert.ok(!source.includes('fieldPickerResult'));
   assert.ok(source.includes('collection.destroy()'));
   assert.ok(!source.includes('ResourceVisual') && !source.includes('createSelectionUsage'));
 });

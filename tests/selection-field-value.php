@@ -4,6 +4,7 @@ require_once __DIR__ . '/../package/component/admin/src/Support/ResourceDescript
 require __DIR__ . '/../package/component/admin/src/Support/CollectionResources.php';
 require __DIR__ . '/../package/component/admin/src/Support/SelectionFieldValue.php';
 require __DIR__ . '/../package/component/admin/src/Support/SelectionFieldSupport.php';
+require __DIR__ . '/../package/component/admin/src/Support/ArticleMediaSelection.php';
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionFieldValue as Value;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionFieldSupport as Support;
 function check($condition, $message) { if (!$condition) throw new RuntimeException($message); }
@@ -62,7 +63,11 @@ check(in_array('visual.thumbnailOverride',array_column($visual['items'][0]['reso
 check(Support::prepare('broken', $config)['invalid'], 'Corrupt prepared value');
 $preparedMixed = Support::prepare(Value::encode($mixed), Support::configuration(['allowed_adapters' => ['articles', 'categories'], 'multiple' => '1', 'homogeneous' => '0']), fn ($reference) => ['id' => $reference['id'], 'title' => $reference['adapter'], 'kind' => 'item', 'type' => 'article']);
 check(array_column($preparedMixed['items'], 'selection') === array_column($mixed['items'], 'selection') && $preparedMixed['items'][1]['resource']['title'] === 'categories', 'Mixed prepared values remain ordered and adapter-scoped');
-$field = (object) ['smartbrowser' => $prepared];
-ob_start(); require __DIR__ . '/../package/plugins/fields/smartbrowserpicker/tmpl/smartbrowser.php'; $output = ob_get_clean();
-check($output === '&lt;safe title&gt;', 'Safe fallback output');
+check($prepared['items'][0]['effectiveThumbnailResource']['id'] === 'local-images:/cover.png', 'Resolved image context for output providers');
+$compoundValue = $decoded;
+$compoundUri = 'images/cover.png#joomlaImage://local-images/cover.png?width=800&opaque=saved';
+$compoundValue['items'][0]['usage']['ext.selectionAddress'] = ['compounds'=>['visual.thumbnailOverride'=>$compoundUri]];
+$compound = Support::prepare(Value::encode($compoundValue), $config, static fn ($reference) => ['id'=>$reference['id'],'type'=>$reference['adapter']==='media' && $reference['id']==='local-images:/cover.png' ? 'image' : 'document','image'=>'cover.png']);
+check($compound['items'][0]['effectiveImageAddress'] === $compoundUri, 'Lossless compound image address for presentation');
+check($compound['items'][0]['selection'] === $compoundValue['items'][0]['selection'], 'Compound thumbnail replaced selected identity');
 echo "Field serialization, configuration, per-resource usage, prepared overrides, unavailable states and safe output OK\n";

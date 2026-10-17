@@ -130,6 +130,32 @@ test('late preview actions notify external controls and open Picker contexts wit
   dialog.dismiss();
 });
 
+test('visual overlay registry supports ordering, late notifications, scoped Picker access and removal', () => {
+  const f = fixture(), changes = [];
+  const unsubscribe = f.picker.subscribeVisualOverlays(overlays => changes.push(overlays.map(d => d.id).join(',')));
+  f.picker.open();
+  const dialog = f.dialogs[0];
+  const context = f.picker.context(f.id(dialog), dialog.frame.contentWindow);
+  const pickerChanges = [];
+  const unsubscribePicker = context.subscribeVisualOverlays(overlays => pickerChanges.push(overlays.length));
+  const remove = f.picker.registerVisualOverlay({ id: 'example.last', order: 200, mount() {} });
+  f.picker.registerVisualOverlay({ id: 'example.first', order: 1, mount() {} });
+  assert.equal(changes[1], 'example.first,example.last');
+  assert.equal(pickerChanges[1], 2);
+  assert.equal(f.picker.extensions().visualOverlays.length, 2);
+  assert.throws(() => f.picker.registerVisualOverlay({ id: 'example.first', mount() {} }));
+  assert.throws(() => f.picker.registerVisualOverlay({ id: 'bad', mount() {} }));
+  f.picker.unregisterVisualOverlay('example.last');
+  f.picker.registerVisualOverlay({ id: 'example.last', mount() {} });
+  remove();
+  assert.equal(f.picker.extensions().visualOverlays.length, 2, 'old cleanup must not remove a new registration');
+  unsubscribe(); unsubscribePicker();
+  const count = changes.length;
+  f.picker.unregisterVisualOverlay('example.first');
+  assert.equal(changes.length, count);
+  dialog.dismiss();
+});
+
 test('custom editor and preview action registrations are generic and removable', () => {
   const f = fixture();
   const unEditor = f.picker.registerUsageEditor('example.editor', { mount() {}, validate() {} });

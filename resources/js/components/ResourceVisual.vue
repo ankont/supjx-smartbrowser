@@ -10,9 +10,21 @@
 <script setup>
 import { computed, inject, onBeforeUnmount, onMounted, onUpdated, ref, watch } from 'vue';
 import { resolveResourceVisual } from '../core/resourceVisual.js';
+import { declaredAspectRatio } from '../core/imagePresentation.js';
 import { allocateVisualId, informationVisualLayers, visualStyleRegistry } from '../core/visualStyleVariables.js';
 const visualId = allocateVisualId();
-const props = defineProps({ resource: Object, settings: Object, background: String, availableAssets: Object, variant: { type: String, default: 'grid' }, allowImage: { type: Boolean, default: true }, open: Boolean, alignBaseStart: Boolean, fitContent: Boolean });
+const props = defineProps({ resource: Object, settings: Object, background: String, availableAssets: Object, variant: { type: String, default: 'grid' }, allowImage: { type: Boolean, default: true }, open: Boolean, alignBaseStart: Boolean, fitContent: Boolean, presentationManaged: Boolean });
+const emit = defineEmits(['image-change']);
+const getImageElement = () => surface.value?.querySelector('.asset-image > img.resource-visual-image') || null;
+const presentationRatio = ref(null);
+const refreshPresentation = () => {
+  const image = getImageElement();
+  const ratio = props.presentationManaged && image
+    ? declaredAspectRatio(image.ownerDocument.defaultView.getComputedStyle(image).aspectRatio) : null;
+  if (presentationRatio.value !== ratio) presentationRatio.value = ratio;
+};
+defineExpose({ getImageElement, refreshPresentation });
+watch(() => props.resource.image, () => { presentationRatio.value = null; }, { flush: 'sync' });
 const fitContent = computed(() => props.fitContent);
 const extent = ref({ width: 180, height: 180 });
 const options = inject('smartBrowserOptions', {});
@@ -39,11 +51,19 @@ onMounted(() => {
   });
   observer.observe(surface.value);
   observeIcons();
+  emit('image-change', getImageElement());
 });
-onUpdated(() => { if (observer) observeIcons(); });
-onBeforeUnmount(() => { observer?.disconnect(); visualStyleRegistry().remove(visualId); });
-const imageLoaded = (event) => { dimensions.value = { url: props.resource.image, ratio: event.target.naturalWidth / event.target.naturalHeight }; };
-const crop = computed(() => props.resource.imageCrop?.source === props.resource.image ? props.resource.imageCrop : null);
+onUpdated(() => { if (observer) observeIcons(); emit('image-change', getImageElement()); });
+onBeforeUnmount(() => { emit('image-change', null); observer?.disconnect(); visualStyleRegistry().remove(visualId); });
+const imageLoaded = (event) => { dimensions.value = { url: props.resource.image, ratio: event.target.naturalWidth / event.target.naturalHeight }; refreshPresentation(); };
+const crop = computed(() => props.presentationManaged ? null : props.resource.imageCrop?.source === props.resource.image ? props.resource.imageCrop : null);
+const declaredImageRatio = computed(() => {
+  if (!props.presentationManaged || !presentationRatio.value) return null;
+  // Layer coordinates are percentages of a potentially rectangular preview.
+  const physicalScale = !fitContent.value && extent.value.width > 0 && extent.value.height > 0
+    ? extent.value.height / extent.value.width : 1;
+  return presentationRatio.value * physicalScale;
+});
 const visual = computed(() => resolveResourceVisual(props.resource, {
   settings: props.settings ?? props.resource.collectionVisualSettings ?? options.visualSettings ?? {}, allowImage: props.allowImage, open: props.open,
   background: props.background ?? props.resource.collectionImageBackground ?? options.imageBackground ?? 'auto', availableAssets: props.availableAssets,
@@ -51,7 +71,7 @@ const visual = computed(() => resolveResourceVisual(props.resource, {
   alignBaseStart: props.alignBaseStart,
   iconRatios: iconRatios.value,
   imageFailed: Boolean(props.resource.image && failedImage.value === props.resource.image),
-  imageRatio: crop.value?.ratio || (dimensions.value.url === props.resource.image ? dimensions.value.ratio : 1),
+  imageRatio: declaredImageRatio.value || crop.value?.ratio || (dimensions.value.url === props.resource.image ? dimensions.value.ratio : 1),
 }));
 const syncVariables = () => {
   const fitted = fitContent.value ? informationVisualLayers(visual.value.layers, extent.value.width) : { layers: visual.value.layers, side: side.value };

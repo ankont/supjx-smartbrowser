@@ -29,7 +29,12 @@ require_once __DIR__ . '/../package/component/admin/src/Support/ResourceDescript
     foreach (['site', 'administrator'] as $client) {
         $dispatcher = new class {
             public $provider = null;
+            public int $preparations = 0;
             public function dispatch($name, $event): void {
+                if ($name === 'onSmartVisualsPreparePreviews') {
+                    if (!is_object($event->getArgument('document')) || !in_array($event->getArgument('context')['application'], ['site', 'administrator'], true)) throw new \RuntimeException('Invalid preview host context');
+                    $this->preparations++; return;
+                }
                 if ($name !== 'onSmartVisualsDecorateResources') throw new \RuntimeException('Wrong event');
                 if (array_keys($event->getArguments()) !== ['resources', 'decorations']) throw new \RuntimeException('Wrong arguments');
                 if ($this->provider) ($this->provider)($event);
@@ -44,6 +49,9 @@ require_once __DIR__ . '/../package/component/admin/src/Support/ResourceDescript
         $fallback = ['id' => 'category:45', 'image' => null, 'icon' => 'fas fa-folder'];
         $response = ['items' => [$native], 'nodes' => [$fallback]];
         $decorator = new ResourceVisualDecorator($app);
+        $document = new \stdClass();
+        $decorator->preparePreviews($document); $decorator->preparePreviews($document);
+        if ($dispatcher->preparations !== 1) throw new \RuntimeException('Preview assets prepared more than once per document');
         $complete = ['items' => [\SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceDescriptor::complete($native)],
             'nodes' => [\SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceDescriptor::complete($fallback)]];
         if ($decorator->decorate($response, 'articles') !== $complete) throw new \RuntimeException('No provider changed native visuals');

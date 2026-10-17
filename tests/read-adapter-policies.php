@@ -1,6 +1,8 @@
 <?php
+namespace Joomla\Component\Tags\Site\Helper { class RouteHelper { public static function getTagRoute($id) { return 'index.php?option=com_tags&view=tag&id=' . (int) $id; } } }
 namespace Joomla\CMS\Application { interface CMSApplicationInterface {} }
 namespace Joomla\CMS\Language { class Text { public static function _($key) { return $key; } } }
+namespace Joomla\CMS\HTML { class HTMLHelper { public static function _($key, $value) { return (object) ['url' => explode('#', $value)[0]]; } } }
 namespace Joomla\CMS\Router { class Route { public static function link($client, $url) { return $url; } } }
 namespace Joomla\CMS\Uri { class Uri { public static function root() { return 'https://site.example/'; } } }
 namespace Joomla\Database { interface DatabaseInterface {} }
@@ -94,7 +96,14 @@ $menu = new class($identity) {
         $item = $this->items[$id] ?? null;
         if (!$item || $item->published !== 1 || !in_array($item->access, $this->identity->levels)
             || ($item->publish_up ?? '') === 'future' || ($item->publish_down ?? '') === 'past') return null;
-        return $item;
+        if (method_exists($item, 'getParams')) return $item;
+        return new class($item) extends \stdClass {
+            public function __construct(object $item) { foreach (get_object_vars($item) as $key => $value) $this->$key = $value; }
+            public function getParams() { return new class(json_decode($this->params ?? '{}', true) ?: []) {
+                public function __construct(private array $values) {}
+                public function get($key, $default = null) { return $this->values[$key] ?? $default; }
+            }; }
+        };
     }
 };
 $app = new class($identity, $menu, $tags) implements \Joomla\CMS\Application\CMSApplicationInterface {
@@ -163,6 +172,10 @@ try {
     $tagReader = new \SuperSoft\Component\Smartbrowser\Administrator\Adapter\TagAdapter($app);
     $tag = $tagReader->getReadableResource('tag:2');
     $check($tag['title'] === 'Public tag' && str_contains($tag['metadata']['url'], 'com_tags'), 'Public guest tag failed');
+    $app->tags[2]->images = json_encode(['image_intro' => 'images/tag.png#joomlaImage://local-images/tag.png?crop=keep']);
+    $check($tagReader->getReadableResource('tag:2')['image'] === 'https://site.example/images/tag.png#joomlaImage://local-images/tag.png?crop=keep', 'Readable tag image or crop metadata lost');
+    $app->tags[2]->images = json_encode(['image_fulltext' => 'images/full-tag.png']);
+    $check($tagReader->getReadableResource('tag:2')['image'] === 'https://site.example/images/full-tag.png', 'Tag full image fallback lost');
     $app->tags[2]->access=9; $denied(fn () => $tagReader->getReadableResource('tag:2'));
     $identity->levels=[1,9]; $check($tagReader->getReadableResource('tag:2')['title'] === 'Public tag', 'Tag special access failed');
     $identity->levels=[1]; $app->tags[2]->access=1; $app->tags[2]->published=0;
@@ -184,6 +197,9 @@ try {
     $denied(fn () => $menus->getReadableResource('menu-item:9'));
     $identity->manageMenus=false; $identity->guest=true;
     $check($menus->getReadableResource('menu-item:2')['metadata']['url'] === 'https://example.org/', 'Guest menu failed');
+    $menu->items[2]->params = json_encode(['menu_image' => 'images/menu.png#joomlaImage://local-images/menu.png?crop=keep', 'menu_icon_css' => 'fas fa-book']);
+    $menuVisual = $menus->getReadableResource('menu-item:2');
+    $check($menuVisual['image'] === 'https://site.example/images/menu.png#joomlaImage://local-images/menu.png?crop=keep' && $menuVisual['badgeIcon'] === 'fas fa-book', 'Readable menu image/icon or crop metadata lost');
     foreach (['publish_up'=>'future','publish_down'=>'past','access'=>9,'published'=>0] as $key=>$value) {
         $old=$menu->items[2]->$key ?? null; $menu->items[2]->$key=$value;
         $denied(fn () => $menus->getReadableResource('menu-item:2')); $menu->items[2]->$key=$old;

@@ -40,7 +40,7 @@ test('compact collection view choice is remembered without persisting selection 
     assert.equal(saved.get('supjx.smartbrowser.collection.view'), 'grid');
     const component = read('resources/js/components/CollectionView.vue');
     assert.ok(component.includes(':is="state.activeView === \'details\' ? ResourceDetails : ResourceGrid"'));
-    assert.ok(component.indexOf('v-for="view in views"') > component.indexOf('</template>'));
+    assert.match(component, /v-for="view in views"[^>]+@click="state.activeView = view.id"/);
   } finally { first?.destroy();second?.destroy();globalThis.window=previous; }
 });
 test('collection view storage restrictions do not break editing', () => {

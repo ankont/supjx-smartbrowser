@@ -5,7 +5,7 @@ namespace Joomla\CMS\Plugin {
         public static function isEnabled($group, $name): bool { return self::$enabled; }
     }
 }
-namespace SuperSoftJx\Plugin\Content\SmartCrop\Helper {
+namespace SuperSoft\Plugin\Content\SmartCrop\Helper {
     final class SmartCropHelper {
         public static function getFocalPointAndScale($uri): ?array {
             if (str_contains($uri, 'invalid')) return null;

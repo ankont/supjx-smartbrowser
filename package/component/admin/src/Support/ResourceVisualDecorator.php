@@ -12,9 +12,24 @@ final class ResourceVisualDecorator
 {
     private const GROUPS = ['roots', 'nodes', 'items', 'contextItems', 'breadcrumb', 'resources'];
     private const TONES = ['neutral', 'success', 'warning', 'danger', 'info', 'muted', 'expired', 'pending'];
+    private static ?\WeakMap $previewDocuments = null;
 
     public function __construct(private readonly CMSApplicationInterface $app)
     {
+    }
+
+    public function preparePreviews(object $document): void
+    {
+        self::$previewDocuments ??= new \WeakMap();
+        if (isset(self::$previewDocuments[$document])) return;
+        self::$previewDocuments[$document] = true;
+        $dispatcher = $this->app->getDispatcher();
+        PluginHelper::importPlugin('smartvisuals', null, true, $dispatcher);
+        $event = new Event('onSmartVisualsPreparePreviews', [
+            'document' => $document,
+            'context' => ['application' => $this->app->isClient('site') ? 'site' : 'administrator'],
+        ]);
+        $dispatcher->dispatch($event->getName(), $event);
     }
 
     public function decorate(array $response, string $adapterId): array
@@ -106,26 +121,6 @@ final class ResourceVisualDecorator
             $existing[$id] = $overlay;
         }
 
-        unset($resource['imageCrop']);
-        $image = $resource['image'] ?? null;
-        $helper = 'SuperSoftJx\\Plugin\\Content\\SmartCrop\\Helper\\SmartCropHelper';
-        if (is_string($image) && str_contains($image, 'crop=') && class_exists($helper)
-            && PluginHelper::isEnabled('content', 'smartcrop')) {
-            try {
-                $crop = $helper::getFocalPointAndScale($image);
-                if ($crop !== null) {
-                    $ratio = explode(':', $crop['ratio']);
-                    $resource['imageCrop'] = [
-                        'source' => $image,
-                        'ratio' => (float) $ratio[0] / (float) $ratio[1],
-                        'x' => $crop['left_pct'], 'y' => $crop['top_pct'],
-                        'width' => $crop['width_pct'], 'height' => $crop['height_pct'],
-                    ];
-                }
-            } catch (\Throwable) {
-                // Optional image presentation must not interrupt resource browsing.
-            }
-        }
         return $resource;
     }
 

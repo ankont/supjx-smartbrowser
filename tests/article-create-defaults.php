@@ -98,6 +98,17 @@ namespace {
     $restored = (new FrontendEditorService($failed))->getForm('article', 0); $restored->bind($failed->state['com_smartbrowser.editor.failure']['data']);
     check($restored->values['title'] === 'User correction' && $failed->input->getInt('catid') === 45, 'Failure data/ACL context lost');
     $seeded = app($defaults); $seeded->model->form->values = ['title' => 'Plugin draft']; (new FrontendEditorService($seeded))->getForm('article', 0); check($seeded->model->form->values === ['title' => 'Plugin draft'], 'Populated form overwritten');
+    foreach ([['id' => 0, 'title' => ''], ['id' => 99, 'title' => 'Other article']] as $stale) {
+        $edit = new DefaultsApp(['a_id' => 156]);
+        $edit->state['com_content.edit.article.data'] = $stale;
+        (new FrontendEditorService($edit))->getForm('article', 156);
+        check($edit->getUserState('com_content.edit.article.data') === null, 'Frontend edit retained stale native form data instead of loading the requested article');
+        check($edit->input->getInt('a_id') === 156, 'Frontend article identity lost');
+    }
+    $same = new DefaultsApp(['a_id' => 156]);
+    $same->state['com_content.edit.article.data'] = ['id' => 156, 'title' => 'User correction'];
+    (new FrontendEditorService($same))->getForm('article', 156);
+    check($same->getUserState('com_content.edit.article.data')['title'] === 'User correction', 'Same-article native recovery data lost');
     $app->input->method = 'POST'; $app->model->invalid = true;
     try { $service->save('article', 0, ['title' => 'Invalid', 'catid' => 45, 'language' => '*']); throw new RuntimeException('Validation bypassed'); } catch (RuntimeException $error) { check($error->getCode() === 400, 'Wrong validation error'); }
     check($app->model->saves === 0 && $app->model->validated['title'] === 'Invalid', 'Native validation/save changed');

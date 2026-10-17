@@ -277,7 +277,9 @@ test('appearance fields use shared preview, independent profiles and single-line
   assert.doesNotMatch(browserCss, /inset: 0 14px 28px/);
   assert.doesNotMatch(editor, /<component[^>]*\sopen[\s=>]/);
   assert.doesNotMatch(profile, /v-model="example"/);
-  assert.match(editor, /badgeIcon: kind === 'nodes' \? 'fas fa-book' : ''/);
+  assert.match(editor, /badgeIcon: 'fas fa-book'/);
+  assert.match(editor, /items: \{ base: true, identity: true, image: true \}/);
+  assert.match(profile, /const assets = computed\(\(\) => \['base', 'identity', 'image'\]\)/);
   assert.doesNotMatch(profile, /v-model="custom"|v-if="!adapter \|\| custom"/);
   assert.match(profile, /custom.value = Boolean\(props.adapter\)/);
   assert.match(profile, /v-for="size in visualSizes"/);
@@ -288,7 +290,7 @@ test('appearance fields use shared preview, independent profiles and single-line
   assert.match(profile, /in visibleRules"/);
   assert.match(profile, /:disabled="rowIndex === 0"/);
   assert.match(profile, /:disabled="rowIndex === visibleRules.length - 1"/);
-  assert.match(profile, /props.kind === 'items' \? \['base', 'image'\]/);
+  assert.doesNotMatch(profile, /props.kind === 'items'/);
   assert.doesNotMatch(profile, /fas fa-code-branch|sb-rule-indicator/);
   assert.match(profile, /type="number"/);
   assert.match(profile, /labels.z_index/);

@@ -1,0 +1,46 @@
+async page => {
+  await page.goto('http://127.0.0.1:8791');
+  await page.evaluate(() => { localStorage.removeItem('supjx.smartbrowser.collection.view.single-layout'); localStorage.removeItem('supjx.smartbrowser.collection.view.multiple-layout'); });
+  await page.goto('http://127.0.0.1:8791?fieldFixture=1&usageMode=editable&presentationFixture=1');
+  const article = page.locator('.sb-selection-field').nth(2);
+  await article.getByLabel('Displayed name', { exact: true }).fill('Temporary title');
+  await page.waitForFunction(() => document.querySelectorAll('.sb-selection-field')[2].querySelector('.resource-selection-path input')?.value.includes('titleOverride=Temporary%20title'));
+  const address = await article.locator('.resource-selection-path input').inputValue();
+  if (!address.startsWith('https://example.org/frontend/article.html#joomlaItem://article/1?')) throw Error('Article identity or frontend URL missing');
+  await article.evaluate(async root => {
+    const text = '#joomlaItem://article/1?titleOverride=Imported&thumbnailOverride=q&q.src=%2Fresources%2Fimages%2Fvisual-example.svg&q.media=local-images%2Fb.png&q.width=800&q.height=600&q.crop=0%2C0%2C800%2C600&q.param.custom=preserved&role=featured';
+    await SmartBrowser.mountSelectionField(root).importAddresses(text, { append: false });
+  });
+  await page.waitForFunction(() => document.querySelectorAll('.sb-selection-field')[2].querySelector('.resource-selection-path input')?.value.includes('thumbnailOverride=t'));
+  const exported = await article.evaluate(root => SmartBrowser.mountSelectionField(root).exportAddresses());
+  if (!exported.includes('titleOverride=Imported') || !exported.includes('t.param.custom=preserved') || !exported.includes('role=featured')) throw Error('Compound or unknown metadata lost');
+  if (exported.includes('{') || exported.includes('article:1')) throw Error('Address displays JSON or legacy identity');
+  await article.locator('.sb-collection-count-toggle').click();
+  await article.getByRole('button', { name: 'Import resource addresses', exact: true }).click();
+  const dialog = article.locator('.sb-address-dialog[open]');
+  const before = await article.locator('[data-sb-value]').inputValue();
+  await dialog.locator('textarea').fill('#joomlaItem://article/1\nhttps://example.org/#unknownFormat://thing');
+  await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+  await dialog.getByRole('alert').getByText('Line 2:', { exact: false }).waitFor();
+  if (await article.locator('[data-sb-value]').inputValue() !== before) throw Error('Invalid import partially committed');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await article.getByRole('button', { name: 'List', exact: true }).click();
+  await article.locator('.resource-column-selectionPath').last().getByText('#joomlaItem://', { exact: false }).waitFor();
+  await article.getByRole('button', { name: 'Replace', exact: true }).click();
+  const picker = page.frameLocator('dialog.smartbrowser-picker iframe');
+  await picker.getByLabel('Displayed name', { exact: true }).waitFor();
+  if (await picker.getByLabel('Displayed name', { exact: true }).inputValue() !== 'Imported') throw Error('Import usage lost on reopen');
+  await picker.locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
+  const reopened = await article.evaluate(root => SmartBrowser.mountSelectionField(root).exportAddresses());
+  if (!reopened.includes('t.param.custom=preserved')) throw Error('Native thumbnail extension parameters lost on Picker roundtrip');
+  const multiple = page.locator('.sb-selection-field').nth(3);
+  await multiple.evaluate(root => SmartBrowser.mountSelectionField(root).importAddresses('/resources/images/visual-example.svg#joomlaImage://local-images/a.png?crop=one&unknown=two\r\n/resources/images/visual-example.svg#joomlaImage://local-images/b.png', { append: false }));
+  const lines = (await multiple.evaluate(root => SmartBrowser.mountSelectionField(root).exportAddresses())).split('\n');
+  if (lines.length !== 2 || !lines[0].includes('local-images/a.png') || !lines[0].includes('unknown=two')) throw Error('Multiline image metadata/order lost');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await article.locator('.resource-selection-path input').waitFor();
+  const width = await article.evaluate(root => ({ client: root.clientWidth, scroll: root.scrollWidth }));
+  if (width.scroll > width.client + 2) throw Error('Selection addresses overflow the mobile control');
+  return 'Address display, aliases, native image parameters, unknown metadata, invalid import rollback, Picker reopen, ordered multiline import/export and mobile layout passed.';
+}

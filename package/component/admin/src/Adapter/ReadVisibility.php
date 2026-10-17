@@ -21,7 +21,7 @@ final class ReadVisibility
     public static function publicDescriptor(array $resource): array
     {
         $resource['metadata'] = array_intersect_key($resource['metadata'] ?? [], array_flip([
-            'id', 'alias', 'languageKey', 'category', 'categoryPath', 'language', 'languageImage', 'created', 'modified', 'state', 'stateLabel', 'access', 'accessId', 'author',
+            'id', 'alias', 'languageKey', 'category', 'categoryPath', 'language', 'languageImage', 'created', 'modified', 'state', 'stateLabel', 'access', 'accessId', 'author', 'publicUrl',
         ]));
         $resource['capabilities'] = [];
         $resource['overlays'] = [];

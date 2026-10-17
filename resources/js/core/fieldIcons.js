@@ -18,3 +18,5 @@ export const iconForUsage = definition => definition.icon || ({
   'media.decorative': 'fas fa-image', 'media.loading': 'fas fa-clock',
   'link.text': 'fas fa-font', 'link.target': 'fas fa-external-link-alt',
 }[definition.key]) || 'fas fa-info';
+
+export const normalizeIconClasses = value => String(value ?? '').trim().replace(/\s+/g, ' ');

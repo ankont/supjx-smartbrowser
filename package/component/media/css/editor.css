@@ -341,39 +341,17 @@ body .calendar-container table tbody td.day.selected {
   padding-top: 72px !important;
 }
 
-.com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) {
-  box-sizing: border-box;
-  height: var(--sb-editor-available-height, 100dvh);
-  padding-bottom: 0 !important;
-  overflow: hidden;
-}
-
 html.sb-editor-modal-document, html.sb-editor-modal-document body { overflow: hidden; }
-html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) { display: flex; flex-direction: column; height: var(--sb-editor-available-height, 100dvh); overflow: hidden; box-sizing: border-box; padding-bottom: 0 !important; }
-html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) > #adminForm { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; height: auto; }
-html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .main-card { flex: 1 1 0; min-height: 0; }
+html.sb-editor-modal-document body { box-sizing: border-box; min-height: 100dvh; margin: 0; padding: 0; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) { position: fixed; inset: 0; display: flex; flex-direction: column; width: 100%; max-width: none; height: var(--sb-editor-available-height, 100dvh); overflow: hidden; box-sizing: border-box; margin: 0 !important; padding: 0 !important; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) > #adminForm { display: block; flex: 1 1 0; min-height: 0; height: auto; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 0; scroll-padding-top: calc(var(--sb-editor-toolbar-height, 72px) + 12px); }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .main-card { height: auto; min-height: 0; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrowser-editor-content { box-sizing: border-box; min-width: 0; padding: 16px; }
 html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrowser-editor-error { flex: none; }
-html.sb-editor-modal-document #smartbrowserEditorTabs:not([view="tabs"]) { height: 100%; overflow-y: auto; overscroll-behavior: contain; }
-
-.com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) #adminForm,
-.com-smartbrowser-editor:has(#smartbrowserEditorTabs[view="tabs"]) .main-card {
-  height: 100%;
-  min-height: 0;
-}
-
-.com-smartbrowser-editor #smartbrowserEditorTabs[view="tabs"] {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-
-.com-smartbrowser-editor #smartbrowserEditorTabs[view="tabs"] > :not([role="tablist"]) {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) #smartbrowserEditorTabs { height: auto; min-height: 0; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) #smartbrowserEditorTabs > :not([role="tablist"]) { overflow: visible; height: auto; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .title-alias { margin-top: 0; }
+html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrowser-editor-actions { position: sticky; top: 0; flex-wrap: wrap; height: auto; min-height: 72px; }
 
 .com-smartbrowser-editor .smartbrowser-editor-actions {
   position: fixed;

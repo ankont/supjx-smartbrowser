@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { resolve, extname, sep } from 'node:path';
 const root = resolve('.');
@@ -6,6 +7,10 @@ const joomla = resolve(process.env.SMARTBROWSER_TEST_JOOMLA_ROOT || '../joomla')
 const server = createServer(async (request, response) => {
   try {
     const path = new URL(request.url, 'http://localhost').pathname;
+    if (path === '/selection-output-preview.html') {
+      response.setHeader('Content-Type', 'text/html; charset=utf-8');
+      response.end(execFileSync('php', ['tests/fixtures/selection-output-preview.php'])); return;
+    }
     if (path === '/' || path === '/index.php') {
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
       response.end(await readFile('tests/fixtures/picker-profiles.html', 'utf8')); return;

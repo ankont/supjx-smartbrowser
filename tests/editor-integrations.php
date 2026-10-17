@@ -53,6 +53,11 @@ namespace {
     \Joomla\CMS\Component\ComponentHelper::$values=['replace_editor_article_site'=>1];
     $plugin->replaceNativeEditor(); parse_str(parse_url($app->redirect, PHP_URL_QUERY), $query);
     $check(base64_decode($query['sbReturn']) === 'index.php?option=com_content&view=article&id=42', 'Unsafe return accepted');
+    $input->values = ['option' => 'com_content', 'task' => 'article.edit', 'id' => 9, 'a_id' => 156, 'tmpl' => 'component'];
+    $app->states = []; $app->redirect = null;
+    $plugin->replaceNativeEditor();
+    parse_str(parse_url($app->redirect, PHP_URL_QUERY), $nativeEdit);
+    $check((int) $nativeEdit['id'] === 156 && $nativeEdit['tmpl'] === 'component', 'Native frontend Edit lost a_id or popup layout');
     foreach ([['task'=>'article.add'], ['view'=>'form', 'layout'=>'edit']] as $entry) {
         $app->states=[]; $app->redirect=null;
         $input->values=array_merge(['option'=>'com_content','id'=>8,'catid'=>8,'Itemid'=>106], $entry);

@@ -88,13 +88,13 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             }
             // Avoid tree-wide metadata and authoring decorations in public descriptors.
             $resource = ['id' => $resourceId, 'title' => $this->title((string) $tag->title), 'subtitle' => null,
-                'kind' => 'node', 'type' => 'tag', 'parentId' => null, 'icon' => 'fas fa-tag', 'image' => null,
+                'kind' => 'node', 'type' => 'tag', 'parentId' => null, 'icon' => 'fas fa-tag', 'image' => $this->tagImage($tag),
                 'status' => 1, 'metadata' => ['id' => (int) $tag->id, 'alias' => (string) $tag->alias,
                     'language' => $tag->language ?? '*', 'created' => $tag->created_time ?? null, 'modified' => $tag->modified_time ?? null,
                     'languageKey' => $this->languageKey((string) $tag->title),
                     'tagPaths' => implode(' / ', array_slice($this->tagPathTitles((int) $tag->id), 0, -1)),
                     'accessId' => (int) $tag->access, 'state' => (int) $tag->published,
-                    'url' => \Joomla\CMS\Router\Route::link('site', 'index.php?option=com_tags&view=tag&id=' . (int) $tag->id, false)]];
+                    'url' => \Joomla\CMS\Router\Route::link('site', \Joomla\Component\Tags\Site\Helper\RouteHelper::getTagRoute((int) $tag->id), false, 0, true)]];
         } else {
             throw new \RuntimeException('No safe read policy for reference.', 403);
         }
@@ -339,13 +339,14 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         return [
             'id' => 'tag:' . $id, 'title' => $this->title((string) $tag->title), 'subtitle' => Text::_('JTAG'),
             'parentId' => $this->browseRoot === 'tag:' . $id ? null : ((int) $tag->parent_id === $this->tagRootId() ? static::ROOT_ID : 'tag:' . (int) $tag->parent_id),
-            'kind' => 'node', 'type' => 'tag', 'icon' => 'fas fa-tag', 'image' => null,
+            'kind' => 'node', 'type' => 'tag', 'icon' => 'fas fa-tag', 'image' => $this->tagImage($tag),
             'status' => $state, 'statusPresentation' => $this->statusPresentation($state),
             'overlays' => [$this->statusOverlay($state)],
             'selectable' => $managed, 'navigable' => true, 'hasChildren' => $this->tagHasChildren($id, $tree),
             'capabilities' => $managed ? $this->tagCapabilities($id, $state) : ['open' => true],
             'metadata' => [
                 'id' => $id, 'alias' => (string) ($tag->alias ?? ''), 'languageKey' => $languageKey,
+                'publicUrl' => $this->selectionTagPublicUrl($id),
                 'tagPaths' => implode(' / ', array_slice($this->tagPathTitles($id), 0, -1)),
                 'cardSummary' => $this->languageKeySummary($languageKey), 'state' => $state,
                 'stateLabel' => $this->stateLabel($state), 'language' => $tag->language ?? '*',
@@ -497,7 +498,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'title' => $this->title($category->title),
             'subtitle' => Text::_('JCATEGORY'),
             'parentId' => $this->browseRoot === 'category:' . (int) $category->id ? null : ((int) $category->parent_id > 1 ? 'category:' . $category->parent_id : static::ROOT_ID),
-            'kind' => 'node', 'type' => 'category', 'icon' => 'fas fa-box', 'image' => null,
+            'kind' => 'node', 'type' => 'category', 'icon' => 'fas fa-box', 'image' => $this->imageUrl((string) $category->getParams()->get('image', '')),
             'status' => (int) $category->published,
             'statusPresentation' => $this->statusPresentation((int) $category->published),
             'overlays' => [$this->statusOverlay((int) $category->published)],
@@ -505,6 +506,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'capabilities' => $this->categoryCapabilities((int) $category->id, (int) $category->published),
             'metadata' => [
                 'id' => (int) $category->id, 'alias' => $category->alias,
+                'publicUrl' => $this->selectionPublicUrl($category, false),
                 'categoryPath' => implode(' / ', array_slice($this->categoryPathTitles((int) $category->id), 0, -1)),
                 'languageKey' => $languageKey,
                 'cardSummary' => $this->languageKeySummary($languageKey),
@@ -590,6 +592,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             ],
             'metadata' => [
                 'id' => $id, 'alias' => $article->alias ?? '', 'languageKey' => $languageKey,
+                'publicUrl' => $this->selectionPublicUrl($article, true),
                 'cardSummary' => $cardSummary,
                 'cardSummaryWithCategory' => implode("\n", array_filter([
                     $cardSummary, $categoryTitle,
@@ -607,6 +610,27 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
                 'checkedOut' => (int) ($article->checked_out ?? 0), 'checkedOutBy' => (string) ($article->editor ?? ''),
             ],
         ];
+    }
+
+    private function selectionTagPublicUrl(int $id): string
+    {
+        try { return (string) ($this->getReadableResource('tag:' . $id)['metadata']['url'] ?? ''); }
+        catch (\Throwable $error) { return ''; }
+    }
+
+    private function selectionPublicUrl(object $record, bool $article): string
+    {
+        try {
+            ReadVisibility::assertPublished($record, $this->app->getIdentity(), $article ? 'state' : 'published');
+            $this->assertReadableCategory($article ? (int) $record->catid : (int) $record->id);
+            $helper = \Joomla\Component\Content\Site\Helper\RouteHelper::class;
+            $route = $article ? $helper::getArticleRoute((string) $record->id . ':' . ($record->alias ?? ''), (int) $record->catid, $record->language ?? '*')
+                : $helper::getCategoryRoute((int) $record->id, $record->language ?? '*');
+            return (string) \Joomla\CMS\Router\Route::link('site', $route, false, 0, true);
+        } catch (\Throwable $error) {
+            // Internal/unpublished resources retain their locator without inventing a public URL.
+            return '';
+        }
     }
 
     protected function canCreateArticle(): bool
@@ -892,6 +916,12 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
     {
         return $languageKey;
     }
+    protected function tagImage(object $tag): ?string
+    {
+        $images = json_decode((string) ($tag->images ?? '{}')) ?: new \stdClass();
+        return $this->imageUrl((string) ($images->image_intro ?? '') ?: (string) ($images->image_fulltext ?? ''));
+    }
+
     protected function imageUrl(string $image): ?string
     {
         if ($image === '') return null;

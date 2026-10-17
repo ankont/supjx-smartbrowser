@@ -1,5 +1,162 @@
 # Changelog
 
+## 4.0.0 - 2026-10-18
+
+- Consolidate Selection View enhancements, universal selection addresses, extensible previews and image-presentation providers.
+- Add native Joomla custom-field output with shared layouts, template overrides and generic PHP image presentation.
+- Include accumulated adapter, permissions, editor, accessibility and layout fixes; preserve existing selections and consumer compatibility.
+
+## 3.16.0 - 2026-10-17
+
+- Render custom fields through a shared Joomla resource layout with native image markup, captions, public links and safe text fallbacks across adapters and node/item kinds.
+- Add a generic PHP image-presentation event after layouts, with opaque Usage, resolved image context, failure rollback and once-only server presentation markers.
+- Preserve template overrides and existing read policies/storage; prevent duplicate JS presentation of server-rendered images and document migration for template, SmartVisuals, Sources and providers.
+
+## 3.15.1 - 2026-10-17
+
+- Recalculate native preview image viewport geometry from provider-declared CSS aspect-ratio on generic presentation notifications, ahead of natural dimensions.
+- Restore fallback geometry after reset, image changes, provider removal and failed application; document equivalent custom-renderer behavior without metadata parsing or reapplication loops.
+
+## 3.15.0 - 2026-10-17
+
+- Add generic preview image-presentation providers with declared style ownership, ordered conflict resolution, rollback, cancellation, readonly rendering and provider-owned reset hooks.
+- Publish primary images explicitly from native previews and custom renderers; expose resolved image context and generic presentation-change notifications while preserving renderer frames/pins.
+- Remove extension-specific reset metadata handling and the optional direct PHP image-extension helper call; document provider/renderer migration without changing selection storage or introducing grid/list effects.
+
+## 3.14.4 - 2026-10-17
+
+- Make Selection Usage available in writable Pickers even without ordinary usage fields; keep crop, reset and modified previews exclusively in Selection Usage, leaving Information unchanged.
+- Offer a hidden-by-default Address column in Pickers using the existing Selection Address serializer and live usage values.
+
+## 3.14.3 - 2026-10-17
+
+- Detect native image address changes independently of attached native preview markup, showing reset for address-only crops and restoring the default image address.
+
+## 3.14.2 - 2026-10-16
+
+- Restore independent type icon, thematic badge and image layers in item appearance settings and previews.
+- Preserve configured item type icons when visuals providers supply a separate thematic icon.
+
+## 3.14.1 - 2026-10-16
+
+- Place preview editing controls on the left (reset, thumbnail, extensions) and the preview eye on the right.
+- Detect persisted SmartCrop changes and reset visual, crop and address overrides without clearing unrelated metadata.
+
+## 3.14.0 - 2026-10-16
+
+- Centralize selection Add/Replace Picker workflows in the public Collection View, including resource resolution, limits, metadata-safe append, current-resource focus and stale-result protection.
+- Reuse the public workflow in selection fields; retain explicit callback overrides and expose add()/editSelection() for external consumer buttons.
+
+## 3.13.0 - 2026-10-16
+
+- Open an empty Picker for selection-field Add and append new identities without modifying existing entries or usage.
+- Edit the full collection through Replace, focusing the current resource with Information open through public initialFocus/initialInfoOpen options.
+- Remove Add from item context menus and document the callback contract for external collection consumers.
+
+## 3.12.3 - 2026-10-16
+
+- Keep the modal document body at viewport height so TinyMCE CMS menus and other body-mounted dropdowns are not clipped behind the fixed editor.
+
+## 3.12.2 - 2026-10-16
+
+- Clear stale native form session data in frontend editors as well as administrator, so article Edit loads the requested record instead of a blank or unrelated draft.
+- Preserve recovery data for the same record and cover native frontend article identity routing.
+
+## 3.12.1 - 2026-10-15
+
+- Preserve icon class input drafts while normalizing whitespace in stored values.
+- Validate Selection View usage edits before notifying consumers, keeping invalid drafts out of persisted selections and rejecting stale validation results.
+
+## 3.12.0 - 2026-10-15
+
+- Expose a shared preview actions container to visual overlays, with consistent square icon and variable-width text button styling.
+- Remount overlays when their action slot changes and document extension button ownership and cleanup.
+
+## 3.11.4 - 2026-10-15
+
+- Fill the modal editor viewport edge-to-edge, removing template insets above its toolbar and placing the form scrollbar at the window edge.
+- Keep field spacing inside a shared content wrapper so grid gutters do not create horizontal form scrolling.
+
+## 3.11.3 - 2026-10-15
+
+- Keep the icon badge above the thumbnail in Both presentation mode.
+- Add a visible disclosure indicator to More options and retain its open/closed state while switching selected resources.
+
+## 3.11.2 - 2026-10-15
+
+- Let all modal editors scroll the complete form below a sticky action toolbar instead of restricting scrolling to tab panels.
+- Remove reserved toolbar padding before the title and adapt focus/dropdown scrolling to the shared form viewport.
+
+## 3.11.1 - 2026-10-15
+
+- Extend the Browser folders, content and Information panel to the available viewport height, including resized and focus layouts.
+
+## 3.11.0 - 2026-10-15
+
+- Align generic selection previews with grid composition and pass effective presentation mode, imagery and crop to site preview renderers.
+- Reuse configured badge placement for explicit visual modes, clarify Default and add icons to common presentation usage fields.
+
+## 3.10.4 - 2026-10-15
+
+- Shorten selection context menu labels and keep collection ordering sort in the toolbar only.
+
+## 3.10.3 - 2026-10-15
+
+- Add selection toolbar operations to item context menus, sharing ordering commands, availability checks and handlers with preview actions.
+
+## 3.10.2 - 2026-10-15
+
+- Restore the Sort icon for stored collection ordering; reserve Signal for view sorting.
+
+## 3.10.1 - 2026-10-15
+
+- Keep Information visuals identical to the Browser Grid composition for non-image resources, independently of Selection Preview renderers and usage overrides.
+- Scope generic preview sizing so Information surfaces cannot collapse and paint over their metadata; retain adaptive native-image Information sizing.
+
+## 3.10.0 - 2026-10-15
+
+- Add registered preview renderers with shared mount/update/cleanup, readonly inspection, late registration and Picker iframe integration.
+- Add the SmartVisuals preview asset preparation hook for frontend and administrator hosts.
+- Reuse resource visual composition for generic previews: image or configured type icon, with site-specific identity as a corner badge.
+- Preserve native image field integration and separate Information visuals, overlays and preview actions.
+
+## 3.9.1 - 2026-10-15
+
+- Show native category and tag images in shared resource descriptors and previews, including readable frontend selections.
+- Show menu link images or icons in previews and preserve native image metadata in menu visuals.
+- Keep node previews compatible with SmartVisuals decorations and selection thumbnail/icon overrides.
+
+## 3.9.0 - 2026-10-15
+
+- Implement the Universal Selection Address Contract with seven semantic formats, flat registered properties and extensible compound codecs.
+- Add deterministic short image aliases and lossless native image query metadata, including SmartCrop and unknown extension parameters.
+- Integrate complete plain-text addresses, copy/export and atomic multiline paste/import into the shared Selection View.
+- Resolve imports through existing adapters and server profile/ACL validation; retain JSON storage and native Joomla image field output.
+- Generate public Joomla resource URLs through site routing and preserve existing view-adapter identities through optional routing hints.
+- Share the Browser Columns popup with Selection View, show sorting only in Grid, and keep search/sort controls out of expanded toolbar rows.
+- Honor caller-disabled selection ordering throughout the UI while retaining view sorting, and rename address commands to Copy/Import Resource Addresses.
+- Use Signal icons for sorting, expand sort options away from aligned triggers without moving them, and place selection ordering actions after Replace.
+- Export advanced Sort translations through the common language list for external Selection Views as well as the Browser.
+
+## 3.8.0 - 2026-10-14
+
+- Add per-selection article displayed names and thumbnail/icon/both visual presentation capabilities.
+- Add common optional selection columns and persistent view sorting without altering stored selection order.
+- Reuse advanced Sort for whole-collection ordering, preserving full entries and extension metadata without changing native Joomla resource order.
+- Retain resolved thumbnail crop presentation and document extension metadata and replacement policy.
+
+## 3.7.1 - 2026-10-14
+
+- Move selection position hints from preview titles to accessible gallery navigation buttons.
+- Style selection addresses explicitly as readonly while allowing text selection without URI editing.
+
+## 3.7.0 - 2026-10-13
+
+- Add a shared visual overlay registry and mount/update/cleanup lifecycle for Picker, external and native image previews, including late registration.
+- Allow explicitly declared inspection preview actions in readonly usage mode while protecting write callbacks.
+- Persist bounded extension metadata under reserved ext.* usage keys without weakening standard capability validation.
+- Synchronize extension address updates with selection change events and native image fields; support expanded overlay stacking.
+
 ## 3.6.22 - 2026-10-13
 
 - Disable single-resource Media download/share for multiple selections, constrain batch control sizing, normalize Joomla article reorder conditions, and preserve unselected sibling slots during advanced Sort.

@@ -116,8 +116,11 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $menu = $this->app->getMenu('site');
         $item = $this->readableSiteItem($menu, (int) $matches[1]);
         $url = $this->readableSiteUrl($menu, $item, []);
+        $params = $item->getParams();
         return ['id' => $resourceId, 'title' => (string) $item->title, 'subtitle' => null, 'parentId' => null,
-            'kind' => 'node', 'type' => 'menu-item', 'icon' => 'fas fa-diagram-predecessor', 'image' => null,
+            'kind' => 'node', 'type' => 'menu-item', 'icon' => 'fas fa-diagram-predecessor',
+            'image' => $this->menuImage((string) $params->get('menu_image', '')),
+            'badgeIcon' => trim((string) $params->get('menu_icon_css', '')),
             'status' => 1, 'capabilities' => [], 'overlays' => [],
             'metadata' => ['id' => (int) $item->id, 'url' => $url, 'alias' => $item->alias ?? '', 'language' => $item->language ?? '*',
                 'accessId' => (int) $item->access, 'state' => 1, 'menuItemKind' => (string) $item->type,
@@ -324,13 +327,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         $state = (int) $item->published;
         $params = json_decode((string) $item->params, true) ?: [];
         $aliasTarget = (string) $item->type === 'alias' ? (int) ($params['aliasoptions'] ?? 0) : 0;
-        $menuImage = (string) ($params['menu_image'] ?? '');
-        if ($menuImage !== '') {
-            $menuImage = (string) (HTMLHelper::_('cleanImageURL', $menuImage)->url ?? '');
-            if ($menuImage !== '' && !preg_match('#^(?:[a-z][a-z0-9+.-]*:)?//#i', $menuImage) && !str_starts_with($menuImage, 'data:')) {
-                $menuImage = Uri::root() . ltrim($menuImage, '/');
-            }
-        }
+        $menuImage = $this->menuImage((string) ($params['menu_image'] ?? ''));
         $overlays = [$this->statusOverlay($state)];
         $homeLabel = !empty($item->home) ? Text::_((string) $item->language === '*' ? 'COM_SMARTBROWSER_HOME_ALL_LANGUAGES' : 'COM_SMARTBROWSER_HOME_LANGUAGE') : '';
         if ($homeLabel !== '') $overlays[] = [
@@ -365,6 +362,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             'capabilities' => $capabilities,
             'metadata' => [
                 'id' => (int) $item->id, 'alias' => (string) $item->alias, 'menu' => (string) $this->menu((string) $item->menutype)->title,
+                'publicUrl' => $this->selectionPublicUrl((int) $item->id),
                 'homeLabel' => $homeLabel,
                 'menutype' => (string) $item->menutype, 'parent' => (int) $item->parent_id > 1 ? (string) $this->item((int) $item->parent_id)->title : '',
                 'menuItemType' => $typeLabel, 'menuItemKind' => (string) $item->type, 'state' => $state, 'stateLabel' => $this->stateLabel($state),
@@ -377,6 +375,22 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 'link' => (string) $item->link, 'aliasOf' => $aliasTarget ?: null,
             ],
         ];
+    }
+
+    private function menuImage(string $image): ?string
+    {
+        if ($image === '') return null;
+        $url = (string) (HTMLHelper::_('cleanImageURL', $image)->url ?? '');
+        $fragment = strstr($image, '#joomlaImage://');
+        if ($fragment !== false && !str_contains($url, '#')) $url .= $fragment;
+        if ($url !== '' && !preg_match('#^(?:[a-z][a-z0-9+.-]*:)?//#i', $url) && !str_starts_with($url, 'data:')) $url = Uri::root() . ltrim($url, '/');
+        return $url ?: null;
+    }
+
+    private function selectionPublicUrl(int $id): string
+    {
+        try { return (string) ($this->getReadableResource('menu-item:' . $id)['metadata']['url'] ?? ''); }
+        catch (\Throwable $error) { return ''; }
     }
 
     private function itemCapabilities(object $item): array

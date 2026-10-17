@@ -24,7 +24,7 @@ test('optional generic Add command is in the collection toolbar before Remove, i
   assert.ok(view.indexOf('v-if="canAdd" class="resource-icon-button"') < view.indexOf('v-if="model.canRemove" class="resource-icon-button"'));
   assert.ok(view.includes("typeof props.config.onAdd === 'function'"));
   assert.ok(view.includes('<header class="resource-toolbar sb-collection-toolbar">'));
-  assert.ok(read('resources/js/selection-field.js').includes('onAdd: () => pick()'));
+  assert.ok(read('resources/js/collection.js').includes('config.onAdd = picker.add'));
   assert.ok(!read('package/component/admin/src/Field/SmartbrowserpickerField.php').includes('data-sb-select'));
 });
 test('collection count is a footer, while Picker has one actionable summary with colon and no duplicate count', () => {

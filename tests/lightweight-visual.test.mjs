@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { effectiveIcon, lightweightImage, thumbnailCapabilities } from '../resources/js/core/lightweightVisual.js';
+import { effectiveIcon, lightweightImage, lightweightPreviewIcon, selectionPresentation, thumbnailCapabilities } from '../resources/js/core/lightweightVisual.js';
 import { createSelectionUsage } from '../resources/js/core/selectionUsage.js';
 
 test('decorative dependency clears alt in initial/current usage and validation results', async () => {
@@ -39,13 +39,13 @@ test('generic thumbnail metadata preserves reference validation, initial values 
 test('Info visual stays separate from card/full preview and uses the existing dispatcher', () => {
   const info = readFileSync(new URL('../resources/js/components/ResourceInfoPanel.vue', import.meta.url), 'utf8');
   const visual = readFileSync(new URL('../resources/js/components/LightweightResourceVisual.vue', import.meta.url), 'utf8');
-  assert.ok(!info.includes('<ResourceVisual'));
+  assert.ok(!/<ResourceVisual(?:\s|>)/.test(info));
   assert.ok(!/<(?:iframe|video|audio)\b/.test(visual));
   assert.ok(visual.includes("$emit('preview')"));
   assert.ok(visual.includes('initialSelection:'));
   assert.ok(visual.includes('fas fa-eye'));
   assert.ok(visual.includes("props.editable ? thumbnailDefinitions.value.filter(definition => definition.presentation !== 'hidden') : []"));
-  assert.ok(info.includes(':editable="selectionOnly ? usageMode === \'editable\' : tab === \'usage\'"'));
+  assert.ok(info.includes(':editable="selectionOnly ? usageMode === \'editable\' : showUsage && previewContext?.isReadOnly === false"'));
   assert.ok(info.includes("available ? preferredTab.value : 'info'"));
   assert.ok(info.includes("selectTab('info')"));
   assert.ok(visual.indexOf('  </div>') < visual.indexOf('class="resource-lightweight-actions'), 'Actions are outside the image surface');
@@ -66,4 +66,28 @@ test('effective icons preserve native CSS class identity independently of thumbn
   assert.equal(lightweightImage(resource), 'native.jpg');
   assert.equal(effectiveIcon(resource, { 'visual.iconOverride': '<script>' }), 'fas fa-newspaper');
   assert.equal(effectiveIcon({ unavailable: true }, { 'visual.iconOverride': 'fas fa-book' }), '');
+});
+
+test('node previews use native or decorated images and menu identity icons with per-selection overrides', () => {
+  for (const type of ['category', 'tag', 'menu-item']) {
+    const resource = { type, image: '/native.png', icon: 'fas fa-folder' };
+    assert.equal(lightweightImage(resource), '/native.png');
+    assert.equal(lightweightImage({ ...resource, image: '/decorated.png' }), '/decorated.png');
+    assert.equal(lightweightPreviewIcon(resource), 'fas fa-folder');
+    assert.equal(lightweightPreviewIcon(resource, { 'visual.iconOverride': 'fas fa-star' }), 'fas fa-star');
+    assert.equal(lightweightPreviewIcon({ ...resource, unavailable: true }), '');
+  }
+  const menu = { type: 'menu-item', icon: 'fas fa-folder', badgeIcon: 'fas fa-book' };
+  assert.equal(lightweightPreviewIcon(menu), 'fas fa-book');
+  assert.equal(lightweightPreviewIcon(menu, { 'visual.iconOverride': 'fas fa-heart' }), 'fas fa-heart');
+  assert.equal(selectionPresentation(menu, { 'visual.iconOverride': 'fas fa-heart' }).badgeIcon, 'fas fa-heart');
+  assert.equal(selectionPresentation(menu, { 'visual.iconOverride': '<script>' }).badgeIcon, 'fas fa-book');
+  assert.equal(lightweightPreviewIcon({ type: 'document', icon: 'fas fa-file-pdf' }), '');
+});
+
+test('category/tag descriptors reuse native image fields rather than a separate preview data source', () => {
+  const content = readFileSync(new URL('../package/component/admin/src/Adapter/ContentAdapter.php', import.meta.url), 'utf8');
+  assert.match(content, /'image' => \$this->imageUrl\(\(string\) \$category->getParams\(\)->get\('image', ''\)\)/);
+  assert.equal((content.match(/'image' => \$this->tagImage\(\$tag\)/g) || []).length, 2);
+  assert.match(content, /image_intro.*image_fulltext/);
 });

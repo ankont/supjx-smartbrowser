@@ -33,8 +33,8 @@ test('advanced action shell is manage-only and requires a selection', async () =
   assert.match(dialog, /class="resource-batch-summary-step-heading" role="heading" aria-level="4"/);
   assert.doesNotMatch(dialog, /<h[1-6]\b/);
   assert.doesNotMatch(dialog, /class="resource-batch-count"/);
-  assert.match(dialog, /v-if="isMedia"/);
-  assert.match(dialog, /v-else-if="isArticles"/);
+  assert.match(dialog, /v-if="isMedia && !collectionOnly"/);
+  assert.match(dialog, /v-else-if="isArticles && !collectionOnly"/);
   assert.match(dialog, /<details class="resource-batch-step" :open="media\.rename"/);
   assert.match(dialog, /v-model="media\.placement"/);
   assert.match(dialog, /<ResourceBatchModeToggle v-model="media\.placement"/);
@@ -60,8 +60,8 @@ test('advanced action shell is manage-only and requires a selection', async () =
   assert.match(categoryAdapter, /'category' => array_merge\(\[\['value' => '1'/);
   assert.match(categoryAdapter, /'tag' => \$this->batchTagOptions\(\)/);
   assert.match(menuAdapter, /'menuParent' => array_values\(array_map/);
-  assert.match(dialog, /v-else-if="isCategories \|\| isTags \|\| isMenus"/);
-  assert.match(dialog, /v-else-if="isUsers"/);
+  assert.match(dialog, /v-else-if="!collectionOnly && \(isCategories \|\| isTags \|\| isMenus\)"/);
+  assert.match(dialog, /v-else-if="isUsers && !collectionOnly"/);
   assert.match(dialog, /shared\.flipOrdering/);
   assert.match(dialog, /menuDestinationOptions/);
   assert.match(dialog, /user\.groupAction/);

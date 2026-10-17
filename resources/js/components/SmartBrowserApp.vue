@@ -1,5 +1,5 @@
 <template>
-  <div class="smartbrowser-shell" :style="gridWidthStyle">
+  <div ref="shellElement" class="smartbrowser-shell" :style="{ ...gridWidthStyle, '--sb-browser-available-height': availableHeight }">
     <div v-if="pickerContext" class="resource-picker-titlebar"><strong>{{ pickerTitle }}</strong><span v-if="pickerContext.subtitle" :title="pickerContext.subtitle">{{ pickerContext.subtitle }}</span></div>
     <div v-if="state.busy" class="smartbrowser-busy" role="status" aria-live="polite">
       <span class="spinner-border" aria-hidden="true" />
@@ -108,7 +108,7 @@
           <component
             :is="activeView.component"
             v-else
-            :resources="resources"
+            :resources="addressResources"
             :selected-ids="state.selectedIds"
             :focused-id="state.focusedId"
             :all-selected="bulkSelectableResources.length > 0 && bulkSelectableResources.every((resource) => state.selectedIds.includes(resourceKey(resource)))"
@@ -158,9 +158,12 @@ import { columnCatalog } from '../core/columnCatalog.js';
 import { defaultResourceAction, resourcePreviewAction, modifiedResourceAction } from '../core/defaultResourceAction.js';
 import { createSelectionUsage } from '../core/selectionUsage.js';
 import { referenceKey, resourceKey, resourceReference } from '../core/selectionIdentity.js';
+import { selectionUri } from '../core/selectedPresentation.js';
+import { previewExtensionContext } from '../core/previewExtensionContext.js';
 import CollectionView from './CollectionView.vue';
 import { createCollectionState } from '../core/collectionState.js';
 import ResourceApi from '../services/ResourceApi.js';
+import createSelectionAddressService from '../services/SelectionAddressService.js';
 import MediaActionDriver from '../adapters/MediaActionDriver.js';
 import { asPrimaryResource, canSelectResource } from '../core/resourcePolicy.js';
 
@@ -168,13 +171,33 @@ const browser = inject('browser');
 const options = inject('smartBrowserOptions');
 const displayEnabled = options.application === 'site' && window.self === window.top;
 const displayMode = ref('normal');
+const shellElement = ref(null), availableHeight = ref('620px');
+let heightObserver;
+const updateAvailableHeight = () => {
+  const shell = shellElement.value;
+  if (!shell) return;
+  const container = shell.parentElement;
+  const style = getComputedStyle(container);
+  const bottomInset = parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+  const pageOffset = container.hasAttribute('data-sb-focus') ? 0 : window.scrollY;
+  availableHeight.value = `${Math.max(0, window.innerHeight - shell.getBoundingClientRect().top - pageOffset - bottomInset)}px`;
+};
 let displayController;
 const displayLabel = computed(() => ({ normal: 'COM_SMARTBROWSER_DISPLAY_WIDE', wide: 'COM_SMARTBROWSER_DISPLAY_FOCUS', focus: 'COM_SMARTBROWSER_DISPLAY_NORMAL' })[displayMode.value]);
 const cycleDisplay = () => { displayMode.value = displayController.cycle(); };
 onMounted(() => {
   if (displayEnabled) displayController = createDisplayMode(document.getElementById('smartbrowser-app'), mode => { displayMode.value = mode; });
+  updateAvailableHeight();
+  heightObserver = new ResizeObserver(updateAvailableHeight);
+  heightObserver.observe(shellElement.value.parentElement);
+  window.addEventListener('resize', updateAvailableHeight);
 });
-onBeforeUnmount(() => displayController?.destroy());
+watch(displayMode, () => nextTick(updateAvailableHeight));
+onBeforeUnmount(() => {
+  heightObserver?.disconnect();
+  window.removeEventListener('resize', updateAvailableHeight);
+  displayController?.destroy();
+});
 const driver = inject('actionDriver');
 const api = inject('resourceApi');
 const registry = inject('viewRegistry');
@@ -219,6 +242,10 @@ const executeAction = async (action, targets) => {
 onBeforeUnmount(() => itemDrivers.forEach(({ api, driver }) => { driver.destroy(); api.destroy(); }));
 let pickerCollection, updatingProjection = false;
 const pickerCollectionConfig = { referenceItems: true, homogeneous: pickerContext?.homogeneous === true, readOnly: false, showCount: false,
+  selectionProfile: pickerContext?.selectionProfile || {},
+  addressContract: pickerContext?.addressContract, adapter: options.adapter,
+  allowedAdapters: pickerContext?.allowedAdapters || (pickerContext?.collectionMode ? [] : [options.adapter]),
+  allowedResourceTypes: options.allowedResourceTypes, selectionTarget: options.selectionTarget, maxSelections: pickerContext?.maxSelections || 500,
   selectedResources: true, informationPanel: false, multiple: options.multiple,
   items: pickerContext?.getCollectionSnapshot?.().items || [], layout: 'compact', allowRemove: true, allowOrdering: options.multiple && pickerContext?.allowOrdering !== false,
   contextActions: false, resourceActions: [{ id: 'selectionFocus', label: 'COM_SMARTBROWSER_USAGE_OPTIONS', icon: 'fas fa-pen', requiresSelection: true }],
@@ -271,9 +298,15 @@ const usageVersion = ref(0);
 if (collectionMode) {
   pickerCollection = createCollectionState({ config: pickerCollectionConfig, api, translate: t, notify: detail => {
     updatingProjection = true;
+    for (const entry of detail.items) {
+      const resource = detail.resources.find(resource => resourceKey(resource) === referenceKey(entry.selection));
+      if (resource) for (const [key, value] of Object.entries(entry.usage)) usage.set(resource, key, value);
+    }
     state.selectedResources = Object.fromEntries(detail.resources.map(resource => [resourceKey(resource), asPrimaryResource(resource)]));
     state.selectedIds = detail.items.map(entry => referenceKey(entry.selection));
+    usageVersion.value++;
     updatingProjection = false;
+    commitCollection();
   } });
   pickerCollection.refresh().catch(error => Joomla.renderMessages({ error: [error.message] }));
   watch(() => [state.selectedIds, usageVersion.value], () => {
@@ -294,10 +327,10 @@ const usageDefinitions = computed(() => usage.definitions(focusedResource.value)
 const usageValues = computed(() => { usageVersion.value; return usage.get(focusedResource.value); });
 const forceUsageInfo = computed(() => Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length));
 const hasUsageProfile = Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length);
-const pickerInfoOpen = ref(Object.values(pickerContext?.selectionProfile || {}).some(policy => policy !== false && policy?.presentation !== 'hidden') || state.showInfo);
-const showInfo = computed(() => hasUsageProfile ? pickerInfoOpen.value : state.showInfo);
+const pickerInfoOpen = ref(pickerContext?.initialInfoOpen === true || Object.values(pickerContext?.selectionProfile || {}).some(policy => policy !== false && policy?.presentation !== 'hidden') || state.showInfo);
+const showInfo = computed(() => hasUsageProfile || pickerContext?.initialInfoOpen === true ? pickerInfoOpen.value : state.showInfo);
 const toggleInfo = () => {
-  if (hasUsageProfile) pickerInfoOpen.value = !pickerInfoOpen.value;
+  if (hasUsageProfile || pickerContext?.initialInfoOpen === true) pickerInfoOpen.value = !pickerInfoOpen.value;
   else state.showInfo = !state.showInfo;
 };
 const setResourceUsage = (resource, key, value) => {
@@ -310,21 +343,46 @@ const setResourceUsage = (resource, key, value) => {
 const setUsage = (key, value) => setResourceUsage(focusedResource.value, key, value);
 const previewContext = computed(() => {
   const resource = focusedResource.value;
-  return { resource, profile: pickerContext?.selectionProfile || {}, values: usageValues.value,
+  return previewExtensionContext({ resource, overlayRegistry: pickerContext || window.SmartBrowserPicker, isReadOnly: !pickerContext || options.mode === 'readonly', fieldElement: null,
+    isCurrent: () => !unmounted && resourceKey(focusedResource.value) === resourceKey(resource),
+    getAddress: () => usage.get(resource)['ext.address'] ?? selectionUri(resource),
+    getDefaultAddress: () => selectionUri(resource),
+    resetAddress: () => setResourceUsage(resource, 'ext.address', null),
+    setAddress: address => setResourceUsage(resource, 'ext.address', address), profile: pickerContext?.selectionProfile || {}, values: usageValues.value,
     getValues: () => usage.get(resource), setValue: (key, value) => setResourceUsage(resource, key, value),
-    refresh: () => load(), selectResource: config => window.SmartBrowserPicker.open(config) };
+    refresh: () => load(), selectResource: config => window.SmartBrowserPicker.open(config) });
 });
 const registeredPreviewActions = ref(pickerContext?.previewActions || []);
 const unsubscribePreviewActions = pickerContext?.subscribePreviewActions?.(actions => { registeredPreviewActions.value = actions; });
 onBeforeUnmount(() => unsubscribePreviewActions?.());
 const previewActions = computed(() => registeredPreviewActions.value.filter(action => {
-  try { return focusedResource.value && (!action.applies || action.applies(previewContext.value)); } catch { return false; }
+  try { return focusedResource.value && (!previewContext.value.isReadOnly || action.allowReadOnly === true) && (!action.applies || action.applies(previewContext.value)); } catch { return false; }
 }));
 let unmounted = false;
 onBeforeUnmount(() => { unmounted = true; referenceApis.forEach(api => api.destroy()); });
 const views = registry.all();
 const activeView = computed(() => registry.get(state.activeView));
-const availableColumns = computed(() => columnCatalog(state.presentation, options.adapter));
+const addressValues = ref({});
+const addressService = createSelectionAddressService({ api, config: { ...options,
+  selectionProfile: pickerContext?.selectionProfile || {}, addressContract: pickerContext?.addressContract } });
+let addressGeneration = 0;
+watch(() => [resources.value, usageVersion.value], async () => {
+  if (!pickerContext) return;
+  const generation = ++addressGeneration, values = {};
+  for (const resource of resources.value) {
+    try {
+      values[resourceKey(resource)] = await addressService.serialize({ selection: resourceReference(resource, options.adapter.replace(/^flat-/, '')), usage: usage.get(resource) }, resource);
+    } catch { values[resourceKey(resource)] = ''; }
+  }
+  if (generation === addressGeneration) addressValues.value = values;
+}, { immediate: true });
+onBeforeUnmount(() => { addressGeneration++; addressService.destroy(); });
+const addressResources = computed(() => pickerContext ? resources.value.map(resource => ({ ...resource, selectionAddress: addressValues.value[resourceKey(resource)] || '' })) : resources.value);
+const availableColumns = computed(() => {
+  const columns = columnCatalog(state.presentation, options.adapter);
+  if (pickerContext && !columns.some(column => column.id === 'selectionAddress')) columns.push({ id: 'selectionAddress', source: 'selectionAddress', label: 'COM_SMARTBROWSER_URI', headerIcon: 'fas fa-link', defaultVisible: false });
+  return columns;
+});
 const visibleColumns = computed(() => availableColumns.value.filter((column) =>
   column.id === 'title' || column.id === 'name' || (column.defaultVisible
     ? !state.hiddenColumns.includes(column.id)
@@ -537,6 +595,10 @@ onMounted(() => {
         state.selectedResources = Object.fromEntries(result.resources.map(resource => [resourceKey(resource), asPrimaryResource(resource)]));
         state.selectedIds = result.items.map(entry => referenceKey(entry.selection));
         state.focusedId = state.selectedIds.find(key => resources.value.some(resource => resourceKey(resource) === key)) || state.selectedIds[0] || null;
+        if (pickerContext.initialFocus) {
+          const key = referenceKey(pickerContext.initialFocus);
+          if (state.selectedIds.includes(key)) state.focusedId = key;
+        }
       } catch (error) { if (!unmounted) Joomla.renderMessages({ error: [error.message] }); }
     }
     if (!collectionMode && pickerContext?.initialSelection?.length && (!pickerContext.initialAdapter || pickerContext.initialAdapter.replace(/^flat-/, '') === options.adapter.replace(/^flat-/, ''))) {
