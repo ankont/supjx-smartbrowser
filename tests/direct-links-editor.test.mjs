@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 test('local editor decodes translations as text and keeps caller suggestions editable', () => {
   const driver = readFileSync('resources/js/adapters/MediaActionDriver.js', 'utf8');
   assert.match(driver, /decoder\.innerHTML = this\.translate\(key\); return decoder\.value/);
-  assert.match(driver, /save\.textContent = text\('JTOOLBAR_SAVE'\)/);
+  assert.match(driver, /save\.textContent = text\('JSAVE'\)/);
   assert.match(driver, /createElement\('datalist'\)/);
   assert.match(driver, /editorContext\?\.suggestions/);
   assert.match(driver, /field\.dependsOn/);

@@ -59,7 +59,7 @@ test('media preview uses the editor toolbar labels loaded for browser JavaScript
     source('resources/js/adapters/MediaActionDriver.js'),
     source('package/component/admin/src/Support/BrowserViewSupport.php'),
   ]);
-  for (const key of ['JSAVE', 'JAPPLY', 'JSAVEASCOPY']) {
+  for (const key of ['COM_SMARTBROWSER_SAVE_CLOSE', 'JAPPLY', 'COM_SMARTBROWSER_SAVE_AS_COPY']) {
     assert.match(driver, new RegExp(`this\\.escapeTranslated\\('${key}'\\)`));
     assert.match(browser, new RegExp(`'${key}'`));
   }

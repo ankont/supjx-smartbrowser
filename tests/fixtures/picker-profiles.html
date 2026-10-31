@@ -37,6 +37,7 @@ const labels = {
   COM_SMARTBROWSER_USAGE_PROFILE_INVALID: 'Hidden options configuration error',
 };
 const params = new URL(location.href).searchParams;
+labels.COM_SMARTBROWSER_ADAPTER_ARTICLES = 'Articles';
 Object.assign(labels, { COM_SMARTBROWSER_COLLECTION_SORT: 'Sort selection order', COM_SMARTBROWSER_BATCH_SORT: 'Sort', COM_SMARTBROWSER_BATCH_APPLY: 'Apply', COM_SMARTBROWSER_SORT_BY: 'Sort by', COM_SMARTBROWSER_COLUMNS: 'Columns', COM_SMARTBROWSER_ASCENDING: 'Ascending', COM_SMARTBROWSER_DESCENDING: 'Descending', COM_SMARTBROWSER_SORT_DIRECTION: 'Sort direction', JGRID_HEADING_ORDERING: 'Ordering', JGRID_HEADING_ID: 'ID', COM_SMARTBROWSER_RESOURCE_TYPE: 'Type', JGLOBAL_FIELD_CREATED_LABEL: 'Created', JGLOBAL_FIELD_MODIFIED_LABEL: 'Modified', COM_SMARTBROWSER_USAGE_DISPLAYED_NAME: 'Displayed name', COM_SMARTBROWSER_USAGE_VISUAL_PRESENTATION: 'Visual presentation', COM_SMARTBROWSER_USAGE_VISUAL_BOTH: 'Thumbnail and icon', COM_SMARTBROWSER_USAGE_ICON: 'Icon' });
 const roots = [{ id: 'local-images:/', title: 'Library', icon: 'fas fa-folder', kind: 'node', type: 'folder', selectable: false, navigable: true }];
 const imageCapabilities = [
@@ -44,6 +45,11 @@ const imageCapabilities = [
   { key: 'media.decorative', type: 'boolean', editor: 'boolean', label: 'COM_SMARTBROWSER_USAGE_DECORATIVE', default: false },
   { key: 'media.loading', type: 'string', editor: 'select', label: 'COM_SMARTBROWSER_USAGE_LOADING', default: 'auto', options: [{ value: 'auto', label: 'COM_SMARTBROWSER_USAGE_AUTO' }, { value: 'lazy', label: 'COM_SMARTBROWSER_USAGE_LAZY' }, { value: 'eager', label: 'COM_SMARTBROWSER_USAGE_EAGER' }] },
 ];
+if (params.has('nativeImageFixture')) {
+  imageCapabilities.push(...[
+    ['media.caption', 'Caption'], ['media.class', 'Image class'], ['media.figureClass', 'Image container class'],
+  ].map(([key, label]) => ({ key, label, type: 'string', editor: 'text', default: '' })));
+}
 const resources = [
   { id: 'local-images:/a.png', title: 'First image', kind: 'item', type: 'image', image: '/resources/images/visual-example.svg', icon: 'fas fa-file-image', selectable: true, metadata: { mimeType: 'image/png' }, selectionCapabilities: imageCapabilities },
   { id: 'local-images:/b.png', title: 'Second image', kind: 'item', type: 'image', image: '/resources/images/visual-example.svg', icon: 'fas fa-file-image', selectable: true, metadata: { mimeType: 'image/png' }, selectionCapabilities: imageCapabilities },
@@ -74,8 +80,34 @@ for (const resource of resources) {
   }
 }
 Object.assign(labels, { COM_SMARTBROWSER_COPY_ADDRESSES: 'Copy resource addresses', COM_SMARTBROWSER_IMPORT_ADDRESSES: 'Import resource addresses', COM_SMARTBROWSER_IMPORT: 'Import', COM_SMARTBROWSER_ADDRESS_APPEND: 'Add to existing selection', COM_SMARTBROWSER_ADDRESS_UNAVAILABLE: 'Address unavailable', COM_SMARTBROWSER_SEARCH: 'Search', COM_SMARTBROWSER_DEFAULT_SORTING: 'Unsorted' });
-window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'COM_SMARTBROWSER_ADAPTER_MEDIA', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'COM_SMARTBROWSER_ADAPTER_ARTICLES', icon: 'fas fa-book-open' }], application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: 'grid', currentNode: 'local-images:/', initialNode: 'local-images:/',
+window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'COM_SMARTBROWSER_ADAPTER_MEDIA', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'COM_SMARTBROWSER_ADAPTER_ARTICLES', icon: 'fas fa-book-open' }], application: 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: params.get('defaultView') || null, currentNode: 'local-images:/', initialNode: 'local-images:/',
   allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
+Object.assign(labels, { COM_SMARTBROWSER_PICKER_SELECT_TITLE: 'Select', COM_SMARTBROWSER_ADAPTER_MEDIA: 'Files & Media' });
+if (params.has('flatTreeFixture')) Object.assign(fixtureOptions, {
+  adapter: 'flat-media', adapters: [{ id: 'flat-media', title: 'Files & Media', icon: 'fas fa-photo-video' }],
+  flatTreeNode: params.get('flatFromNode') || 'local-images:/', flatTreeRoot: null,
+});
+if (params.get('nativeToolbar')) {
+  Object.assign(labels, { COM_SMARTBROWSER_STATUS_TOTAL: 'Total items: %s', COM_SMARTBROWSER_STATUS_SELECTED: 'Selected: %s', COM_SMARTBROWSER_BACK_TO_DASHBOARD: 'Dashboard', COM_SMARTBROWSER_FILTER_OPTIONS: 'Filter Options', COM_SMARTBROWSER_FLAT_VIEW: 'Flat View', COM_SMARTBROWSER_BATCH: 'Advanced', COM_SMARTBROWSER_BATCH_ACTIONS: 'Advanced actions', JCLEAR: 'Clear' });
+  Object.assign(fixtureOptions, { mode: 'manage', nativeToolbarTarget: '#sb-native-actions', dashboardUrl: '/dashboard', managerUrl: '/native', browserDescription: 'Browse files and folders.' });
+  if (params.get('nativeToolbar') !== 'missing') {
+    const toolbar = document.createElement('div'); toolbar.className = 'btn-toolbar d-flex'; toolbar.id = 'toolbar';
+    toolbar.innerHTML = '<div id="sb-native-intro"></div><div id="sb-native-manager"></div><div id="sb-native-actions"></div><a class="btn sb-options-icon" title="SmartBrowser Options" aria-label="SmartBrowser Options">SB<span class="sb-options-label">SmartBrowser Options</span></a><joomla-toolbar-button class="ms-auto"><a class="btn button-options">Options</a></joomla-toolbar-button>';
+    const subhead = document.createElement('div'); subhead.className = 'subhead'; subhead.append(toolbar);
+    document.querySelector('#smartbrowser-app').before(subhead);
+  }
+}
+if (params.has('frontendFixture')) {
+  Object.assign(fixtureOptions, { application: 'site', mode: 'manage', managerUrl: '/native', dashboardUrl: '/dashboard', browserDescription: 'Browse files and folders.' });
+  const fixed = document.createElement('header'); fixed.id = 'template-fixed-header'; fixed.style = 'position:fixed;top:0;left:0;right:0;height:36px;z-index:1000;background:#176'; fixed.textContent = 'Template header'; document.body.prepend(fixed);
+  if (!params.has('clippedFixture')) document.body.style.paddingTop = '36px';
+  if (params.has('clippedFixture')) {
+    fixed.style.position = 'relative';
+    addEventListener('scroll', () => { fixed.style.position = scrollY > 150 ? 'fixed' : 'relative'; }, { passive: true });
+    const wrapper = document.createElement('div'); wrapper.id = 'template-clip-frame'; wrapper.style.cssText = 'position:relative;overflow:hidden';
+    const app = document.getElementById('smartbrowser-app'); app.before(wrapper); wrapper.append(app);
+  }
+}
 window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; document.body.prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
   request(config) {
     const request = new URL(config.url);
@@ -85,7 +117,39 @@ window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptio
       ? body.operation === 'reorder' ? { items: [...body.items].reverse() } : body.referenceItems ? { items: body.items, resources: body.items.map(entry => ({ ...(resources.find(resource => resource.id === entry.selection.id) || { id: entry.selection.id, title: entry.selection.id, unavailable: true, metadata: {}, capabilities: {} }), adapter: entry.selection.adapter, selection: entry.selection, selectionKey: JSON.stringify([entry.selection.adapter, entry.selection.id]), collectionActions: [], collectionPresentation: { columns: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }], infoFields: [] } })) }
         : { identifiers: body.items, resources: body.items.map(id => resources.find(resource => resource.id === id) || { id, title: id, unavailable: true, metadata: {}, capabilities: {} }) }
       : { nodes: [], items, breadcrumb: roots, actions: [{ id: 'edit', label: 'Edit', requiresSelection: true, single: true, icon: 'fas fa-pen' }, { id: 'checkin', label: 'Check in', requiresSelection: true, icon: 'fas fa-lock' }] };
+    if (params.has('flatTreeFixture') && request.searchParams.get('adapter') === 'media') {
+      Object.assign(response, { roots: [roots[0], { ...roots[0], id: 'local-files:/', title: 'Files' }], nodeId: request.searchParams.get('node'), nodes: [{ ...roots[0], id: 'local-images:/child', title: 'Child folder' }], breadcrumb: roots });
+    }
+    if ((params.has('nativeToolbar') || params.has('frontendFixture')) && response.actions) {
+      response.items.forEach(resource => { resource.capabilities = { ...resource.capabilities, edit: true }; });
+      response.actions.unshift({ id: 'createNode', label: 'New folder', creationRole: 'node', icon: 'fas fa-folder-plus' });
+      response.presentation = { filters: [{ id: 'state', label: 'State', type: 'select', default: '', options: [{ value: '', label: 'All' }, { value: 'published', label: 'Published' }] }] };
+    }
+    if (params.has('longFixture') && request.searchParams.get('task') === 'api.resources' && response.items) response.items = Array.from({ length: 120 }, (_, i) => ({ ...items[0], id: `local-images:/long-${i}.png`, title: `Resource ${i}` }));
+    if (params.has('infoScrollFixture') && response.items) {
+      response.presentation ||= {};
+      response.presentation.infoFields = Array.from({ length: 28 }, (_, i) => ({ label: `Info ${i}`, source: `metadata.info${i}` })).concat({ label: 'URL', source: 'metadata.url' });
+      response.presentation.columns = [{ id: 'title', label: 'Name', source: 'title' }, { id: 'id', label: 'ID', source: 'id' }];
+      for (const resource of response.items) {
+        resource.metadata = { ...resource.metadata, url: 'https://example.org/' + resource.id };
+        for (let i = 0; i < 28; i++) resource.metadata[`info${i}`] = `${resource.title}: information ${i} to compare across resources`;
+      }
+    }
+    if (params.has('contextualCreation') && response.actions) response.actions.unshift({ id: 'newArticle', label: 'Secondary article', creationRole: 'contextual', primary: false, icon: 'fas fa-newspaper' });
+    if (params.has('depthFixture') && request.searchParams.get('task') === 'api.resources') {
+      response.items = ['Zeta', 'Alpha'].map((location, index) => ({ ...items[index], metadata: { ...items[index].metadata, location, locationPath: `Parent / ${location}`, locationDepth: index * 2 } }));
+      response.presentation = { columns: [{ id: 'title', label: 'Name', source: 'title' }, { id: 'location', label: 'Location', source: 'metadata.location' }], sortFields: [{ id: 'location', label: 'Location' }] };
+    }
     if (params.has('pickerAddressFixture') && request.searchParams.get('task') !== 'api.collection') response.presentation = { columns: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }] };
+    if (params.has('batchFixture') && request.searchParams.get('task') !== 'api.collection') response.presentation = {
+      sortFields: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }],
+      batchOptions: { category: [{ value: '7', label: 'Category seven' }], menu: [{ value: 'main', label: 'Main menu' }], menuParent: [{ value: '1', menu: 'main', label: 'Home' }] },
+    };
+    if (params.has('delayedResources') && request.searchParams.get('task') === 'api.resources') {
+      let aborted = false;
+      window.releaseResourceLoad = () => { if (!aborted) config.onSuccess(JSON.stringify({ success: true, data: response })); };
+      return { abort() { aborted = true; } };
+    }
     const timer = setTimeout(() => config.onSuccess(JSON.stringify({ success: true, data: response })), 10);
     return { abort() { clearTimeout(timer); } };
   },
@@ -99,13 +163,51 @@ if (params.has('nodeInformationFixture')) {
   ] } };
 }
 </script>
+<script>
+if (params.has('flatBreadcrumbFixture')) Object.assign(fixtureOptions, {
+  adapter: 'flat-articles', mode: 'manage', flatBreadcrumb: [
+    { id: 'content:root', title: 'All Articles', type: 'root', icon: 'fas fa-box', visible: false },
+    { id: 'category:7', title: 'Parent category', icon: 'fas fa-box', visible: true },
+    { id: 'category:12', title: 'Current category', icon: 'fas fa-box', visible: true },
+  ],
+});
+if (params.has('flatRootFixture')) fixtureOptions.flatBreadcrumb = fixtureOptions.flatBreadcrumb.slice(0, 1);
+</script>
 <script src="/package/component/media/js/dialog-dismiss.js"></script>
 <script src="/package/component/media/js/media-value.js"></script>
 <script src="/package/component/media/js/picker.js"></script>
 <script type="module">
 if (params.get('view') === 'browser') {
+  if (params.has('batchFixture')) {
+    fixtureOptions.mode = 'manage'; fixtureOptions.multiple = true;
+    await new Promise(resolve => { const script = document.createElement('script'); script.src = '/joomla/media/vendor/choicesjs/js/choices.min.js'; script.onload = resolve; document.head.append(script); });
+    await import('/joomla/media/system/js/fields/joomla-field-fancy-select.js');
+  }
   document.getElementById('host').remove();
   await import('/package/component/media/js/smartbrowser.js');
+} else if (params.has('nativeImageFixture')) {
+  document.getElementById('host').remove(); document.getElementById('smartbrowser-app').remove();
+  const form = document.createElement('form'); form.style.cssText = 'padding:20px';
+  for (const role of ['intro', 'fulltext']) {
+    const group = document.createElement('fieldset'); group.dataset.sbNativeMedia = '';
+    const values = { [`image_${role}`]: `images/a.png#joomlaImage://local-images/a.png`, [`image_${role}_alt`]: `${role} alt`, [`image_${role}_alt_empty`]: false,
+      [`image_${role}_caption`]: `${role} caption`, [`imgclass_${role}`]: `${role}-image`, [`float_${role}`]: `${role}-figure` };
+    for (const [name, value] of Object.entries(values)) {
+      const row = document.createElement('div'); row.className = 'control-group';
+      const controls = document.createElement('div'); controls.className = 'controls';
+      const input = document.createElement('input'); input.name = `jform[images][${name}]`; input.type = typeof value === 'boolean' ? 'checkbox' : 'text'; input.value = String(value); input.checked = value === true;
+      if (name === `image_${role}`) {
+        input.className = 'field-media-input';
+        const media = document.createElement('joomla-field-media'); media.setAttribute('types', 'images'); media.append(input); controls.append(media);
+      } else controls.append(input);
+      row.append(controls); group.append(row);
+    }
+    form.append(group);
+  }
+  document.body.append(form);
+  const getOptions = Joomla.getOptions;
+  Joomla.getOptions = name => name === 'com_smartbrowser.image-selectors' ? { ...fixtureOptions, siteUrl: location.origin + '/', roots: [{ url: location.origin + '/images/', filesystem: 'local-images' }] } : getOptions(name);
+  await import('/package/component/media/js/image-selectors.js');
 } else if (params.has('fieldFixture')) {
   document.getElementById('host').remove(); document.getElementById('smartbrowser-app').remove();
   const form = document.createElement('form'); form.style.cssText = 'padding:20px;width:100%;max-width:860px;margin:auto';

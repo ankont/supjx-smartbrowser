@@ -1,5 +1,5 @@
-import { t as e } from "./visual-runtime-D66WPd8K.js?v=4.0.0";
-import { mountNativeSelection as t } from "./article-media.js?v=4.0.0";
+import { t as e } from "./visual-runtime-DGDa_BWV.js?v=5.0.0";
+import { mountNativeSelection as t } from "./article-media.js?v=5.0.0";
 //#region resources/js/image-selectors.js
 var n = /* @__PURE__ */ new WeakSet(), r = Joomla.getOptions("com_smartbrowser.image-selectors", {});
 function i(e) {
@@ -38,10 +38,13 @@ function a(a) {
 			"media.alt": p[2] + "_alt",
 			"media.decorative": p[2] + "_alt_empty"
 		};
-		p && p[1] === "images" && Object.assign(e, {
-			"media.caption": p[2] + "_caption",
-			"media.class": "float_" + p[2].slice(6)
-		});
+		if (p && p[1] === "images") {
+			let t = p[2].slice(6), n = s.elements.namedItem(`jform[images][imgclass_${t}]`) ? `imgclass_${t}` : `float_${t}`;
+			Object.assign(e, {
+				"media.caption": p[2] + "_caption",
+				"media.class": n
+			}), n !== `float_${t}` && (e["media.figureClass"] = `float_${t}`);
+		}
 		for (let [t, n] of Object.entries(e)) {
 			let e = m ? `${m[1]}[${n}]` : `jform[${p[1]}][${n}]`, r = s.elements.namedItem(e);
 			!r?.tagName || r.disabled || r.readOnly || (u[t] = n, d[n] = e, f[t] = r.type === "checkbox" ? r.checked : r.value);
@@ -63,6 +66,7 @@ function a(a) {
 		adapter: "media",
 		allowedAdapters: ["media"],
 		allowedResourceTypes: ["image"],
+		viewPreferenceKey: r.viewPreferenceKey || `supjx.smartbrowser.native.${p?.[1] === "images" ? "article.images." + p[2].slice(6) : (Joomla.getOptions("com_smartbrowser.preferences", {}).context || "media") + "." + o.name.replace(/[^a-zA-Z0-9_.-]/g, ".")}`,
 		multiple: !1,
 		maxSelections: 1,
 		homogeneous: !0,

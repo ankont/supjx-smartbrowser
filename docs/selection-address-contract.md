@@ -2,6 +2,12 @@
 
 ## Objective
 
+Native article link integration (4.3.26) stores this same address representation in the
+existing Joomla URL slots. Render-time preparation exposes bare URLs and optional prepared
+selections without introducing storage or a second syntax. The PHP reader and extension
+registration points are documented in `field-output.md`; unknown extension properties
+remain opaque until their provider registers a decoder.
+
 Implement a universal, human-readable **Selection Address Contract** in SmartBrowser.
 
 The goal is to represent any selected resource, together with its representation properties and Selection Usage Data, as a single portable, copyable, editable text string.

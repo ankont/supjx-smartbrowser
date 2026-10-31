@@ -1,10 +1,10 @@
-import { t as e } from "./visual-runtime-CEVDGWRG.js?v=4.0.0";
+import { i as e, t } from "./visual-runtime-DQsy__lt.js?v=5.0.0";
 //#region resources/js/adapters/MediaActionDriver.js
-var t = (e) => {
+var n = (e) => {
 	if (!e.metadata?.url) return null;
 	let t = (e.metadata.mimeType || "").toLowerCase();
 	return t.startsWith("image/") ? "image" : /^video\/(mp4|webm|ogg)$/.test(t) ? "video" : /^audio\/(mpeg|mp4|ogg|wav|webm)$/.test(t) ? "audio" : t === "application/pdf" ? "pdf" : null;
-}, n = class {
+}, r = class {
 	constructor(e, t, n, r, i = "modal", a = "administrator") {
 		this.api = e, this.state = t, this.reload = n, this.translate = r, this.editorMode = i, this.application = a, this.dialogs = /* @__PURE__ */ new Set(), this.dialogCleanups = /* @__PURE__ */ new Map();
 	}
@@ -110,9 +110,9 @@ var t = (e) => {
 			await navigator.clipboard.writeText(i.text), Joomla.renderMessages({ success: [i.text] });
 			return;
 		}
-		e.id === "preview" && this.preview(i), e.id === "edit" && i?.metadata?.mimeType && this.editMedia(i), e.id === "share" && this.share(i), e.id === "download" && this.download(i), (i?.updated || i?.deleted) && await this.reload();
+		e.id === "preview" && this.preview(i), e.id === "edit" && i?.metadata?.mimeType && await this.editMedia(i), e.id === "share" && this.share(i), e.id === "download" && this.download(i), (i?.updated || i?.deleted) && await this.reload();
 	}
-	actionDialog({ title: e, message: t, value: n, accept: r = "JTOOLBAR_SAVE", destructive: i = !1 }) {
+	actionDialog({ title: e, message: t, value: n, accept: r = "JSAVE", destructive: i = !1 }) {
 		if (this.destroyed) return Promise.resolve(null);
 		let a = (e) => {
 			let t = document.createElement("textarea");
@@ -237,7 +237,7 @@ var t = (e) => {
 		let c = document.createElement("div");
 		c.className = "smartbrowser-local-editor-actions";
 		let l = document.createElement("button");
-		l.type = "submit", l.className = "btn btn-primary", l.textContent = i("JTOOLBAR_SAVE");
+		l.type = "submit", l.className = "btn btn-primary", l.textContent = i("JSAVE");
 		let u = document.createElement("button");
 		u.type = "button", u.className = "btn btn-danger", u.textContent = i("JCANCEL"), c.append(l, u), r.append(c), n.append(r), u.addEventListener("click", () => n.close());
 		let d = new Map([...o].map(([e, t]) => [e, t.value]));
@@ -283,18 +283,18 @@ var t = (e) => {
 		});
 	}
 	canPreview(e) {
-		return !e?.metadata?.mimeType || !!t(e);
+		return !e?.metadata?.mimeType || !!n(e);
 	}
-	openEditor(t) {
+	openEditor(e) {
 		if (this.destroyed) return;
 		if (this.editorMode === "page") {
-			let e = new URL(t, window.location.href);
-			this.application === "site" ? (window.sessionStorage.setItem("supjx.smartbrowser.editorReturn", window.location.href), e.searchParams.set("sbpage", "1"), e.searchParams.delete("tmpl")) : (e.searchParams.get("option") === "com_smartbrowser" && e.searchParams.get("view") === "editor" ? (e.searchParams.set("sbpage", "1"), e.searchParams.set("sbReturn", window.btoa(window.location.href))) : e.searchParams.has("view") && !e.searchParams.has("task") ? e.searchParams.set("layout", "edit") : e.searchParams.delete("layout"), e.searchParams.delete("tmpl"), e.searchParams.set("return", window.btoa(window.location.href))), window.location.assign(e.toString());
+			let t = new URL(e, window.location.href);
+			this.application === "site" ? (window.sessionStorage.setItem("supjx.smartbrowser.editorReturn", window.location.href), t.searchParams.set("sbpage", "1"), t.searchParams.delete("tmpl")) : (t.searchParams.get("option") === "com_smartbrowser" && t.searchParams.get("view") === "editor" ? (t.searchParams.set("sbpage", "1"), t.searchParams.set("sbReturn", window.btoa(window.location.href))) : t.searchParams.has("view") && !t.searchParams.has("task") ? t.searchParams.set("layout", "edit") : t.searchParams.delete("layout"), t.searchParams.delete("tmpl"), t.searchParams.set("return", window.btoa(window.location.href))), window.location.assign(t.toString());
 			return;
 		}
 		let n = document.createElement("dialog");
-		n.className = "smartbrowser-editor", n.innerHTML = `<iframe src="${this.escape(t)}" title="Editor"></iframe><div class="smartbrowser-editor-loading" role="status"><span class="spinner-border" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_WORKING"))}</span></div><button type="button" class="btn-close" aria-label="Close"></button>`;
-		let r = e(n, null, this.translate), i = n.querySelector("iframe"), a = n.querySelector(".smartbrowser-editor-loading"), o = !1, s = !1;
+		n.className = "smartbrowser-editor", n.innerHTML = `<iframe src="${this.escape(e)}" title="Editor"></iframe><div class="smartbrowser-editor-loading" role="status"><span class="spinner-border" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_WORKING"))}</span></div><button type="button" class="btn-close" aria-label="Close"></button>`;
+		let r = t(n, null, this.translate), i = n.querySelector("iframe"), a = n.querySelector(".smartbrowser-editor-loading"), o = !1, s = !1;
 		i.addEventListener("load", () => {
 			a.hidden = !0, r.bind(null);
 			try {
@@ -344,39 +344,48 @@ var t = (e) => {
 		let e = document.createElement("input");
 		e.type = "file", e.multiple = !0, e.addEventListener("change", () => this.uploadFiles(e.files)), e.click();
 	}
-	async uploadFiles(e) {
+	async uploadFiles(t) {
 		if (this.state.busy) return;
 		this.state.busy = !0;
-		let t = 0;
+		let n = 0, r = [];
 		try {
-			for (let n of Array.from(e || [])) try {
-				let e = await this.read(n), r = {
+			for (let e of Array.from(t || [])) try {
+				let t = await this.read(e), i = {
 					nodeId: this.state.selectedNode,
-					name: n.name,
-					content: e
+					name: e.name,
+					content: t
 				};
 				try {
-					await this.api.execute("upload", [], r);
-				} catch (e) {
-					if (e.status !== 409) throw e;
-					let t = this.translate("COM_MEDIA_FILE_EXISTS_AND_OVERRIDE").replace(/%[sS]/, n.name);
+					let e = await this.api.execute("upload", [], i);
+					e?.id && r.push(e.id);
+				} catch (t) {
+					if (t.status !== 409) throw t;
+					let n = this.translate("COM_MEDIA_FILE_EXISTS_AND_OVERRIDE").replace(/%[sS]/, e.name);
 					if (!await this.actionDialog({
 						title: "COM_SMARTBROWSER_ACTION_UPLOAD",
-						message: t,
+						message: n,
 						accept: "JYES",
 						destructive: !0
 					})) continue;
-					await this.api.execute("upload", [], {
-						...r,
+					let a = await this.api.execute("upload", [], {
+						...i,
 						override: !0
 					});
+					a?.id && r.push(a.id);
 				}
-				t++;
-			} catch (e) {
-				let t = e?.message || this.translate("COM_SMARTBROWSER_ERROR_UPLOAD_FAILED");
-				Joomla.renderMessages({ error: [`${n.name}: ${t}`] });
+				n++;
+			} catch (t) {
+				let n = t?.message || this.translate("COM_SMARTBROWSER_ERROR_UPLOAD_FAILED");
+				Joomla.renderMessages({ error: [`${e.name}: ${n}`] });
 			}
-			t && (await this.reload(), Joomla.renderMessages({ success: [this.translate("COM_MEDIA_UPLOAD_SUCCESS")] }));
+			if (n) {
+				await this.reload();
+				let t = this.api.options?.pickerContext?.collectionMode || this.api.options?.selectionHost?.collectionMode, n = this.api.options?.adapter?.replace(/^flat-/, ""), i = this.api.options?.mode === "select" ? this.api.options.multiple === !1 ? 1 : this.api.options.maxSelections || 500 : 500, a = r.slice(0, i).map((r) => t ? e({
+					adapter: n,
+					id: r
+				}) : r);
+				this.state.selectedIds = [...new Set(a)], a.length && (this.state.focusedId = a[a.length - 1]), Joomla.renderMessages({ success: [this.translate("COM_MEDIA_UPLOAD_SUCCESS")] });
+			}
 		} finally {
 			this.state.busy = !1;
 		}
@@ -388,8 +397,8 @@ var t = (e) => {
 		});
 	}
 	previewMedia(e) {
-		let n = e.metadata?.url, r = t(e);
-		return r === "image" ? `<img data-preview-media src="${this.escapeAttribute(n)}" alt="${this.escapeAttribute(e.title)}">` : r === "video" ? `<video data-preview-media src="${this.escapeAttribute(n)}" controls preload="metadata"></video>` : r === "audio" ? `<audio data-preview-media src="${this.escapeAttribute(n)}" controls preload="metadata"></audio>` : r === "pdf" ? `<iframe data-preview-media src="${this.escapeAttribute(n)}" title="${this.escapeAttribute(e.title)}"></iframe>` : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(e.icon || "fas fa-file")}" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_PREVIEW_UNAVAILABLE"))}</span></div>`;
+		let t = e.metadata?.url, r = n(e);
+		return r === "image" ? `<img data-preview-media src="${this.escapeAttribute(t)}" alt="${this.escapeAttribute(e.title)}">` : r === "video" ? `<video data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></video>` : r === "audio" ? `<audio data-preview-media src="${this.escapeAttribute(t)}" controls preload="metadata"></audio>` : r === "pdf" ? `<iframe data-preview-media src="${this.escapeAttribute(t)}" title="${this.escapeAttribute(e.title)}"></iframe>` : `<div class="smartbrowser-preview-unavailable"><span class="${this.escapeAttribute(e.icon || "fas fa-file")}" aria-hidden="true"></span><span>${this.escape(this.translate("COM_SMARTBROWSER_PREVIEW_UNAVAILABLE"))}</span></div>`;
 	}
 	previewUrl(e, t) {
 		let n = document.createElement("dialog");
@@ -402,16 +411,26 @@ var t = (e) => {
 	showContentPreview(e) {
 		this.destroyed || (e.querySelector(".btn-close").addEventListener("click", () => e.close()), window.SmartBrowserDialogDismiss.install(e), e.addEventListener("close", () => e.remove()), this.ownDialog(e), e.showModal());
 	}
-	editMedia(t) {
-		let n = t, [r, i] = this.splitFilename(t.title), a = document.createElement("dialog");
-		a.className = "smartbrowser-preview";
-		let o = this.previewMedia(t);
-		a.innerHTML = `<form class="smartbrowser-preview-form com-smartbrowser-editor" method="dialog">
+	async editMedia(e) {
+		let n = e, r = (e.metadata?.extension || e.title.split(".").pop()).toLowerCase(), i = e.metadata?.mimeType || "", a = e.capabilities?.rename && (/^(jpg|jpeg|png)$/.test(r) && /^image\/(jpeg|png)$/.test(i) || /^(txt|md|csv|log)$/.test(r) && /^text\/(plain|markdown|csv)$/.test(i)), o = null;
+		if (a) {
+			try {
+				o = await this.api.execute("readFile", [e.id]);
+			} catch (e) {
+				Joomla.renderMessages({ error: [e.message] });
+				return;
+			}
+			if (this.destroyed) return;
+		}
+		let [s, c] = this.splitFilename(e.title), l = document.createElement("dialog");
+		l.className = "smartbrowser-preview";
+		let u = this.previewMedia(e);
+		l.innerHTML = `<form class="smartbrowser-preview-form com-smartbrowser-editor" method="dialog">
       <div class="smartbrowser-preview-actions">
-        <button type="button" class="btn btn-primary" data-action="save" ${t.capabilities?.rename ? "" : "disabled"}><span class="fas fa-save" aria-hidden="true"></span> ${this.escapeTranslated("JSAVE")}</button>
-        <button type="button" class="btn btn-outline-primary" data-action="apply" ${t.capabilities?.rename ? "" : "disabled"}><span class="fas fa-check" aria-hidden="true"></span> ${this.escapeTranslated("JAPPLY")}</button>
-        <button type="button" class="btn btn-outline-primary" data-action="copy" ${t.capabilities?.copy ? "" : "disabled"}><span class="fas fa-copy" aria-hidden="true"></span> ${this.escapeTranslated("JSAVEASCOPY")}</button>
-        <button type="button" class="btn btn-danger" data-action="cancel"><span class="fas fa-times" aria-hidden="true"></span> ${this.escape(this.translate("COM_SMARTBROWSER_CANCEL"))}</button>
+        <button type="button" class="btn btn-primary" data-action="save" ${e.capabilities?.rename ? "" : "disabled"}><span class="fas fa-save" aria-hidden="true"></span> ${this.escapeTranslated("COM_SMARTBROWSER_SAVE_CLOSE")}</button>
+        <button type="button" class="btn btn-outline-success" data-action="apply" ${e.capabilities?.rename ? "" : "disabled"}><span class="fas fa-check" aria-hidden="true"></span> ${this.escapeTranslated("JAPPLY")}</button>
+        <button type="button" class="btn btn-outline-secondary" data-action="copy" ${e.capabilities?.copy ? "" : "disabled"}><span class="fas fa-copy" aria-hidden="true"></span> ${this.escapeTranslated("COM_SMARTBROWSER_SAVE_AS_COPY")}</button>
+        <button type="button" class="btn btn-danger" data-action="cancel"><span class="fas fa-times" aria-hidden="true"></span> <span data-exit-label>${this.escape(this.translate("JCLOSE"))}</span></button>
         <button type="button" class="btn btn-outline-secondary smartbrowser-preview-download" data-action="download"><span class="fas fa-download" aria-hidden="true"></span> ${this.escape(this.translate("COM_SMARTBROWSER_ACTION_DOWNLOAD"))}</button>
         <button type="button" class="btn btn-outline-secondary ms-auto smartbrowser-editor-size"><span class="fas fa-expand" aria-hidden="true"></span></button>
       </div>
@@ -423,11 +442,11 @@ var t = (e) => {
         <section id="smartbrowser-preview-content" class="smartbrowser-preview-tab smartbrowser-editor-tab" role="tabpanel">
           <div class="smartbrowser-preview-name-fields smartbrowser-editor-title-alias">
             <div class="control-group"><div class="control-label"><label for="smartbrowser-preview-name">${this.escape(this.translate("COM_SMARTBROWSER_FILE_NAME"))}</label></div>
-              <div class="controls"><input id="smartbrowser-preview-name" class="form-control" name="name" required value="${this.escapeAttribute(r)}" ${t.capabilities?.rename || t.capabilities?.copy ? "" : "readonly"}></div></div>
+              <div class="controls"><input id="smartbrowser-preview-name" class="form-control" name="name" required value="${this.escapeAttribute(s)}" ${e.capabilities?.rename || e.capabilities?.copy ? "" : "readonly"}></div></div>
             <div class="control-group"><div class="control-label"><label for="smartbrowser-preview-extension">${this.escape(this.translate("COM_SMARTBROWSER_EXTENSION"))}</label></div>
-              <div class="controls"><input id="smartbrowser-preview-extension" class="form-control" name="extension" value="${this.escapeAttribute(i)}" ${t.capabilities?.rename || t.capabilities?.copy ? "" : "readonly"}></div></div>
+              <div class="controls"><input id="smartbrowser-preview-extension" class="form-control" name="extension" value="${this.escapeAttribute(c)}" ${e.capabilities?.rename || e.capabilities?.copy ? "" : "readonly"}></div></div>
           </div>
-          <div class="smartbrowser-preview-media">${o}</div>
+          <div class="smartbrowser-preview-media">${u}</div>
         </section>
         <section id="smartbrowser-preview-metadata" class="smartbrowser-preview-tab" role="tabpanel" hidden>
           <dl class="smartbrowser-preview-metadata">
@@ -436,60 +455,132 @@ var t = (e) => {
 			document: "COM_SMARTBROWSER_MEDIA_DOCUMENT",
 			video: "COM_SMARTBROWSER_MEDIA_VIDEO",
 			audio: "COM_SMARTBROWSER_MEDIA_AUDIO"
-		}[t.type] || "COM_SMARTBROWSER_RESOURCE"))}</dd></div>
-            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_MIME_TYPE"))}</dt><dd>${this.escape(t.metadata?.mimeType || "")}</dd></div>
-            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_EXTENSION"))}</dt><dd>${this.escape(t.metadata?.extension || "")}</dd></div>
-            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_SIZE"))}</dt><dd>${this.escape(this.formatPreviewSize(t.metadata?.size))}</dd></div>
-            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_DIMENSIONS"))}</dt><dd>${t.metadata?.width && t.metadata?.height ? `${Number(t.metadata.width)} × ${Number(t.metadata.height)} px` : ""}</dd></div>
-            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_DATE_CREATED"))}</dt><dd>${this.escape(this.formatPreviewDate(t.metadata?.created))}</dd></div>
-            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_DATE_MODIFIED"))}</dt><dd>${this.escape(this.formatPreviewDate(t.metadata?.modified))}</dd></div>
+		}[e.type] || "COM_SMARTBROWSER_RESOURCE"))}</dd></div>
+            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_MIME_TYPE"))}</dt><dd>${this.escape(e.metadata?.mimeType || "")}</dd></div>
+            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_EXTENSION"))}</dt><dd>${this.escape(e.metadata?.extension || "")}</dd></div>
+            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_SIZE"))}</dt><dd>${this.escape(this.formatPreviewSize(e.metadata?.size))}</dd></div>
+            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_DIMENSIONS"))}</dt><dd>${e.metadata?.width && e.metadata?.height ? `${Number(e.metadata.width)} × ${Number(e.metadata.height)} px` : ""}</dd></div>
+            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_DATE_CREATED"))}</dt><dd>${this.escape(this.formatPreviewDate(e.metadata?.created))}</dd></div>
+            <div><dt>${this.escape(this.translate("COM_SMARTBROWSER_DATE_MODIFIED"))}</dt><dd>${this.escape(this.formatPreviewDate(e.metadata?.modified))}</dd></div>
           </dl>
         </section>
       </div></form>`;
-		let s = e(a, a.querySelector(".smartbrowser-editor-size"), this.translate);
-		a.querySelector("form").addEventListener("submit", (e) => e.preventDefault()), a.querySelectorAll("[data-tab]").forEach((e) => e.addEventListener("click", () => {
-			a.querySelectorAll("[data-tab]").forEach((t) => {
-				t.setAttribute("aria-selected", String(t === e));
-			}), a.querySelector("#smartbrowser-preview-content").hidden = e.dataset.tab !== "content", a.querySelector("#smartbrowser-preview-metadata").hidden = e.dataset.tab !== "metadata";
-		})), a.querySelector("[data-action=\"cancel\"]").addEventListener("click", () => a.close()), a.querySelector("[data-action=\"download\"]").addEventListener("click", async () => {
+		let d = t(l, l.querySelector(".smartbrowser-editor-size"), this.translate);
+		l.querySelector("form").addEventListener("submit", (e) => e.preventDefault());
+		let f = (e) => {
+			l.querySelectorAll("[data-tab]").forEach((t) => t.setAttribute("aria-selected", String(t === e)));
+			let t = e.dataset.imageTab;
+			l.querySelectorAll(".smartbrowser-preview-tab").forEach((n) => {
+				n.hidden = n.id !== (t ? "smartbrowser-preview-image-edit" : `smartbrowser-preview-${e.dataset.tab}`);
+			}), t && requestAnimationFrame(() => v?.contentWindow?.SmartBrowserImageEditor?.activateTab(t));
+		};
+		l.querySelector(".smartbrowser-preview-tabs").addEventListener("click", (e) => {
+			let t = e.target.closest("[data-tab]");
+			t && f(t);
+		});
+		let p = (e) => {
+			let t = document.createElement("section");
+			return t.id = `smartbrowser-preview-${e}`, t.className = "smartbrowser-preview-tab smartbrowser-file-edit-panel", t.setAttribute("role", "tabpanel"), t.hidden = !0, l.querySelector(".smartbrowser-preview-card").append(t), t;
+		}, m = (e, t, n = null) => {
+			let r = document.createElement("button");
+			return r.type = "button", r.dataset.tab = e, r.setAttribute("role", "tab"), r.setAttribute("aria-selected", "false"), r.setAttribute("aria-controls", `smartbrowser-preview-${n ? "image-edit" : e}`), r.textContent = t, n && (r.dataset.imageTab = n), l.querySelector("[data-tab=\"metadata\"]").before(r), r;
+		};
+		l.querySelector("[data-action=\"cancel\"]").addEventListener("click", () => l.close()), l.querySelector("[data-action=\"download\"]").addEventListener("click", async () => {
 			try {
 				this.download(await this.api.execute("download", [n.id]));
 			} catch (e) {
 				Joomla.renderMessages({ error: [e.message] });
 			}
 		});
-		let c = a.querySelector("[name=\"name\"]"), l = a.querySelector("[name=\"extension\"]"), u = () => c.value.trim() + (l.value.trim().replace(/^\.+/, "") ? `.${l.value.trim().replace(/^\.+/, "")}` : "");
-		window.SmartBrowserDialogDismiss.install(a, () => u() !== n.title);
-		let d = async (e) => {
-			if (!c.value.trim()) {
-				c.reportValidity();
+		let h = l.querySelector("[name=\"name\"]"), g = l.querySelector("[name=\"extension\"]");
+		o && (g.readOnly = !0);
+		let _ = null, v = null, y = !1, b = (e) => {
+			let t = new TextEncoder().encode(e), n = "";
+			for (let e of t) n += String.fromCharCode(e);
+			return btoa(n);
+		};
+		if (o?.kind === "text") {
+			_ = document.createElement("textarea"), _.className = "form-control smartbrowser-file-text", _.rows = 20, _.spellcheck = !1, _.setAttribute("aria-label", this.translate("COM_SMARTBROWSER_EDIT_FILE_CONTENT")), _.value = new TextDecoder("utf-8", {
+				fatal: !0,
+				ignoreBOM: !0
+			}).decode(Uint8Array.from(atob(o.content), (e) => e.charCodeAt(0))), p("text-edit").append(_), m("text-edit", this.translate("COM_SMARTBROWSER_EDIT_TEXT"));
+			let e = document.createElement("pre");
+			e.className = "smartbrowser-file-text-preview", e.textContent = _.value, l.querySelector(".smartbrowser-preview-media").replaceChildren(e);
+		} else if (o?.kind === "image") {
+			v = document.createElement("iframe"), v.className = "smartbrowser-file-image-editor", v.title = this.translate("COM_SMARTBROWSER_EDIT_FILE_CONTENT");
+			let t = new URL(this.api.options.apiBaseUrl);
+			t.searchParams.delete("format"), t.searchParams.delete("task"), t.searchParams.set("view", "mediaeditor"), t.searchParams.set("tmpl", "component"), t.searchParams.set("path", e.id), this.api.options.browseRoot && t.searchParams.set("browseRoot", this.api.options.browseRoot), v.src = t.toString(), p("image-edit").append(v), v.addEventListener("load", () => {
+				let e = () => {
+					if (v.isConnected && !l.querySelector("[data-image-tab]")) for (let e of v.contentWindow?.SmartBrowserImageEditor?.getTabs() || []) m(`image-${e.id}`, e.label, e.id);
+				};
+				v.contentWindow?.addEventListener("smartbrowser-image-editor-ready", e, { once: !0 }), e();
+			});
+		}
+		let x = () => _ ? b(_.value) : v?.contentWindow?.SmartBrowserImageEditor?.getContent() ?? o?.content, S = () => o && x() !== o.content;
+		if (o) {
+			let e = document.createElement("button");
+			e.type = "button", e.className = "btn btn-outline-secondary", e.textContent = this.translate("JRESET"), e.addEventListener("click", () => {
+				_ ? _.value = new TextDecoder("utf-8", { ignoreBOM: !0 }).decode(Uint8Array.from(atob(o.content), (e) => e.charCodeAt(0))) : v?.contentWindow?.SmartBrowserImageEditor?.reset(o.content);
+			}), l.querySelector("[data-action=\"download\"]").before(e);
+		}
+		let C = () => h.value.trim() + (g.value.trim().replace(/^\.+/, "") ? `.${g.value.trim().replace(/^\.+/, "")}` : ""), w = () => {
+			l.querySelector("[data-exit-label]").textContent = this.translate(C() !== n.title || S() ? "JCANCEL" : "JCLOSE");
+		};
+		l.addEventListener("input", w), l.addEventListener("change", w), l.addEventListener("click", () => requestAnimationFrame(w)), v?.addEventListener("load", () => {
+			v.contentDocument?.addEventListener("input", w), v.contentDocument?.addEventListener("change", w), v.contentDocument?.addEventListener("pointerup", () => requestAnimationFrame(w));
+		}), window.SmartBrowserDialogDismiss.install(l, () => y || C() !== n.title || S());
+		let T = async (e) => {
+			if (y) return;
+			if (!h.value.trim()) {
+				h.reportValidity();
 				return;
 			}
-			let t = u();
+			let t = C();
+			y = !0;
 			try {
+				if (S()) {
+					o = await this.api.execute("writeFile", [n.id], {
+						content: x(),
+						revision: o.revision
+					}), n = o.resource, v && x() === o.content && v.contentWindow?.SmartBrowserImageEditor?.commit?.(o.content);
+					let e = l.querySelector("[data-preview-media]");
+					o.kind === "image" && e && (e.src = n.image || n.metadata?.url || e.src);
+					let t = l.querySelector(".smartbrowser-file-text-preview");
+					t && (t.textContent = _.value), await this.reload();
+				}
 				if (t !== n.title) {
 					n = await this.api.execute("rename", [n.id], { name: t });
-					let e = a.querySelector("[data-preview-media]");
-					e && n.metadata?.url && (e.src = n.metadata.url), [c.value, l.value] = this.splitFilename(n.title), await this.reload();
+					let e = l.querySelector("[data-preview-media]");
+					e && n.metadata?.url && (e.src = n.metadata.url), [h.value, g.value] = this.splitFilename(n.title), await this.reload();
 				}
-				e && a.close();
+				e && l.close();
 			} catch (e) {
 				Joomla.renderMessages({ error: [e.message] });
+			} finally {
+				y = !1, w();
 			}
 		};
-		a.querySelector("[data-action=\"save\"]").addEventListener("click", () => d(!0)), a.querySelector("[data-action=\"apply\"]").addEventListener("click", () => d(!1)), a.querySelector("[data-action=\"copy\"]").addEventListener("click", async () => {
-			if (!c.value.trim()) {
-				c.reportValidity();
+		l.querySelector("[data-action=\"save\"]").addEventListener("click", () => T(!0)), l.querySelector("[data-action=\"apply\"]").addEventListener("click", () => T(!1)), l.querySelector("[data-action=\"copy\"]").addEventListener("click", async () => {
+			if (!h.value.trim()) {
+				h.reportValidity();
 				return;
 			}
 			try {
-				await this.api.execute("copy", [n.id], { name: u() }), a.close(), await this.reload();
+				let e = await this.api.execute("copy", [n.id], { name: C() });
+				if (S()) {
+					let t = await this.api.execute("readFile", [e.id]);
+					await this.api.execute("writeFile", [e.id], {
+						content: x(),
+						revision: t.revision
+					});
+				}
+				l.close(), await this.reload();
 			} catch (e) {
 				Joomla.renderMessages({ error: [e.message] });
 			}
-		}), a.addEventListener("close", () => {
-			s.destroy(), a.remove();
-		}), this.ownDialog(a, () => s.destroy()), a.showModal();
+		}), l.addEventListener("close", () => {
+			d.destroy(), l.remove();
+		}), this.ownDialog(l, () => d.destroy()), l.showModal();
 	}
 	async share(e) {
 		let t = e.metadata?.url;
@@ -527,4 +618,4 @@ var t = (e) => {
 	}
 };
 //#endregion
-export { n as t };
+export { r as t };

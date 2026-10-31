@@ -135,6 +135,18 @@ test('multiline import commits full ordered entries atomically after resolution 
   f.model.destroy(); f.service.destroy();
 });
 
+test('address export scopes clipboard selections without changing full-collection export', async () => {
+  const f = fixture();
+  await f.operations.importAddresses('#joomlaItem://article/43\n#joomlaItem://article/44\n#joomlaItem://article/45', { append: false });
+  const all = (await f.operations.exportAddresses()).split('\n');
+  assert.equal(all.length, 3);
+  assert.equal(await f.operations.exportAddresses({ selectionIds: [referenceKey({ adapter: 'articles', id: 'article:44' })] }), all[1]);
+  assert.equal(await f.operations.exportAddresses({ selectionIds: [referenceKey({ adapter: 'articles', id: 'article:45' }), referenceKey({ adapter: 'articles', id: 'article:43' })] }), [all[0], all[2]].join('\n'));
+  assert.equal(await f.operations.exportAddresses({ selectionIds: [] }), '');
+  assert.equal(f.model.getItems().length, 3);
+  f.model.destroy(); f.service.destroy();
+});
+
 test('invalid multiline input, denied resources, unknown providers, limits and validation leave selection untouched', async () => {
   for (const [setup, input, pattern] of [
     [{}, '#joomlaItem://article/43\nhttps://example.org/#badFormat://x', /Line 2/],

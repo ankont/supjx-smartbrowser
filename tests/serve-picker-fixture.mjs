@@ -18,7 +18,7 @@ const server = createServer(async (request, response) => {
     const base = path.startsWith('/joomla/') ? joomla : root;
     const target = resolve(base, '.' + (path.startsWith('/joomla/') ? path.slice(7) : path));
     if (!target.startsWith(base + sep)) throw new Error('Outside fixture roots');
-    response.setHeader('Content-Type', ({ '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' })[extname(target)] || 'application/octet-stream');
+    response.setHeader('Content-Type', ({ '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' })[extname(target)] || 'application/octet-stream');
     response.end(await readFile(target));
   } catch { response.writeHead(404); response.end(); }
 });

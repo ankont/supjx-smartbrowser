@@ -1,7 +1,6 @@
 const optionalFields = {
   articles: [
-    ['categoryPath', 'COM_SMARTBROWSER_CATEGORY_HIERARCHY'],
-    ['tagPaths', 'COM_SMARTBROWSER_TAG_HIERARCHY'],
+    ['tagPaths', 'COM_SMARTBROWSER_TAGS'],
     ['access', 'JFIELD_ACCESS_LABEL'],
     ['languageKey', 'COM_SMARTBROWSER_LANGUAGE_KEY'],
   ],
@@ -33,18 +32,19 @@ export function columnCatalog(presentation, adapter) {
   const result = defaults.map((column) => ({ ...column, defaultVisible: true }));
   const ids = new Set(defaults.map((column) => column.id));
   const sources = new Set(defaults.map((column) => column.source).filter(Boolean));
-  const baseAdapter = adapter.replace(/^flat-/, '') === 'articles-by-tag' ? 'articles' : adapter.replace(/^flat-/, '');
-  const candidates = [...(presentation?.infoFields || []), ...(optionalFields[baseAdapter] || []).map(([id, label, format]) => ({
+  const baseAdapter = ['articles-by-tag', 'featured-articles'].includes(adapter.replace(/^flat-/, '')) ? 'articles' : adapter.replace(/^flat-/, '');
+  const candidates = [...(presentation?.infoFields || []), { id: 'location', label: 'COM_SMARTBROWSER_LOCATION', source: 'metadata.location' }, ...(optionalFields[baseAdapter] || []).map(([id, label, format]) => ({
     id: columnId(id), label, source: `metadata.${id}`, format,
   }))];
   const hasDateGroup = ids.has('dates');
   for (const field of candidates) {
     if (!field.source || !field.label || field.source === 'metadata.locationPath') continue;
+    if (baseAdapter === 'articles' && field.source === 'metadata.categoryPath') continue;
     const id = field.id || columnId(field.source);
     if (ids.has(id) || sources.has(field.source) || (hasDateGroup && ['created', 'modified'].includes(id))) continue;
     ids.add(id);
     sources.add(field.source);
-    result.push({ id, label: field.label, source: field.source, format: field.format, sortField: field.sortField, defaultVisible: false });
+    result.push({ id, label: baseAdapter === 'articles' && id === 'tagPaths' ? 'COM_SMARTBROWSER_TAGS' : field.label, source: field.source, format: field.format, sortField: field.sortField, defaultVisible: false });
   }
   return result;
 }

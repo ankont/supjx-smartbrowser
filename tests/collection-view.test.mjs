@@ -7,6 +7,27 @@ const resource = id => ({ id, title: id, kind: 'item', type: 'article', metadata
 const result = ids => ({ identifiers: ids, resources: ids.map(resource), actions: [], presentation: {} });
 const model = (options = {}, api = { collection: async ids => result(ids) }, notify = () => {}) => createCollectionState({ config: { adapter: 'articles', items: ['article:2', 'article:1'], ...options }, api, notify });
 
+test('unavailable stored selections participate in Select All despite picker type restrictions', async () => {
+  const a = model({ allowedResourceTypes: ['article'] }, { collection: async ids => ({ ...result(ids), resources: ids.map(id => ({ ...resource(id), type: 'unavailable', unavailable: true })) }) });
+  await a.refresh();
+  a.browser.selectAll();
+  assert.deepEqual(a.browser.state.selectedIds, ['article:2', 'article:1']);
+  a.destroy();
+});
+
+test('failed collection replacement retains the previous items, resources and selection', async () => {
+  let fail = false;
+  const a = model({}, { collection: async ids => { if (fail) throw Error('Resolution failed'); return result(ids); } });
+  await a.refresh();
+  a.browser.selectAll();
+  fail = true;
+  await assert.rejects(a.setItems(['article:8']), /Resolution failed/);
+  assert.deepEqual(a.getItems(), ['article:2', 'article:1']);
+  assert.deepEqual(a.resources.value.map(item => item.id), ['article:2', 'article:1']);
+  assert.deepEqual(a.browser.state.selectedIds, ['article:2', 'article:1']);
+  a.destroy();
+});
+
 test('external preview actions can update the displayed address', async () => {
   const source = await readFile(new URL('../resources/js/components/CollectionView.vue', import.meta.url), 'utf8');
   const callback = source.match(/setAddress: (\(value\) => \{ if \(resourceKey\(focusedResource.value\) !== resourceKey\(resource\)\) return; props\.config\.nativeAddress = String\(value \|\| ''\); return setUsage\('ext.address', props.config.nativeAddress\); \})/);

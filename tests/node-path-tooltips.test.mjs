@@ -16,6 +16,7 @@ test('flat location columns expose the immediate node and full path tooltip', as
   for (const adapter of [flat, categories, articles]) {
     assert.match(adapter, /COM_SMARTBROWSER_LOCATION/);
     assert.match(adapter, /locationPath/);
+    assert.match(adapter, /locationDepth/);
   }
   assert.doesNotMatch(menus.match(/'columns' => \[[\s\S]*?\],\s*'gridFields'/)?.[0] || '', /'id' => 'menu'|'id' => 'parent'/);
   assert.match(list, /column\.id === 'location'/);

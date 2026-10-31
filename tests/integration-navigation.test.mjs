@@ -17,10 +17,9 @@ test('featured navigation has its own integration toggle and native Joomla manag
   assert.match(plugin, /\$query\['filter'\]\['featured'\] \?\? ''/);
   assert.match(plugin, /if \(\$featured\) return IntegrationOptions::enabled\('replace_featured_articles'\) \? 'featured-articles'/);
   assert.match(plugin, /'com_content:articles' => \['articles', 'replace_articles'\]/);
-  assert.match(plugin, /\$replacements = \['replace_articles', 'replace_featured_articles'/);
   assert.match(config, /name="replace_featured_articles"[^>]*default="0"/);
   assert.match(support, /\$adapterId = 'featured-articles'/);
-  assert.match(support, /'defaultSortBy' => \$adapterId === 'featured-articles' \? 'ordering'/);
+  assert.match(support, /'defaultSortBy' => in_array\(\$adapterId, \['featured-articles', 'tags', 'flat-tags'\], true\) \? 'ordering'/);
   assert.match(manager, /'featured-articles' => 'index\.php\?option=com_content&view=featured'/);
 });
 

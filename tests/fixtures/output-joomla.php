@@ -1,4 +1,22 @@
 <?php
+namespace Joomla\CMS\Language {
+    final class Text {
+        public static function _($key) { return $key; }
+        public static function sprintf($key, ...$args) { return sprintf($key === 'JGLOBAL_USE_GLOBAL_VALUE' ? 'Use Global (%s)' : $key, ...$args); }
+    }
+}
+namespace Joomla\CMS\Component {
+    final class ComponentHelper {
+        public static int $showUnavailable = 0;
+        public static array $placeholder = [];
+        public static function getParams($name) { return new class { public function get($key, $default = null) { return $key === 'selection_show_unavailable' ? ComponentHelper::$showUnavailable : (ComponentHelper::$placeholder[$key] ?? $default); } }; }
+    }
+}
+namespace Joomla\CMS\Form\Field {
+    class ListField {
+        protected function getOptions() { return [(object) ['value'=>'', 'text'=>'Use Global'], (object) ['value'=>'1', 'text'=>'Show'], (object) ['value'=>'0', 'text'=>'Hide']]; }
+    }
+}
 namespace Joomla\CMS {
     final class Factory { public static object $app; public static function getApplication() { return self::$app; } }
 }

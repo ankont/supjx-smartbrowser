@@ -11,7 +11,9 @@ test('info metadata is available as optional columns without changing defaults',
   }, 'articles');
   assert.equal(columns.find((column) => column.id === 'status').defaultVisible, true);
   assert.equal(columns.find((column) => column.id === 'alias').defaultVisible, false);
-  assert.equal(columns.find((column) => column.id === 'categoryPath').defaultVisible, false);
+  assert.equal(columns.some((column) => column.id === 'categoryPath'), false);
+  assert.equal(columns.find((column) => column.id === 'location').defaultVisible, false);
+  assert.equal(columns.find((column) => column.id === 'tagPaths').label, 'COM_SMARTBROWSER_TAGS');
   assert.equal(columns.find((column) => column.id === 'tagPaths').defaultVisible, false);
   assert.equal(columns.filter((column) => column.id === 'status').length, 1);
 });

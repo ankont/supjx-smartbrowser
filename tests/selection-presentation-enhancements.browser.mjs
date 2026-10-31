@@ -17,7 +17,7 @@ async page => {
   const picker = page.frameLocator('dialog.smartbrowser-picker iframe');
   await picker.getByLabel('Displayed name', { exact: true }).waitFor();
   if (await picker.getByLabel('Displayed name', { exact: true }).inputValue() !== 'Temporary name') throw Error('Displayed name lost on reopen');
-  await picker.locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  await picker.locator('.resource-picker-select').click();
   await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   const multi = page.locator('.sb-selection-field').nth(3);
   await multi.locator('.sb-collection-count-toggle').click();

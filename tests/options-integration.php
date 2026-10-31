@@ -16,8 +16,10 @@ namespace {
         public function getCmd($key) { return $this->values[$key] ?? ''; }
     };
     $document = new class($toolbar) {
+        public array $scripts = [];
         public function __construct(private object $toolbar) {}
         public function getToolbar() { return $this->toolbar; }
+        public function addScriptDeclaration($script) { $this->scripts[] = $script; }
     };
     $plugin = new \SuperSoft\Plugin\System\Smartbrowserintegration\Extension\Smartbrowserintegration();
     $plugin->app = new class($input, $document) {
@@ -48,6 +50,13 @@ namespace {
         throw new \RuntimeException('Shared article icon settings not applied');
     }
     $config = simplexml_load_file(__DIR__ . '/../package/component/admin/config.xml');
+    $general = $config->xpath('//fieldset[@name="integration_general"]')[0];
+    $generalFields = array_map(static fn($field) => (string) $field['name'], iterator_to_array($general->field, false));
+    if ($generalFields !== ['replace_all', 'integration_hint']
+        || count($config->xpath('//field[@name="hide_component_menu"]')) !== 1
+        || isset($general['showon'])) throw new \RuntimeException('Replacement group contains unrelated controls');
+    $display = $config->xpath('//fieldset[@name="integration"]/fieldset[@name="integration_display"]')[0];
+    if (isset($display['showon']) || count($display->field) !== 2) throw new \RuntimeException('General integrations must remain independent');
     $names = array_map(static fn($set) => (string) $set['name'], iterator_to_array($config->fieldset, false));
     if ($names !== ['visuals', 'icons', 'context', 'resource_editors', 'integration', 'permissions']) throw new \RuntimeException('Wrong settings tab order');
     $labels = array_map(static fn($set) => (string) $set['label'], iterator_to_array($config->fieldset, false));

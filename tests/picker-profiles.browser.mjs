@@ -4,11 +4,15 @@ async page => {
   await page.goto('http://127.0.0.1:8791');
   await page.setViewportSize({ width: 1280, height: 900 });
   const frame = () => page.frameLocator('dialog.smartbrowser-picker iframe');
-  const select = () => frame().locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  const select = () => frame().locator('.resource-picker-select').click();
   const closed = () => page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   const result = async () => JSON.parse(await page.locator('#result').innerText());
-  const showInfo = async () => { await frame().locator('.resource-picker-titlebar').waitFor(); if (!await frame().locator('.resource-info-panel').count()) await frame().getByRole('button', { name: 'Toggle information', exact: true }).click(); };
-  await page.evaluate(() => sessionStorage.setItem('supjx.smartbrowser.media', JSON.stringify({ showInfo: false, activeView: 'grid' })));
+  const showInfo = async () => {
+    await frame().locator('.resource-main > .resource-browser .resource-browser-item.selected').first().waitFor();
+    const toggle = frame().locator('.resource-main > .resource-toolbar').getByRole('button', { name: 'Toggle information', exact: true });
+    if (!(await toggle.getAttribute('class')).split(' ').includes('active')) await toggle.click();
+  };
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); localStorage.setItem('supjx.smartbrowser.media', JSON.stringify({ showInfo: false, activeView: 'grid' })); });
   await page.locator('#images').click();
   await showInfo();
   await frame().locator('.resource-usage-editor').waitFor();
@@ -24,15 +28,15 @@ async page => {
   await page.locator('#legacy').click();
   await frame().locator('.resource-browser-grid').waitFor();
   check(await frame().locator('.resource-info-panel').count() === 0, 'Forced Info open must not leak to the next picker');
-  check(JSON.parse(await page.evaluate(() => sessionStorage.getItem('supjx.smartbrowser.media'))).showInfo === false, 'Remembered preference changed');
+  check(JSON.parse(await page.evaluate(() => localStorage.getItem('supjx.smartbrowser.media'))).showInfo === false, 'Remembered preference changed');
   await frame().locator('.resource-picker-cancel').click();
   await page.locator('#hidden').click();
-  await frame().locator('.resource-browser-item.selected').waitFor();
+  await frame().locator('.resource-main > .resource-browser .resource-browser-item.selected').waitFor();
   check(await frame().locator('.resource-info-panel').count() === 0, 'Hidden-only profile opened Info');
   await select(); await closed();
   check((await result()).usage['local-images:/a.png']['media.loading'] === 'lazy', 'Hidden default was not returned');
   await page.locator('#hidden-invalid').click();
-  await frame().locator('.resource-browser-item.selected').waitFor();
+  await frame().locator('.resource-main > .resource-browser .resource-browser-item.selected').waitFor();
   await select();
   await frame().getByText('Hidden options configuration error', { exact: true }).waitFor();
   check(await page.locator('dialog.smartbrowser-picker').count() === 1, 'Invalid hidden option completed selection');
@@ -48,8 +52,8 @@ async page => {
   await showInfo();
   await frame().getByRole('button', { name: 'Change thumbnail', exact: true }).click();
   const nested = frame().frameLocator('dialog.smartbrowser-picker iframe');
-  await nested.locator('.resource-browser-item').first().waitFor();
-  check(await nested.locator('.resource-browser-item').filter({ hasText: 'Report PDF' }).getAttribute('aria-pressed') === null, 'Nested picker allowed non-images');
+  await nested.locator('.resource-main > .resource-browser .resource-browser-item').first().waitFor();
+  check(await nested.locator('.resource-main > .resource-browser .resource-browser-item').filter({ hasText: 'Report PDF' }).getAttribute('aria-pressed') === null, 'Nested picker allowed non-images');
   await nested.locator('.resource-item-title').getByText('First image', { exact: true }).dblclick();
   await frame().locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   await frame().locator('.resource-lightweight-visual.has-override img').waitFor();
@@ -65,7 +69,7 @@ async page => {
   await showInfo();
   await frame().locator('.resource-usage-editor').waitFor();
   await frame().locator('.resource-usage-field input[type=text]').fill('Second label');
-  await frame().locator('.resource-browser-item').filter({ has: frame().locator('.resource-item-title', { hasText: 'First image' }) }).locator('.resource-item-menu-toggle').click();
+  await frame().locator('.resource-main > .resource-browser .resource-browser-item').filter({ has: frame().locator('.resource-item-title', { hasText: 'First image' }) }).locator('.resource-item-menu-toggle').click();
   await frame().locator('.resource-usage-field input[type=text]').fill('First label');
   await select(); await closed();
   const multi = await result();

@@ -29,6 +29,9 @@ final class HtmlView extends BaseHtmlView
             (new BrowserViewSupport($app))->prepare($this->getDocument());
         } else {
             $this->getDocument()->getWebAssetManager()->useStyle('com_smartbrowser.app');
+            $this->getDocument()->getWebAssetManager()
+                ->registerAndUseStyle('com_smartbrowser.identity-fonts', 'system/joomla-fontawesome.min.css', ['version'=>'auto'])
+                ->registerAndUseStyle('com_smartbrowser.identity', 'com_smartbrowser/identity.css', ['version'=>'auto']);
             $this->items = (new DashboardProvider($app))->items($params);
         }
 

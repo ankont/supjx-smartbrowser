@@ -27,6 +27,7 @@
 
     const accepted = (input.getAttribute('accept') || wrapper.getAttribute('types') || wrapper.dataset.types || '').toLowerCase();
     const resource = await window.SmartBrowserPicker.open({
+      viewPreferenceKey: `supjx.smartbrowser.native.${/^jform\[images\]\[image_(intro|fulltext)\]$/.test(input.name) ? 'article.images.' + /image_(intro|fulltext)/.exec(input.name)[1] : (Joomla.getOptions('com_smartbrowser.preferences', {}).context || 'media') + '.' + (input.name || 'media').replace(/[^a-zA-Z0-9_.-]/g, '.')}`,
       adapter: 'media',
       multiple: false,
       selectionTarget: 'item',

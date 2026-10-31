@@ -119,6 +119,8 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
                 $nodeResource['metadata']['parent'] = $parentTitleForNode;
                 $nodeResource['metadata']['location'] = $parentTitleForNode;
                 $nodeResource['metadata']['locationPath'] = implode(' / ', array_slice($pathTitles[$parentId], 0, -1));
+                $nodeResource['metadata']['locationDepth'] = max(0, $level - 1);
+                $nodeResource['metadata']['hierarchyOrder'] = count($nodes);
                 $nodeResource['navigable'] = false;
                 $nodes[$parentId] = $nodeResource;
             }
@@ -145,6 +147,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
                 $item['metadata']['parent'] = $parentTitle;
                 $item['metadata']['location'] = $parentTitle;
                 $item['metadata']['locationPath'] = implode(' / ', $pathTitles[$parentId]);
+                $item['metadata']['locationDepth'] = $level;
                 $items[$item['id']] = ['resource' => $item, 'parent' => $parentId];
             }
         }
@@ -221,7 +224,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
         if ($search !== '' && !str_contains(mb_strtolower($searchable), $search)) return false;
         if ($this->source->getId() === 'menus') {
             $filters = $options['filters'] ?? [];
-            foreach (['menu' => 'menutype', 'access' => 'accessId', 'language' => 'language', 'component' => 'componentId'] as $filter => $field) {
+            foreach (['menu' => 'menutype', 'access' => 'accessId', 'language' => 'language', 'component' => 'componentId', 'menuItemType' => 'menuItemType'] as $filter => $field) {
                 if (($filters[$filter] ?? '') !== '' && (string) ($resource['metadata'][$field] ?? '') !== (string) $filters[$filter]) return false;
             }
         }
@@ -243,7 +246,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
             'trashed' => (int) $value === -2,
             'archived' => (int) $value === 2,
             'all' => true,
-            default => in_array((int) $value, [0, 1], true),
+            default => in_array((int) $value, \SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserDefaults::states(), true),
         };
     }
 

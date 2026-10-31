@@ -72,7 +72,7 @@ async function resetPreview() {
   finally { picking.value = false; }
 }
 const image = computed(() => {
-  return props.contentOnly && props.resource?.type === 'image' ? props.resource.metadata?.url || props.resource.image || lightweightImage(props.resource) : resolvedImage.value || lightweightImage(props.resource);
+  return props.contentOnly && props.resource?.type === 'image' ? props.resource.image || props.resource.metadata?.url || lightweightImage(props.resource) : resolvedImage.value || lightweightImage(props.resource);
 });
 const genericResource = computed(() => ({ ...genericPreviewResource(props.resource, props.values, resolvedImage.value), imageCrop: resolvedResource.value?.imageCrop || props.resource?.imageCrop }));
 const rendererContext = computed(() => ({ ...props.overlayContext, resource: props.resource,
@@ -96,7 +96,7 @@ async function pick(definition) {
   const id = resourceKey(props.resource);
   picking.value = true;
   try {
-    const selected = await window.SmartBrowserPicker.open({ ...definition.picker, title: props.t('COM_SMARTBROWSER_SELECT_THUMBNAIL'), subtitle: props.resource.title, confirmLabel: props.t('COM_SMARTBROWSER_USE_THUMBNAIL'), multiple: false, initialSelection: props.values?.[definition.key] ? [props.values[definition.key].id] : [] });
+    const selected = await window.SmartBrowserPicker.open({ ...definition.picker, viewPreferenceKey: definition.picker.viewPreferenceKey || 'supjx.smartbrowser.thumbnail', title: props.t('COM_SMARTBROWSER_SELECT_THUMBNAIL'), subtitle: props.resource.title, confirmLabel: props.t('COM_SMARTBROWSER_USE_THUMBNAIL'), multiple: false, initialSelection: props.values?.[definition.key] ? [props.values[definition.key].id] : [] });
     if (selected && !disposed && resourceKey(props.resource) === id) emit('change', definition.key, normalizeReference({ adapter: definition.picker.adapter, id: selected.id }));
   } catch { if (!disposed && resourceKey(props.resource) === id) error.value = 'COM_SMARTBROWSER_USAGE_INVALID'; }
   finally { picking.value = false; }

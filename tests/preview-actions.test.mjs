@@ -8,7 +8,7 @@ test('article and tag previews use native frontend component-only routes with re
   const articles = await source('package/component/admin/src/Adapter/ArticleCollectionAdapter.php');
   const tags = await source('package/component/admin/src/Adapter/TagAdapter.php');
   assert.match(content, /command' => 'previewUrl'/);
-  assert.match(content, /option=com_content&view=article&id=/);
+  assert.match(content, /option=com_smartbrowser&view=preview&id=/);
   assert.match(content, /option=com_tags&view=tag&id=/);
   assert.match(content, /&tmpl=component&Itemid=0/);
   assert.match(content, /resource\['capabilities'\]\['preview'\]/);
@@ -20,10 +20,10 @@ test('article and tag previews use native frontend component-only routes with re
 });
 test('content preview is view-only; media editor retains its existing save controls', async () => {
   const driver = await source('resources/js/adapters/MediaActionDriver.js');
-  const preview = driver.slice(driver.indexOf('  preview(resource)'), driver.indexOf('  editMedia(resource)'));
+  const preview = driver.slice(driver.indexOf('  preview(resource)'), driver.indexOf('  async editMedia(resource)'));
   assert.doesNotMatch(preview, /data-action="save"|name="name"|api\.execute/);
   assert.match(preview, /showContentPreview/);
-  const editor = driver.slice(driver.indexOf('  editMedia(resource)'));
+  const editor = driver.slice(driver.indexOf('  async editMedia(resource)'));
   assert.match(editor, /data-action="save"/);
   assert.match(editor, /data-action="apply"/);
   assert.match(editor, /data-action="copy"/);

@@ -38,8 +38,10 @@ export function createCollectionPicker({ config, model, api, open, isDisposed = 
       if (isDisposed()) return;
       if (revision !== model.revision.value) throw new Error('Selection changed while the Picker was open.');
       const selected = new Set(result.items.map(entry => referenceKey(entry.selection)));
+      const existing = new Set(current.items.map(entry => referenceKey(entry.selection)));
       for (const item of resolved.resources) {
         if (!selected.has(resourceKey(item))) continue;
+        if (item.unavailable && existing.has(resourceKey(item))) continue;
         if (item.unavailable || item.selectable === false || config.allowedResourceTypes?.length && !config.allowedResourceTypes.includes(item.type)
           || config.selectionTarget === 'item' && item.kind !== 'item' || config.selectionTarget === 'node' && item.kind !== 'node') throw new Error('Unavailable or disallowed selection.');
       }

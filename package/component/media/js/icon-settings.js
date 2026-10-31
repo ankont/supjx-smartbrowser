@@ -6,7 +6,7 @@
     const integration = document.getElementById('fieldset-integration_general');
     const controls = integration?.querySelector(':scope > .form-grid');
     if (controls) integration.replaceWith(controls);
-    const replacement = document.querySelector('input[name="jform[replace_all]"]')?.closest('.control-group');
+    const replacement = document.querySelector('input[name="jform[replace_all]"], input[name="jform[params][replace_all]"]')?.closest('.control-group');
     if (replacement) {
       const group = document.createElement('fieldset');
       group.className = 'options-menu options-form';
@@ -43,12 +43,9 @@
         if (section) group.append(section);
       }
     }
-    const transparency = document.getElementById('jform_image_background')?.closest('.control-group');
-    const appearance = transparency?.closest('fieldset');
-    if (appearance) appearance.before(transparency);
   });
   const updateIntegrations = () => {
-    const replacement = document.querySelector('input[name="jform[replace_all]"]:checked');
+    const replacement = document.querySelector('input[name="jform[replace_all]"]:checked, input[name="jform[params][replace_all]"]:checked');
     if (!replacement) return;
     for (const group of ['fields', 'editor_buttons', 'resource_editors', 'navigation']) {
       const fieldset = document.getElementById(`fieldset-integration_${group}`);
@@ -57,7 +54,7 @@
   };
   document.addEventListener('DOMContentLoaded', updateIntegrations);
   document.addEventListener('change', event => {
-    if (event.target.name === 'jform[replace_all]') updateIntegrations();
+    if (['jform[replace_all]', 'jform[params][replace_all]'].includes(event.target.name)) updateIntegrations();
   });
   const normalize = value => {
     value = value.trim();
@@ -78,8 +75,19 @@
   };
   document.addEventListener('input', event => {
     if (event.target.matches('.sb-icon-settings input[data-role]')) update(event.target.closest('.sb-icon-settings'));
+    const field = event.target.closest('[data-sb-icon-field]');
+    if (field && event.target.matches('input')) {
+      const value = normalize(event.target.value);
+      event.target.setCustomValidity(event.target.value.trim() && !value ? Joomla.Text._('COM_SMARTBROWSER_ICON_INVALID') : '');
+      field.querySelector('[data-icon-preview]').className = value || field.dataset.default;
+    }
   });
   document.addEventListener('click', event => {
+    const singleReset = event.target.closest('[data-single-icon-reset]');
+    if (singleReset) {
+      const input = singleReset.closest('[data-sb-icon-field]').querySelector('input');
+      input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); return;
+    }
     const button = event.target.closest('[data-icon-reset]');
     if (!button) return;
     const root = button.closest('.sb-icon-settings');

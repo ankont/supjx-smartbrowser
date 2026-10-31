@@ -8,7 +8,12 @@ const initialize = () => {
   if (!globalField) return;
   const global = reactive(normalizeVisualProfiles(JSON.parse(globalField.dataset.sbVisualSettings).value));
   const sampleImage = new URL('../images/visual-example.svg', import.meta.url).href;
-  const backgroundInput = document.getElementById('jform_image_background');
+  const backgroundInput = document.querySelector('select[name="jform[params][image_background]"], select[name="jform[image_background]"]') || document.getElementById('jform_image_background');
+  const globalControl = globalField.closest('.control-group');
+  const backgroundControl = backgroundInput?.closest('.control-group');
+  if (backgroundControl && globalControl && backgroundControl !== globalControl) {
+    globalControl.before(backgroundControl);
+  }
   const display = reactive({ background: backgroundInput?.value || 'auto' });
   backgroundInput?.addEventListener('change', () => { display.background = backgroundInput.value; });
   for (const field of fields) {

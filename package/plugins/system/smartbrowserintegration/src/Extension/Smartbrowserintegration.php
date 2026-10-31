@@ -4,6 +4,7 @@ namespace SuperSoft\Plugin\System\Smartbrowserintegration\Extension;
 
 use Joomla\CMS\Event\Menu\PreprocessMenuItemsEvent;
 use Joomla\CMS\Event\Model\PrepareDataEvent;
+use Joomla\Module\Quickicon\Administrator\Event\QuickIconsEvent;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Language\Text;
@@ -24,7 +25,37 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
 
     public static function getSubscribedEvents(): array
     {
-        return ['onEditorButtonsSetup' => ['replaceEditorButtons', Priority::LOW], 'onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onBeforeRender' => 'prepareOptionsToolbar', 'onAfterRoute' => 'routeEditors', 'onContentPrepareData' => 'prefillArticleContext'];
+        return ['onContentPrepare' => ['prepareArticleLinks', Priority::HIGH], 'onGetIcons' => 'dashboardIcon', 'onEditorButtonsSetup' => ['replaceEditorButtons', Priority::LOW], 'onPreprocessMenuItems' => 'replaceManagerLinks', 'onBeforeCompileHead' => 'preparePickers', 'onBeforeRender' => 'prepareOptionsToolbar', 'onAfterRoute' => 'routeEditors', 'onContentPrepareData' => 'prefillArticleContext'];
+    }
+
+    public function prepareArticleLinks($event): void
+    {
+        if (!$this->getApplication()->isClient('site')) return;
+        $context = $event->getArgument('context', '');
+        if (!in_array($context, ['com_content.article', 'com_content.category', 'com_content.featured'], true) && !str_starts_with($context, 'mod_articles')) return;
+        $article = $event->getArgument('subject');
+        if (is_object($article) && class_exists(\SuperSoft\Component\Smartbrowser\Administrator\Support\ArticleLinkPresentation::class)) {
+            \SuperSoft\Component\Smartbrowser\Administrator\Support\ArticleLinkPresentation::prepare($article);
+        }
+    }
+
+    public function dashboardIcon(QuickIconsEvent $event): void
+    {
+        $app = $this->getApplication();
+        if (!$app->isClient('administrator') || $event->getContext() !== 'mod_quickicon'
+            || !(bool) ComponentHelper::getParams('com_smartbrowser')->get('show_dashboard_icon', 1)
+            || !$app->getIdentity()->authorise('core.manage', 'com_smartbrowser')) return;
+
+        $result = $event->getArgument('result', []);
+        $result[] = [[
+            'link' => 'index.php?option=com_smartbrowser&view=dashboard',
+            'image' => 'icon-sb-brand',
+            'text' => 'SmartBrowser',
+            'id' => 'plg_system_smartbrowserintegration_dashboard',
+            'access' => ['core.manage', 'com_smartbrowser'],
+            'group' => 'MOD_QUICKICON',
+        ]];
+        $event->setArgument('result', $result);
     }
 
     public function routeEditors(): void
@@ -44,13 +75,24 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
             'com_content' => 'article', 'com_categories' => 'category', 'com_tags' => 'tag',
             'com_menus' => 'item', 'com_users' => 'user', default => null,
         };
+        $fallback = null;
+        if ($prefix && $app->isClient('administrator') && !$app->getIdentity()->guest) {
+            $view = match ($option) { 'com_content'=>'articles', 'com_categories'=>'categories', 'com_tags'=>'tags', 'com_menus'=>'items', 'com_users'=>'users' };
+            $adapter = $this->managerAdapter('index.php?option=' . $option . '&view=' . $view . '&extension=' . rawurlencode($input->getCmd('extension', 'com_content')));
+            if ($adapter) $fallback = 'index.php?option=com_smartbrowser&view=browser&adapter=' . $adapter . '&mode=manage';
+        }
         if ($prefix && $input->getBool('sbNative') && $input->getMethod() === 'GET') {
             $encoded = $input->getString('sbReturn', '');
             $url = strlen($encoded) <= 4096 ? base64_decode($encoded, true) : false;
+            if ($encoded === '') $url = $fallback;
             $app->setUserState($key, $url && Uri::isInternal($url) ? ['option'=>$option, 'url'=>$url, 'pending'=>false] : null);
             return;
         }
         $context = $app->getUserState($key);
+        if (!is_array($context) && $fallback && $input->getMethod() === 'POST'
+            && in_array($input->getCmd('task'), [$prefix . '.save', $prefix . '.cancel'], true) && Session::checkToken('request')) {
+            $context = ['option'=>$option, 'url'=>$fallback, 'pending'=>false];
+        }
         if (!is_array($context)) return;
         if ($option !== $context['option']) {
             $app->setUserState($key, null);
@@ -64,7 +106,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         }
         $finishedViews = $app->isClient('site') ? ['article', 'category', 'featured'] : ['articles', 'featured', 'categories', 'tags', 'items', 'users'];
         if ($input->getMethod() === 'GET' && $task === '' && !empty($context['pending'])
-            && in_array($input->getCmd('view', ''), $finishedViews, true)) {
+            && in_array($input->getCmd('view', ''), ['', ...$finishedViews], true)) {
             $app->setUserState($key, null);
             $app->setUserState('com_smartbrowser.editor.native', null);
             if (Uri::isInternal($context['url'])) {
@@ -83,7 +125,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         if ($site && $option === 'com_content' && $input->getBool('sbEditor')
             && IntegrationOptions::enabled('replace_editor_article_site')) {
             $task = $input->getCmd('task', '');
-            if (!in_array($task, ['', 'editor.save', 'editor.cancel'], true)) return;
+            if (!in_array($task, ['', 'editor.save', 'editor.cancel', 'editor.reload'], true)) return;
             $id = $input->getInt('a_id');
             if ($id <= 0) return;
             $app->setUserState('com_smartbrowser.editor.native', null);
@@ -149,10 +191,20 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     public function prepareOptionsToolbar(): void
     {
         $app = $this->getApplication();
+        if (method_exists($app->getDocument(), 'getWebAssetManager')) {
+            $assets = $app->getDocument()->getWebAssetManager();
+            if ($app->isClient('site')) $assets->registerAndUseStyle('com_smartbrowser.identity-fonts', 'system/joomla-fontawesome.min.css', ['version'=>'auto']);
+            $assets->registerAndUseStyle('com_smartbrowser.identity', 'com_smartbrowser/identity.css', ['version'=>'auto']);
+        }
+        if ($app->isClient('administrator') && $app->getInput()->getCmd('option') === 'com_config'
+            && method_exists($app->getDocument(), 'addScriptDeclaration')) {
+            $app->getDocument()->addScriptDeclaration('document.addEventListener("DOMContentLoaded", function () { document.querySelectorAll("a[href*=\\"component=com_smartbrowser\\"]").forEach(function (link) { const url = new URL(link.href, location.href); if (url.searchParams.get("option") === "com_config" && url.searchParams.get("component") === "com_smartbrowser") link.textContent = "SupJx SmartBrowser"; }); });');
+        }
         if (!$app->isClient('administrator') || $app->getInput()->getCmd('option') !== 'com_config'
             || $app->getInput()->getCmd('component') !== 'com_smartbrowser') return;
         $document = $app->getDocument();
         if (!method_exists($document, 'getToolbar')) return;
+        if (method_exists($document, 'setTitle') && method_exists($document, 'getTitle')) $document->setTitle(str_replace('SuperSoftJx - ', '', $document->getTitle()));
         $toolbar = $document->getToolbar();
         $toolbar->setItems(array_values(array_filter($toolbar->getItems(), static fn ($button): bool =>
             !$button instanceof \Joomla\CMS\Toolbar\Button\HelpButton)));
@@ -173,6 +225,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
             $assets = $document->getWebAssetManager();
             $assets->getRegistry()->addExtensionRegistryFile('com_smartbrowser');
             $assets->useStyle('com_smartbrowser.app')->useScript('com_smartbrowser.editor-buttons');
+            \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::prepare($document);
             $base = Uri::root() . ($app->isClient('administrator') ? 'administrator/' : '');
             $document->addScriptOptions('com_smartbrowser.editor-buttons', [
                 'url' => $base . 'index.php?option=com_smartbrowser&view=browser',
@@ -265,6 +318,12 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     {
         $app = $this->getApplication();
         $this->prepareArticleEditLinks();
+        if ($app->isClient('site') && $app->getInput()->getCmd('option') === 'com_content'
+            && $app->getInput()->getCmd('view') === 'form') {
+            // Joomla category-change expects this control even when a template
+            // omits it from the native frontend article form.
+            $app->getDocument()->addScriptDeclaration('document.addEventListener("DOMContentLoaded", function () { const category = document.querySelector("select[name=\\"jform[catid]\\"]"); const form = category?.form; if (!form || form.querySelector("input[name=task]")) return; const task = document.createElement("input"); task.type = "hidden"; task.name = "task"; task.value = ""; form.append(task); });');
+        }
         if ($app->isClient('administrator') && $app->getInput()->getCmd('option') === 'com_menus'
             && $app->getInput()->getCmd('view') === 'item') {
             $encoded = $app->getInput()->getString('return');
@@ -294,6 +353,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         if (!$mediaPicker && !$smartAuthorsUsers) return;
         $document = $this->getApplication()->getDocument();
         if (!method_exists($document, 'getWebAssetManager')) return;
+        \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::prepare($document);
         $base = $this->getApplication()->isClient('administrator') ? Uri::root() . 'administrator/' : Uri::root();
         $document->addScriptOptions('com_smartbrowser.picker', ['url' => $base . 'index.php?option=com_smartbrowser&view=browser']);
         $assets = $document->getWebAssetManager();
@@ -340,21 +400,41 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     private function rewrite(array &$items): void
     {
         $params = ComponentHelper::getParams('com_smartbrowser');
-        $replacements = ['replace_articles', 'replace_featured_articles', 'replace_categories', 'replace_tags', 'replace_media', 'replace_menus', 'replace_users'];
-        $integrated = (bool) array_filter($replacements, static fn (string $key): bool => IntegrationOptions::enabled($key, $params));
         foreach ($items as $item) {
-            if ($integrated && IntegrationOptions::enabled('hide_component_menu', $params) && $this->isComponentMenu((string) ($item->link ?? ''))) {
+            if (IntegrationOptions::enabled('hide_component_menu', $params) && $this->isComponentMenu((string) ($item->link ?? ''))) {
                 $item->getParams()->set('menu_show', 0);
                 continue;
             }
             if (isset($item->link) && ($adapter = $this->managerAdapter((string) $item->link))) {
                 $originalLink = (string) $item->link;
-                $item->link = 'index.php?option=com_smartbrowser&view=browser&adapter=' . $adapter . '&mode=manage&integrated=1';
+                parse_str((string) parse_url(html_entity_decode($originalLink), PHP_URL_QUERY), $nativeQuery);
+                $input = $this->getApplication()->getInput();
+                $nativeAdapter = match ($input->getCmd('option')) {
+                    'com_smartbrowser' => $input->getCmd('view') === 'browser' ? preg_replace('/^flat-/', '', $input->getCmd('adapter')) : null,
+                    'com_content' => $input->getCmd('view') === 'featured' ? 'featured-articles' : 'articles',
+                    'com_categories' => 'categories', 'com_tags' => 'tags', 'com_media' => 'media',
+                    'com_menus' => 'menus', 'com_users' => 'users', default => null,
+                };
+                $smartBrowser = $input->getCmd('option') === 'com_smartbrowser' && $input->getCmd('view') === 'browser';
+                $menuType = $input->getString('menutype');
+                if ($smartBrowser) $menuType = str_starts_with($input->getString('browseRoot'), 'menu:') ? substr($input->getString('browseRoot'), 5) : '';
+                $active = $adapter === $nativeAdapter && ($smartBrowser || $input->getCmd('option') === ($nativeQuery['option'] ?? ''))
+                    && ($adapter !== 'menus' || $menuType === (string) ($nativeQuery['menutype'] ?? ''));
+                if ($smartBrowser) $item->active = $active;
+                if ($active) {
+                    $item->active = true;
+                    if (method_exists($item, 'getParent')) {
+                        for ($parent = $item->getParent(); $parent; $parent = $parent->getParent()) $parent->active = true;
+                    }
+                }
+                $item->link = 'index.php?option=com_smartbrowser&view=browser&adapter=' . $adapter . '&mode=manage';
                 if ($adapter === 'menus') {
                     parse_str((string) parse_url(html_entity_decode($originalLink), PHP_URL_QUERY), $query);
                     if (!empty($query['menutype'])) {
                         $item->link .= '&browseRoot=' . rawurlencode('menu:' . (string) $query['menutype']);
-                        $item->link .= '&nativeMenuTitle=' . rawurlencode((string) $item->title);
+                    } else {
+                        // Keep the all-menus URL from prefix-matching a scoped menu in Joomla's active-path resolver.
+                        $item->link .= '&browseRoot=&node=';
                     }
                 }
             }

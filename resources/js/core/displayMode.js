@@ -1,11 +1,31 @@
+import { preferenceStorage } from './userPreferences.js';
 export const displayModes = ['normal', 'wide', 'focus'];
 const storageKey = 'smartbrowser.displayMode';
+
+export function resolvePageBackground(container) {
+  const win = container.ownerDocument.defaultView;
+  if (!win.getComputedStyle) return null;
+  let colour = '', image = null;
+  for (let parent = container.parentElement; parent; parent = parent.parentElement) {
+    const style = win.getComputedStyle(parent);
+    if (!colour && style.backgroundColor !== 'transparent' && !style.backgroundColor.startsWith('rgba(')) colour = style.backgroundColor;
+    if (!image && style.backgroundImage !== 'none') image = style;
+  }
+  return {
+    color: colour || 'Canvas',
+    image: image?.backgroundImage || 'none',
+    size: image?.backgroundSize || 'auto',
+    repeat: image?.backgroundRepeat || 'repeat',
+    position: image?.backgroundPosition || '0% 0%',
+    attachment: image?.backgroundAttachment || 'scroll',
+  };
+}
 
 export function createDisplayMode(container, onChange = () => {}) {
   let mode = 'normal', restore = [], placeholder = null;
   const doc = container.ownerDocument;
   let storage;
-  try { storage = doc.defaultView?.localStorage; } catch {}
+  try { storage = preferenceStorage(doc.defaultView); } catch {}
   const attribute = (element, name, value) => {
     const previous = element.getAttribute(name);
     element.setAttribute(name, value);
@@ -30,6 +50,12 @@ export function createDisplayMode(container, onChange = () => {}) {
       }
     }
     if (mode === 'focus') {
+      const background = resolvePageBackground(container);
+      if (background) {
+        const previousStyle = container.getAttribute('style');
+        for (const [property, value] of Object.entries(background)) container.style.setProperty(`--sb-focus-background-${property}`, value);
+        restore.push(() => previousStyle === null ? container.removeAttribute('style') : container.setAttribute('style', previousStyle));
+      }
       placeholder = doc.createComment('SmartBrowser display position');
       container.replaceWith(placeholder);
       doc.body.appendChild(container);

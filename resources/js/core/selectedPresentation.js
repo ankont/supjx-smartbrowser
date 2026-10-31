@@ -1,5 +1,10 @@
 import { lightweightImage } from './lightweightVisual.js';
 
+export const hierarchyText = value => String(value ?? '').replaceAll(' / ', ' » ');
+export const infoFieldPresentation = (field, resource) => ({ ...field,
+  label: field.source === 'metadata.categoryPath' ? 'COM_SMARTBROWSER_LOCATION'
+    : field.source === 'metadata.tagPaths' ? resource?.type === 'tag' ? 'COM_SMARTBROWSER_LOCATION' : 'COM_SMARTBROWSER_TAGS' : field.label });
+
 const pathSources = new Set(['parentId', 'metadata.locationPath', 'metadata.path', 'metadata.categoryPath', 'metadata.parentPath', 'metadata.tagPaths', 'metadata.url', 'metadata.link']);
 export const supplementalInfoFields = [
   ['metadata.access', 'JFIELD_ACCESS_LABEL'], ['metadata.categoryPath', 'COM_SMARTBROWSER_CATEGORY_HIERARCHY'],

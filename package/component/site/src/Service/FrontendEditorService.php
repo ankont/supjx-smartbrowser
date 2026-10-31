@@ -15,6 +15,28 @@ final class FrontendEditorService
 
     public static function supportsArticleCreateDefaults(): bool { return true; }
 
+    public function reloadArticle(int $id, array $data): void
+    {
+        $data['id'] = $id;
+        $this->app->getInput()->set('catid', (int) ($data['catid'] ?? 0));
+        $model = $this->model('article', $id);
+        $form = $model->getForm($data, false);
+        if (!$form) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
+        $this->prepareArticlePublishingFields($form, $model, $id, false);
+        // Match Joomla reload: preserve incomplete input, but normalise calendar values
+        // before they are converted back to the user's timezone on the next render.
+        $filtered = $form->filter($data);
+        foreach ($form->getFieldset() as $field) {
+            if ($field->type !== 'Calendar') continue;
+            if ($field->group) {
+                if (isset($filtered[$field->group][$field->fieldname])) $data[$field->group][$field->fieldname] = $filtered[$field->group][$field->fieldname];
+            } elseif (isset($filtered[$field->fieldname])) {
+                $data[$field->fieldname] = $filtered[$field->fieldname];
+            }
+        }
+        $this->app->setUserState('com_content.edit.article.data', $data);
+    }
+
     private function articleCreateDefaults(string $type, int $id): array
     {
         $input = $this->app->getInput();
@@ -93,7 +115,9 @@ final class FrontendEditorService
             $form->setFieldAttribute('parent_id', 'extension', 'com_content');
         }
         if ($type === 'article' && $id > 0) {
-            $form->bind($this->articleMediaGroups($model, $id));
+            $media = $this->articleMediaGroups($model, $id);
+            if ((int) ($previous['id'] ?? 0) === $id) $media = array_replace($media, array_intersect_key($previous, $media));
+            $form->bind($media);
         }
         if ($type === 'article' && $id === 0 && $this->app->getInput()->getInt('sbTagId') > 0 && !$form->getValue('tags')) {
             $form->setValue('tags', null, [$this->app->getInput()->getInt('sbTagId')]);

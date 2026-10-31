@@ -1,6 +1,25 @@
 (() => {
   const form = document.getElementById('adminForm');
   if (!form) return;
+  // Joomla's category-change handler submits a reload, rather than saving the form.
+  const category = form.querySelector('select[name="jform[catid]"]');
+  const categoryControl = category?.closest('[data-refresh-section]');
+  if (categoryControl) categoryControl.dataset.refreshSection = 'editor';
+  const saveAction = form.action;
+  form.addEventListener('submit', event => {
+    const task = form.querySelector('input[name="task"]');
+    if (event.submitter?.name === 'editorAction') {
+      if (task) task.value = 'editor.save';
+      form.action = saveAction;
+    } else if (task?.value === 'editor.reload' && form.dataset.reloadUrl) {
+      // Joomla routing can take the task from the URL before the POST body.
+      form.action = form.dataset.reloadUrl;
+    }
+  });
+  const exitLabel = form.querySelector('[data-sb-editor-exit-label]');
+  if (exitLabel) window.SmartBrowserDialogDismiss.watchForm(form, () => {
+    exitLabel.textContent = exitLabel.dataset.dirtyLabel;
+  });
   if (form.closest('.is-admin-article-page, .is-admin-category-page, .is-admin-resource-page')) {
     document.addEventListener('joomla-dialog:open', event => {
       const popup = event.target;
@@ -36,7 +55,14 @@
       const tools = actions.querySelector('.smartbrowser-editor-tools');
       const versions = actions.querySelector('.smartbrowser-editor-versions');
       if (versions && !document.getElementById('toolbar-versions')) toolbar.append(versions);
-      if (tools) toolbar.append(tools);
+      if (tools) {
+        const help = toolbar.querySelector('#toolbar-help');
+        if (help) {
+          help.classList.remove('ms-auto');
+          tools.prepend(help);
+        }
+        toolbar.append(tools);
+      }
       const close = toolbar.querySelector('[task="smartbrowser.cancel"] button');
       if (close) {
         close.classList.remove('btn-primary', 'btn-secondary');

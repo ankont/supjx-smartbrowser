@@ -22,7 +22,7 @@ test('shared action dialogs return submitted values and cancel safely on close o
   const nodes = [];
   globalThis.document = { body: new Element('body'), createElement(tag) { const node = new Element(tag); nodes.push(node); return node; } };
   globalThis.window = {};
-  const driver = new MediaActionDriver({}, {}, async () => {}, key => key === 'JTOOLBAR_SAVE' ? 'Save &amp; Close' : key);
+  const driver = new MediaActionDriver({}, {}, async () => {}, key => key === 'JSAVE' ? 'Save &amp; Close' : key);
   try {
     const rename = driver.actionDialog({ title: 'Rename', value: 'before' });
     const dialog = [...driver.dialogs][0], form = dialog.children[0];

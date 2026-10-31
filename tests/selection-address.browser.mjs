@@ -30,7 +30,7 @@ async page => {
   const picker = page.frameLocator('dialog.smartbrowser-picker iframe');
   await picker.getByLabel('Displayed name', { exact: true }).waitFor();
   if (await picker.getByLabel('Displayed name', { exact: true }).inputValue() !== 'Imported') throw Error('Import usage lost on reopen');
-  await picker.locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  await picker.locator('.resource-picker-select').click();
   await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   const reopened = await article.evaluate(root => SmartBrowser.mountSelectionField(root).exportAddresses());
   if (!reopened.includes('t.param.custom=preserved')) throw Error('Native thumbnail extension parameters lost on Picker roundtrip');

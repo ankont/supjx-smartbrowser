@@ -20,8 +20,9 @@ final class BrowserViewSupport
 
     public function prepare(object $document): array
     {
+        if (class_exists(UserViewPreferences::class)) UserViewPreferences::prepare($document);
         $language = $this->app->getLanguage();
-        $language->load('joomla', JPATH_ADMINISTRATOR, null, true);
+        $language->load('joomla', $this->app->isClient('administrator') ? JPATH_ADMINISTRATOR : JPATH_SITE, null, true);
         $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_content', JPATH_ADMINISTRATOR, null, true);
@@ -29,6 +30,10 @@ final class BrowserViewSupport
         foreach ($this->languageKeys() as $key) Text::script($key);
         Text::script('COM_SMARTBROWSER_RESIZE_INFO');
         Text::script('COM_SMARTBROWSER_LINK_TEXT');
+        Text::script('COM_SMARTBROWSER_PICKER_SELECT_TITLE');
+        Text::script('COM_SMARTBROWSER_FILE_CHANGED');
+        Text::script('COM_SMARTBROWSER_EDIT_FILE_CONTENT');
+        Text::script('JRESET');
         foreach (['web','mail','tel','fragment','joomla'] as $type) {
             Text::script('COM_SMARTBROWSER_LINK_'.strtoupper($type));
             Text::script('COM_SMARTBROWSER_LINK_CREATE_'.strtoupper($type));
@@ -60,6 +65,21 @@ final class BrowserViewSupport
         if (!in_array($defaultView, ['grid', 'details'], true)) $defaultView = null;
         $flatScope = $input->getString('flatScope') ?: null;
         $adapter = $registry->get($adapterId, $browseRoot, $flatScope);
+        $flatBreadcrumb = null;
+        $flatTreeRoot = null;
+        $flatTreeNode = null;
+        if (str_starts_with($adapterId, 'flat-')) {
+            $originalRoot = $input->getString('flatFromBrowseRoot') ?: ($input->getString('flatFromAdapter') ? null : $browseRoot);
+            $source = $registry->get(substr($adapterId, 5), $originalRoot);
+            $flatTreeRoot = $originalRoot;
+            $scope = $input->getString('flatFromNode') ?: ($flatScope ?: $browseRoot);
+            $flatTreeNode = $source->getInitialNode($scope);
+            $flatBreadcrumb = $source->getBreadcrumb($source->getInitialNode($scope));
+            if (($flatBreadcrumb[0]['type'] ?? null) === 'root') {
+                $flatRoot = $registry->get($adapterId, $originalRoot)->getRoots()[0] ?? null;
+                if ($flatRoot) $flatBreadcrumb[0]['title'] = $flatRoot['title'];
+            }
+        }
         $showAdapterSwitcher = $input->getBool('showAdapterSwitcher', false);
         $selectionState = $input->getBool('selectionState', false);
         $adapterDescriptors = $registry->descriptors($selectionState);
@@ -88,6 +108,9 @@ final class BrowserViewSupport
             'gridWidths' => $gridWidths,
             'visualSettings' => VisualOptions::forAdapter($adapterId, $params),
             'imageBackground' => $params->get('image_background', 'auto'),
+            'flatBreadcrumb' => $flatBreadcrumb,
+            'flatTreeRoot' => $flatTreeRoot,
+            'flatTreeNode' => $flatTreeNode,
             'flatRootNode' => $adapter instanceof FlatHierarchyAdapter ? $adapter->getFlatRootNode()
                 : (str_starts_with($adapterId, 'flat-')
                     ? ($input->getString('flatFromBrowseRoot') ?: ($input->getString('flatFromAdapter') ? 'content:root' : ($browseRoot ?: 'content:root')))
@@ -95,7 +118,9 @@ final class BrowserViewSupport
             'preferencesResetToken' => (string) ComponentHelper::getParams('com_smartbrowser')->get('preferences_reset_token', ''),
             'showAdapterSwitcher' => $showAdapterSwitcher,
             'application' => $this->app->isClient('site') ? 'site' : 'administrator',
-            'integrated' => $input->getBool('integrated', false) && $mode === 'manage',
+            'browserDescription' => Text::_(str_starts_with($adapterId, 'flat-') ? 'COM_SMARTBROWSER_FLAT_BROWSER_DESC' : 'COM_SMARTBROWSER_DASHBOARD_' . strtoupper(str_replace('-', '_', $adapterId)) . '_DESC'),
+            'nativeToolbarTarget' => $this->app->isClient('administrator') && $mode === 'manage' && $input->getCmd('tmpl') !== 'component' ? '#sb-native-actions' : null,
+            'integrated' => IntegrationOptions::browserEnabled($adapterId, $this->app->isClient('administrator'), $mode),
             'editorMode' => (string) ComponentHelper::getParams('com_smartbrowser')->get($this->app->isClient('site') ? 'editor_site' : 'editor_admin', 'modal'),
             'mode' => $mode, 'multiple' => $mode === 'manage' || $input->getBool('multiple', false),
             'pickerInstance' => $mode === 'select' ? $input->getCmd('pickerInstance', '') : '',
@@ -103,8 +128,8 @@ final class BrowserViewSupport
             'showContextResources' => $input->getBool('showContextResources', ContextOptions::enabled($adapterId, $this->app->isClient('site'))), 'browseRoot' => $browseRoot, 'flatScope' => $flatScope,
             'allowedResourceTypes' => $allowedResourceTypes,
             'defaultView' => $defaultView,
-            'defaultSortBy' => $adapterId === 'featured-articles' ? 'ordering' : '',
-            'defaultSortDirection' => $adapterId === 'featured-articles' ? 'asc' : '',
+            'defaultSortBy' => in_array($adapterId, ['featured-articles', 'tags', 'flat-tags'], true) ? 'ordering' : '',
+            'defaultSortDirection' => in_array($adapterId, ['featured-articles', 'tags', 'flat-tags'], true) ? 'asc' : '',
             'apiBaseUrl' => Uri::base() . 'index.php?option=com_smartbrowser&format=json',
             'csrfToken' => Session::getFormToken(),
             'initialNode' => $adapter instanceof BrowseRootAwareInterface ? $adapter->getInitialNode() : ($adapter->getRoots()[0]['id'] ?? ''),
@@ -127,12 +152,12 @@ final class BrowserViewSupport
     {
         return [
             'COM_SMARTBROWSER_DOUBLE_CLICK', 'COM_SMARTBROWSER_CTRL_DOUBLE_CLICK',
-            'COM_SMARTBROWSER_COLLECTION_TITLE', 'COM_SMARTBROWSER_COLLECTION_UNAVAILABLE', 'COM_SMARTBROWSER_COLLECTION_ADD', 'COM_SMARTBROWSER_COLLECTION_REMOVE', 'COM_SMARTBROWSER_COLLECTION_EMPTY',
+            'COM_SMARTBROWSER_COLLECTION_TITLE', 'COM_SMARTBROWSER_COLLECTION_UNAVAILABLE', 'COM_SMARTBROWSER_COLLECTION_ADD', 'COM_SMARTBROWSER_COLLECTION_REMOVE', 'COM_SMARTBROWSER_COLLECTION_EMPTY', 'COM_SMARTBROWSER_SELECTION_START', 'COM_SMARTBROWSER_EDIT_TEXT', 'COM_SMARTBROWSER_LINK_NO_PUBLIC_URL',
             'COM_SMARTBROWSER_COLLECTION_REPLACE', 'COM_SMARTBROWSER_URI', 'COM_SMARTBROWSER_SELECT_RESOURCE', 'COM_SMARTBROWSER_SELECTION_PATH', 'COM_SMARTBROWSER_COPY_PATH', 'COM_SMARTBROWSER_COPY_FAILED', 'COM_SMARTBROWSER_SELECTION_INFO_EMPTY', 'COM_SMARTBROWSER_PREVIEW_UNAVAILABLE', 'COM_SMARTBROWSER_SELECT_THUMBNAIL', 'COM_SMARTBROWSER_USE_THUMBNAIL',
-            'COM_SMARTBROWSER_USAGE_ALT', 'COM_SMARTBROWSER_USAGE_DECORATIVE', 'COM_SMARTBROWSER_USAGE_LOADING', 'COM_SMARTBROWSER_USAGE_AUTO',
+            'COM_SMARTBROWSER_USAGE_ALT', 'COM_SMARTBROWSER_USAGE_DECORATIVE', 'COM_SMARTBROWSER_USAGE_FIGURE_CLASS', 'COM_SMARTBROWSER_USAGE_LOADING', 'COM_SMARTBROWSER_USAGE_AUTO',
             'COM_SMARTBROWSER_USAGE_LAZY', 'COM_SMARTBROWSER_USAGE_EAGER', 'COM_SMARTBROWSER_USAGE_THUMBNAIL', 'COM_SMARTBROWSER_USAGE_ICON', 'COM_SMARTBROWSER_USAGE_INFO',
             'COM_SMARTBROWSER_USAGE_DISPLAYED_NAME', 'COM_SMARTBROWSER_USAGE_VISUAL_PRESENTATION', 'COM_SMARTBROWSER_USAGE_VISUAL_BOTH', 'COM_SMARTBROWSER_COLLECTION_SORT', 'COM_SMARTBROWSER_TYPE', 'JGLOBAL_FIELD_CREATED_LABEL', 'JGLOBAL_FIELD_MODIFIED_LABEL', 'JGRID_HEADING_ID',
-            'COM_SMARTBROWSER_USAGE_DEFAULT', 'COM_SMARTBROWSER_COPY_ADDRESS', 'COM_SMARTBROWSER_IMPORT_ADDRESS', 'COM_SMARTBROWSER_ITEM_MOVE_UP', 'COM_SMARTBROWSER_ITEM_MOVE_DOWN',
+            'COM_SMARTBROWSER_SELECTION_UNAVAILABLE', 'COM_SMARTBROWSER_CONFIRM_DISCARD', 'COM_SMARTBROWSER_USAGE_DEFAULT', 'COM_SMARTBROWSER_COPY_ADDRESS', 'COM_SMARTBROWSER_IMPORT_ADDRESS', 'COM_SMARTBROWSER_ITEM_MOVE_UP', 'COM_SMARTBROWSER_ITEM_MOVE_DOWN',
             'COM_SMARTBROWSER_COPY_ADDRESSES', 'COM_SMARTBROWSER_IMPORT_ADDRESSES', 'COM_SMARTBROWSER_ADDRESS_APPEND', 'COM_SMARTBROWSER_ADDRESS_UNAVAILABLE', 'COM_SMARTBROWSER_IMPORT',
             'COM_SMARTBROWSER_USAGE_OPTIONS', 'COM_SMARTBROWSER_USAGE_MORE', 'COM_SMARTBROWSER_USAGE_CUSTOM', 'COM_SMARTBROWSER_USAGE_PICK_RESOURCE', 'COM_SMARTBROWSER_USAGE_PICK_IMAGE',
             'COM_SMARTBROWSER_USAGE_ADD_THUMBNAIL', 'COM_SMARTBROWSER_USAGE_CHANGE_THUMBNAIL', 'COM_SMARTBROWSER_USAGE_CLEAR', 'COM_SMARTBROWSER_USAGE_CHOOSE', 'COM_SMARTBROWSER_USAGE_REQUIRED', 'COM_SMARTBROWSER_USAGE_INVALID', 'COM_SMARTBROWSER_USAGE_EDITOR_UNAVAILABLE', 'COM_SMARTBROWSER_USAGE_PROFILE_INVALID',
@@ -169,9 +194,10 @@ final class BrowserViewSupport
             'COM_SMARTBROWSER_SIZE_SMALL', 'COM_SMARTBROWSER_SIZE_MEDIUM', 'COM_SMARTBROWSER_SIZE_LARGE', 'COM_SMARTBROWSER_SIZE_VERY_LARGE', 'COM_SMARTBROWSER_DIMENSIONS_NONE', 'COM_SMARTBROWSER_DIMENSIONS_SMALL', 'COM_SMARTBROWSER_DIMENSIONS_MEDIUM', 'COM_SMARTBROWSER_DIMENSIONS_LARGE', 'COM_SMARTBROWSER_DIMENSIONS_VERY_LARGE',
             'COM_SMARTBROWSER_MEDIA_IMAGE', 'COM_SMARTBROWSER_MEDIA_DOCUMENT', 'COM_SMARTBROWSER_MEDIA_VIDEO', 'COM_SMARTBROWSER_MEDIA_AUDIO',
             'COM_SMARTBROWSER_CONTENT_TAB', 'COM_SMARTBROWSER_FILE_NAME',
-            'JSAVE', 'JAPPLY', 'JSAVEASCOPY',
+            'JSAVE', 'JAPPLY', 'COM_SMARTBROWSER_SAVE_AS_COPY', 'COM_SMARTBROWSER_SAVE_CLOSE', 'COM_SMARTBROWSER_ORDERING', 'COM_SMARTBROWSER_TAGS',
             'COM_SMARTBROWSER_METADATA_TAB',
-            'COM_SMARTBROWSER_WORKING',
+            'COM_SMARTBROWSER_WORKING', 'COM_SMARTBROWSER_LOADING',
+            'COM_SMARTBROWSER_STATUS_TOTAL', 'COM_SMARTBROWSER_STATUS_SELECTED',
             'COM_SMARTBROWSER_PREVIEW_UNAVAILABLE',
             'COM_SMARTBROWSER_ACTIVATE_USER', 'COM_SMARTBROWSER_NEW_USER', 'COM_SMARTBROWSER_DELETE', 'COM_SMARTBROWSER_REMOVE_FROM_GROUP', 'COM_SMARTBROWSER_CONFIRM_REMOVE_FROM_GROUP', 'COM_SMARTBROWSER_FLAT_VIEW', 'COM_SMARTBROWSER_MAX_LEVELS', 'COM_SMARTBROWSER_TAGS_ROOT', 'COM_SMARTBROWSER_NEW_ARTICLE', 'COM_SMARTBROWSER_ALL_ARTICLES',
             'COM_SMARTBROWSER_ADAPTER_MEDIA', 'COM_SMARTBROWSER_ADAPTER_ARTICLES', 'COM_SMARTBROWSER_ADAPTER_FLAT_ARTICLES',

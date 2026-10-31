@@ -29,7 +29,12 @@ function initialize(media) {
   if (match || accessible) {
     const candidates = accessible ? { 'media.alt': 'alt_text', 'media.decorative': 'alt_empty' }
       : { 'media.alt': match[2] + '_alt', 'media.decorative': match[2] + '_alt_empty' };
-    if (match && match[1] === 'images') Object.assign(candidates, { 'media.caption': match[2] + '_caption', 'media.class': 'float_' + match[2].slice(6) });
+    if (match && match[1] === 'images') {
+      const role = match[2].slice(6);
+      const imageClass = form.elements.namedItem(`jform[images][imgclass_${role}]`) ? `imgclass_${role}` : `float_${role}`;
+      Object.assign(candidates, { 'media.caption': match[2] + '_caption', 'media.class': imageClass });
+      if (imageClass !== `float_${role}`) candidates['media.figureClass'] = `float_${role}`;
+    }
     for (const [key, name] of Object.entries(candidates)) {
       const fullName = accessible ? `${accessible[1]}[${name}]` : `jform[${match[1]}][${name}]`;
       const control = form.elements.namedItem(fullName);
@@ -47,6 +52,7 @@ function initialize(media) {
   root.className = 'sb-selection-field';
   root.dataset.sbArticleMedia = JSON.stringify({ group: 'native', image: 'image', usageFields, nativeNames });
   root.dataset.sbField = JSON.stringify({ ...options, browseRoot, adapter: 'media', allowedAdapters: ['media'], allowedResourceTypes: ['image'],
+    viewPreferenceKey: options.viewPreferenceKey || `supjx.smartbrowser.native.${match?.[1] === 'images' ? 'article.images.' + match[2].slice(6) : (Joomla.getOptions('com_smartbrowser.preferences', {}).context || 'media') + '.' + field.name.replace(/[^a-zA-Z0-9_.-]/g, '.')}`,
     multiple: false, maxSelections: 1, homogeneous: true, selectionTarget: 'item', editorDisplay: 'compact',
     informationPanelPosition: 'right', selectionUseData: 'editable', fullWidth: true,
     showLabel: !row.closest?.('[data-sb-native-media]'),

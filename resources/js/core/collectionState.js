@@ -1,6 +1,7 @@
 import { computed, effectScope, reactive, ref } from 'vue';
 import createBrowserState from './createBrowserState.js';
 import { createViewRegistry } from './viewRegistry.js';
+import { preferenceStorage } from './userPreferences.js';
 import { collectionEntries, referenceKey, resourceKey } from './selectionIdentity.js';
 
 export const collectionIdentifiers = items => {
@@ -18,11 +19,11 @@ export function createCollectionState({ config, api, notify, translate }) {
   const scope = effectScope();
   const viewPreferenceKey = config.viewPreferenceKey || 'supjx.smartbrowser.collection.view';
   let preferredView;
-  try { preferredView = window.localStorage.getItem(viewPreferenceKey); } catch {}
+  try { preferredView = preferenceStorage().getItem(viewPreferenceKey); } catch {}
   const defaultView = ['grid', 'details'].includes(preferredView) ? preferredView : config.layout === 'compact' ? 'details' : config.layout || 'grid';
-  const options = reactive({ ...config, roots: [], actions: [], multiple: config.multiple !== false, selectionTarget: 'both', mode: config.readOnly ? 'readonly' : 'manage', defaultView });
+  const options = reactive({ ...config, allowedResourceTypes: [], roots: [], actions: [], multiple: config.multiple !== false, selectionTarget: 'both', mode: config.readOnly ? 'readonly' : 'manage', defaultView });
   const persistence = { load: defaults => defaults, save(state) {
-    try { window.localStorage.setItem(viewPreferenceKey, state.activeView); } catch {}
+    try { preferenceStorage().setItem(viewPreferenceKey, state.activeView); } catch {}
   } };
   const browser = scope.run(() => createBrowserState({ options, api, persistence, viewRegistry: createViewRegistry().register({ id: 'grid', component: {} }).register({ id: 'details', component: {} }) }));
   const { state } = browser;
@@ -71,11 +72,17 @@ export function createCollectionState({ config, api, notify, translate }) {
       return;
     }
     const sameReferences = referenceItems && normalized.length === items.length && normalized.every((item, index) => itemKey(item) === itemKey(items[index]));
+    const previous = { items, resources: state.items, selectedIds: state.selectedIds, sortBy: state.sortBy, sortDirection: state.sortDirection };
     items = normalized;
     revision.value++;
     if (sameReferences && state.items.length === items.length && !state.error) return;
-    state.selectedIds = []; state.items = []; state.sortBy = 'collectionOrder'; state.sortDirection = 'asc';
-    await refresh();
+    state.selectedIds = []; state.sortBy = 'collectionOrder'; state.sortDirection = 'asc';
+    try { await refresh(); }
+    catch (error) {
+      items = previous.items; state.items = previous.resources; state.selectedIds = previous.selectedIds;
+      state.sortBy = previous.sortBy; state.sortDirection = previous.sortDirection; revision.value++;
+      throw error;
+    }
   }
   function remove(ids) {
     if (!canRemove || destroyed || state.loading || state.busy) return;

@@ -13,11 +13,12 @@ final class CollectionViewSupport
 {
     public static function prepare(object $document): array
     {
+        if (class_exists(UserViewPreferences::class)) UserViewPreferences::prepare($document);
         $app = Factory::getApplication();
-        $app->getLanguage()->load('joomla', JPATH_ADMINISTRATOR, null, true);
+        $app->getLanguage()->load('joomla', $app->isClient('administrator') ? JPATH_ADMINISTRATOR : JPATH_SITE, null, true);
         $app->getLanguage()->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $app->getLanguage()->load('com_content', JPATH_ADMINISTRATOR, null, true);
-        foreach (['JGLOBAL_USE_GLOBAL', 'JBROWSERTARGET_PARENT', 'JBROWSERTARGET_NEW', 'JBROWSERTARGET_POPUP', 'JBROWSERTARGET_MODAL'] as $key) Text::script($key);
+        foreach (['JCANCEL', 'JGLOBAL_USE_GLOBAL', 'JBROWSERTARGET_PARENT', 'JBROWSERTARGET_NEW', 'JBROWSERTARGET_POPUP', 'JBROWSERTARGET_MODAL'] as $key) Text::script($key);
         foreach (['COM_CONTENT_FIELD_IMAGE_CAPTION_LABEL', 'COM_CONTENT_FIELD_IMAGE_CLASS_LABEL', 'COM_CONTENT_FIELD_URLA_LINK_TEXT_LABEL', 'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL'] as $key) Text::script($key);
         foreach ((new BrowserViewSupport($app))->languageKeys() as $key) Text::script($key);
         foreach (['TITLE', 'UNAVAILABLE', 'REMOVE', 'EMPTY'] as $key) Text::script('COM_SMARTBROWSER_COLLECTION_' . $key);

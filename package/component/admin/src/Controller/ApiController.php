@@ -20,6 +20,15 @@ defined('_JEXEC') or die;
 
 class ApiController extends BaseController
 {
+    public function preferences(): void
+    {
+        $this->respond(function (): array {
+            if (!Session::checkToken('json')) throw new \RuntimeException('Invalid token', 403);
+            $body = json_decode($this->input->json->getRaw(), true, 32, JSON_THROW_ON_ERROR);
+            return \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::save((int) $this->app->getIdentity()->id, (string) ($body['generation'] ?? ''), (array) ($body['changes'] ?? []));
+        });
+    }
+
     public function collection(): void
     {
         $this->respond(function (): array {
@@ -175,7 +184,7 @@ class ApiController extends BaseController
     private function respond(callable $callback): void
     {
         $language = $this->app->getLanguage();
-        $language->load('joomla', JPATH_ADMINISTRATOR, null, true);
+        $language->load('joomla', $this->app->isClient('administrator') ? JPATH_ADMINISTRATOR : JPATH_SITE, null, true);
         $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
         try {

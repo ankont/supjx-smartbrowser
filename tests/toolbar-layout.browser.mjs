@@ -23,9 +23,9 @@ async page => {
   await browserSort.click();
   const sort = toolbar.getByRole('combobox', { name: 'Sort by', exact: true });
   await sort.selectOption('title');
-  check(await sort.evaluate(el => el.closest('.resource-toolbar-popup').classList.contains('is-inline')), 'Wide sort should be inline');
+  check(await sort.evaluate(el => el.closest('[popover]').matches(':popover-open')), 'Wide sort should be a popup');
   check(Math.abs((await browserSort.boundingBox()).x - browserSortBefore.x) < 1, 'Browser sort trigger moved');
-  check((await toolbar.locator('.resource-sort-menu').boundingBox()).x < browserSortBefore.x, 'Right-aligned Browser sort must expand left');
+  check((await toolbar.locator('.resource-sort-menu').boundingBox()).y >= browserSortBefore.y + browserSortBefore.height, 'Sort popup must open below the toolbar');
   check(await browserSort.locator('.fa-signal').count(), 'Sort icon is not Signal');
   check((await toolbar.boundingBox()).height === initialHeight, 'Sort added a toolbar row');
   await toolbar.getByRole('button', { name: 'Sort direction', exact: true }).click();
@@ -92,5 +92,5 @@ async page => {
   await unordered.getByRole('button', { name: 'List', exact: true }).click();
   check(!await unordered.locator('.resource-ordering-sort, .resource-ordering-moves').count(), 'Ordering controls remain in list');
   await page.screenshot({ path: 'build/selection-toolbar-columns.png' });
-  return 'Shared Columns popup, Grid-only sorting, no selection search, inline/popup Browser sorting, search popup, stable toolbar geometry, mobile bounds and allowOrdering:false passed.';
+  return 'Shared Columns, Grid-only sort popups, search popup, stable toolbar geometry, mobile bounds and allowOrdering:false passed.';
 }

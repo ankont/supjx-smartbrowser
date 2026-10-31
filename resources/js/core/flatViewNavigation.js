@@ -1,7 +1,7 @@
 const regularAdapters = new Set(['articles', 'categories', 'tags', 'articles-by-tag', 'menus', 'users', 'media']);
 
-export const flatUiStorageKey = (adapter, browseRoot, href) => {
-  const root = adapter.startsWith('flat-')
+export const flatUiStorageKey = (adapter, browseRoot, href, perAdapter = false) => {
+  const root = perAdapter ? '' : adapter.startsWith('flat-')
     ? new URL(href).searchParams.get('flatFromBrowseRoot') || ''
     : browseRoot || '';
   return `supjx.smartbrowser.ui.${adapter.replace(/^flat-/, '')}.${root}`;

@@ -1,5 +1,6 @@
 <template>
   <nav class="resource-sidebar" :aria-label="t('COM_SMARTBROWSER_VIEW')">
+    <div class="resource-tree-content">
     <details v-for="adapter in adapters" :key="adapter.id" class="resource-adapter" :open="adapter.id === activeAdapter" @toggle="openAdapter($event, adapter.id)">
       <summary @click.prevent="openRoot(adapter.id)"><span :class="adapter.icon" aria-hidden="true" /> {{ adapter.title }}</summary>
       <div v-if="adapter.id !== activeAdapter || treeHasContent" class="resource-adapter-roots">
@@ -34,6 +35,7 @@
         </section>
       </div>
     </details>
+    </div>
   </nav>
 </template>
 

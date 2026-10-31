@@ -1,0 +1,33 @@
+/* Shared identity for menu links, page title and quick icons. */
+.icon-sb-brand.icon-sb-brand {
+  position: relative;
+  display: inline-block;
+  width: 1.2em;
+  height: 1em;
+  line-height: 1;
+  vertical-align: -.125em;
+  margin-inline-end: .35em;
+  flex-shrink: 0;
+  padding: 0 !important;
+}
+.icon-sb-brand::before,
+.icon-sb-brand::after {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-style: normal;
+  line-height: 1;
+}
+.icon-sb-brand::before {
+  content: "\f07b";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  opacity: .5;
+}
+.icon-sb-brand::after {
+  content: "\f58d";
+  position: absolute;
+  font-size: .78em;
+  inset-inline-end: .12em;
+  bottom: -.08em;
+}

@@ -2,6 +2,15 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 
+test('default state toggles have targeted help and retain fixed Published/Trashed controls', async () => {
+  const xml = await readFile(new URL('../package/component/admin/config.xml', import.meta.url), 'utf8');
+  for (const state of ['published', 'unpublished', 'archived', 'trashed']) {
+    const field = xml.match(new RegExp(`<field name="default_${state}"[^>]+>`))[0];
+    assert.match(field, new RegExp(`description="COM_SMARTBROWSER_DEFAULT_${state.toUpperCase()}_DESC"`));
+    if (['published', 'trashed'].includes(state)) assert.match(field, /disabled="true"/);
+  }
+});
+
 test('component Options separate resource/icon appearance and group browser settings by client', async () => {
   const config = await readFile(new URL('../package/component/admin/config.xml', import.meta.url), 'utf8');
   const tab = config.match(/<fieldset name="icons"[^>]*>([\s\S]*?)<\/fieldset>\s*<fieldset name="context"/);
@@ -17,7 +26,7 @@ test('component Options separate resource/icon appearance and group browser sett
   assert.doesNotMatch(config, /name="preferences_editors"/);
   assert.ok(config.indexOf('name="visuals"') < config.indexOf('name="icons"'));
   assert.ok(config.indexOf('name="visuals"') < config.indexOf('name="context"'));
-  assert.match(config, /name="context"[^>]*description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC"/);
+  assert.match(config, /name="preferences_display"[^>]*description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC"/);
   assert.doesNotMatch(config, /name="context_(?:site_)?hint"/);
   assert.ok(config.indexOf('name="context"') < config.indexOf('name="integration"'));
   assert.ok(config.indexOf('name="integration"') < config.indexOf('name="permissions"'));

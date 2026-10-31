@@ -1,14 +1,16 @@
 <template>
-  <aside class="resource-info-panel" :class="{ 'has-usage': hasUsage, 'showing-usage': hasUsage && tab === 'usage', 'is-empty-selection': selectionOnly && !resource }">
+  <aside class="resource-info-panel" :class="{ 'has-usage': hasUsage, 'showing-usage': hasUsage && tab === 'usage', 'is-empty-selection': selectionOnly && !resource, 'is-selection-panel': selectionOnly }">
+    <div v-if="resource && !selectionOnly && hasUsage" class="resource-info-tabs" role="tablist">
+      <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="selectTab('usage')">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
+      <button type="button" role="tab" :aria-selected="tab === 'info'" @click="selectTab('info')">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
+    </div>
+    <ResourceInfoScroller :disabled="selectionOnly" :resource-key="resourceKey(resource)" :tab="tab">
     <div v-if="selectionOnly" v-show="nativePreview" ref="nativePreviewElement" class="sb-native-preview-host"><ResourceVisualOverlays v-if="nativePreview && resource" :context="nativeContext" /><ResourceImagePresentation v-if="nativePreview && resource" :image-element="nativeImage" :context="nativeContext" /></div>
     <LightweightResourceVisual v-if="selectionOnly && !resource && !nativePreview" :resource="{ id: '', metadata: {} }" :definitions="[]" :values="{}" content-only :t="t" />
     <template v-if="selectionOnly && !resource"><h3>{{ t(nativePreview ? 'COM_SMARTBROWSER_NO_IMAGE_SELECTED' : 'COM_SMARTBROWSER_COLLECTION_EMPTY') }}</h3><div v-if="allowQuickAdd" class="sb-preview-selection-actions"><button type="button" class="resource-preview-add" :disabled="addDisabled" :title="t('COM_SMARTBROWSER_COLLECTION_ADD')" :aria-label="t('COM_SMARTBROWSER_COLLECTION_ADD')" @click="$emit('selection-add')"><span class="fas fa-plus" /></button></div></template>
     <template v-if="resource">
-      <div v-if="!selectionOnly && hasUsage" class="resource-info-tabs" role="tablist">
-        <button type="button" role="tab" :aria-selected="tab === 'usage'" @click="selectTab('usage')">{{ t('COM_SMARTBROWSER_USAGE_OPTIONS') }}</button>
-        <button type="button" role="tab" :aria-selected="tab === 'info'" @click="selectTab('info')">{{ t('COM_SMARTBROWSER_USAGE_INFO') }}</button>
-      </div>
-      <LightweightResourceVisual ref="previewElement" :overlay-context="showUsage ? previewContext : null" :resource="resource" :definitions="showUsage ? usageDefinitions : []" :values="showUsage ? usageValues : {}" :errors="showUsage ? usageErrors : {}" :resolve-reference="resolveReference" :can-preview="canPreview" :native-preview="nativePreview" :content-only="showUsage" :editable="selectionOnly ? usageMode === 'editable' : showUsage && previewContext?.isReadOnly === false" :t="t" @preview="$emit('preview')" @change="(key, value) => $emit('usage-change', key, value)">
+      <p v-if="resource.unavailable || resource.metadata?.state === -2" class="alert alert-warning" role="status">{{ t('COM_SMARTBROWSER_SELECTION_UNAVAILABLE') }}</p>
+      <LightweightResourceVisual v-if="!resource.unavailable && resource.metadata?.state !== -2" ref="previewElement" :overlay-context="showUsage ? previewContext : null" :resource="resource" :definitions="showUsage ? usageDefinitions : []" :values="showUsage ? usageValues : {}" :errors="showUsage ? usageErrors : {}" :resolve-reference="resolveReference" :can-preview="canPreview" :native-preview="nativePreview" :content-only="showUsage" :editable="selectionOnly ? usageMode === 'editable' : showUsage && previewContext?.isReadOnly === false" :t="t" @preview="$emit('preview')" @change="(key, value) => $emit('usage-change', key, value)">
         <template #actions>
           <button v-for="action in showUsage ? previewActions : []" :key="action.id" type="button" :disabled="actionBusy" :title="t(action.label)" :aria-label="t(action.label)" @click="runPreviewAction(action)"><span :class="action.icon || 'fas fa-bolt'" aria-hidden="true" /></button>
         </template>
@@ -17,7 +19,7 @@
         <h3>{{ displayTitle }}</h3>
       </template>
       <h3 v-else>{{ displayTitle }}</h3>
-      <div v-if="selectionActions?.length" class="sb-preview-selection-actions"><button v-for="action in selectionActions" :key="action.id" type="button" :disabled="action.disabled" :title="t(action.label)" :aria-label="t(action.label)" :class="{ 'resource-preview-remove': action.id === 'collectionRemove', 'resource-preview-add': action.id === 'collectionAdd' }" @click="$emit('selection-action', action)"><ResourceActionIcon :icon="action.icon" /></button></div>
+      <div v-if="selectionActions?.length" class="sb-preview-selection-actions"><button v-for="action in selectionActions" :key="action.id" type="button" :disabled="action.disabled" :title="t(action.label)" :aria-label="t(action.label)" :class="{ 'resource-preview-remove': action.id === 'collectionRemove', 'resource-preview-add': action.id === 'collectionAdd' }" @click="$emit('selection-action', action)"><ResourceActionIcon :icon="action.icon" /></button><slot name="quick-actions" /></div>
       <div class="sb-info-details">
       <dl v-if="selectionOnly" class="resource-selection-information"><div><dt><span class="fas fa-link" aria-hidden="true" />{{ t('COM_SMARTBROWSER_URI') }}</dt><dd class="resource-selection-path"><input type="text" :value="uri" :title="uri" :aria-label="t('COM_SMARTBROWSER_URI')" class="sb-reference-readonly" readonly aria-readonly="true"><button type="button" :title="t('COM_SMARTBROWSER_COPY_PATH')" :aria-label="t('COM_SMARTBROWSER_COPY_PATH')" @click="copyPath(uri)"><span class="fas fa-copy" aria-hidden="true" /></button></dd></div></dl>
       <dl v-if="selectionOnly && usageMode === 'readonly' && usageDefinitions?.length" class="resource-selection-usage">
@@ -80,7 +82,8 @@
       </dl>
       </template>
     </template>
-    <div v-else class="resource-info-empty" role="status"><button v-if="allowAdd" type="button" class="btn btn-outline-secondary" :disabled="addDisabled" @click="$emit('selection-add')"><span class="fas fa-plus" /> {{ t('COM_SMARTBROWSER_SELECT_RESOURCE') }}</button><p>{{ t('COM_SMARTBROWSER_SELECTION_INFO_EMPTY') }}</p></div>
+    <div v-else class="resource-info-empty" role="status"><button v-if="allowAdd" type="button" class="btn btn-outline-secondary" :disabled="addDisabled" @click="$emit('selection-add')"><span class="fas fa-plus" /> {{ t('COM_SMARTBROWSER_SELECT_RESOURCE') }}</button><p>{{ t(selectionOnly ? 'COM_SMARTBROWSER_SELECTION_START' : 'COM_SMARTBROWSER_SELECTION_INFO_EMPTY') }}</p><slot name="empty-actions" /></div>
+    </ResourceInfoScroller>
   </aside>
 </template>
 
@@ -94,14 +97,15 @@ import ResourceImagePresentation from './ResourceImagePresentation.vue';
 import ResourceActionIcon from './ResourceActionIcon.vue';
 import { selectionPresentation, thumbnailCapabilities } from '../core/lightweightVisual.js';
 import SelectionUsageEditor from './SelectionUsageEditor.vue';
-import { selectionUri, selectionTypeLabel, supplementalInfoFields } from '../core/selectedPresentation.js';
+import ResourceInfoScroller from './ResourceInfoScroller.vue';
+import { selectionUri, selectionTypeLabel, supplementalInfoFields, hierarchyText, infoFieldPresentation } from '../core/selectedPresentation.js';
 
 const props = defineProps({ resource: Object, fields: Array, t: Function, usageDefinitions: Array, usageValues: Object, usageErrors: Object, usageEditors: Object, resolveReference: Function, previewActions: Array, previewContext: Object, usageRevision: Number, canPreview: Boolean, selectionOnly: Boolean, nativePreview: Boolean, address: String, selectionActions: Array, allowAdd: Boolean, allowQuickAdd: Boolean, addDisabled: Boolean, usageMode: { type: String, default: 'readonly' } });
 const uri = computed(() => props.address ?? selectionUri(props.resource));
 const secondaryOpen = ref(false);
 const hasUsage = computed(() => Boolean(props.usageDefinitions?.length || props.previewContext && (props.previewContext.isReadOnly === false || Object.values(props.usageValues || {}).some(value => value != null && value !== ''))));
 const showUsage = computed(() => props.selectionOnly || hasUsage.value && tab.value === 'usage');
-const displayTitle = computed(() => showUsage.value ? selectionPresentation(props.resource, props.usageValues).title : props.resource?.title);
+const displayTitle = computed(() => props.resource?.unavailable ? props.t('COM_SMARTBROWSER_SELECTION_UNAVAILABLE') : showUsage.value ? selectionPresentation(props.resource, props.usageValues).title : props.resource?.title);
 const usageIcon = iconForUsage;
 async function copyPath(value) {
   try { await navigator.clipboard.writeText(Array.isArray(value) ? value.join('\n') : String(value)); }
@@ -164,7 +168,7 @@ const visibleFields = computed(() => {
   return [...fields, ...supplementalInfoFields.filter((field) => {
     const value = props.resource?.metadata?.[field.source.split('.')[1]];
     return !present.has(field.source) && value !== null && value !== undefined && value !== '';
-  })];
+  })].map(field => infoFieldPresentation(field, props.resource));
 });
 const fieldIcon = iconForField;
 const typeLabel = computed(() => {
@@ -182,6 +186,7 @@ const formatDate = (value) => {
 const formatSize = (bytes) => `${(bytes / 1024).toFixed(2)} KB`;
 const rawFieldValue = (field) => String(field.source || '').split('.').reduce((value, part) => value?.[part], props.resource);
 const fieldValue = (field) => {
+  if (['metadata.categoryPath', 'metadata.tagPaths', 'metadata.locationPath'].includes(field.source)) return hierarchyText(rawFieldValue(field));
   if ((field.format === 'language' || field.source === 'metadata.language') && rawFieldValue(field) === '*') return props.t('COM_SMARTBROWSER_ALL_LANGUAGES');
   if (field.format === 'date') return formatDate(rawFieldValue(field));
   if (field.format === 'size') return rawFieldValue(field) !== null && rawFieldValue(field) !== undefined ? formatSize(rawFieldValue(field)) : '';

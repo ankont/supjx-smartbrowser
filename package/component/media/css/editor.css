@@ -441,6 +441,7 @@ html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrows
 .com-smartbrowser-editor.is-aligned-editor .smartbrowser-editor-actions[hidden] { display: none !important; }
 .com-smartbrowser-editor.is-aligned-editor joomla-tab[view="tabs"] > div[role="tablist"] { padding-inline: 0; }
 #toolbar > .smartbrowser-editor-tools { margin-inline-start: auto; flex: 0 0 auto; }
+#toolbar > .smartbrowser-editor-tools > #toolbar-help { margin: 0 !important; }
 .com-smartbrowser-editor[data-resource-type="article"] .options-form { min-width: 0; }
 .com-smartbrowser-editor [data-sb-native-media] .control-group[hidden],
 .com-smartbrowser-editor[data-resource-type="category"] .control-group[hidden] { display: none !important; }

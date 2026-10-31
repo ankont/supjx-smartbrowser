@@ -65,8 +65,13 @@ export function mountCollection(container, configuration = {}) {
       config.nativePreview = true;
     },
     addToolbarButton(button) {
-      if (destroyed || !(button instanceof HTMLElement) || !button.matches('button, [role="button"]')) throw new TypeError('A toolbar button element is required.');
+      // Native media extensions can create their buttons in another frame.
+      // A late observer callback after teardown must not interrupt editor startup.
+      if (destroyed) return () => {};
+      const ElementType = button?.ownerDocument?.defaultView?.HTMLElement || HTMLElement;
+      if (!(button instanceof ElementType) || !button.matches('button, [role="button"]')) throw new TypeError('A toolbar button element is required.');
       if (!toolbarButtons.has(button)) {
+          if (!button.textContent.trim()) button.dataset.sbHostLabel = button.getAttribute('aria-label') || button.title || '';
         const marker = document.createComment('SmartBrowser toolbar button');
         button.before(marker);
         toolbarButtons.set(button, marker);
@@ -76,12 +81,13 @@ export function mountCollection(container, configuration = {}) {
         const marker = toolbarButtons.get(button);
         if (!marker) return;
         marker.replaceWith(button);
+          delete button.dataset.sbHostLabel;
         toolbarButtons.delete(button);
       };
     },
     destroy() {
       if (destroyed) return;
-      toolbarButtons.forEach((marker, button) => marker.replaceWith(button));
+        toolbarButtons.forEach((marker, button) => { marker.replaceWith(button); delete button.dataset.sbHostLabel; });
       toolbarButtons.clear();
       if (attachedPreview) attachedPreview.marker.replaceWith(attachedPreview.element);
       destroyed = true; addresses.destroy(); model.destroy(); app.unmount(); mounted.delete(target);

@@ -76,7 +76,7 @@ test('FlatArticleAdapter has one flat root and reusable category-aware Article p
   assert.match(flat, /class FlatArticleAdapter extends ArticleCollectionAdapter/);
   assert.match(flat, /'nodes' => \[\]/);
   assert.match(flat, /getAllArticles\(\$options/);
-  assert.match(flat, /articlePresentation\(true, true, false\)/);
+  assert.match(flat, /articlePresentation\(true, true, true\)/);
   assert.match(flat, /'newArticle'.*'COM_SMARTBROWSER_NEW_ARTICLE'/);
   assert.match(flat, /authorise\('core\.create', 'com_content'\)/);
   assert.match(flat, /task=article\.add/);
@@ -104,10 +104,9 @@ test('ArticlesByTagAdapter reuses Tag hierarchy and loads direct-tag Articles as
   assert.match(registry, /'articles-by-tag' => new ArticlesByTagAdapter/);
 });
 
-test('adapter persistence remains namespaced by concrete adapter id', async () => {
+test('adapter persistence uses the shared management-state key policy', async () => {
   const main = await readFile(new URL('../resources/js/main.js', import.meta.url), 'utf8');
-  assert.match(main, /options\.browseRoot[\s\S]*`supjx\.smartbrowser\.\$\{options\.adapter\}\.\$\{options\.browseRoot\}`/);
-  assert.match(main, /: `supjx\.smartbrowser\.\$\{options\.adapter\}`/);
+  assert.match(main, /browserStateKey\(options\)/);
 });
 
 test('browseRoot is an opaque optional adapter contract enforced by the API', async () => {
@@ -488,7 +487,7 @@ test('resource cards show aliases, available language keys, flat article categor
   assert.match(content, /'cardSummaryWithCategory'/);
   assert.match(articles, /\$showCategoryGrid \? 'metadata.cardSummaryWithCategory' : 'metadata.cardSummary'/);
   assert.match(articleTree, /articlePresentation\(false, false\)/);
-  assert.match(flatArticles, /articlePresentation\(true, true, false\)/);
+  assert.match(flatArticles, /articlePresentation\(true, true, true\)/);
   for (const adapter of [categories, tags, users]) {
     assert.match(adapter, /'gridFields' => \[\['source' => 'metadata.cardSummary'\]\]/);
     assert.doesNotMatch(adapter, /'gridFields'\s*=>[^\n]*metadata.modified/);
@@ -581,10 +580,10 @@ test('shared site bootstrap does not require template-specific icon presets', as
   assert.match(support, /useStyle\('com_smartbrowser\.app'\)/);
 });
 
-test('shared site bootstrap loads component and administrator language catalogues', async () => {
+test('shared site bootstrap preserves frontend core strings and loads component translations', async () => {
   const support = await readFile(new URL('../package/component/admin/src/Support/BrowserViewSupport.php', import.meta.url), 'utf8');
   const language = await readFile(new URL('../package/component/admin/language/en-GB/com_smartbrowser.ini', import.meta.url), 'utf8');
-  assert.match(support, /load\('joomla', JPATH_ADMINISTRATOR/);
+  assert.match(support, /load\('joomla', \$this->app->isClient\('administrator'\) \? JPATH_ADMINISTRATOR : JPATH_SITE/);
   assert.match(support, /load\('com_smartbrowser', JPATH_ADMINISTRATOR/);
   for (const key of ['COM_SMARTBROWSER_NEW_ARTICLE', 'COM_SMARTBROWSER_CREATE_CHILD_CATEGORY', 'COM_SMARTBROWSER_DATE_CREATED', 'COM_SMARTBROWSER_DATE_MODIFIED']) {
     assert.match(language, new RegExp(`^${key}=`, 'm'));

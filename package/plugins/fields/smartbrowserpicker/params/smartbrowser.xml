@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form addfieldprefix="SuperSoft\Component\Smartbrowser\Administrator\Field">
   <fields name="fieldparams"><fieldset name="fieldparams">
+    <field name="show_unavailable" type="Unavailablevisibility" label="PLG_FIELDS_SMARTBROWSERPICKER_SHOW_UNAVAILABLE" description="PLG_FIELDS_SMARTBROWSERPICKER_SHOW_UNAVAILABLE_DESC" default="" validate="options"><option value="">JGLOBAL_USE_GLOBAL</option><option value="1">JSHOW</option><option value="0">JHIDE</option></field>
     <field name="allowed_adapters" type="Smartbrowseradapter" label="PLG_FIELDS_SMARTBROWSERPICKER_ADAPTER" default="media" required="true" multiple="true" />
     <field name="browse_root" type="text" label="PLG_FIELDS_SMARTBROWSERPICKER_ROOT" description="PLG_FIELDS_SMARTBROWSERPICKER_ROOT_DESC" />
     <field name="selection_target" type="list" label="PLG_FIELDS_SMARTBROWSERPICKER_TARGET" default="item" validate="options">

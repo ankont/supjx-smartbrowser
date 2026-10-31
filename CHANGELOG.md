@@ -1,5 +1,335 @@
 # Changelog
 
+## 5.0.0 - 2026-11-01
+
+- Unify administrator/frontend management and Picker layouts with responsive toolbars, sticky controls, independent information scrolling and a bottom selection drawer.
+- Persist view and window preferences in user-scoped localStorage and Joomla profiles, isolate browser/Picker/caller contexts and extend global reset to every persisted UI preference.
+- Restore saved Picker views on reopening, including nested thumbnail Pickers; explicit caller defaults retain precedence over saved preferences.
+- Enhance native article image/link selections, retain full Selection Addresses and expose prepared link presentation data to template overrides while keeping ordinary output URLs clean.
+- Add native Joomla image tools and bounded UTF-8 text editing to the Media file editor, with revision-aware writes, Apply, Save as Copy and Reset.
+- Improve hierarchy paths, sibling ordering, menu filters, media uploads, unavailable-resource presentation and publication indicators for blocked category ancestry.
+- Strengthen native editor return navigation, modal scrolling, translations, access-controlled management previews and extension integration contracts.
+- Refresh public documentation, naming, branding and installable package metadata; retain extension identities, existing native data and selection JSON compatibility.
+
+## 4.3.31 - 2026-10-31
+
+- Isolate Picker preferences from management browsers and support caller-scoped viewPreferenceKey namespaces without per-resource roots.
+- Persist existing view/window preferences in user-scoped localStorage and Joomla user profiles, shared across frontend/backend with authenticated, CSRF-protected patch saves.
+- Expand Reset preferences to invalidate all user/cache generations, including Selection Views, display modes, popup sizes and unsent changes; reject stale writers.
+- Supply stable role/field keys for native article/media fields, editor insertion actions, thumbnails and SmartAuthors user pickers.
+- Verify account isolation, cross-device snapshots, concurrent patch merging, offline recovery, reset races and native Joomla profile persistence.
+
+## 4.3.30 - 2026-10-31
+
+- Share management-browser state by base adapter across browse roots and regular/flat views, including information visibility, columns, sorting, filters and current navigation.
+- Share management filter-panel and remembered flat-mode UI state across roots without changing API browse boundaries or Picker/embedded-collection policies.
+- Add regression coverage for cross-root state restoration and retained Picker scoping.
+
+## 4.3.29 - 2026-10-31
+
+- Add an authorised management preview for articles independently of publication dates, article state and category/ancestor state, while retaining public-view rules for ordinary requests.
+- Keep native article rendering/template overrides and recheck article management/access permissions before supplying preview data.
+- Support separate backend/site sessions through article/user-scoped HMAC grants expiring after five minutes; reject altered, expired, revoked or blocked-user grants.
+- Disable preview caching/indexing and referrers, and restore the original request identity after rendering.
+- Verify preview grant security and render an existing article in a non-published category against local Joomla without database writes.
+
+## 4.3.28 - 2026-10-31
+
+- Use Location/Tags labels and Joomla-style » separators in information panels, including category and tag ancestry.
+- Truncate only the parent portion of narrow Location paths where possible, keeping the final node visible and the complete path in the tooltip.
+- Supply a component-owned Not featured label instead of the missing frontend JUNFEATURED translation.
+
+## 4.3.27 - 2026-10-31
+
+- Indicate published articles blocked by an unpublished/trashed category or ancestor, using the same minus-circle icon as expired publication while retaining the native state actions.
+- Replace the optional article Category Hierarchy column with the universal Location column and label article Tag Hierarchy as Tags, including featured and tag-based article adapters.
+- Show complete location paths with Joomla-style » separators instead of depth markers; retain raw hierarchy-based sorting and keep stored metadata compatible.
+- Verify category publication states, column catalog changes and existing address/editor regressions.
+
+## 4.3.26 - 2026-10-31
+
+- Retain complete Selection Addresses in native article link URL slots, restoring typed references, Usage, compound thumbnails and extension properties on reopen.
+- Enable visual Usage controls for article links, serialize all addresses before touching native fields and silently rehydrate registered codecs without marking the editor dirty.
+- Prepare site article/module links independently of replacement settings: native layouts receive bare URLs with real anchors preserved, while overrides receive optional prepared selections in smartbrowserLinks.
+- Reuse public resource resolution, field output and PHP image-presentation providers; add an extensible server-side address reader that retains unknown properties without interpreting extension schemas.
+- Verify JavaScript/PHP address round trips, native Joomla URL filtering/validation, template data, ordinary anchors, codec handling and silent editor restoration.
+
+## 4.3.25 - 2026-10-31
+
+- Align file editor Apply/Save as Copy styling with article editors and switch popup Close to Cancel after changes, restoring Close after Apply or Reset.
+- Size host extension buttons to match compact preview actions, and show labelled Select-resource-style controls in empty previews without cloning their handlers.
+- Separate adapter sections in mixed trees and replace the generic information prompt's entry terminology with resource.
+- Explicitly select the native com_content view option for article previews so Joomla uses the template's article overrides even when the outer component option is cached.
+- Centre list selection controls, supply an accessible translated Ordering tooltip and use the frontend JSAVE label for rename/local dialogs.
+- Verify generic thumbnail capabilities for text/PDF/archive resources while retaining caller profile and access policies.
+
+## 4.3.24 - 2026-10-31
+
+- Give browser information panels their own bounded scrolling viewport, fixed tabs and retained relative scroll position; keep list headings visible while scrolling.
+- Sort flat locations by their full hierarchy and expose native sibling-group ordering in flat article browsers without introducing a separate ordering system.
+- Place native image tools and text editing in the file editor's main tabs, preserve the Content preview and avoid saving untouched image tools as modifications.
+- Correct file-editor labels and fullscreen controls, preserve collapsed selection preferences and reuse host Upload buttons in empty/collapsed previews.
+- Allow configured article-link adapters while storing resolved public URLs in Joomla's native link fields; improve empty-selection guidance and unavailable-icon settings.
+- Load core language strings from the current Joomla client so embedded frontend selectors do not replace native Save captions.
+- Render article preview popups through Joomla's native article view with edit controls disabled and existing access checks retained.
+- Add focused sorting, persistence, scrolling, host-action, file-editor, translation and article-preview regression coverage.
+
+## 4.3.23 - 2026-10-31
+
+- Fix the active generic article image-selector bridge to bind Joomla's separate image and figure classes, instead of applying the fix only to the legacy bridge.
+- Expose the figure/container class as `media.figureClass`, preserve both class values and write all core image options back to the native Joomla fields.
+- Apply separate image/container classes in default field output and retain compatibility with older article forms.
+- Remove obsolete icon-settings code that moved Image transparency outside Thumbnail options after visual-settings had positioned it correctly.
+- Verify both image slots through the actual generic selector bridge and initialize both Options scripts together in the transparency regression test.
+
+## 4.3.22 - 2026-10-31
+
+- Keep the source hierarchy available in flat browsers, initially collapsed, including switching between Media filesystems and menus.
+- Move Picker Select before the heading and Cancel beside its native/fullscreen controls; use Select — Adapter headings.
+- Keep native article editors component-only when opened from popup editors, preserving the selected category.
+- Hide both duplicated Joomla image/figure class controls while retaining their stored values and the Selection Usage image-class editor.
+- Embed Joomla's enabled media-action image tools in the file editor and add bounded UTF-8 text editing with Save, Apply, Save as Copy and Reset.
+- Enforce Media ACL, browse scope, content validation and revision checks on file writes; version image presentation URLs without changing canonical addresses.
+- Verify picker navigation/results, modern and legacy image fields, text round trips and failures, and native Joomla image tools.
+
+## 4.3.21 - 2026-10-31
+
+- Place Image transparency beside the global thumbnail controls without depending on a generated fieldset ID.
+- Supply missing location-depth metadata for flat articles/categories, retaining raw location sorting.
+- Use SupJx SmartBrowser only for its Options navigation link, preserving the component identity.
+- Visibly distinguish fixed Published/Trashed switches and provide targeted default-state help in English and Greek.
+- Paint loading status before expensive list/grid transitions without interfering with network loading state.
+
+## 4.3.20 - 2026-10-30
+
+- Bind article Image Class usage to Joomla's imgclass fields when available, hide the duplicated native control and preserve the separate figure class; retain legacy field compatibility.
+- Extend the fixed bottom selection drawer to legacy/resource/usage pickers, reusing the collection renderer without changing returned selection formats.
+- Return backend native editor Save/Cancel to the enabled integrated browser when no explicit return URL was supplied; preserve native behaviour when integration is disabled.
+- Verify modern/legacy image-class mapping, picker drawer geometry and result contracts, usage profiles, and native editor return/token policies.
+
+## 4.3.19 - 2026-10-30
+
+- Respect explicit creation roles before legacy action-name fallbacks, so contextual New Article in the Category browser stays an ordinary auxiliary button.
+
+## 4.3.18 - 2026-10-30
+
+- Use the flat adapter's actual root-node title for the breadcrumb tooltip (for example All Articles), retaining the original browse boundary rather than substituting the generic browser name.
+
+## 4.3.17 - 2026-10-30
+
+- Label the icon-only flat breadcrumb root with its browser title instead of the regular hierarchy label, retaining existing root presentation.
+- Show the Flat View label in frontend toolbars when space permits and collapse it to its tooltip-backed icon during responsive compaction.
+
+## 4.3.16 - 2026-10-30
+
+- Give the resource-list loader a visible accent colour instead of the template's light text colour, with a translated loading message and accessible busy/status semantics throughout slow responses.
+- Keep Flat View right-aligned before filter controls arrive, avoiding the initial toolbar jump after loading completes.
+- Verify pending and completed backend/frontend resource responses with delayed fixtures.
+
+## 4.3.15 - 2026-10-30
+
+- Keep secondary node creation buttons in the ordinary toolbar style; reserve green styling for primary creation actions.
+
+## 4.3.14 - 2026-10-30
+
+- Restore green creation buttons and consistent Flat View active colours in backend/frontend; use dark Actions-style hover for Flat View and display/fullscreen toggles.
+- Show navigation progress before switching flat scopes or view modes, including slow backend page loads.
+- Use the regular adapter's full breadcrumb inside flat hierarchy scopes and navigate parent folders in flat mode while preserving the original browse boundary; retain existing root presentation.
+- Verify colours, full breadcrumb, parent scope, progress feedback and return-to-regular navigation.
+
+## 4.3.13 - 2026-10-30
+
+- Use a compact Picker heading while retaining normal browser page titles.
+- Include surrounding component-template bottom spacing in contained browser height calculations, removing the outer page scrollbar without disabling result scrolling.
+- Group native Help with the Joomla escape-hatch button at the right of backend editor toolbars.
+- Verify padded Atum picker layouts at multiple viewport sizes and Help/Joomla toolbar alignment in browser fixtures.
+
+## 4.3.12 - 2026-10-30
+
+- Finalize configured unavailable-resource placeholder images through the existing PHP presentation hook, for default output and consumer-composed fragments.
+- Rebuild unavailable provider context centrally with null selection, empty Usage/metadata and no original image identity; expose an unavailable flag while retaining visibility policy.
+- Preserve no-image output, once-only processing, custom frames/pins and provider rollback; test privacy, trashed resources, hidden output and direct consumer finalization.
+
+## 4.3.11 - 2026-10-29
+
+- Apply the editor's native publishing-field definitions before category reload filtering, matching the displayed Created date format instead of the frontend model's different definition.
+- Return reload filtering errors to the editor with unsaved input preserved instead of an uncaught 500, while retaining forbidden-access errors.
+- Reproduce the Created date failure using the actual local Joomla calendar output and verify the fix against that runtime without saving an article.
+
+## 4.3.10 - 2026-10-29
+
+- Locate category refresh metadata on Joomla's fancy-select wrapper, and submit category reloads to their explicit reload URL instead of the save action.
+- Restore the save task for actual save buttons and set cancel/menu-type tasks explicitly, keeping URL and POST tasks consistent.
+- Accept toolbar buttons created in another frame and ignore late toolbar callbacks after a collection is destroyed.
+- Exercise the real Joomla fancy-select, category-change and submitform scripts through a captured POST; verify cross-frame toolbar button handlers and teardown.
+
+## 4.3.9 - 2026-10-29
+
+- Remove wrapping labels from enhanced batch destination controls to avoid duplicate mouse activation of their hidden native selects; verify mouse opening, searching and selection.
+- Supply the task control expected by Joomla category-change in native frontend article forms when missing, and route SmartBrowser category changes through a dedicated reload action.
+- Preserve unsaved article/custom-field/media data during category reload, normalise calendar values as Joomla does, and retain token, permission and checkout checks without saving the article.
+
+## 4.3.8 - 2026-10-29
+
+- Keep only the second action row pinned in normal backend and frontend browsers, allowing the heading, Back and configuration controls to scroll away.
+- Give frontend browser headers an opaque background derived from the surrounding page colour and texture; retain complete headers in pickers and focused views.
+- Verify both toolbar rows, dynamic template offsets, sidebar handle alignment and fullscreen background restoration in browser fixtures.
+
+## 4.3.7 - 2026-10-28
+
+- Preserve viewport sticky behaviour under clipped frontend template wrappers by temporarily using overflow:clip instead of hidden on non-scrolling ancestors, with restoration on focus/unmount.
+- Re-evaluate template headers during scrolling so menus that become fixed after a threshold contribute their current height to browser offsets.
+- Verify header, toolbar and handle alignment through forward/back scrolling in a clipped-template fixture and a temporary probe within the actual public Catichisi template; verify restoration of template clipping.
+
+## 4.3.6 - 2026-10-28
+
+- Cover mouse focus and pressed states for Filter Options/Clear as well as expanded filters; verify closed-but-focused Filter retains blue styling until blur.
+
+## 4.3.5 - 2026-10-28
+
+- Give Filter Options/Clear scoped colour states that resist native subhead defaults and the generic browser button palette, including active filters, icon contrast and disabled Clear opacity.
+- Verify normal, hover, open, enabled and disabled states with native CSS loaded after the component stylesheet in backend/frontend fixtures.
+
+## 4.3.4 - 2026-10-28
+
+- Separate full-listing sidebar/info rails from their sticky viewport content, keeping both column backgrounds extended to the end of long results instead of ending after one viewport.
+- Give the tree-collapse handle its own full-height rail and centre it in the visible area, including collapsed-tree state; preserve contained picker and mobile layouts.
+- Check complete rail bottoms against long listing bounds, sticky contents, handle alignment and drawer behaviour in backend/frontend browser fixtures.
+
+## 4.3.3 - 2026-10-28
+
+- Stack the frontend subtitle directly under its title in a compact block beside Back and the display controls.
+- Preserve normal transparency while giving focused fullscreen mode an opaque page-derived background with the surrounding texture; restore original host styles when leaving focus mode.
+
+## 4.3.2 - 2026-10-28
+
+- Restore a pale grey-blue Dashboard/Back hover and keyboard-focus state with a subtle border and readable dark text/icons in both backend and frontend headers.
+
+## 4.3.1 - 2026-10-28
+
+- Override the native toolbar's d-flex utility for the two-row layout; move borderless Dashboard/Back before the description and keep both Options links and the dark native-manager button together on the right.
+- Standardize browser control heights, restore light-blue Flat View/Advanced controls, blue default hover, dark Actions hover and neutral dropdown hover while retaining green/destructive variants.
+- Use a compact transparent frontend header with adjacent title/subtitle and Back, and restore viewport-filling tree/info panels with a measured centred tree handle.
+- Add browser checks using the actual native d-flex markup for alignment, heights, colour states and pane geometry.
+
+## 4.3.0 - 2026-10-28
+
+- Unify browser headers across backend, frontend and pickers: two-row sticky native management toolbar, frontend title/icon/subtitle, and caller-aware picker headings with native/display controls aligned above the actions.
+- Keep browser controls, independently scrollable tree and information accessible below measured Joomla/template headers, including responsive and focused layouts.
+- Move collection picker selections into an always-visible bottom drawer that opens upward, reserves result height and retains scroll position; bound its height on small screens.
+- Replace the interim backend count status with the adapter description; preserve action handlers, permissions, picker selection/usage and Add/Replace contracts.
+- Add long-list sticky-layout and drawer regression fixtures; verify native controls, responsive bounds, nested pickers, selection usage, public collection workflows and existing search/sort/columns popups.
+
+## 4.2.7 - 2026-10-28
+
+- Expand the SmartBrowser Options label when native toolbar space permits, retaining the accessible icon/tooltip in narrow layouts.
+- Show reactive current-listing and selected-resource counts in the backend's lower action row, leaving frontend and picker toolbars unchanged.
+
+## 4.2.6 - 2026-10-28
+
+- Match Atum's native toolbar spacing, keep both Options links right-aligned despite native button margins, and show Flat View text with wider spacing in the remaining backend action row.
+
+## 4.2.5 - 2026-10-28
+
+- Render backend management primary actions in Joomla's native toolbar via Vue Teleport, keeping existing reactive handlers, selection checks and inline fallback for other hosts.
+- Always offer authorised users an icon-only SmartBrowser Options link with an accessible tooltip, independent of Dashboard/menu visibility; preserve native component Options and return URLs.
+- Verify dynamic toolbar selection state, creation controls, dropdown dismissal, filter placement, responsive wrapping and missing-host fallback in browser tests.
+
+## 4.2.4 - 2026-10-28
+
+- Protect the shared icon viewport from later Bootstrap menu padding utilities and absolutely position both glyph layers, preserving composition and text-baseline alignment at menu and heading sizes.
+- Verify the fix against the public site's template CSS and a regression fixture with later important padding rules.
+
+## 4.2.3 - 2026-10-28
+
+- Align the shared identity icon to the text baseline instead of the lowercase midpoint and preserve spacing before adjacent menu labels and headings.
+
+## 4.2.2 - 2026-10-28
+
+- Add the shared folder-and-grip icon to the frontend Dashboard heading, loading its styles and icon font independently of the integration plugin.
+
+## 4.2.1 - 2026-10-28
+
+- Make the shared icon-sb-brand folder-and-grip identity available to frontend menu links through the integration plugin, including Joomla's icon font and native menu spacing compatibility.
+
+## 4.2.0 - 2026-10-28
+
+- Adopt the shared folder-and-grip identity, with a larger inset grip, for administrator navigation, the SmartBrowser dashboard title and Home Dashboard shortcut.
+- Label the administrator menu SupJx SmartBrowser without changing extension identities or resource-type labels.
+- Place independent menu visibility and Home Dashboard visibility switches in General Integrations below Global Replacement; preserve ACL checks and default the dashboard shortcut to visible.
+
+## 4.1.11 - 2026-10-28
+
+- Move Hide SmartBrowser menu above and outside the Global Replacement frame, preserving independent behavior and simplifying the integration hint in both languages.
+
+## 4.1.10 - 2026-10-28
+
+- Copy resource addresses from the toolbar only for the current selection, disabling Copy when nothing is selected; context Copy uses the selected group or the clicked item.
+- Add optional selection scoping to address export while preserving full-collection exports for existing API consumers and collection order.
+
+## 4.1.9 - 2026-10-28
+
+- Keep Hide SmartBrowser menu independent of Global Replacement and individual replacements; display it above the integration hint and clarify both translations.
+- Add an ACL-aware SmartBrowser dashboard shortcut to Joomla's Home Dashboard third-party quick icons through the existing integration plugin.
+- Cover independent visibility settings, Options ordering, quickicon contexts, result preservation and access checks.
+
+## 4.1.8 - 2026-10-28
+
+- Remove native required validation from the address-paste textarea so its closed dialog cannot block saving the enclosing Joomla editor form; empty imports still use the existing import validation.
+- Verify host form validation before and after closing Paste, plus empty/invalid imports, at desktop and mobile widths.
+
+## 4.1.7 - 2026-10-28
+
+- Override Atum's generic details-content padding within the SmartBrowser adapter tree, removing the backend-only gap between the adapter heading and its roots.
+- Verify contiguous root placement in a browser with the Atum spacing rule applied.
+
+## 4.1.6 - 2026-10-28
+
+- Derive backend management integration from enabled per-adapter settings and the integration plugin, removing the integrated URL flag while retaining Picker/frontend boundaries and Options ACL checks.
+- Use resolved menu titles rather than URL title hints, and distinguish all-menu trees from scoped menus in active sidebar selection and Joomla URL prefix matching.
+- Cover enabled/disabled integration, flat adapters, dashboard entry, standalone modes and mutually exclusive menu leaves in regression tests.
+
+## 4.1.5 - 2026-10-28
+
+- Highlight the matching administrator menu and its ancestors for SmartBrowser browser routes regardless of the integrated flag, including dashboard returns.
+- Resolve menu identity from the current menu node, falling back to browseRoot for menu-item nodes; cover the reported Hidden Menu/Main Menu URLs and flat menus in regression tests.
+
+## 4.1.4 - 2026-10-28
+
+- Configure an optional public placeholder image, plain-text title and optional Font Awesome icon for unavailable output under Selection options, using Joomla conditional controls.
+- Render unavailable selections through the shared Joomla layout with a sanitized placeholder descriptor, no original identity/Usage/private metadata, no links and no original image-presentation providers.
+- Preserve global/host visibility inheritance and cover layout overrides, escaping, unsafe settings, disabled assets and input immutability in output tests.
+
+## 4.1.3 - 2026-10-28
+
+- Accept native image JSON strings and already-decoded arrays/objects in article and tag normalization, preserving image URIs and Intro/Full Image fallback without array-to-string warnings.
+- Add regression coverage that converts PHP warnings to exceptions and checks malformed values and input immutability.
+
+## 4.1.2 - 2026-10-28
+
+- Locate the transparency control by its Joomla parameter name, including the params prefix, so placement and live background previews work in component Options.
+- Document unavailable manual selections that must reach the shared renderer instead of being removed by consumer queries or preparation filters.
+- Add per-custom-field Use Global/Show/Hide controls, an effective-value Global label and a reusable tri-state visibility resolver for hosts.
+
+## 4.1.1 - 2026-10-28
+
+- Restore Paste dialog padding and spacing through an explicit body class, without reintroducing a nested form; cover desktop/mobile spacing in the browser regression test.
+- Keep the transparency control inside Thumbnail options, scope reset help to its own group and show four native publication-state switches with readable locked states.
+- Restore the corresponding administrator menu path when returning to integrated browsers, including scoped menus and flat adapters without a standalone component menu entry.
+
+## 4.1.0 - 2026-10-28
+
+- Keep unavailable selections bulk-selectable and replaceable; optionally render a safe, translated unavailable notice in field output and always flag unavailable/trashed previews.
+- Remove nested Paste forms and context-menu Paste commands, load Cancel translations, preserve selections on resolution failure and accept retained unavailable references during collection editing.
+- Update list/preview toggling and info-state order; use sort popups, compact access columns, framed tree roots and display-only flat location depth hints.
+- Select uploaded media, add menu-item-type sorting/filtering, default tags to ordering and expose configurable default published/unpublished/archived browsing states.
+- Add backend Help and article Save dropdown/accessibility controls; popup editors use Close until the first change, then Cancel, while page editors use Cancel. Confirm before dismissing dirty dialogs and retain native editor return context for default list routes.
+
+## 4.0.1 - 2026-10-19
+
+- Standardize Joomla extension names and field-type labels on SuperSoftJx while preserving technical identities and translated plugin group labels.
+- Complete author and release-date metadata across all manifests and synchronize package, extension and asset versions.
+
 ## 4.0.0 - 2026-10-18
 
 - Consolidate Selection View enhancements, universal selection addresses, extensible previews and image-presentation providers.

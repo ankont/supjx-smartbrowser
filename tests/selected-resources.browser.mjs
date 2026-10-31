@@ -26,7 +26,7 @@ async page => {
   await picker().locator('.resource-main .resource-browser-item.selected').waitFor();
   check(await picker().locator('.resource-item-select, .resource-grid-select-all, .resource-row-select, .resource-details-select-all').count() === 0, 'Single Picker must not show checkboxes');
   check(await picker().locator('.resource-main .resource-browser-item.selected .resource-item-title').innerText() === 'First image', 'Replace must preselect existing resource');
-  check(await picker().locator('.resource-picker-titlebar').innerText() === 'Select resource \u2014 Files & Media', 'Picker title must describe the adapter');
+  check((await picker().locator('.sb-browser-title').innerText()).trim() === 'Select resource \u2014 Files & Media', 'Picker title must describe the adapter');
   check(await picker().locator('.resource-info-panel').count() === 1, 'Usage Picker must start with the information panel open');
   await picker().getByRole('button', { name: 'Toggle information', exact: true }).click();
   await picker().locator('.resource-main .resource-item-title').getByText('Second image', { exact: true }).click();
@@ -64,17 +64,20 @@ async page => {
   const multipleBefore = await stored(3);
   await field(3).locator('tbody tr').first().click();
   await field(3).getByRole('button', { name: 'Replace', exact: true }).click();
-  await picker().locator('.resource-main .resource-browser-item.selected').waitFor();
-  await picker().locator('.resource-item-title').getByText('Report PDF', { exact: true }).dblclick();
+  await picker().locator('.smartbrowser-layout > .resource-main .resource-browser-item.selected').first().waitFor();
+  check(await picker().locator('.smartbrowser-layout > .resource-main .resource-browser-item.selected').count() === multipleBefore.items.length, 'Replace must edit the complete selection');
+  await picker().locator('.smartbrowser-layout > .resource-main .resource-browser-item').filter({ hasText: 'Report PDF' }).locator('.resource-item-select').click();
+  await picker().locator('.resource-picker-select').click();
   await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   await field(3).locator('.resource-title-cell').getByText('Report PDF', { exact: true }).waitFor();
   const multipleAfter = await stored(3);
-  check(multipleAfter.items[0].selection.id === 'local-images:/report.pdf', 'Replacement moved its slot');
-  check(JSON.stringify(multipleAfter.items[1]) === JSON.stringify(multipleBefore.items[1]), 'Replacement changed sibling');
-  await field(3).locator('tbody tr').first().click();
-  await field(3).locator('.resource-ordering-moves button').last().click();
-  await field(3).locator('.resource-title-cell').first().getByText('First image', { exact: true }).waitFor();
-  check((await stored(3)).items[1].selection.id === 'local-images:/report.pdf', 'Ordering failed');
+  check(multipleAfter.items.at(-1).selection.id === 'local-images:/report.pdf', 'Edited selection lost the added resource');
+  check(multipleBefore.items.every((item, index) => JSON.stringify(multipleAfter.items[index].selection) === JSON.stringify(item.selection)
+    && Object.entries(item.usage).every(([key, value]) => JSON.stringify(multipleAfter.items[index].usage[key]) === JSON.stringify(value))), 'Editing selection changed existing values');
+  await field(3).locator('tbody tr').last().click();
+  await field(3).locator('.resource-ordering-moves button').first().click();
+  // The fixture's reorder endpoint reverses its input collection.
+  await page.waitForFunction(() => JSON.parse(document.querySelectorAll('.sb-selection-field')[3].querySelector('[data-sb-value]').value).items[0].selection.id === 'local-images:/report.pdf');
 
   await page.goto('http://127.0.0.1:8791?fieldFixture=1&usageMode=editable');
   await field(0).locator('.sb-collection-count-toggle').waitFor();
@@ -84,12 +87,12 @@ async page => {
   await field(0).locator('.resource-usage-editor input[type=text]').fill('Unsaved external description');
   check((await stored(0)).items[0].usage['media.alt'] === 'Unsaved external description', 'External edits did not persist');
   await field(0).getByRole('button', { name: 'Replace', exact: true }).click();
-  await picker().locator('.resource-picker-titlebar').waitFor();
+  await picker().locator('.sb-browser-heading-copy').waitFor();
   if (!await picker().locator('.resource-info-panel').count()) await picker().getByRole('button', { name: 'Toggle information', exact: true }).click();
   await picker().locator('.resource-usage-editor input[type=text]').waitFor();
   check(await picker().locator('.resource-usage-editor input[type=text]').inputValue() === 'Unsaved external description', 'Picker lost external edits');
   await picker().locator('.resource-usage-editor input[type=text]').fill('Picker description');
-  await picker().locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  await picker().locator('.resource-picker-select').click();
   await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   check((await stored(0)).items[0].usage['media.alt'] === 'Picker description', 'Picker edits did not sync back');
   check(await field(0).locator('.resource-usage-editor input[type=text]').inputValue() === 'Picker description', 'External usage renderer stale');
@@ -99,9 +102,9 @@ async page => {
     await field(1).getByRole('button', { name: 'Information', exact: true }).click();
   }
   await field(1).getByRole('button', { name: 'Change thumbnail', exact: true }).click();
-  await picker().locator('.resource-picker-titlebar').waitFor();
-  check(await picker().locator('.resource-picker-titlebar strong').innerText() === 'Select thumbnail', 'Nested thumbnail title missing');
-  check(await picker().locator('.resource-picker-titlebar > span').innerText() === 'Report PDF', 'Nested thumbnail subtitle missing');
+  await picker().locator('.sb-browser-heading-copy').waitFor();
+  check((await picker().locator('.sb-browser-title').innerText()).trim() === 'Select thumbnail', 'Nested thumbnail title missing');
+  check(await picker().locator('.sb-browser-description').innerText() === 'Report PDF', 'Nested thumbnail subtitle missing');
   await picker().locator('.resource-browser-item').first().waitFor();
   await picker().locator('.resource-item-title').getByText('First image', { exact: true }).click();
   await picker().locator('.resource-actions').getByRole('button', { name: 'Use as thumbnail', exact: true }).click();

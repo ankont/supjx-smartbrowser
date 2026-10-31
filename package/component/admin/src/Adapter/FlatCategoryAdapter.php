@@ -51,6 +51,7 @@ final class FlatCategoryAdapter extends CategoryAdapter
             $parentPath = $this->categoryPathTitles($parentId);
             $resource['metadata']['location'] = end($parentPath);
             $resource['metadata']['locationPath'] = implode(' / ', $parentPath);
+            $resource['metadata']['locationDepth'] = max(0, count($parentPath) - 1);
             $resource['navigable'] = false;
             $nodes[] = $resource;
         }

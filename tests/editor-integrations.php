@@ -70,6 +70,11 @@ namespace {
     $plugin->replaceNativeEditor();
     $check($input->values['option'] === 'com_smartbrowser' && $input->values['view'] === 'editor' && $input->values['id'] === 69 && $input->values['Itemid'] === 23, 'Article-context dispatch lost identity or menu');
     $check($app->redirect === null, 'Article context was redirected outside its menu');
+    $input->values=['option'=>'com_content','task'=>'editor.reload','a_id'=>69,'sbEditor'=>1,'Itemid'=>23];
+    $input->method='POST';
+    $plugin->replaceNativeEditor();
+    $check($input->values['option'] === 'com_smartbrowser' && $input->values['task'] === 'editor.reload' && $input->values['id'] === 69, 'Category reload escaped the article-context editor');
+    $input->method='GET';
     $input->values=['option'=>'com_content','task'=>'article.edit','id'=>11,'a_id'=>69,'sbNative'=>1];
     $plugin->replaceNativeEditor();
     $check($app->getUserState('com_smartbrowser.editor.native') === ['com_content',69], 'Native fallback used menu/category ID instead of a_id');
@@ -107,7 +112,7 @@ namespace {
             $plugin->returnFromNativeEditor();
             $input->method='GET'; $input->values=['option'=>$component, 'view'=>$prefix];
             $plugin->returnFromNativeEditor(); $check($app->redirect === null, 'Validation/edit view returned prematurely');
-            $input->values['view']=$list;
+            $input->values['view']=$action === 'cancel' ? '' : $list;
             $plugin->returnFromNativeEditor();
             $check($app->redirect === '/site/browser' && $app->getUserState('com_smartbrowser.editor.native_return') === null, 'Native completion lost original page');
         }
@@ -115,5 +120,64 @@ namespace {
     $app->states=[]; $input->values=['option'=>'com_content','sbNative'=>1,'sbReturn'=>base64_encode('https://evil.test/')];
     $plugin->returnFromNativeEditor();
     $check($app->getUserState('com_smartbrowser.editor.native_return') === null, 'External fallback return accepted');
+    $app->site=false;
+    \Joomla\CMS\Component\ComponentHelper::$values = ['replace_articles'=>1];
+    foreach ([false, true] as $explicitNative) {
+        $app->states=[]; $app->redirect=null;
+        if ($explicitNative) {
+            $input->method='GET'; $input->values=['option'=>'com_content','task'=>'article.edit','sbNative'=>1];
+            $plugin->returnFromNativeEditor();
+        }
+        $input->method='POST'; $input->values=['option'=>'com_content','task'=>'article.cancel'];
+        $plugin->returnFromNativeEditor();
+        $input->method='GET'; $input->values=['option'=>'com_content','view'=>'articles'];
+        $plugin->returnFromNativeEditor();
+        $check(str_contains($app->redirect ?? '', 'adapter=articles') && str_contains($app->redirect, 'option=com_smartbrowser'), 'Native Cancel without explicit return escaped to native articles');
+    }
+    $app->states=[]; $app->redirect=null;
+    \Joomla\CMS\Component\ComponentHelper::$values = [];
+    $input->method='POST'; $input->values=['option'=>'com_content','task'=>'article.cancel'];
+    $plugin->returnFromNativeEditor();
+    $check($app->getUserState('com_smartbrowser.editor.native_return') === null, 'Disabled integration hijacked native Cancel');
+    $input->method='GET';
+    \Joomla\CMS\Component\ComponentHelper::$values = ['replace_articles'=>'1', 'replace_menus'=>'1', 'hide_component_menu'=>'1'];
+    $rewrite = new \ReflectionMethod($plugin, 'rewrite');
+    foreach ([['articles', '', 'articles'], ['menus', 'menu:main', 'main'], ['flat-menus', 'menu:main', 'main']] as [$adapter, $scope, $expected]) {
+        $input->values = ['option'=>'com_smartbrowser', 'view'=>'browser', 'adapter'=>$adapter, 'browseRoot'=>$scope, 'integrated'=>1];
+        $make = static fn ($id, $link) => new class($id, $link) {
+            public bool $active = false;
+            public string $title = 'Fixture menu';
+            public function __construct(public string $id, public string $link) {}
+        };
+        $items = [$make('articles', 'index.php?option=com_content&view=articles'), $make('main', 'index.php?option=com_menus&view=items&menutype=main'), $make('other', 'index.php?option=com_menus&view=items&menutype=other')];
+        $rewrite->invokeArgs($plugin, [&$items]);
+        $active = array_values(array_filter($items, static fn ($item) => $item->active));
+        $check(count($active) === 1 && $active[0]->id === $expected, 'Integrated browser lost the native admin menu path');
+    }
+    foreach ([
+        ['adapter=menus&mode=manage&integrated=1&browseRoot=menu%3Ahidden&nativeMenuTitle=Hidden+Menu&node=menu%3Ahidden', 'hidden'],
+        ['adapter=menus&mode=manage&fromDashboard=1&node=menu%3Amainmenu', 'all'],
+        ['adapter=flat-menus&mode=manage&fromDashboard=1&node=menu%3Amainmenu', 'all'],
+        ['adapter=menus&mode=manage&browseRoot=menu%3Ahidden&node=menu%3Ahidden', 'hidden'],
+        ['adapter=menus&mode=manage&browseRoot=menu%3Ahidden&node=menu-item%3A42', 'hidden'],
+    ] as [$query, $expected]) {
+        parse_str('option=com_smartbrowser&view=browser&' . $query, $input->values);
+        $parent = new class { public bool $active = false; public function getParent() { return null; } };
+        $items = [];
+        foreach (['all', 'hidden', 'mainmenu'] as $menu) $items[] = new class($menu, $parent) {
+            public bool $active = false;
+            public string $title = 'Fixture menu';
+            public string $link;
+            public function __construct(public string $id, private object $parent) { $this->link = 'index.php?option=com_menus&view=items' . ($id === 'all' ? '' : '&menutype=' . $id); }
+            public function getParent() { return $this->parent; }
+        };
+        $rewrite->invokeArgs($plugin, [&$items]);
+        $active = array_values(array_filter($items, static fn ($item) => $item->active));
+        $check(count($active) === 1 && $active[0]->id === $expected && $parent->active, 'Dashboard return lost the active menu and its parent');
+        $href = 'index.php?option=com_smartbrowser&view=browser&' . $query;
+        foreach ($items as $item) {
+            if ($item->id !== $expected) $check(!str_starts_with($href, $item->link), 'Joomla prefix matching would activate another menu');
+        }
+    }
     echo "Editor entry points, client settings, fallback, tokens and safe returns OK\n";
 }

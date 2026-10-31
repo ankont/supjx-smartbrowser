@@ -21,7 +21,7 @@ test('archive action follows publish state through article, category, and tag ad
   assert.match(content, /2 => 'archive'/);
   assert.match(content, /2 => 'unarchive'/);
   assert.match(content, /'published' => \[0, 1, 2, -2\]/);
-  assert.match(content, /default => in_array\(\$state, \[0, 1\], true\)/);
+  assert.match(content, /default => in_array\(\$state, .*BrowserDefaults::states\(\), true\)/);
 });
 
 test('clipped breadcrumb names retain their full title as a tooltip', async () => {

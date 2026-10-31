@@ -3,6 +3,25 @@ import test from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { flatRootUrl, flatUiStorageKey, flatViewUrl, regularViewUrl } from '../resources/js/core/flatViewNavigation.js';
 
+test('flat parent navigation changes scope without losing the original boundary or return view', () => {
+  for (const [adapter, child, parent, root] of [
+    ['articles', 'category:12', 'category:7', 'category:3'],
+    ['categories', 'category:12', 'category:7', 'category:3'],
+    ['media', 'local-images:/photos/2026', 'local-images:/photos', 'local-images:/'],
+    ['menus', 'menu-item:12', 'menu-item:7', 'menu:main'],
+    ['tags', 'tag:12', 'tag:7', 'tag:3'],
+  ]) {
+    const flat = flatViewUrl('https://example.test/?adapter=' + adapter, adapter, child, root);
+    const next = new URL(flatViewUrl(flat, adapter, parent, root));
+    assert.equal(next.searchParams.get('adapter'), 'flat-' + adapter);
+    assert.equal(next.searchParams.get('flatFromBrowseRoot'), root);
+    assert.equal(next.searchParams.get('flatFromNode'), parent);
+    const regular = new URL(regularViewUrl(next.toString(), root));
+    assert.equal(regular.searchParams.get('node'), parent);
+    assert.equal(regular.searchParams.get('browseRoot'), root);
+  }
+});
+
 test('flat breadcrumb returns to the natural root without losing the regular-view destination', () => {
   const flat = flatViewUrl('https://example.test/index.php?adapter=articles&node=category%3A12', 'articles', 'category:12', null);
   const root = new URL(flatRootUrl(flat, 'content:root'));
@@ -130,7 +149,8 @@ test('flat view control follows filters and uses a labelled local icon', async (
   const adapter = await readFile(new URL('../package/component/admin/src/Adapter/FlatArticleAdapter.php', import.meta.url), 'utf8');
   const breadcrumb = await readFile(new URL('../resources/js/components/ResourceBreadcrumb.vue', import.meta.url), 'utf8');
   const css = await readFile(new URL('../package/component/media/css/smartbrowser.css', import.meta.url), 'utf8');
-  assert.match(actions, /resource-filter-buttons[\s\S]*resource-flat-toggle[\s\S]*resource-manager-link/);
+  assert.match(actions, /resource-filter-buttons[\s\S]*resource-flat-toggle/);
+  assert.match(actions, /sb-heading-controls[\s\S]*resource-manager-link/);
   assert.match(actions, /resource-flat-toggle[^>]*:title="t\('COM_SMARTBROWSER_FLAT_VIEW'\)"[^>]*:aria-label="t\('COM_SMARTBROWSER_FLAT_VIEW'\)"/);
   assert.match(actions, /fas fa-layer-group/);
   assert.match(adapter, /'icon' => \$this->browseRoot \? 'fas fa-box' : 'fas fa-newspaper'/);
@@ -138,7 +158,7 @@ test('flat view control follows filters and uses a labelled local icon', async (
   assert.match(css, /\.resource-actions \.resource-flat-toggle \{[^}]*background: #e8f2fb;/s);
 });
 
-test('breadcrumb keeps its root as an icon and tree handle stays outside flat view', async () => {
+test('breadcrumb keeps its root as an icon and flat view retains an expandable tree', async () => {
   const [breadcrumb, app, css, browser] = await Promise.all([
     readFile(new URL('../resources/js/components/ResourceBreadcrumb.vue', import.meta.url), 'utf8'),
     readFile(new URL('../resources/js/components/SmartBrowserApp.vue', import.meta.url), 'utf8'),
@@ -148,8 +168,8 @@ test('breadcrumb keeps its root as an icon and tree handle stays outside flat vi
   assert.match(breadcrumb, /const first = items\[0\] \|\| props\.root/);
   assert.match(breadcrumb, /index === 0 && iconOnlyRoot \? crumb\.title/);
   assert.match(breadcrumb, /v-if="index !== 0 \|\| !iconOnlyRoot" class="resource-breadcrumb-title"/);
-  assert.match(app, /:icon-only-root="!flatActive && state\.breadcrumb\.length > 1"/);
-  assert.match(app, /v-if="!flatActive \|\| collectionMode" type="button" class="resource-sidebar-handle"/);
+  assert.match(app, /:icon-only-root="toolbarBreadcrumb\.length > 1"/);
+  assert.match(app, /<div class="sb-tree-handle-rail">\s*<button type="button" class="resource-sidebar-handle"/);
   assert.match(app, /treeCollapsed = !treeCollapsed/);
   assert.match(css, /\.smartbrowser-layout\.tree-collapsed \{ grid-template-columns: 0 14px minmax\(0, 1fr\); \}/);
   for (const key of ['COM_SMARTBROWSER_HIDE_TREE', 'COM_SMARTBROWSER_SHOW_TREE']) assert.match(browser, new RegExp(`'${key}'`));

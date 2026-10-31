@@ -54,16 +54,27 @@ final class ArticleMediaSelection
     public static function imageUsage(object $form, string $role): array
     {
         $prefix = $role === 'intro' ? 'image_intro' : 'image_fulltext';
-        return ['media.alt' => (string) $form->getValue($prefix . '_alt', 'images', ''),
+        $class = method_exists($form, 'getField') && $form->getField('imgclass_' . $role, 'images') ? 'imgclass_' . $role : 'float_' . $role;
+        $usage = ['media.alt' => (string) $form->getValue($prefix . '_alt', 'images', ''),
             'media.decorative' => (bool) $form->getValue($prefix . '_alt_empty', 'images', false),
             'media.caption' => (string) $form->getValue($prefix . '_caption', 'images', ''),
-            'media.class' => (string) $form->getValue('float_' . $role, 'images', '')];
+            'media.class' => (string) $form->getValue($class, 'images', '')];
+        if ($class !== 'float_' . $role && $form->getField('float_' . $role, 'images')) $usage['media.figureClass'] = (string) $form->getValue('float_' . $role, 'images', '');
+        return $usage;
     }
 
     public static function linkEntry(object $form, string $slot): ?array
     {
         $url = (string) $form->getValue('url' . $slot, 'urls', '');
         if ($url === '') return null;
+        try {
+            $entry = SelectionAddress::decode($url);
+            if ($entry) {
+                $entry['usage']['link.text'] = (string) $form->getValue('url' . $slot . 'text', 'urls', '');
+                $entry['usage']['link.target'] = (string) $form->getValue('target' . $slot, 'urls', '');
+                return $entry;
+            }
+        } catch (\Throwable $error) { /* Preserve malformed legacy values in the native link editor. */ }
         $type = str_starts_with($url, 'mailto:') ? 'mail' : (str_starts_with($url, 'tel:') ? 'tel' : (str_starts_with($url, '#') ? 'fragment' : 'web'));
         return ['selection' => DirectLinkUri::reference($type, $url), 'usage' => [
             'link.text' => (string) $form->getValue('url' . $slot . 'text', 'urls', ''),

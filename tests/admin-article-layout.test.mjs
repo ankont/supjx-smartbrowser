@@ -27,6 +27,6 @@ test('administrator articles reuse native fieldset hierarchy and component conte
     assert.match(css, /is-aligned-editor \.col-lg-3 \.control-group \{ flex-direction: column;/);
     assert.ok(view.includes("versions('com_content.article', $this->resourceId)"));
     assert.ok(view.includes("preview($url, 'JGLOBAL_PREVIEW', false)"));
-    assert.ok(view.includes("'smartbrowser.cancel', 'times', '', 'JCLOSE'"));
+    assert.ok(view.includes("'smartbrowser.cancel', 'times', '', 'JCANCEL'"));
     assert.match(view, /isClient\('administrator'\)[\s\S]*?set\('hidemainmenu', true\)/);
 });

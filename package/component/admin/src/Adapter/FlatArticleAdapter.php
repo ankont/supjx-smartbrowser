@@ -54,7 +54,7 @@ class FlatArticleAdapter extends ArticleCollectionAdapter
                 }
             }
         }
-        $presentation = $this->articlePresentation(true, true, false);
+        $presentation = $this->articlePresentation(true, true, true);
         $presentation['filters'] = array_values(array_filter($presentation['filters'], static fn (array $filter): bool => $filter['id'] !== 'category'));
         $presentation['filters'][] = [
             'id' => 'category', 'label' => 'COM_SMARTBROWSER_CATEGORY', 'type' => 'select', 'default' => '', 'options' => $this->categoryOptions(),
@@ -75,6 +75,7 @@ class FlatArticleAdapter extends ArticleCollectionAdapter
             $path = $this->categoryPathTitles($categoryId);
             $item['metadata']['location'] = end($path);
             $item['metadata']['locationPath'] = implode(' / ', $path);
+            $item['metadata']['locationDepth'] = max(0, count($path) - 1);
         }
         unset($item);
 

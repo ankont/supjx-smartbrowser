@@ -11,24 +11,47 @@ use SuperSoft\Component\Smartbrowser\Site\Service\FrontendEditorService;
 defined('_JEXEC') or die;
 class EditorController extends BaseController
 {
+    public function reload(): void
+    {
+        if (!Session::checkToken()) throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+        $type = $this->input->getCmd('type');
+        $id = $this->input->getInt('id');
+        if ($type !== 'article') throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+        $data = $this->input->post->get('jform', [], 'array');
+        try {
+            (new FrontendEditorService($this->app))->reloadArticle($id, $data);
+        } catch (\Throwable $error) {
+            if ((int) $error->getCode() === 403) throw $error;
+            $this->app->setUserState('com_smartbrowser.editor.failure', [
+                'type' => $type, 'id' => $id,
+                'message' => $error->getMessage() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'),
+                'data' => $data,
+            ]);
+        }
+        $this->setRedirect($this->editorUrl($type, $id, $data));
+    }
+
     public function save(): void
     {
         $type = $this->input->getCmd('type');
         $id = $this->input->getInt('id');
         $apply = $this->input->post->getCmd('editorAction') === 'apply';
         $copy = $type === 'article' && $id > 0 && $this->input->post->getCmd('editorAction') === 'copy';
+        $saveNew = $type === 'article' && $this->app->isClient('administrator') && $this->input->post->getCmd('editorAction') === 'save2new';
         $data = $this->input->post->get('jform', [], 'array');
         foreach (['parent_id', 'menutype'] as $key) {
             if (isset($data[$key])) $this->input->set($key, $data[$key]);
         }
         try {
             if (!Session::checkToken()) throw new \RuntimeException(Text::_('JINVALID_TOKEN'), 403);
+            if ($saveNew && !$this->app->getIdentity()->authorise('core.create', 'com_content')) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
             $savedId = (new FrontendEditorService($this->app))->save($type, $id, $data, $copy);
             if (!$apply) (new FrontendEditorService($this->app))->release($type, $savedId);
             if ($copy) (new FrontendEditorService($this->app))->release($type, $id);
             $url = ($apply || $copy)
                 ? $this->editorUrl($type, $savedId, $data)
                 : $this->completionUrl($type);
+            if ($saveNew) $url = $this->editorUrl($type, 0, []);
             $this->setRedirect($url, Text::_('COM_SMARTBROWSER_FRONTEND_EDITOR_SAVED'));
         } catch (\Throwable $error) {
             $this->app->setUserState('com_smartbrowser.editor.failure', [

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="plugin" group="fields" method="upgrade">
   <name>PLG_FIELDS_SMARTBROWSERPICKER</name>
-    <version>4.0.0</version>
-  <creationDate>2026-10</creationDate>
-  <author>SuperSoft</author>
+    <version>5.0.0</version>
+  <creationDate>2026-11-01</creationDate>
+  <author>SuperSoft — Kontarinis Andreas</author>
   <license>GNU General Public License version 2 or later</license>
   <description>PLG_FIELDS_SMARTBROWSERPICKER_XML_DESCRIPTION</description>
   <namespace path="src">SuperSoft\Plugin\Fields\Smartbrowserpicker</namespace>

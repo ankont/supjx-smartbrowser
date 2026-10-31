@@ -5,9 +5,9 @@
         <th class="resource-type-column resource-details-select-column" scope="col">
           <span class="resource-details-select-controls">
             <label v-if="selectionControls" class="resource-details-select-all">
-              <input type="checkbox" :checked="allSelected" :aria-label="t('COM_SMARTBROWSER_SELECT_ALL')" @change="$emit('select-all')">
+              <input type="checkbox" :checked="allSelected" :title="t('COM_SMARTBROWSER_SELECT_ALL')" :aria-label="t('COM_SMARTBROWSER_SELECT_ALL')" @change="$emit('select-all')">
             </label>
-            <button v-if="orderingField" type="button" class="resource-ordering-sort" :title="t('JGRID_HEADING_ORDERING')" @click="$emit('sort', orderingField)">
+            <button v-if="orderingField" type="button" class="resource-ordering-sort" :title="t('COM_SMARTBROWSER_ORDERING')" :aria-label="t('COM_SMARTBROWSER_ORDERING')" @click="$emit('sort', orderingField)">
               <span :class="sortIcon(orderingField)" aria-hidden="true" />
             </button>
           </span>
@@ -62,6 +62,7 @@
               <span v-else-if="resource.metadata.language === '*'" class="resource-language-all fas fa-asterisk" aria-hidden="true" />
               <span class="resource-language-name">{{ cell(resource, column) }}</span>
             </span>
+            <span v-else-if="column.id === 'location'" class="resource-location-path"><span v-if="locationParts(resource, column).parent" class="resource-location-parents">{{ locationParts(resource, column).parent }}</span><span class="resource-location-current">{{ locationParts(resource, column).leaf }}</span></span>
             <span v-else class="resource-cell-ellipsis">{{ cell(resource, column) }}</span>
             <span v-if="column.overlays && resource.overlays?.length" class="resource-row-overlays">
               <template v-for="overlay in resource.overlays.filter((item) => item.id !== 'status')" :key="overlay.id">
@@ -157,6 +158,7 @@ const formatDate = (value) => {
 };
 const valueAt = (resource, path) => String(path || '').split('.').reduce((value, part) => value?.[part], resource);
 const cell = (resource, column) => {
+  if (column.id === 'location') return String(resource.metadata?.locationPath || resource.metadata?.location || resource.metadata?.categoryPath || resource.metadata?.parentPath || resource.metadata?.parent || '').replaceAll(' / ', ' » ');
   if (column.id === 'size') return resource.kind === 'node' ? '' : formatSize(resource.metadata.size);
   if (column.id === 'dimension') return dimensions(resource);
   const source = column.source || `metadata.${column.id}`;
@@ -166,11 +168,15 @@ const cell = (resource, column) => {
   if (column.format === 'date' || ['created', 'modified'].includes(column.id)) return formatDate(value);
   if (column.format === 'mediaType') return props.t({ folder: 'COM_SMARTBROWSER_FOLDER', image: 'COM_SMARTBROWSER_MEDIA_IMAGE', document: 'COM_SMARTBROWSER_MEDIA_DOCUMENT', video: 'COM_SMARTBROWSER_MEDIA_VIDEO', audio: 'COM_SMARTBROWSER_MEDIA_AUDIO' }[value] || 'COM_SMARTBROWSER_RESOURCE');
   if (column.format === 'language' && value === '*') return props.t('COM_SMARTBROWSER_ALL_LANGUAGES');
-  return value ?? '';
+  return ['categoryPath', 'tagPaths'].includes(column.id) ? String(value ?? '').replaceAll(' / ', ' » ') : value ?? '';
 };
 const cellTitle = (resource, column) => column.id === 'location'
-  ? String(resource.metadata?.locationPath || cell(resource, column) || '')
+  ? String(cell(resource, column) || '')
   : column.format === 'status' ? status(resource).label : String(cell(resource, column) || '');
+const locationParts = (resource, column) => {
+  const text = String(cell(resource, column)), index = text.lastIndexOf(' » ');
+  return index < 0 ? { parent: '', leaf: text } : { parent: text.slice(0, index), leaf: text.slice(index) };
+};
 const status = (resource) => ({
   icon: resource.statusPresentation?.icon || 'fas fa-question-circle',
   label: resource.statusPresentation?.label || cell(resource, { source: 'metadata.stateLabel' }),

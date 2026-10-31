@@ -50,13 +50,13 @@ const run = handler => async editor => {
   catch (error) { Joomla.renderMessages({ error: [error.message] }); }
 };
 JoomlaEditorButton.registerAction('smartbrowser-media', run(async editor => {
-  const result = await window.SmartBrowserPicker.open({ url: settings().url, adapter: 'media', selectionTarget: 'item',
+  const result = await window.SmartBrowserPicker.open({ url: settings().url, viewPreferenceKey: 'supjx.smartbrowser.insert.media', adapter: 'media', selectionTarget: 'item',
     allowedResourceTypes: ['image', 'document', 'video', 'audio'], resultFormat: 'usage',
     selectionProfile: { 'media.alt': {}, 'media.decorative': {}, 'media.loading': { default: 'auto' }, 'visual.thumbnailOverride': {} } });
   if (result) editor.replaceSelection(await mediaMarkup(result.selection, result.usage[result.selection.id]));
 }));
 JoomlaEditorButton.registerAction('smartbrowser-article', run(async editor => {
-  const resource = await window.SmartBrowserPicker.open({ url: settings().url, adapter: 'articles', selectionTarget: 'item', allowedResourceTypes: ['article'] });
+  const resource = await window.SmartBrowserPicker.open({ url: settings().url, viewPreferenceKey: 'supjx.smartbrowser.insert.article', adapter: 'articles', selectionTarget: 'item', allowedResourceTypes: ['article'] });
   if (!resource) return;
   const id = /^article:(\d+)$/.exec(resource.id)?.[1];
   if (!id) throw new Error('Invalid article reference.');
@@ -66,7 +66,7 @@ JoomlaEditorButton.registerAction('smartbrowser-article', run(async editor => {
   editor.replaceSelection(link.outerHTML);
 }));
 JoomlaEditorButton.registerAction('smartbrowser-menu', run(async editor => {
-  const resource = await window.SmartBrowserPicker.open({ url: settings().url, adapter: 'menus', selectionTarget: 'node', allowedResourceTypes: ['menu-item'] });
+  const resource = await window.SmartBrowserPicker.open({ url: settings().url, viewPreferenceKey: 'supjx.smartbrowser.insert.menu', adapter: 'menus', selectionTarget: 'node', allowedResourceTypes: ['menu-item'] });
   if (!resource) return;
   const id = /^menu-item:([1-9]\d*)$/.exec(resource.id)?.[1];
   if (!id) throw new Error('Invalid menu reference.');

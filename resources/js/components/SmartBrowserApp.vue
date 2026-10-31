@@ -1,11 +1,15 @@
 <template>
-  <div ref="shellElement" class="smartbrowser-shell" :style="{ ...gridWidthStyle, '--sb-browser-available-height': availableHeight }">
-    <div v-if="pickerContext" class="resource-picker-titlebar"><strong>{{ pickerTitle }}</strong><span v-if="pickerContext.subtitle" :title="pickerContext.subtitle">{{ pickerContext.subtitle }}</span></div>
+  <div ref="shellElement" class="smartbrowser-shell sb-redesigned-browser" :class="{ 'is-site': options.application === 'site', 'is-picker': options.mode === 'select' || !!pickerContext, 'is-contained': options.mode === 'select' || !!pickerContext || displayMode === 'focus' }" :style="{ ...gridWidthStyle, '--sb-browser-available-height': availableHeight }">
     <div v-if="state.busy" class="smartbrowser-busy" role="status" aria-live="polite">
       <span class="spinner-border" aria-hidden="true" />
       <span>{{ t('COM_SMARTBROWSER_WORKING') }}</span>
     </div>
     <ResourceActions
+      ref="browserHeader"
+      :native-toolbar-target="options.nativeToolbarTarget"
+      :heading-title="pickerContext || options.mode === 'select' ? pickerTitle : browserTitle"
+      :heading-subtitle="pickerContext || options.mode === 'select' ? pickerContext?.subtitle : options.browserDescription"
+      :heading-icon="adapterIcon"
       :actions="state.actions"
       :available="action => actionAvailable(action, selection)"
       :selection="selection"
@@ -13,6 +17,7 @@
       :can-cancel="typeof pickerContext?.cancel === 'function'"
       :flat-available="flatAvailable"
       :flat-active="flatActive"
+      :flat-busy="flatNavigating"
       :filters-open="filtersOpen"
       :filters="state.presentation.filters"
       :filter-values="state.filters"
@@ -44,22 +49,21 @@
         </button>
       </template>
     </ResourceActions>
-    <details v-if="collectionMode" class="resource-picker-collection">
-      <summary><span class="fas fa-chevron-right resource-picker-collection-chevron" aria-hidden="true" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: <span>{{ state.selectedIds.length }}</span></summary>
-      <CollectionView v-if="pickerCollection" :model="pickerCollection" :api="api" :config="pickerCollectionConfig" :t="t" />
-    </details>
     <ResourceBatchDialog ref="batchDialog" :selection="selection" :adapter="options.adapter" :filters="state.presentation.filters" :batch-options="state.presentation.batchOptions" :sort-fields="state.presentation.sortFields" :ordering-available="reorderVisible" :t="t" @apply="applyBatch" />
-    <div class="smartbrowser-layout" :class="{ 'flat-mode': flatActive && !collectionMode, 'tree-collapsed': treeCollapsed }">
-      <ResourceTree v-if="(!flatActive || collectionMode) && !treeCollapsed" :adapters="pickerContext?.allowedAdapters?.length ? (options.adapters || []).filter(adapter => pickerContext.allowedAdapters.includes(adapter.id.replace(/^flat-/, ''))) : options.adapters" :active-adapter="options.adapter" :roots="state.roots" :nodes="flatActive ? [] : state.nodes" :breadcrumb="state.breadcrumb" :selected-node="state.selectedNode" :t="t" @open="load" @adapter="switchAdapter" />
-      <button v-if="!flatActive || collectionMode" type="button" class="resource-sidebar-handle" :title="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-label="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-expanded="!treeCollapsed" @click="treeCollapsed = !treeCollapsed">
-        <span :class="treeCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'" aria-hidden="true" />
+    <div class="smartbrowser-layout" :class="{ 'tree-collapsed': treeCollapsed }">
+      <ResourceTree v-if="!treeCollapsed && (!treeApi || flatTree)" :adapters="treeAdapters" :active-adapter="options.adapter" :roots="flatTree?.roots || state.roots" :nodes="flatTree?.nodes || state.nodes" :breadcrumb="flatTree?.breadcrumb || state.breadcrumb" :selected-node="flatTree?.nodeId || state.selectedNode" :t="t" @open="openTreeNode" @adapter="switchAdapter" />
+      <div class="sb-tree-handle-rail">
+      <button type="button" class="resource-sidebar-handle" :title="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-label="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-expanded="!treeCollapsed" :aria-busy="flatTreeLoading" @click="treeCollapsed = !treeCollapsed">
+        <span v-if="flatTreeLoading" class="spinner-border spinner-border-sm" aria-hidden="true" />
+        <span v-else :class="treeCollapsed ? 'fas fa-chevron-right' : 'fas fa-chevron-left'" aria-hidden="true" />
       </button>
+      </div>
       <main class="resource-main">
         <ResourceToolbar
-          :breadcrumb="state.breadcrumb"
+          :breadcrumb="toolbarBreadcrumb"
           :root="state.roots[0]"
           :root-icon="openNodeIcon"
-          :icon-only-root="!flatActive && state.breadcrumb.length > 1"
+          :icon-only-root="toolbarBreadcrumb.length > 1"
           :search="state.search"
           :sort-by="state.sortBy"
           :sort-direction="state.sortDirection"
@@ -89,18 +93,19 @@
           @toggle-thumbnails="state.viewOptions.detailsThumbnails = !state.viewOptions.detailsThumbnails"
           @toggle-date-field="toggleDateField"
           @toggle-column="toggleColumn"
-          @view="state.activeView = $event"
+          @view="changeView"
           @info="toggleInfo"
         />
         <div
           class="resource-browser"
-          :class="{ loading: state.loading, 'is-dragging': dragging, 'info-open': showInfo, 'usage-open': forceUsageInfo }"
+          :aria-busy="renderLoading"
+          :class="{ loading: renderLoading, 'is-dragging': dragging, 'info-open': showInfo, 'usage-open': forceUsageInfo }"
           @dragenter.prevent="dragging = isMedia"
           @dragover.prevent
           @dragleave.self="dragging = false"
           @drop.prevent="drop"
         >
-          <div v-if="state.loading" class="resource-loader"><span class="spinner-border" aria-hidden="true" /></div>
+          <div v-if="renderLoading" class="resource-loader" role="status" aria-live="polite"><span class="spinner-border" aria-hidden="true" /><span>{{ t('COM_SMARTBROWSER_LOADING') }}</span></div>
           <div v-else-if="!resources.length" class="resource-empty">
             <span :class="state.search ? 'fas fa-search' : isMedia ? 'fas fa-cloud-upload-alt' : adapterIcon" aria-hidden="true" />
             <p>{{ state.search ? t('COM_SMARTBROWSER_NO_RESULTS') : isMedia ? t('COM_SMARTBROWSER_DROP_UPLOAD') : t('COM_SMARTBROWSER_EMPTY_STATE') }}</p>
@@ -135,25 +140,34 @@
             @sort="sortFromTable"
           />
           <div v-if="isMedia && dragging" class="resource-drop-overlay"><span class="fas fa-cloud-upload-alt" />{{ t('COM_SMARTBROWSER_DROP_UPLOAD') }}</div>
-          <ResourceInfoPanel v-if="showInfo" :resource="focusedResource" :fields="focusedResource?.collectionPresentation?.infoFields || state.presentation.infoFields" :t="t"
+          <div v-if="showInfo" class="sb-browser-info-rail">
+          <ResourceInfoPanel :resource="focusedResource" :fields="focusedResource?.collectionPresentation?.infoFields || state.presentation.infoFields" :t="t"
             :usage-definitions="usageDefinitions" :usage-values="usageValues" :usage-errors="usageErrors[resourceKey(focusedResource)] || {}"
             :usage-editors="pickerContext?.editors" :resolve-reference="resolveUsageReference" :usage-revision="usageRevision"
             :preview-actions="previewActions" :preview-context="previewContext" :can-preview="Boolean(resourcePreview(focusedResource)) && driverFor(focusedResource).canPreview(focusedResource) && !state.busy" @preview="runItemAction(resourcePreview(focusedResource), focusedResource)" @usage-change="setUsage" />
+          </div>
         </div>
       </main>
     </div>
+    <details v-if="pickerMode" class="resource-picker-collection">
+      <summary><span class="fas fa-chevron-up resource-picker-collection-chevron" aria-hidden="true" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: <span>{{ state.selectedIds.length }}</span></summary>
+      <div class="resource-picker-collection-body"><CollectionView v-if="pickerCollection" :model="pickerCollection" :api="api" :config="pickerCollectionConfig" :t="t" /></div>
+    </details>
   </div>
 </template>
 
 <script setup>
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { createDisplayMode } from '../core/displayMode.js';
+import { observeBrowserLayout } from '../core/browserLayout.js';
 import ResourceActions from './ResourceActions.vue';
 import ResourceBatchDialog from './ResourceBatchDialog.vue';
 import ResourceInfoPanel from './ResourceInfoPanel.vue';
 import ResourceToolbar from './ResourceToolbar.vue';
 import ResourceTree from './ResourceTree.vue';
 import { flatRootUrl, flatUiStorageKey, flatViewUrl, regularViewUrl } from '../core/flatViewNavigation.js';
+import { isManagementBrowser } from '../services/PersistenceService.js';
+import { preferenceStorage } from '../core/userPreferences.js';
 import { columnCatalog } from '../core/columnCatalog.js';
 import { defaultResourceAction, resourcePreviewAction, modifiedResourceAction } from '../core/defaultResourceAction.js';
 import { createSelectionUsage } from '../core/selectionUsage.js';
@@ -172,13 +186,21 @@ const options = inject('smartBrowserOptions');
 const displayEnabled = options.application === 'site' && window.self === window.top;
 const displayMode = ref('normal');
 const shellElement = ref(null), availableHeight = ref('620px');
+const browserHeader = ref(null);
 let heightObserver;
+let stopLayout;
 const updateAvailableHeight = () => {
   const shell = shellElement.value;
   if (!shell) return;
   const container = shell.parentElement;
-  const style = getComputedStyle(container);
-  const bottomInset = parseFloat(style.paddingBottom) + parseFloat(style.borderBottomWidth);
+  let bottomInset = 0;
+  // The component template (e.g. Atum's padded body) also needs room below us.
+  // Counting only the app border makes an otherwise contained picker overflow.
+  for (let element = container; element; element = element.parentElement) {
+    const style = getComputedStyle(element);
+    bottomInset += (parseFloat(style.paddingBottom) || 0) + (parseFloat(style.borderBottomWidth) || 0) + (parseFloat(style.marginBottom) || 0);
+    if (element.hasAttribute('data-sb-focus') || element === document.body) break;
+  }
   const pageOffset = container.hasAttribute('data-sb-focus') ? 0 : window.scrollY;
   availableHeight.value = `${Math.max(0, window.innerHeight - shell.getBoundingClientRect().top - pageOffset - bottomInset)}px`;
 };
@@ -190,11 +212,13 @@ onMounted(() => {
   updateAvailableHeight();
   heightObserver = new ResizeObserver(updateAvailableHeight);
   heightObserver.observe(shellElement.value.parentElement);
+  stopLayout = observeBrowserLayout(shellElement.value, () => browserHeader.value?.element, options.nativeToolbarTarget);
   window.addEventListener('resize', updateAvailableHeight);
 });
 watch(displayMode, () => nextTick(updateAvailableHeight));
 onBeforeUnmount(() => {
   heightObserver?.disconnect();
+  stopLayout?.();
   window.removeEventListener('resize', updateAvailableHeight);
   displayController?.destroy();
 });
@@ -204,7 +228,9 @@ const registry = inject('viewRegistry');
 const { state, resources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection } = browser;
 const pickerContext = options.mode === 'select' ? options.pickerContext || options.selectionHost : options.selectionHost || null;
 const collectionMode = Boolean(pickerContext?.collectionMode);
+const pickerMode = options.mode === 'select' || !!pickerContext;
 const t = (key) => Joomla.Text?._(key, key) || key;
+const browserTitle = computed(() => t(options.adapters?.find(adapter => adapter.id === options.adapter)?.title || options.adapters?.find(adapter => adapter.id === options.adapter.replace(/^flat-/, ''))?.title || 'COM_SMARTBROWSER_RESOURCE'));
 const itemDrivers = new Map();
 const driverFor = resource => {
   const adapter = resource?.selection?.adapter || resource?.adapter;
@@ -241,16 +267,17 @@ const executeAction = async (action, targets) => {
 };
 onBeforeUnmount(() => itemDrivers.forEach(({ api, driver }) => { driver.destroy(); api.destroy(); }));
 let pickerCollection, updatingProjection = false;
+const toPickerResource = resource => collectionMode ? resource : { ...resource, selectionKey: undefined };
 const pickerCollectionConfig = { referenceItems: true, homogeneous: pickerContext?.homogeneous === true, readOnly: false, showCount: false,
   selectionProfile: pickerContext?.selectionProfile || {},
-  addressContract: pickerContext?.addressContract, adapter: options.adapter,
-  allowedAdapters: pickerContext?.allowedAdapters || (pickerContext?.collectionMode ? [] : [options.adapter]),
+  addressContract: pickerContext?.addressContract, adapter: options.adapter.replace(/^flat-/, ''),
+  allowedAdapters: pickerContext?.allowedAdapters || (pickerContext?.collectionMode ? [] : [options.adapter.replace(/^flat-/, '')]),
   allowedResourceTypes: options.allowedResourceTypes, selectionTarget: options.selectionTarget, maxSelections: pickerContext?.maxSelections || 500,
   selectedResources: true, informationPanel: false, multiple: options.multiple,
   items: pickerContext?.getCollectionSnapshot?.().items || [], layout: 'compact', allowRemove: true, allowOrdering: options.multiple && pickerContext?.allowOrdering !== false,
   contextActions: false, resourceActions: [{ id: 'selectionFocus', label: 'COM_SMARTBROWSER_USAGE_OPTIONS', icon: 'fas fa-pen', requiresSelection: true }],
   defaultResourceActionId: 'selectionFocus', apiBaseUrl: options.apiBaseUrl, csrfToken: options.csrfToken, application: options.application,
-  onResourceAction: (_action, resource) => { state.selectedResources[resourceKey(resource)] = resource; state.focusedId = resourceKey(resource); },
+  onResourceAction: (_action, resource) => { resource = toPickerResource(resource); state.selectedResources[resourceKey(resource)] = resource; state.focusedId = resourceKey(resource); },
 };
 const referenceApis = new Map();
 async function resolveUsageReference(reference, constraint = {}) {
@@ -295,15 +322,15 @@ driver.selectionHost = selectionHost;
 watch(() => [state.selectedIds, state.selectedResources], commitCollection, { deep: true, flush: 'sync' });
 onBeforeUnmount(commitCollection);
 const usageVersion = ref(0);
-if (collectionMode) {
+if (pickerMode) {
   pickerCollection = createCollectionState({ config: pickerCollectionConfig, api, translate: t, notify: detail => {
     updatingProjection = true;
     for (const entry of detail.items) {
       const resource = detail.resources.find(resource => resourceKey(resource) === referenceKey(entry.selection));
-      if (resource) for (const [key, value] of Object.entries(entry.usage)) usage.set(resource, key, value);
+      if (resource) for (const [key, value] of Object.entries(entry.usage)) usage.set(toPickerResource(resource), key, value);
     }
-    state.selectedResources = Object.fromEntries(detail.resources.map(resource => [resourceKey(resource), asPrimaryResource(resource)]));
-    state.selectedIds = detail.items.map(entry => referenceKey(entry.selection));
+    state.selectedResources = Object.fromEntries(detail.resources.map(toPickerResource).map(resource => [resourceKey(resource), asPrimaryResource(resource)]));
+    state.selectedIds = detail.items.map(entry => collectionMode ? referenceKey(entry.selection) : entry.selection.id);
     usageVersion.value++;
     updatingProjection = false;
     commitCollection();
@@ -317,8 +344,8 @@ if (collectionMode) {
 const pickerMaximized = ref(pickerContext?.isMaximized?.() || false);
 const pickerTitle = computed(() => {
   if (pickerContext?.title) return pickerContext.title;
-  const adapter = options.adapters?.find(adapter => adapter.id === options.adapter.replace(/^flat-/, ''));
-  return `${t('COM_SMARTBROWSER_SELECT_RESOURCE')} \u2014 ${t(adapter?.title || 'COM_SMARTBROWSER_RESOURCE')}`;
+  const adapter = options.adapters?.find(adapter => adapter.id === options.adapter) || options.adapters?.find(adapter => adapter.id === options.adapter.replace(/^flat-/, ''));
+  return `${t('COM_SMARTBROWSER_PICKER_SELECT_TITLE')} \u2014 ${t(adapter?.title || 'COM_SMARTBROWSER_RESOURCE')}`;
 });
 const usageRevision = ref(0);
 const usageErrors = ref({});
@@ -327,10 +354,10 @@ const usageDefinitions = computed(() => usage.definitions(focusedResource.value)
 const usageValues = computed(() => { usageVersion.value; return usage.get(focusedResource.value); });
 const forceUsageInfo = computed(() => Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length));
 const hasUsageProfile = Boolean(pickerContext && Object.keys(pickerContext.selectionProfile || {}).length);
-const pickerInfoOpen = ref(pickerContext?.initialInfoOpen === true || Object.values(pickerContext?.selectionProfile || {}).some(policy => policy !== false && policy?.presentation !== 'hidden') || state.showInfo);
+const pickerInfoOpen = ref(pickerContext?.initialInfoOpen === true || (typeof options.pickerRememberedInfo === 'boolean' ? options.pickerRememberedInfo : Object.values(pickerContext?.selectionProfile || {}).some(policy => policy !== false && policy?.presentation !== 'hidden') || state.showInfo));
 const showInfo = computed(() => hasUsageProfile || pickerContext?.initialInfoOpen === true ? pickerInfoOpen.value : state.showInfo);
 const toggleInfo = () => {
-  if (hasUsageProfile || pickerContext?.initialInfoOpen === true) pickerInfoOpen.value = !pickerInfoOpen.value;
+  if (hasUsageProfile || pickerContext?.initialInfoOpen === true) { pickerInfoOpen.value = !pickerInfoOpen.value; state.showInfo = pickerInfoOpen.value; }
   else state.showInfo = !state.showInfo;
 };
 const setResourceUsage = (resource, key, value) => {
@@ -362,6 +389,19 @@ let unmounted = false;
 onBeforeUnmount(() => { unmounted = true; referenceApis.forEach(api => api.destroy()); });
 const views = registry.all();
 const activeView = computed(() => registry.get(state.activeView));
+const viewChanging = ref(false);
+const renderLoading = computed(() => state.loading || viewChanging.value);
+const changeView = async (view) => {
+  if (state.activeView === view || state.loading || state.busy || viewChanging.value) return;
+  viewChanging.value = true;
+  try {
+    await nextTick();
+    // Paint progress before mounting a potentially large grid/details view.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    state.activeView = view;
+    await nextTick();
+  } finally { viewChanging.value = false; }
+};
 const addressValues = ref({});
 const addressService = createSelectionAddressService({ api, config: { ...options,
   selectionProfile: pickerContext?.selectionProfile || {}, addressContract: pickerContext?.addressContract } });
@@ -394,7 +434,9 @@ const toggleColumn = (id) => {
   state[key] = state[key].includes(id) ? state[key].filter((entry) => entry !== id) : [...state[key], id];
 };
 const dragging = ref(false);
-const treeCollapsed = ref(false);
+const treeCollapsed = ref(options.adapter.startsWith('flat-'));
+const flatTree = ref(null);
+const flatTreeLoading = ref(false);
 const batchDialog = ref(null);
 const isMedia = computed(() => options.adapter === 'media');
 const reorderVisible = computed(() => options.mode === 'manage' && ['details', 'grid'].includes(state.activeView)
@@ -424,24 +466,60 @@ const moveSelection = async (direction) => {
 };
 const flatAvailable = options.adapter !== 'featured-articles' && ['articles', 'categories', 'tags', 'articles-by-tag', 'menus', 'users', 'media'].includes(options.adapter.replace(/^flat-/, ''));
 const flatActive = options.adapter.startsWith('flat-') || options.adapter === 'featured-articles';
+const treeApi = options.adapter.startsWith('flat-') ? new ResourceApi({ ...options, adapter: options.adapter.slice(5), browseRoot: options.flatTreeRoot || null, flatScope: null }) : null;
+const treeAdapters = computed(() => (options.adapters || []).filter(adapter =>
+  (!treeApi || adapter.id !== options.adapter.slice(5)) && (!pickerContext?.allowedAdapters?.length || pickerContext.allowedAdapters.includes(adapter.id.replace(/^flat-/, '')))));
+watch(treeCollapsed, async collapsed => {
+  if (collapsed || !treeApi || flatTree.value || flatTreeLoading.value) return;
+  flatTreeLoading.value = true;
+  try {
+    const roots = (await treeApi.getResources('')).roots || [];
+    const nodeId = options.flatTreeNode || roots[0]?.id;
+    flatTree.value = { ...(nodeId ? await treeApi.getResources(nodeId) : {}), roots };
+  }
+  catch (error) { if (!unmounted) Joomla.renderMessages({ error: [error.message] }); }
+  finally { flatTreeLoading.value = false; }
+});
+onBeforeUnmount(() => treeApi?.destroy());
+const openTreeNode = async nodeId => {
+  if (!treeApi) return load(nodeId);
+  commitCollection();
+  await navigateFlat(flatViewUrl(window.location.href, options.adapter.slice(5), nodeId, options.flatTreeRoot || null));
+};
+const toolbarBreadcrumb = computed(() => {
+  if (!flatActive || !options.flatBreadcrumb?.length) return state.breadcrumb;
+  // Preserve the adapter's existing root title/icon, including constrained roots.
+  if (options.flatBreadcrumb.length === 1) return state.breadcrumb;
+  return options.flatBreadcrumb;
+});
+const flatNavigating = ref(false);
 const gridWidthStyle = Object.fromEntries(
   Object.entries(options.gridWidths || {}).map(([size, width]) => [`--sb-grid-${size}`, `${width}px`]),
 );
-const uiKey = flatUiStorageKey(options.adapter, options.browseRoot, window.location.href);
-let storedUi = (() => { try { return JSON.parse(window.sessionStorage.getItem(uiKey) || '{}'); } catch { return {}; } })();
+const uiKey = isManagementBrowser(options) ? flatUiStorageKey(options.adapter, options.browseRoot, window.location.href, true)
+  : `supjx.smartbrowser.ui.picker.${encodeURIComponent(pickerContext?.viewPreferenceKey || options.viewPreferenceKey || 'default')}.${options.adapter.replace(/^flat-/, '')}`;
+let storedUi = (() => { try { return JSON.parse(preferenceStorage().getItem(uiKey) || '{}'); } catch { return {}; } })();
 const filtersOpen = ref(storedUi.filtersOpen === true);
 const saveUi = (values) => {
   storedUi = { ...storedUi, filtersOpen: filtersOpen.value, ...values };
-  window.sessionStorage.setItem(uiKey, JSON.stringify(storedUi));
+  preferenceStorage().setItem(uiKey, JSON.stringify(storedUi));
 };
 const toggleFilters = () => { filtersOpen.value = !filtersOpen.value; saveUi({ filtersOpen: filtersOpen.value }); };
+const navigateFlat = async (url) => {
+  if (flatNavigating.value) return;
+  flatNavigating.value = true;
+  state.loading = true;
+  await nextTick();
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  window.location.assign(url);
+};
 const toggleFlat = () => {
   saveUi({ flat: !flatActive });
-  window.location.assign(flatActive
+  navigateFlat(flatActive
     ? regularViewUrl(window.location.href, options.browseRoot)
     : flatViewUrl(window.location.href, options.adapter, state.selectedNode, options.browseRoot));
 };
-const adapterIcon = computed(() => options.adapters?.find((adapter) => adapter.id === options.adapter)?.icon || 'fas fa-list');
+const adapterIcon = computed(() => options.adapters?.find((adapter) => adapter.id === options.adapter)?.icon || options.adapters?.find((adapter) => adapter.id === options.adapter.replace(/^flat-/, ''))?.icon || 'fas fa-list');
 const openNodeIcon = computed(() => options.adapters?.find(adapter => adapter.id === options.adapter)?.nodeOpenIcon || ({ media: 'fas fa-folder-open', articles: 'fas fa-box-open', 'flat-articles': 'fas fa-box-open', categories: 'fas fa-box-open', tags: 'fas fa-tags', 'articles-by-tag': 'fas fa-tags', users: 'fas fa-users-viewfinder', menus: 'fas fa-diagram-successor', 'featured-articles': 'fas fa-star' })[options.adapter] || 'fas fa-folder-open');
 const sizes = ['sm', 'md', 'lg', 'xl'];
 const applyBatch = async ({ selection: ids, payload, resolve, reject }) => {
@@ -538,6 +616,13 @@ const clearFilters = async () => {
   await load(state.selectedNode);
 };
 const openNode = async (nodeId) => {
+  if (flatActive && options.flatBreadcrumb?.some(crumb => crumb.id === nodeId)) {
+    if (nodeId === options.flatBreadcrumb.at(-1)?.id) return;
+    const current = new URL(window.location.href);
+    const originalRoot = current.searchParams.get('flatFromBrowseRoot') || (!current.searchParams.has('flatFromAdapter') ? options.browseRoot : null);
+    await navigateFlat(flatViewUrl(window.location.href, options.adapter.replace(/^flat-/, ''), nodeId, originalRoot));
+    return;
+  }
   if (flatActive && nodeId === state.selectedNode && nodeId === state.roots[0]?.id) {
     state.search = '';
     state.sortBy = options.defaultSortBy || '';

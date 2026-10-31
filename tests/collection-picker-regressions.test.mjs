@@ -16,8 +16,8 @@ test('flat views are not adapter descriptors and mixed Picker keeps adapter navi
   const registry = read('package/component/admin/src/Adapter/AdapterRegistry.php').split('public function descriptors(')[1].split('private function canUse')[0];
   assert.ok(!registry.includes("'id' => 'flat-"));
   const app = read('resources/js/components/SmartBrowserApp.vue');
-  assert.ok(app.includes('(!flatActive || collectionMode) && !treeCollapsed'));
-  assert.ok(app.includes("'flat-mode': flatActive && !collectionMode"));
+  assert.ok(app.includes('<ResourceTree v-if="!treeCollapsed && (!treeApi || flatTree)"'));
+  assert.ok(app.includes("treeCollapsed = ref(options.adapter.startsWith('flat-'))"));
 });
 test('optional generic Add command is in the collection toolbar before Remove, including compact/empty fields', () => {
   const view = read('resources/js/components/CollectionView.vue');

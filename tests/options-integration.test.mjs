@@ -28,7 +28,7 @@ test('all option help uses native inline help and integrations have independent 
   assert.doesNotMatch(xml, /JENABLED|JDISABLED/);
   const css = readFileSync('package/component/media/css/smartbrowser.css', 'utf8');
   assert.match(css, /legend\.sb-integration-legend \.switcher \{[^}]*display: inline-block;[^}]*height: 28px;/);
-  assert.match(xml, /name="context"[^>]*description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC"/);
+  assert.match(xml, /name="preferences_display"[^>]*description="COM_SMARTBROWSER_RESET_PREFERENCES_DESC"/);
   assert.match(xml, /name="context_site"[^>]*description="COM_SMARTBROWSER_OPTIONS_CONTEXT_DESC"/);
   assert.ok(xml.indexOf('name="context_site"') < xml.indexOf('name="context_admin"'));
   assert.ok(xml.indexOf('name="preferences_reset_token"') < xml.indexOf('name="context_admin"'));

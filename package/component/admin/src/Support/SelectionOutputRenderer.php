@@ -2,6 +2,8 @@
 namespace SuperSoft\Component\Smartbrowser\Administrator\Support;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\FileLayout;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Plugin\PluginHelper;
@@ -14,12 +16,15 @@ final class SelectionOutputRenderer
 {
     public static function render(array $selected, array $options = []): string
     {
-        if (!empty($selected['unavailable']) || !empty($selected['resource']['unavailable']) || empty($selected['resource']['id'])) return '';
+        $unavailable = self::isUnavailable($selected);
+        if ($unavailable && !self::showUnavailable($options['showUnavailable'] ?? null)) return '';
+        if (!$unavailable && empty($selected['resource']['id'])) return '';
         $layoutId = $options['layout'] ?? 'smartbrowser.resource';
         if (!is_string($layoutId) || !preg_match('/^[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)*$/D', $layoutId)) throw new \InvalidArgumentException('Invalid output layout.');
         $data = self::displayData($selected);
         $layout = new FileLayout($layoutId, null, ['component' => 'com_smartbrowser', 'client' => 0]);
-        return self::present($layout->render($data), $selected, $options);
+        $html = $layout->render($data);
+        return self::present($html, $data['selected'], $options);
     }
 
     public static function renderSelection(array $prepared, array $options = []): string
@@ -34,8 +39,18 @@ final class SelectionOutputRenderer
         return '<ul class="list-unstyled smartbrowser-selection"><li>' . implode('</li><li>', $items) . '</li></ul>';
     }
 
+    public static function showUnavailable(mixed $value = null): bool
+    {
+        if (in_array($value, [null, '', -1, '-1'], true)) {
+            $value = class_exists(ComponentHelper::class) ? ComponentHelper::getParams('com_smartbrowser')->get('selection_show_unavailable', 0) : 0;
+        }
+        if (!in_array($value, [true, false, 1, 0, '1', '0'], true)) throw new \InvalidArgumentException('Invalid unavailable-resource visibility.');
+        return in_array($value, [true, 1, '1'], true);
+    }
+
     public static function displayData(array $selected): array
     {
+        if (self::isUnavailable($selected)) $selected = self::unavailableSelection();
         $resource = $selected['resource'];
         $usage = $selected['usage'] ?? [];
         $title = (string) ($selected['displayedName'] ?? $resource['title'] ?? '');
@@ -50,12 +65,39 @@ final class SelectionOutputRenderer
         if (!is_string($icon) || !preg_match('/^[a-zA-Z0-9_-]+(?: [a-zA-Z0-9_-]+)*$/D', $icon)) $icon = null;
         $class = $usage['media.class'] ?? '';
         if (!is_string($class) || !preg_match('/^[a-zA-Z0-9_ -]*$/D', $class)) $class = '';
-        return ['selected' => $selected, 'resource' => $resource, 'usage' => $usage, 'title' => $title,
+        $figureClass = $usage['media.figureClass'] ?? '';
+        if (!is_string($figureClass) || !preg_match('/^[a-zA-Z0-9_ -]*$/D', $figureClass)) $figureClass = '';
+        return ['selected' => $selected, 'resource' => $resource, 'usage' => $usage, 'title' => $title, 'unavailable' => !empty($selected['unavailable']),
             'url' => $url, 'imageAddress' => $image, 'image' => $image ? [
                 'src' => $image, 'alt' => !empty($usage['media.decorative']) ? '' : (string) ($usage['media.alt'] ?? $title),
                 'class' => $class, 'loading' => 'lazy', 'data-sb-primary-image' => '1',
-            ] : null, 'icon' => $icon, 'caption' => (string) ($usage['media.caption'] ?? ''),
+            ] : null, 'icon' => $icon, 'caption' => (string) ($usage['media.caption'] ?? ''), 'figureClass' => $figureClass,
             'target' => (string) ($usage['link.target'] ?? '') === '1' ? '_blank' : null];
+    }
+
+    private static function isUnavailable(array $selected): bool
+    {
+        return !empty($selected['unavailable']) || !empty($selected['resource']['unavailable']) || (int) ($selected['resource']['metadata']['state'] ?? 1) === -2;
+    }
+
+    private static function unavailableSelection(): array
+    {
+        if (defined('JPATH_ADMINISTRATOR')) Factory::getApplication()->getLanguage()->load('com_smartbrowser', JPATH_ADMINISTRATOR);
+        $params = ComponentHelper::getParams('com_smartbrowser');
+        $text = $params->get('selection_unavailable_text', '');
+        $title = is_string($text) && trim($text) !== '' ? $text : Text::_('COM_SMARTBROWSER_SELECTION_UNAVAILABLE');
+        $image = (int) $params->get('selection_unavailable_image_enabled', 0) === 1 ? self::safeUrl($params->get('selection_unavailable_image', ''), true) : null;
+        $icon = (int) $params->get('selection_unavailable_icon_enabled', 1) === 1 ? $params->get('selection_unavailable_icon', 'fas fa-ban') : null;
+        if (is_string($icon)) {
+            $icon = trim($icon) ?: 'fas fa-ban';
+            if (preg_match('/^fa-[a-z0-9-]+$/D', $icon)) $icon = 'fas ' . $icon;
+        }
+        if (!is_string($icon) || !preg_match('/^(?:fas|far|fab|fa-solid|fa-regular|fa-brands) fa-[a-z0-9-]+$/D', $icon)) $icon = null;
+        return ['unavailable' => true, 'selection' => null, 'usage' => [], 'displayedName' => $title,
+            'effectiveThumbnail' => $image, 'effectiveImageAddress' => $image, 'effectiveIcon' => $icon,
+            'visualPresentation' => $icon ? 'both' : 'thumbnail',
+            'resource' => ['id' => 'unavailable', 'type' => 'unavailable', 'kind' => 'item', 'unavailable' => true,
+                'title' => $title, 'image' => $image, 'icon' => $icon, 'metadata' => [], 'capabilities' => []]];
     }
 
     public static function safeUrl(mixed $value, bool $image = false): ?string
@@ -71,7 +113,15 @@ final class SelectionOutputRenderer
     /** Finalize one visual fragment, after its default or overridden layout. */
     public static function present(string $html, array $selected, array $options = []): string
     {
-        if (!empty($selected['unavailable']) || !empty($selected['resource']['unavailable']) || empty($selected['resource']['id'])) return '';
+        $unavailable = self::isUnavailable($selected);
+        if ($unavailable) {
+            if (!self::showUnavailable($options['showUnavailable'] ?? null)) return '';
+            // Never expose the original reference or its saved presentation data.
+            $selected = self::unavailableSelection();
+            if (!$selected['effectiveImageAddress']) return $html;
+        } elseif (empty($selected['resource']['id'])) {
+            return '';
+        }
         if (!str_contains($html, 'data-sb-primary-image')) return $html;
         $document = new \DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
@@ -95,7 +145,8 @@ final class SelectionOutputRenderer
                 'context' => ['resource' => $selected['resource'], 'selection' => $selected['selection'] ?? null,
                     'usage' => $selected['usage'] ?? [], 'resolvedImage' => $selected['effectiveThumbnailResource'] ?? $selected['resource'],
                     'imageAddress' => self::displayData($selected)['imageAddress'], 'imageUrl' => $image->getAttribute('src'),
-                    'purpose' => ($options['purpose'] ?? '') === 'preview' ? 'preview' : 'output', 'isReadOnly' => true],
+                    'purpose' => ($options['purpose'] ?? '') === 'preview' ? 'preview' : 'output', 'isReadOnly' => true,
+                    'unavailable' => $unavailable],
             ]);
             $dispatcher->dispatch($event->getName(), $event);
         } catch (\Throwable $error) {

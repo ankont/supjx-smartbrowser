@@ -4,6 +4,7 @@ namespace Joomla\CMS\Categories {
     class CategoryNode {
         public int $id = 7, $access = 1, $published = 1;
         public function getParent() { return null; }
+        public function getPath() { return [7 => 'Category']; }
     }
 }
 namespace Joomla\Component\Content\Site\Helper {
@@ -50,5 +51,12 @@ namespace {
     if ($method->invoke($adapter, $record, true) !== '') throw new \RuntimeException('Unpublished category public URL fabricated');
     $adapter->category->published = 1; $record->access = 9;
     if ($method->invoke($adapter, $record, true) !== '') throw new \RuntimeException('Private public URL fabricated');
+    $state = new \ReflectionMethod(\SuperSoft\Component\Smartbrowser\Administrator\Adapter\ContentAdapter::class, 'articleCategoryState');
+    $adapter->category->published = -2;
+    if ($state->invoke($adapter, $record) !== -2) throw new \RuntimeException('Trashed category state lost');
+    $adapter->category->published = 0;
+    if ($state->invoke($adapter, $record) !== 0) throw new \RuntimeException('Unpublished category state lost');
+    $adapter->category->published = 1;
+    if ($state->invoke($adapter, $record) !== 1) throw new \RuntimeException('Published category state lost');
     echo "Selection addresses delegate public URLs to Joomla site routing with category, language and publication context OK\n";
 }

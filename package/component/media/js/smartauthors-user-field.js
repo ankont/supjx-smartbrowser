@@ -16,6 +16,7 @@
     event.stopImmediatePropagation();
 
     const user = await window.SmartBrowserPicker.open({
+      viewPreferenceKey: `supjx.smartbrowser.native.${input.name.replace(/\[[0-9]+\]/g, '[]').replace(/[^a-zA-Z0-9_.-]/g, '.')}`,
       adapter: 'users',
       selectionTarget: 'item',
       allowedResourceTypes: ['user'],

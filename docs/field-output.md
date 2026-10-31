@@ -1,8 +1,84 @@
 # Field Output and PHP Image Presentation
 
+## Native article links (4.3.26)
+
+The SmartBrowser article editor stores complete Selection Addresses in Joomla's native
+`urls.urla/urlb/urlc` fields. Text and target continue to use the native sibling fields.
+Images remain on their existing native contract. Plain legacy URLs remain supported.
+
+The enabled System - SmartBrowser Integration plugin prepares site article/module output
+at `onContentPrepare`, independently of replacement settings. It changes only the in-memory
+render object, never the database. The original `urls` value type is retained. Generic
+Joomla/template layouts receive bare URLs, preserving real anchors before the structured
+fragment. Unknown formats and ordinary fragments are not stripped. Invalid properties do
+not break the article. Public resolution reuses `SelectionFieldSupport::prepare()` and
+the existing read/access policy; no permission is granted by knowing an address.
+
+An override receives `$item->smartbrowserLinks['a'|'b'|'c']` for structured links:
+
+```php
+$link = $this->item->smartbrowserLinks['a'] ?? null;
+$selected = $link['selected'] ?? null;
+// $link['address']: original full address; $link['url']: bare URL.
+if ($selected) {
+    echo \SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionOutputRenderer::render($selected);
+}
+```
+
+`selected` is the same prepared selection shape as custom field output: `resource`,
+`selection`, `usage`, `effectiveThumbnail`, `effectiveThumbnailResource`,
+`effectiveImageAddress`, `effectiveIcon`, `displayedName`, `visualPresentation`, `unavailable`.
+For custom composition, call `SelectionOutputRenderer::displayData($selected)`; mark the
+single primary image with `data-sb-primary-image` and finalize its HTML with
+`SelectionOutputRenderer::present($html, $selected)`. This invokes the shared PHP image
+presentation providers and preserves the template's frame/pin composition. Do not render
+raw stored addresses as hrefs or independently parse provider metadata. Delegate unavailable
+selections to the shared renderer rather than exposing retained references or Usage.
+
+Consumers that render articles without dispatching Joomla's content preparation event can
+explicitly call `ArticleLinkPresentation::prepare($item)` first. The method is idempotent.
+Ordinary links have no extra entry and continue through the existing native layout.
+
+The server-side address reader `SelectionAddress` reuses the contract's format/property
+names. PHP extensions can register their own `registerProperty($definition)` and
+`registerCodec($name, $decode)` before article preparation, using the same definitions as
+their JS registration. A decoder receives ordered component pairs, the definition and
+address; it returns `['value' => ...]` and optional `preserved`. `registerFormat($name,
+$referenceHandler)` supports additional identity formats. Unknown properties/codecs remain
+opaque in `usage['ext.selectionAddress']`; they are preserved but never guessed into typed
+metadata. No specific crop extension is interpreted by SmartBrowser. The editor rehydrates
+registered JS codecs silently, including when a different saved reference is unavailable.
+
 Implemented in 3.16.0. Custom fields now render through Joomla's normal `FieldsPlugin` lifecycle and shared Joomla layouts, independently of the component's Picker UI. No editor JS is needed for final output. Stored `{ version, items: [{ selection, usage }] }` values and existing read/access policies are unchanged.
 
 ## Native-Like Defaults
+
+Since 4.1.0, Resources > Selection options can enable neutral unavailable-resource
+notices (`selection_show_unavailable`). The default remains omission. Notices never
+include IDs, titles, links, thumbnails or private metadata of inaccessible resources.
+Trashed resources use the same output policy; editor previews always show a warning.
+The renderer also accepts an explicit `showUnavailable` option for trusted consumers.
+Since 4.1.4, unavailable output uses the same Joomla layout as regular resources.
+`displayData.unavailable` is true and all resource-specific identity, Usage and metadata
+are replaced with a safe placeholder descriptor (`resource.id/type = unavailable`).
+The configured public placeholder image, plain-text title and optional Font Awesome
+icon are exposed through the usual image/title/icon fields. No original link or
+badge is supplied. Template overrides should retain their normal composition but
+recognize this flag and never resolve or re-query the synthetic resource ID.
+Since 4.3.12, a configured placeholder image participates in the same presentation
+hook. The context is rebuilt centrally from the neutral placeholder: null selection,
+empty Usage/metadata, synthetic unavailable resource and configured image only.
+There is no provider call without a configured safe image.
+Custom output layouts/consumers that skip unavailable entries before calling
+`SelectionOutputRenderer::render()` must delegate those entries to the renderer
+to inherit this policy. This does not relax resource access checks.
+
+For explicit/manual selections, retain one opaque reference for every stored item,
+including references absent from a public-only query. Pass them through the normal
+read-only preparation policy and preserve its unavailable entries for rendering.
+Never query private titles, URLs, images or content just to fill an unavailable slot.
+Do not invent unavailable placeholders for dynamic category/tag query results:
+those queries should continue to return only publicly readable candidates.
 
 | Resource | Default output |
 | --- | --- |
@@ -62,7 +138,7 @@ The renderer dispatches `onSmartBrowserPrepareImagePresentation` after the layou
 Event arguments:
 
 - `imageElement`: the final primary `DOMElement` (`img`).
-- `context`: `resource`, `selection`, opaque `usage`, `resolvedImage`, original `imageAddress`, DOM `imageUrl`, `purpose` (`output` or `preview`), `isReadOnly: true`.
+- `context`: `resource`, `selection`, opaque `usage`, `resolvedImage`, original `imageAddress`, DOM `imageUrl`, `purpose` (`output` or `preview`), `isReadOnly: true`, `unavailable` (boolean).
 
 The original `imageAddress` retains native/compound URI data before Joomla cleans src; the DOM `imageUrl` may already be a plain public path. Providers interpret only their own data. No Usage JSON is exposed in HTML.
 
@@ -87,7 +163,19 @@ public function prepareImage(\Joomla\Event\Event $event): void
 }
 ```
 
-A thrown provider error restores the whole pre-event visual and logs a generic warning. No provider means ordinary layout output. Unavailable resources are never passed to this event. For trusted HTML already generated by a consumer, `SelectionOutputRenderer::present($html, $preparedItem, $options)` exposes the same finalization step; use it instead of, not in addition to, `render()`. It is not an HTML sanitizer.
+A thrown provider error restores the whole pre-event visual and logs a generic warning. No provider means ordinary layout output. Original unavailable resources are never passed to this event; their centrally generated neutral placeholders may participate when they have a configured image and the effective visibility policy permits output. Providers can check `context.unavailable`, and must not resolve the synthetic resource ID.
+
+For trusted HTML already generated by a consumer, `SelectionOutputRenderer::present($html, $preparedItem, $options)` exposes the same finalization step; use it instead of, not in addition to, `render()`. It is not an HTML sanitizer. This also supports an unavailable model from `displayData(['unavailable' => true])`. Build its visual solely from the sanitized display data, preserve exactly one primary-image marker, and pass the host's effective `showUnavailable` choice. The same hook, once-only marker and rollback apply. With no configured image, the fragment is returned unchanged without calling providers; hidden unavailable output returns an empty string.
+
+```php
+$data = SelectionOutputRenderer::displayData(['unavailable' => true]);
+// Layout uses only $data['image'], title/icon, and its own frame/pin; no article lookup.
+$html = LayoutHelper::render('site.resource-identity', $data);
+echo SelectionOutputRenderer::present($html, $data['selected'], [
+    'showUnavailable' => $showUnavailable, // null/-1 means Use Global
+    'purpose' => 'preview', // or 'output' for the published page
+]);
+```
 
 ## Once-Only Presentation and Migration
 

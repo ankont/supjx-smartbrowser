@@ -48,6 +48,19 @@ test('shared image integration converts compatible fields once and keeps unsuppo
     assert.equal(mapping.usageFields['media.decorative'], 'alt_empty');
     assert.deepEqual(Object.keys(mapping.usageFields), ['media.alt', 'media.decorative']);
   }
+  for (const modern of [false, true]) for (const role of ['intro', 'fulltext']) {
+    const media = make(`jform[images][image_${role}]`, 'images/a.jpg');
+    const names = [`image_${role}_alt`, `image_${role}_alt_empty`, `image_${role}_caption`, `float_${role}`, ...(modern ? [`imgclass_${role}`] : [])];
+    const controls = Object.fromEntries(names.map(name => [`jform[images][${name}]`, { tagName: 'INPUT', type: 'text', value: name }]));
+    media.input.form.elements.namedItem = name => controls[name];
+    fields.push(media);
+    changed();
+    const mapping = mounted.at(-1);
+    assert.equal(mapping.usageFields['media.class'], modern ? `imgclass_${role}` : `float_${role}`);
+    assert.equal(mapping.usageFields['media.caption'], `image_${role}_caption`);
+    assert.equal(mapping.usageFields['media.figureClass'], modern ? `float_${role}` : undefined);
+    assert.equal(Object.keys(mapping.usageFields).length, modern ? 5 : 4, 'Every editable native image property must be bridged');
+  }
 });
 
 test('image integration remains separate from Media Manager and always loads in SmartBrowser editors', () => {

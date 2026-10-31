@@ -15,9 +15,10 @@ final class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
-        ToolbarHelper::title('SuperSoftJx - SmartBrowser', 'folder-open');
+        ToolbarHelper::title('SuperSoftJx - SmartBrowser', 'sb-brand');
         if ($this->getCurrentUser()->authorise('core.options', 'com_smartbrowser')) ToolbarHelper::preferences('com_smartbrowser');
         $this->getDocument()->getWebAssetManager()->useStyle('com_smartbrowser.app');
+        $this->getDocument()->getWebAssetManager()->registerAndUseStyle('com_smartbrowser.identity', 'com_smartbrowser/identity.css', ['version'=>'auto']);
         $this->items = (new DashboardProvider(Factory::getApplication()))->items();
         parent::display($tpl);
     }

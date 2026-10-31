@@ -1,4 +1,4 @@
-import { n as e, t } from "./visual-runtime-C8QgQ5Tx.js?v=4.0.0";
+import { n as e, t } from "./visual-runtime-DJhP9wqL.js?v=5.0.0";
 //#region resources/js/core/articleAnchors.js
 function n(e, t = "none") {
 	if (!["anchors", "all"].includes(t)) return [];
@@ -27,7 +27,9 @@ function r(e, t, r = window.Joomla?.editors?.instances) {
 var i = /* @__PURE__ */ new WeakMap();
 function a(n) {
 	if (i.has(n)) return i.get(n);
-	let a = n.querySelector("[data-sb-value]"), o = a.value, s = JSON.parse(n.dataset.sbField), c = n.closest(".control-group"), l = c?.querySelector(":scope > .control-label"), u = l?.hidden;
+	let a = n.querySelector("[data-sb-value]"), o = a.value, s = JSON.parse(n.dataset.sbField);
+	!s.viewPreferenceKey && a.name && (s.viewPreferenceKey = `supjx.smartbrowser.field.${a.name.replace(/[^a-zA-Z0-9_.-]/g, ".")}`);
+	let c = n.closest(".control-group"), l = c?.querySelector(":scope > .control-label"), u = l?.hidden;
 	s.showLabel === !1 && l && (l.hidden = !0), s.fullWidth === !0 && c?.classList.add("sb-selection-full-width");
 	let d = s.allowedAdapters || [s.adapter], f = (e) => window.Joomla?.Text?._(e, e) || e, p = n.querySelector("[data-sb-error]"), m = (e) => {
 		p.textContent = e ? f("PLG_FIELDS_SMARTBROWSERPICKER_INVALID") : "", p.hidden = !e;
@@ -37,8 +39,8 @@ function a(n) {
 	} catch (t) {
 		h = e("", d), m(t);
 	}
-	let _ = () => {
-		a.value = h.items.length ? JSON.stringify(h) : "", a.dispatchEvent(new Event("change", { bubbles: !0 })), m(null);
+	let _ = (e = {}) => {
+		a.value = h.items.length ? JSON.stringify(h) : "", e.initial && (o = a.value), !e.silent && (a.dispatchEvent(new Event("change", { bubbles: !0 })), m(null));
 	}, v, y = async () => v ? v.setItems(h.items) : (v = t(n.querySelector("[data-sb-collection]"), {
 		...s,
 		referenceItems: !0,
@@ -99,11 +101,11 @@ function a(n) {
 			g || (g = !0, b?.removeEventListener("click", S), x?.removeEventListener("click", C), a.form?.removeEventListener("reset", w), l && (l.hidden = u), s.fullWidth === !0 && c?.classList.remove("sb-selection-full-width"), v.destroy(), i.delete(n));
 		}
 	};
-	return i.set(n, T), T.setNativeAddress = (e) => v.setNativeAddress(e), T.exportAddresses = (e) => v.exportAddresses(e), T.importAddresses = (e, t) => v.importAddresses(e, t), T.setItems = (t) => {
+	return i.set(n, T), T.setNativeAddress = (e) => v.setNativeAddress(e), T.exportAddresses = (e) => v.exportAddresses(e), T.importAddresses = (e, t) => v.importAddresses(e, t), T.setItems = async (t, n = {}) => {
 		if (!(g || s.readOnly)) return h = e({
 			version: 1,
 			items: t
-		}, d, s.multiple, s.homogeneous), _(), y();
+		}, d, s.multiple, s.homogeneous), _(n), y();
 	}, T;
 }
 var o = (e) => {

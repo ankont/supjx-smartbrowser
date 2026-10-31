@@ -5,9 +5,11 @@ import ResourceApi from './ResourceApi.js';
 
 export function selectionAddressOperations({ model, api, config, service, isDisposed = () => false }) {
   return {
-    async exportAddresses(options) {
+    async exportAddresses({ selectionIds, ...options } = {}) {
       await model.refresh();
-      return service.serializeLines(model.getItems(), model.resources.value, { ...(config.nativeImage ? { nativeAddress: config.nativeAddress } : {}), ...options });
+      const selected = selectionIds === undefined ? null : new Set(selectionIds);
+      const items = model.getItems().filter(item => !selected || selected.has(item.selection ? referenceKey(item.selection) : String(item)));
+      return service.serializeLines(items, model.resources.value, { ...(config.nativeImage ? { nativeAddress: config.nativeAddress } : {}), ...options });
     },
     async importAddresses(text, options) {
       if (!model.referenceItems) throw new TypeError('This consumer stores identifiers only, not selection usage.');
@@ -15,7 +17,9 @@ export function selectionAddressOperations({ model, api, config, service, isDisp
       const result = await service.import(text, model.getItems(), options);
       const resolved = await api.collection(result.items, { referenceItems: true, homogeneous: config.homogeneous === true });
       if (isDisposed() || model.revision.value !== revision) throw new Error('Selection changed while importing addresses.');
-      if (resolved.resources.some(resource => resource.unavailable || resource.selectable === false)) throw new Error('An imported resource is unavailable.');
+      if (!Array.isArray(resolved.resources) || resolved.resources.length !== result.items.length) throw new Error('Incomplete imported selection.');
+      const existing = new Set(model.getItems().map(item => referenceKey(item.selection)));
+      if (resolved.resources.some(resource => !existing.has(resource.selectionKey || referenceKey(resource.selection || { adapter: resource.adapter || config.adapter, id: resource.id })) && (resource.unavailable || resource.selectable === false))) throw new Error('An imported resource is unavailable.');
       await model.setItems(result.items, { resolvedResources: resolved.resources, reason: 'import' });
       return model.getItems();
     },

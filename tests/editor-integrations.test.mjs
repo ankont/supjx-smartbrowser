@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+test('category reload returns invalid input to the editor without completing or bypassing token/access checks', () => {
+  assert.match(execFileSync('php', ['tests/editor-category-reload.php'], { encoding: 'utf8' }), /token\/access checks OK/);
+});
+
 test('native editor replacement covers admin and frontend links with safe fallback and navigation boundaries', () => {
   assert.match(execFileSync('php', ['tests/editor-integrations.php'], { encoding: 'utf8' }), /safe returns OK/);
 });

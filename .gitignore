@@ -6,3 +6,10 @@ build/diagnostics/
 build/*.png
 .playwright-mcp/
 build/test-install-*/
+build/*.log
+build/check-*
+build/native-image-editor.html
+build/icon-comparison.html
+build/release-*.py
+build/release-*.md
+build/release-*.txt

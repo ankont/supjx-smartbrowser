@@ -44,7 +44,11 @@ class PublishingForm {
         };
     }
     public function getFieldsets() { return [(object) ['name'=>'audit','label'=>'Audit']]; }
-    public function getFieldset($name) { return $name === 'audit' ? array_map(fn ($name) => $this->getField($name), array_keys($this->fields)) : []; }
+    public function getFieldset($name = null) { return $name === 'audit' ? array_map(fn ($name) => $this->getField($name), array_keys($this->fields)) : ($name === null ? [(object) ['type'=>'Calendar', 'fieldname'=>'publish_up', 'group'=>'']] : []); }
+    public function filter($data) {
+        if (isset($data['created']) && (string) $this->fields['created']['filter'] !== 'user_utc') throw new \RuntimeException('Created date must use the displayed publishing-field definition');
+        return array_replace($data, ['publish_up'=>'2026-10-29 10:00:00']);
+    }
     public function getInput(...$args) { return ''; }
     public function renderControlFields() { return ''; }
 }
@@ -74,6 +78,7 @@ class PublishingApp implements \Joomla\CMS\Application\CMSApplicationInterface {
         $this->model = new PublishingModel();
         $this->input = new class {
             public function getMethod() { return 'GET'; } public function getBool($key) { return false; }
+            public function getCmd($key, $default = '') { return $default; }
             public function getInt($key, $default = 0) { return $default; } public function getString($key, $default = '') { return $default; }
             public function set(...$args) {}
         };
@@ -145,5 +150,20 @@ catch (\RuntimeException $error) { check($error->getCode() === 403, 'Wrong lock 
 $app->model->record['checked_out'] = 0; $app->user->manageContent = false;
 try { $service->getForm('article', 3); throw new \LogicException('Administrator component ACL skipped'); }
 catch (\RuntimeException $error) { check($error->getCode() === 403, 'Wrong administrator ACL failure'); }
+$app = new class(true) extends PublishingApp {
+    public array $states = [];
+    public function setUserState($key, $value) { $this->states[$key] = $value; }
+    public function getUserState($key, $default = null) { return $this->states[$key] ?? $default; }
+};
+$service = new FrontendEditorService($app);
+$service->reloadArticle(3, ['id'=>999, 'catid'=>7, 'title'=>'Unsaved title', 'created'=>'29-10-2026 12:00:00', 'publish_up'=>'local time', 'images'=>['image_intro'=>'images/unsaved.jpg'], 'com_fields'=>['sources'=>'unchanged JSON']]);
+$reloaded = $app->states['com_content.edit.article.data'];
+check($reloaded['id'] === 3 && $reloaded['catid'] === 7 && $reloaded['title'] === 'Unsaved title', 'Category reload lost unsaved data or accepted a forged identity');
+check($reloaded['publish_up'] === '2026-10-29 10:00:00', 'Category reload did not normalise calendars');
+check($reloaded['com_fields']['sources'] === 'unchanged JSON' && !$app->model->saved, 'Category reload saved the article or lost Sources data');
+check($service->getForm('article', 3)->getValue('images')['image_intro'] === 'images/unsaved.jpg', 'Category reload replaced unsaved image data with stored media');
+$app->admin = true; $app->user->manageContent = false;
+try { $service->reloadArticle(3, ['catid'=>7]); throw new \LogicException('Category reload bypassed ACL'); }
+catch (\RuntimeException $error) { check($error->getCode() === 403, 'Wrong reload ACL failure'); }
 echo "Publishing fields, native definitions, read-only audit values, author ACL, save/reload data and presentation independence OK\n";
 }

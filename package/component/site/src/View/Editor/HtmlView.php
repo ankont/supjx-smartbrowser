@@ -20,6 +20,7 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null): void
     {
         $app = Factory::getApplication();
+        \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::prepare($this->getDocument());
         if ($app->isClient('administrator')) {
             $app->getInput()->set('hidemainmenu', true);
         }
@@ -91,9 +92,14 @@ class HtmlView extends BaseHtmlView
             && $app->getInput()->getBool('sbpage') && !$this->editorComplete) {
             \Joomla\CMS\Toolbar\ToolbarHelper::title(Text::_($this->resourceId > 0 ? 'COM_CONTENT_PAGE_EDIT_ARTICLE' : 'COM_CONTENT_PAGE_ADD_ARTICLE'), 'pencil-alt article');
             \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.apply', 'save', '', 'JTOOLBAR_APPLY', false);
-            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.save', 'save', '', 'JTOOLBAR_SAVE', false);
-            if ($this->resourceId > 0) \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.copy', 'copy', '', 'JTOOLBAR_SAVE_AS_COPY', false);
-            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.cancel', 'times', '', 'JCLOSE', false);
+            $this->getDocument()->getToolbar()->dropdownButton('save-group')->configure(function (\Joomla\CMS\Toolbar\Toolbar $bar) use ($app): void {
+                $bar->save('smartbrowser.save');
+                if ($app->getIdentity()->authorise('core.create', 'com_content')) $bar->save2new('smartbrowser.save2new');
+            });
+            if ($this->resourceId > 0 && $app->getIdentity()->authorise('core.create', 'com_content')) {
+                \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.copy', 'copy', '', 'JTOOLBAR_SAVE_AS_COPY', false);
+            }
+            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.cancel', 'times', '', 'JCANCEL', false);
             if ($this->resourceId > 0) {
                 if (\Joomla\CMS\Component\ComponentHelper::getParams('com_content')->get('save_history', 0)
                     && \Joomla\CMS\Component\ComponentHelper::isEnabled('com_contenthistory')) {
@@ -106,6 +112,9 @@ class HtmlView extends BaseHtmlView
                 Text::script('COM_SMARTBROWSER_EDITOR_RESTORE');
                 $this->getDocument()->getToolbar()->preview($url, 'JGLOBAL_PREVIEW', false)
                     ->popupType('iframe')->modalWidth('90vw')->modalHeight('90vh');
+                if (\Joomla\CMS\Plugin\PluginHelper::isEnabled('system', 'jooa11y')) {
+                    $this->getDocument()->getToolbar()->jooa11y($url . (str_contains($url, '?') ? '&' : '?') . 'jooa11y=1', 'JGLOBAL_JOOA11Y')->bodyHeight(80)->modalWidth(90);
+                }
             }
         }
         if ($app->isClient('administrator') && $this->resourceType === 'category'
@@ -118,7 +127,7 @@ class HtmlView extends BaseHtmlView
             \Joomla\CMS\Toolbar\ToolbarHelper::title($categoryTitle, 'folder');
             \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.apply', 'save', '', 'JTOOLBAR_APPLY', false);
             \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.save', 'save', '', 'JTOOLBAR_SAVE', false);
-            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.cancel', 'times', '', 'JCLOSE', false);
+            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.cancel', 'times', '', 'JCANCEL', false);
             if ($this->resourceId > 0 && \Joomla\CMS\Component\ComponentHelper::getParams($extension)->get('save_history', 0)
                 && \Joomla\CMS\Component\ComponentHelper::isEnabled('com_contenthistory')) {
                 \Joomla\CMS\Toolbar\ToolbarHelper::versions($extension . '.category', $this->resourceId);
@@ -135,12 +144,21 @@ class HtmlView extends BaseHtmlView
             \Joomla\CMS\Toolbar\ToolbarHelper::title(Text::_($title), $icon);
             \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.apply', 'save', '', 'JTOOLBAR_APPLY', false);
             \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.save', 'save', '', 'JTOOLBAR_SAVE', false);
-            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.cancel', 'times', '', 'JCLOSE', false);
+            \Joomla\CMS\Toolbar\ToolbarHelper::custom('smartbrowser.cancel', 'times', '', 'JCANCEL', false);
             if ($this->resourceType === 'tag' && !$new && \Joomla\CMS\Component\ComponentHelper::getParams('com_tags')->get('save_history', 0)
                 && \Joomla\CMS\Component\ComponentHelper::isEnabled('com_contenthistory')) {
                 \Joomla\CMS\Toolbar\ToolbarHelper::versions('com_tags.tag', $this->resourceId);
             }
         }
+        if ($app->isClient('administrator') && !$this->editorComplete) {
+            $help = match ($this->resourceType) {
+                'article' => 'Articles:_Edit', 'category' => 'Articles:_Edit_Category',
+                'tag' => 'Tags:_New_or_Edit', 'menu-item' => 'Menus:_New_Item', 'user' => 'Users:_Edit_Profile',
+                default => null,
+            };
+            if ($help) $this->getDocument()->getToolbar()->help($help);
+        }
+        Text::script('COM_SMARTBROWSER_CONFIRM_DISCARD');
         parent::display($tpl);
     }
 }

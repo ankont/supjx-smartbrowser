@@ -20,22 +20,23 @@ test('native article storage bridge preserves slots, usage and unsupported legac
   assert.doesNotMatch(partial, /name="[^"]*selection/);
 });
 
-test('image selection retains and refreshes the native preview wrapper', async () => {
+for (const modern of [false, true]) test(`image selection retains native preview and maps the ${modern ? 'image' : 'legacy'} class field`, async () => {
   let change, previews = 0;
   const upload = {}, toolbarButtons = [];
   let observeChanges;
   class MutationObserver { constructor(callback) { observeChanges = callback; } observe() {} disconnect() {} }
   const events = [], hidden = [];
   const media = { classList: { add() {} }, querySelectorAll: () => [upload], updatePreview: () => previews++, dispatchEvent: event => events.push(event) };
-  const names = ['image_intro', 'image_intro_alt', 'image_intro_alt_empty', 'image_intro_caption', 'float_intro'];
+  const names = ['image_intro', 'image_intro_alt', 'image_intro_alt_empty', 'image_intro_caption', modern ? 'imgclass_intro' : 'float_intro'];
   const fields = Object.fromEntries(names.map(name => [name, {
     tagName: 'INPUT', type: name.endsWith('_empty') ? 'checkbox' : 'text', value: 'original',
     closest: selector => selector === 'joomla-field-media' ? media : { classList: { add() {} }, setAttribute: () => hidden.push(name) },
     dispatchEvent() {},
   }]));
   const form = { elements: { namedItem: name => fields[/\[([^\]]+)\]$/.exec(name)[1]] }, addEventListener() {} };
+  if (modern) fields.float_intro = { tagName: 'INPUT', type: 'text', value: 'figure-frame', closest: () => ({ setAttribute: () => hidden.push('float_intro'), classList: { add() {} } }) };
   const selection = { adapter: 'media', id: 'local-files:/images/photo.jpg' };
-  const input = { form, value: JSON.stringify({ items: [{ selection }] }), addEventListener: (_, fn) => { change = fn; } };
+  const input = { form, value: JSON.stringify({ items: [{ selection, usage: { 'media.class': 'image-frame' } }] }), addEventListener: (_, fn) => { change = fn; } };
   const root = { dataset: { sbArticleMedia: JSON.stringify({ group: 'images', role: 'intro' }), sbField: '{}' }, querySelector: () => input };
   class ResourceApi { async collection() { return { resources: [{ selection, id: selection.id }] }; } }
   class CustomEvent extends Event { constructor(type, options) { super(type, options); this.detail = options.detail; } }
@@ -45,11 +46,13 @@ test('image selection retains and refreshes the native preview wrapper', async (
     window: { addEventListener() {}, SmartBrowserMediaValue: { format: () => 'images/photo.jpg', parse: value => ({ resourceId: value.includes('#joomlaImage:') ? selection.id : null }) } },
     Joomla: { renderMessages() {} },
   });
-  assert.deepEqual(hidden, names.slice(1), 'The native image control group must remain visible');
+  assert.deepEqual(hidden, [...names.slice(1), ...(modern ? ['float_intro'] : [])], 'Only the replacement image control group must remain visible');
   assert.deepEqual(toolbarButtons, [upload], 'Move the actual upload button, retaining its handlers');
   observeChanges();
   assert.equal(toolbarButtons.length, 1, 'Late initialization must not duplicate the upload control');
   await change();
+  assert.equal(fields[names.at(-1)].value, 'image-frame');
+  if (modern) assert.equal(fields.float_intro.value, 'figure-frame', 'Image usage must not overwrite the separate figure class');
   assert.equal(previews, 1);
   assert.equal(media.validatedUrl, 'images/photo.jpg');
   assert.equal(events[0].detail.value, 'images/photo.jpg');
@@ -57,10 +60,19 @@ test('image selection retains and refreshes the native preview wrapper', async (
   await change();
   assert.equal(media.validatedUrl, fields.image_intro.value, 'Usage edits preserve plugin URI data for the same resource');
   assert.ok(media.validatedUrl.includes('crop=custom'));
+  if (modern) {
+    const value = JSON.parse(input.value);
+    value.items[0].usage['media.figureClass'] = 'updated-figure';
+    input.value = JSON.stringify(value);
+    await change();
+    assert.equal(fields.float_intro.value, 'updated-figure', 'Explicit figure usage must persist separately');
+    assert.equal(fields.imgclass_intro.value, 'image-frame', 'Figure usage must not overwrite the image class');
+  }
   input.value = '{"items":[]}';
   await change();
-  assert.equal(previews, 3);
+  assert.equal(previews, modern ? 4 : 3);
   assert.equal(media.validatedUrl, '');
+  if (modern) assert.equal(fields.float_intro.value, '', 'Removing the image must clear its figure usage');
 });
 
 test('maximum selections applies to ordinary selection, select-all, inversion and entry validation', () => {
@@ -96,6 +108,7 @@ test('editor bridge writes only native fields, preserves target zero and ignores
   class ResourceApi { collection() { return new Promise((resolve, reject) => requests.push({ resolve, reject })); } }
   const source = readFileSync('resources/js/article-media.js', 'utf8').replace(/^import .*;\s*/gm, '').replace(/^export /gm, '');
   vm.runInNewContext(source, { mountSelectionField() {}, ResourceApi, JSON, Map, Event,
+    createSelectionAddressService: () => ({ serialize: async (entry, resource) => `${resource.metadata.publicUrl || resource.metadata.url}#${entry.selection.adapter === 'direct-links' ? 'joomlaLink://' : 'joomlaItem://' + entry.selection.id.replace(':', '/')}`, destroy() {} }),
     document: { querySelectorAll: () => [root], querySelector: () => null },
     window: { addEventListener() {} }, Joomla: { Text: { _: key => key }, renderMessages: message => messages.push(message) } });
   assert.equal(fields.urla.value, 'original', 'Opening must not rewrite native slots');
@@ -110,7 +123,7 @@ test('editor bridge writes only native fields, preserves target zero and ignores
   const next = listeners.change();
   resolve(requests[1], '/new'); await next;
   resolve(requests[0], '/old'); await old;
-  assert.equal(fields.urla.value, '/new');
+  assert.equal(fields.urla.value, '/new#joomlaLink://');
   assert.equal(fields.urlatext.value, 'Name');
   assert.equal(fields.targeta.value, '0');
   assert.equal(fields.urlb.value, '');
@@ -118,8 +131,20 @@ test('editor bridge writes only native fields, preserves target zero and ignores
   const failed = listeners.change(); requests[2].reject(new Error('Unavailable')); await failed;
   blocked = false; formListeners.submit({ preventDefault: () => { blocked = true; } });
   assert.equal(blocked, true);
-  assert.equal(fields.urla.value, '/new', 'Failed lookup must not erase stored native values');
+  assert.equal(fields.urla.value, '/new#joomlaLink://', 'Failed lookup must not erase stored native values');
   formListeners.reset();
   blocked = false; formListeners.submit({ preventDefault: () => { blocked = true; } });
   assert.equal(blocked, false);
+  const articleEntry = { selection: { adapter: 'articles', id: 'article:43' }, usage: { 'link.text': 'Article link', 'link.target': '1' } };
+  input.value = JSON.stringify({ items: [articleEntry] });
+  const article = listeners.change();
+  requests.at(-1).resolve({ resources: [{ selection: articleEntry.selection, type: 'article', metadata: { publicUrl: '/article.html', url: '/internal-route' } }] });
+  await article;
+  assert.equal(fields.urla.value, '/article.html#joomlaItem://article/43', 'Typed references must retain their address in Joomla');
+  assert.equal(fields.urlatext.value, 'Article link');
+  assert.equal(fields.targeta.value, '1');
+  const missing = listeners.change();
+  requests.at(-1).resolve({ resources: [{ selection: articleEntry.selection, type: 'article', metadata: {} }] });
+  await missing;
+  assert.equal(fields.urla.value, '/article.html#joomlaItem://article/43', 'A resource without a public URL must preserve the native link');
 });

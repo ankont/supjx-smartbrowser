@@ -1,10 +1,11 @@
 import { lockPageScroll } from './pageScrollLock.js';
+import { preferenceStorage } from './userPreferences.js';
 
 const storageKey = 'smartbrowser.editorMaximized';
 
 export function createEditorSize(dialog, button, translate, preferenceKey = storageKey) {
   let storage;
-  try { storage = dialog.ownerDocument.defaultView.localStorage; } catch {}
+  try { storage = preferenceStorage(dialog.ownerDocument.defaultView); } catch {}
   let maximized = false;
   let unlock;
   const set = (value, persist = true) => {

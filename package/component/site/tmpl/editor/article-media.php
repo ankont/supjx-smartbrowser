@@ -19,13 +19,18 @@ foreach (['INVALID', 'EDIT', 'SELECT', 'CLEAR'] as $key) Text::script('PLG_FIELD
 $escape = static fn ($value) => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $picker = static function (array $entries, array $mapping, bool $multiple) use ($escape, $baseConfig, $form): void {
     $media = $mapping['group'] === 'images';
+    $extraAdapters = ComponentHelper::getParams('com_smartbrowser')->get('article_link_adapters', ['articles', 'menus']);
+    if (is_string($extraAdapters)) $extraAdapters = explode(',', $extraAdapters);
+    $linkAdapters = ['direct-links', ...array_values(array_intersect((array) $extraAdapters, ['articles', 'categories', 'tags', 'menus', 'media']))];
     $config = [...$baseConfig, 'pickerUrl' => Uri::base() . 'index.php?option=com_smartbrowser&view=browser',
-        'adapter' => $media ? 'media' : 'direct-links', 'allowedAdapters' => [$media ? 'media' : 'direct-links'],
-        'allowedResourceTypes' => [$media ? 'image' : 'uri'], 'selectionTarget' => 'item', 'homogeneous' => true,
+        'adapter' => $media ? 'media' : 'direct-links', 'allowedAdapters' => $media ? ['media'] : $linkAdapters,
+        'allowedResourceTypes' => $media ? ['image'] : ['uri', 'article', 'category', 'tag', 'menu-item', 'image', 'document', 'video', 'audio'], 'selectionTarget' => $media ? 'item' : 'both', 'homogeneous' => $media,
         'multiple' => $multiple, 'maxSelections' => $multiple ? 3 : 1, 'ordering' => $multiple, 'editorDisplay' => 'compact',
         'fullWidth' => true, 'showLabel' => false, 'informationPanelPosition' => 'right', 'selectionUseData' => 'editable',
-        'selectionProfile' => array_fill_keys($media ? ['media.alt', 'media.decorative', 'media.caption', 'media.class'] : ['link.text', 'link.target'], (object) []),
+        'selectionProfile' => array_fill_keys($media ? array_keys(ArticleMediaSelection::imageUsage($form, $mapping['role'])) : ['link.text', 'link.target', 'article.displayedName', 'visual.presentation', 'visual.thumbnailOverride', 'visual.iconOverride'], (object) []),
         'anchorSuggestions' => 'anchors', 'preserveUsageOnReplace' => true];
+    $config['viewPreferenceKey'] = 'supjx.smartbrowser.native.article.' . ($media ? 'images.' . $mapping['role'] : 'links.' . implode('-', $mapping['slots']));
+    if (!$media) $config['nativeLinkAddresses'] = array_map(static fn ($slot) => (string) $form->getValue('url' . $slot, 'urls', ''), $mapping['slots']);
     if (!$multiple) {
         $defaults = $media ? ArticleMediaSelection::imageUsage($form, $mapping['role']) : [
             'link.text' => (string) $form->getValue('url' . $mapping['slots'][0] . 'text', 'urls', ''),

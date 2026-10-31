@@ -1,5 +1,11 @@
+import { preferenceStorage } from '../core/userPreferences.js';
+export const isManagementBrowser = options => options.mode === 'manage' && !options.pickerInstance && !options.pickerContext;
+export const browserStateKey = options => isManagementBrowser(options)
+  ? `supjx.smartbrowser.${options.adapter.replace(/^flat-/, '')}`
+  : `supjx.smartbrowser.picker.${encodeURIComponent(options.pickerContext?.viewPreferenceKey || options.viewPreferenceKey || 'default')}.${options.adapter.replace(/^flat-/, '')}`;
+
 export default class PersistenceService {
-  constructor(storage = window.sessionStorage, key = 'supjx.smartbrowser.media') {
+  constructor(storage = preferenceStorage(), key = 'supjx.smartbrowser.media') {
     this.storage = storage;
     this.key = key;
   }

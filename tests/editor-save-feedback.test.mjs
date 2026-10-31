@@ -39,7 +39,7 @@ test('all frontend saves pass the resource ID in form data like native Joomla co
 
 test('frontend article forms restore stored image and URL groups without losing unsent keys', async () => {
   const service = await source('package/component/site/src/Service/FrontendEditorService.php');
-  assert.match(service, /\$form->bind\(\$this->articleMediaGroups\(\$model, \$id\)\)/);
+  assert.match(service, /\$form->bind\(\$media\)/);
   assert.match(service, /foreach \(\['images', 'urls'\] as \$group\)/);
   assert.match(service, /new Registry\(\(string\) \$value\)/);
   assert.match(service, /\$valid\[\$group\] = array_replace\(\$stored, \$valid\[\$group\]\)/);

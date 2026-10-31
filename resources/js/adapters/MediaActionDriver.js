@@ -1,4 +1,5 @@
 import { createEditorSize } from '../core/editorSize.js';
+import { referenceKey } from '../core/selectionIdentity.js';
 
 export const previewKind = (resource) => {
   if (!resource.metadata?.url) return null;
@@ -136,13 +137,13 @@ export default class MediaActionDriver {
       return;
     }
     if (action.id === 'preview') this.preview(resource);
-    if (action.id === 'edit' && resource?.metadata?.mimeType) this.editMedia(resource);
+    if (action.id === 'edit' && resource?.metadata?.mimeType) await this.editMedia(resource);
     if (action.id === 'share') this.share(resource);
     if (action.id === 'download') this.download(resource);
     if (resource?.updated || resource?.deleted) await this.reload();
   }
 
-  actionDialog({ title, message, value, accept = 'JTOOLBAR_SAVE', destructive = false }) {
+  actionDialog({ title, message, value, accept = 'JSAVE', destructive = false }) {
     if (this.destroyed) return Promise.resolve(null);
     const text = value => { const decoder = document.createElement('textarea'); decoder.innerHTML = value; return decoder.value; };
     const dialog = document.createElement('dialog'); dialog.className = 'smartbrowser-editor smartbrowser-local-editor';
@@ -253,7 +254,7 @@ export default class MediaActionDriver {
     }
     const error = document.createElement('p'); error.className = 'text-danger'; error.setAttribute('role','alert'); form.append(error);
     const actions = document.createElement('div'); actions.className = 'smartbrowser-local-editor-actions';
-    const save = document.createElement('button'); save.type = 'submit'; save.className = 'btn btn-primary'; save.textContent = text('JTOOLBAR_SAVE');
+    const save = document.createElement('button'); save.type = 'submit'; save.className = 'btn btn-primary'; save.textContent = text('JSAVE');
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'btn btn-danger'; cancel.textContent = text('JCANCEL');
     actions.append(save, cancel); form.append(actions); dialog.append(form);
     cancel.addEventListener('click', () => dialog.close());
@@ -407,18 +408,21 @@ export default class MediaActionDriver {
     if (this.state.busy) return;
     this.state.busy = true;
     let uploaded = 0;
+    const uploadedIds = [];
     try {
       for (const file of Array.from(files || [])) {
         try {
           const content = await this.read(file);
           const payload = { nodeId: this.state.selectedNode, name: file.name, content };
           try {
-            await this.api.execute('upload', [], payload);
+            const resource = await this.api.execute('upload', [], payload);
+            if (resource?.id) uploadedIds.push(resource.id);
           } catch (error) {
             if (error.status !== 409) throw error;
             const question = this.translate('COM_MEDIA_FILE_EXISTS_AND_OVERRIDE').replace(/%[sS]/, file.name);
             if (!await this.actionDialog({ title: 'COM_SMARTBROWSER_ACTION_UPLOAD', message: question, accept: 'JYES', destructive: true })) continue;
-            await this.api.execute('upload', [], { ...payload, override: true });
+            const resource = await this.api.execute('upload', [], { ...payload, override: true });
+            if (resource?.id) uploadedIds.push(resource.id);
           }
           uploaded++;
         } catch (error) {
@@ -428,6 +432,12 @@ export default class MediaActionDriver {
       }
       if (uploaded) {
         await this.reload();
+        const collectionMode = this.api.options?.pickerContext?.collectionMode || this.api.options?.selectionHost?.collectionMode;
+        const adapter = this.api.options?.adapter?.replace(/^flat-/, '');
+        const limit = this.api.options?.mode === 'select' ? this.api.options.multiple === false ? 1 : this.api.options.maxSelections || 500 : 500;
+        const keys = uploadedIds.slice(0, limit).map(id => collectionMode ? referenceKey({ adapter, id }) : id);
+        this.state.selectedIds = [...new Set(keys)];
+        if (keys.length) this.state.focusedId = keys[keys.length - 1];
         Joomla.renderMessages({ success: [this.translate('COM_MEDIA_UPLOAD_SUCCESS')] });
       }
     } finally {
@@ -483,18 +493,27 @@ export default class MediaActionDriver {
     dialog.showModal();
   }
 
-  editMedia(resource) {
+  async editMedia(resource) {
     let currentResource = resource;
+    const extension = (resource.metadata?.extension || resource.title.split('.').pop()).toLowerCase();
+    const mime = resource.metadata?.mimeType || '';
+    const editable = resource.capabilities?.rename && ((/^(jpg|jpeg|png)$/.test(extension) && /^image\/(jpeg|png)$/.test(mime)) || (/^(txt|md|csv|log)$/.test(extension) && /^text\/(plain|markdown|csv)$/.test(mime)));
+    let file = null;
+    if (editable) {
+      try { file = await this.api.execute('readFile', [resource.id]); }
+      catch (error) { Joomla.renderMessages({ error: [error.message] }); return; }
+      if (this.destroyed) return;
+    }
     const [initialName, initialExtension] = this.splitFilename(resource.title);
     const dialog = document.createElement('dialog');
     dialog.className = 'smartbrowser-preview';
     const media = this.previewMedia(resource);
     dialog.innerHTML = `<form class="smartbrowser-preview-form com-smartbrowser-editor" method="dialog">
       <div class="smartbrowser-preview-actions">
-        <button type="button" class="btn btn-primary" data-action="save" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="fas fa-save" aria-hidden="true"></span> ${this.escapeTranslated('JSAVE')}</button>
-        <button type="button" class="btn btn-outline-primary" data-action="apply" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="fas fa-check" aria-hidden="true"></span> ${this.escapeTranslated('JAPPLY')}</button>
-        <button type="button" class="btn btn-outline-primary" data-action="copy" ${resource.capabilities?.copy ? '' : 'disabled'}><span class="fas fa-copy" aria-hidden="true"></span> ${this.escapeTranslated('JSAVEASCOPY')}</button>
-        <button type="button" class="btn btn-danger" data-action="cancel"><span class="fas fa-times" aria-hidden="true"></span> ${this.escape(this.translate('COM_SMARTBROWSER_CANCEL'))}</button>
+        <button type="button" class="btn btn-primary" data-action="save" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="fas fa-save" aria-hidden="true"></span> ${this.escapeTranslated('COM_SMARTBROWSER_SAVE_CLOSE')}</button>
+        <button type="button" class="btn btn-outline-success" data-action="apply" ${resource.capabilities?.rename ? '' : 'disabled'}><span class="fas fa-check" aria-hidden="true"></span> ${this.escapeTranslated('JAPPLY')}</button>
+        <button type="button" class="btn btn-outline-secondary" data-action="copy" ${resource.capabilities?.copy ? '' : 'disabled'}><span class="fas fa-copy" aria-hidden="true"></span> ${this.escapeTranslated('COM_SMARTBROWSER_SAVE_AS_COPY')}</button>
+        <button type="button" class="btn btn-danger" data-action="cancel"><span class="fas fa-times" aria-hidden="true"></span> <span data-exit-label>${this.escape(this.translate('JCLOSE'))}</span></button>
         <button type="button" class="btn btn-outline-secondary smartbrowser-preview-download" data-action="download"><span class="fas fa-download" aria-hidden="true"></span> ${this.escape(this.translate('COM_SMARTBROWSER_ACTION_DOWNLOAD'))}</button>
         <button type="button" class="btn btn-outline-secondary ms-auto smartbrowser-editor-size"><span class="fas fa-expand" aria-hidden="true"></span></button>
       </div>
@@ -526,11 +545,27 @@ export default class MediaActionDriver {
       </div></form>`;
     const size = createEditorSize(dialog, dialog.querySelector('.smartbrowser-editor-size'), this.translate);
     dialog.querySelector('form').addEventListener('submit', (event) => event.preventDefault());
-    dialog.querySelectorAll('[data-tab]').forEach((tab) => tab.addEventListener('click', () => {
-      dialog.querySelectorAll('[data-tab]').forEach((button) => { button.setAttribute('aria-selected', String(button === tab)); });
-      dialog.querySelector('#smartbrowser-preview-content').hidden = tab.dataset.tab !== 'content';
-      dialog.querySelector('#smartbrowser-preview-metadata').hidden = tab.dataset.tab !== 'metadata';
-    }));
+    const activateTab = tab => {
+      dialog.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-selected', String(button === tab)));
+      const imageTab = tab.dataset.imageTab;
+      dialog.querySelectorAll('.smartbrowser-preview-tab').forEach(panel => { panel.hidden = panel.id !== (imageTab ? 'smartbrowser-preview-image-edit' : `smartbrowser-preview-${tab.dataset.tab}`); });
+      if (imageTab) requestAnimationFrame(() => imageFrame?.contentWindow?.SmartBrowserImageEditor?.activateTab(imageTab));
+    };
+    dialog.querySelector('.smartbrowser-preview-tabs').addEventListener('click', event => {
+      const tab = event.target.closest('[data-tab]'); if (tab) activateTab(tab);
+    });
+    const editPanel = id => {
+      const panel = document.createElement('section'); panel.id = `smartbrowser-preview-${id}`;
+      panel.className = 'smartbrowser-preview-tab smartbrowser-file-edit-panel'; panel.setAttribute('role', 'tabpanel'); panel.hidden = true;
+      dialog.querySelector('.smartbrowser-preview-card').append(panel); return panel;
+    };
+    const addTab = (id, label, imageTab = null) => {
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.tab = id;
+      button.setAttribute('role', 'tab'); button.setAttribute('aria-selected', 'false');
+      button.setAttribute('aria-controls', `smartbrowser-preview-${imageTab ? 'image-edit' : id}`);
+      button.textContent = label; if (imageTab) button.dataset.imageTab = imageTab;
+      dialog.querySelector('[data-tab="metadata"]').before(button); return button;
+    };
     dialog.querySelector('[data-action="cancel"]').addEventListener('click', () => dialog.close());
     dialog.querySelector('[data-action="download"]').addEventListener('click', async () => {
       try { this.download(await this.api.execute('download', [currentResource.id])); }
@@ -538,12 +573,87 @@ export default class MediaActionDriver {
     });
     const nameInput = dialog.querySelector('[name="name"]');
     const extensionInput = dialog.querySelector('[name="extension"]');
+    if (file) extensionInput.readOnly = true;
+    let contentInput = null, imageFrame = null, contentBusy = false;
+    const encodeText = text => {
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      for (const byte of bytes) binary += String.fromCharCode(byte);
+      return btoa(binary);
+    };
+    if (file?.kind === 'text') {
+      contentInput = document.createElement('textarea');
+      contentInput.className = 'form-control smartbrowser-file-text';
+      contentInput.rows = 20;
+      contentInput.spellcheck = false;
+      contentInput.setAttribute('aria-label', this.translate('COM_SMARTBROWSER_EDIT_FILE_CONTENT'));
+      contentInput.value = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(Uint8Array.from(atob(file.content), char => char.charCodeAt(0)));
+      editPanel('text-edit').append(contentInput);
+      addTab('text-edit', this.translate('COM_SMARTBROWSER_EDIT_TEXT'));
+      const preview = document.createElement('pre'); preview.className = 'smartbrowser-file-text-preview'; preview.textContent = contentInput.value;
+      dialog.querySelector('.smartbrowser-preview-media').replaceChildren(preview);
+    } else if (file?.kind === 'image') {
+      imageFrame = document.createElement('iframe');
+      imageFrame.className = 'smartbrowser-file-image-editor';
+      imageFrame.title = this.translate('COM_SMARTBROWSER_EDIT_FILE_CONTENT');
+      const url = new URL(this.api.options.apiBaseUrl);
+      url.searchParams.delete('format');
+      url.searchParams.delete('task');
+      url.searchParams.set('view', 'mediaeditor');
+      url.searchParams.set('tmpl', 'component');
+      url.searchParams.set('path', resource.id);
+      if (this.api.options.browseRoot) url.searchParams.set('browseRoot', this.api.options.browseRoot);
+      imageFrame.src = url.toString();
+      editPanel('image-edit').append(imageFrame);
+      imageFrame.addEventListener('load', () => {
+        const addImageTabs = () => {
+          if (!imageFrame.isConnected || dialog.querySelector('[data-image-tab]')) return;
+          for (const tab of imageFrame.contentWindow?.SmartBrowserImageEditor?.getTabs() || []) addTab(`image-${tab.id}`, tab.label, tab.id);
+        };
+        imageFrame.contentWindow?.addEventListener('smartbrowser-image-editor-ready', addImageTabs, { once: true });
+        addImageTabs();
+      });
+    }
+    const currentContent = () => contentInput ? encodeText(contentInput.value) : imageFrame?.contentWindow?.SmartBrowserImageEditor?.getContent() ?? file?.content;
+    const contentChanged = () => file && currentContent() !== file.content;
+    if (file) {
+      const reset = document.createElement('button');
+      reset.type = 'button';
+      reset.className = 'btn btn-outline-secondary';
+      reset.textContent = this.translate('JRESET');
+      reset.addEventListener('click', () => {
+        if (contentInput) contentInput.value = new TextDecoder('utf-8', { ignoreBOM: true }).decode(Uint8Array.from(atob(file.content), char => char.charCodeAt(0)));
+        else imageFrame?.contentWindow?.SmartBrowserImageEditor?.reset(file.content);
+      });
+      dialog.querySelector('[data-action="download"]').before(reset);
+    }
     const filename = () => nameInput.value.trim() + (extensionInput.value.trim().replace(/^\.+/, '') ? `.${extensionInput.value.trim().replace(/^\.+/, '')}` : '');
-    window.SmartBrowserDialogDismiss.install(dialog, () => filename() !== currentResource.title);
+    const updateExitLabel = () => { dialog.querySelector('[data-exit-label]').textContent = this.translate(filename() !== currentResource.title || contentChanged() ? 'JCANCEL' : 'JCLOSE'); };
+    dialog.addEventListener('input', updateExitLabel);
+    dialog.addEventListener('change', updateExitLabel);
+    dialog.addEventListener('click', () => requestAnimationFrame(updateExitLabel));
+    imageFrame?.addEventListener('load', () => {
+      imageFrame.contentDocument?.addEventListener('input', updateExitLabel);
+      imageFrame.contentDocument?.addEventListener('change', updateExitLabel);
+      imageFrame.contentDocument?.addEventListener('pointerup', () => requestAnimationFrame(updateExitLabel));
+    });
+    window.SmartBrowserDialogDismiss.install(dialog, () => contentBusy || filename() !== currentResource.title || contentChanged());
     const save = async (closeAfter) => {
+      if (contentBusy) return;
       if (!nameInput.value.trim()) { nameInput.reportValidity(); return; }
       const name = filename();
+      contentBusy = true;
       try {
+        if (contentChanged()) {
+          file = await this.api.execute('writeFile', [currentResource.id], { content: currentContent(), revision: file.revision });
+          currentResource = file.resource;
+          if (imageFrame && currentContent() === file.content) imageFrame.contentWindow?.SmartBrowserImageEditor?.commit?.(file.content);
+          const mediaPreview = dialog.querySelector('[data-preview-media]');
+          if (file.kind === 'image' && mediaPreview) mediaPreview.src = currentResource.image || currentResource.metadata?.url || mediaPreview.src;
+          const textPreview = dialog.querySelector('.smartbrowser-file-text-preview');
+          if (textPreview) textPreview.textContent = contentInput.value;
+          await this.reload();
+        }
         if (name !== currentResource.title) {
           currentResource = await this.api.execute('rename', [currentResource.id], { name });
           const preview = dialog.querySelector('[data-preview-media]');
@@ -553,13 +663,18 @@ export default class MediaActionDriver {
         }
         if (closeAfter) dialog.close();
       } catch (error) { Joomla.renderMessages({ error: [error.message] }); }
+      finally { contentBusy = false; updateExitLabel(); }
     };
     dialog.querySelector('[data-action="save"]').addEventListener('click', () => save(true));
     dialog.querySelector('[data-action="apply"]').addEventListener('click', () => save(false));
     dialog.querySelector('[data-action="copy"]').addEventListener('click', async () => {
       if (!nameInput.value.trim()) { nameInput.reportValidity(); return; }
       try {
-        await this.api.execute('copy', [currentResource.id], { name: filename() });
+        const copy = await this.api.execute('copy', [currentResource.id], { name: filename() });
+        if (contentChanged()) {
+          const target = await this.api.execute('readFile', [copy.id]);
+          await this.api.execute('writeFile', [copy.id], { content: currentContent(), revision: target.revision });
+        }
         dialog.close();
         await this.reload();
       } catch (error) { Joomla.renderMessages({ error: [error.message] }); }

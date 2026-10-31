@@ -14,11 +14,11 @@
           <summary @click.prevent="media.placement = media.placement === 'none' ? 'move' : 'none'">{{ t('COM_SMARTBROWSER_BATCH_PLACEMENT') }}</summary>
           <div class="resource-batch-fields">
             <ResourceBatchModeToggle v-model="media.placement" :t="t" />
-            <label>{{ t('COM_SMARTBROWSER_BATCH_DESTINATION_FOLDER') }}
+            <div class="resource-batch-field"><span>{{ t('COM_SMARTBROWSER_BATCH_DESTINATION_FOLDER') }}</span>
               <span v-if="folderLoading" class="spinner-border spinner-border-sm" role="status" :aria-label="t('COM_SMARTBROWSER_LOADING_FOLDERS')" />
               <span v-else-if="folderError" class="text-danger">{{ folderError }}</span>
-              <ResourceFancySelect v-else v-model="media.destination" :options="folderOptions" placeholder="COM_SMARTBROWSER_SELECT_FOLDER" :t="t" />
-            </label>
+              <ResourceFancySelect v-else v-model="media.destination" :options="folderOptions" placeholder="COM_SMARTBROWSER_SELECT_FOLDER" :t="t" :aria-label="t('COM_SMARTBROWSER_BATCH_DESTINATION_FOLDER')" />
+            </div>
           </div>
         </details>
         <details class="resource-batch-step" :open="media.rename">
@@ -57,7 +57,7 @@
           <summary @click.prevent="article.placement = article.placement === 'none' ? 'move' : 'none'">{{ t('COM_SMARTBROWSER_BATCH_CATEGORY_PLACEMENT') }}</summary>
           <div v-if="article.placement !== 'none'" class="resource-batch-fields">
             <ResourceBatchModeToggle v-model="article.placement" :t="t" />
-            <label>{{ t('COM_SMARTBROWSER_CATEGORY') }}<ResourceFancySelect v-model="article.category" :options="filterOptions('category')" placeholder="COM_SMARTBROWSER_SELECT_CATEGORY" :t="t" /></label>
+            <div class="resource-batch-field"><span>{{ t('COM_SMARTBROWSER_CATEGORY') }}</span><ResourceFancySelect v-model="article.category" :options="filterOptions('category')" placeholder="COM_SMARTBROWSER_SELECT_CATEGORY" :t="t" :aria-label="t('COM_SMARTBROWSER_CATEGORY')" /></div>
           </div>
         </details>
       </template>
@@ -77,7 +77,7 @@
           <summary @click.prevent="shared.placement = shared.placement === 'none' ? 'move' : 'none'">{{ t('COM_SMARTBROWSER_BATCH_CATEGORY_PLACEMENT') }}</summary>
           <div v-if="shared.placement !== 'none'" class="resource-batch-fields">
             <ResourceBatchModeToggle v-model="shared.placement" :t="t" />
-            <label>{{ t('COM_SMARTBROWSER_BATCH_PARENT_CATEGORY') }}<ResourceFancySelect v-model="shared.category" :options="filterOptions('category')" placeholder="COM_SMARTBROWSER_SELECT_CATEGORY" :t="t" /></label>
+            <div class="resource-batch-field"><span>{{ t('COM_SMARTBROWSER_BATCH_PARENT_CATEGORY') }}</span><ResourceFancySelect v-model="shared.category" :options="filterOptions('category')" placeholder="COM_SMARTBROWSER_SELECT_CATEGORY" :t="t" :aria-label="t('COM_SMARTBROWSER_BATCH_PARENT_CATEGORY')" /></div>
           </div>
         </details>
         <details v-if="isCategories" class="resource-batch-step" :open="shared.flipOrdering">
@@ -87,7 +87,7 @@
           <summary @click.prevent="shared.placement = shared.placement === 'none' ? 'move' : 'none'">{{ t('COM_SMARTBROWSER_BATCH_MENU_PLACEMENT') }}</summary>
           <div v-if="shared.placement !== 'none'" class="resource-batch-fields">
             <ResourceBatchModeToggle v-model="shared.placement" :t="t" />
-            <label>{{ t('COM_SMARTBROWSER_BATCH_MENU_DESTINATION') }}<ResourceFancySelect v-model="shared.menuDestination" :options="menuDestinationOptions" placeholder="COM_SMARTBROWSER_SELECT_MENU" :t="t" /></label>
+            <div class="resource-batch-field"><span>{{ t('COM_SMARTBROWSER_BATCH_MENU_DESTINATION') }}</span><ResourceFancySelect v-model="shared.menuDestination" :options="menuDestinationOptions" placeholder="COM_SMARTBROWSER_SELECT_MENU" :t="t" :aria-label="t('COM_SMARTBROWSER_BATCH_MENU_DESTINATION')" /></div>
           </div>
         </details>
       </template>
@@ -96,7 +96,7 @@
           <summary @click.prevent="user.groupOpen = !user.groupOpen">{{ t('COM_SMARTBROWSER_BATCH_USER_GROUPS') }}</summary>
           <div v-if="user.groupOpen" class="resource-batch-fields">
             <label>{{ t('COM_SMARTBROWSER_BATCH_MODE') }}<select v-model="user.groupAction" class="form-select resource-batch-mode-select"><option value="add">{{ t('COM_SMARTBROWSER_BATCH_GROUP_ADD') }}</option><option value="remove">{{ t('COM_SMARTBROWSER_BATCH_GROUP_REMOVE') }}</option><option value="set">{{ t('COM_SMARTBROWSER_BATCH_GROUP_SET') }}</option></select></label>
-            <label>{{ t('COM_SMARTBROWSER_USER_GROUP') }}<ResourceFancySelect v-model="user.group" :options="filterOptions('group')" placeholder="COM_SMARTBROWSER_SELECT_USER_GROUP" :t="t" /></label>
+            <div class="resource-batch-field"><span>{{ t('COM_SMARTBROWSER_USER_GROUP') }}</span><ResourceFancySelect v-model="user.group" :options="filterOptions('group')" placeholder="COM_SMARTBROWSER_SELECT_USER_GROUP" :t="t" :aria-label="t('COM_SMARTBROWSER_USER_GROUP')" /></div>
           </div>
         </details>
         <details class="resource-batch-step" :open="user.resetOpen">

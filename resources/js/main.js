@@ -5,10 +5,11 @@ import ResourceDetails from './components/ResourceDetails.vue';
 import MediaActionDriver from './adapters/MediaActionDriver.js';
 import createBrowserState from './core/createBrowserState.js';
 import { createViewRegistry } from './core/viewRegistry.js';
-import PersistenceService from './services/PersistenceService.js';
+import PersistenceService, { browserStateKey } from './services/PersistenceService.js';
 import { resetPreferencesIfNeeded } from './core/resetPreferences.js';
 import { resetSessionNavigationIfNeeded, urlWithoutSessionNavigation } from './core/resetSessionNavigation.js';
 import ResourceApi from './services/ResourceApi.js';
+import { preferenceStorage } from './core/userPreferences.js';
 
 const options = Joomla.getOptions('com_smartbrowser', {});
 let pickerContext = null;
@@ -21,10 +22,9 @@ const resetUrl = sessionChanged ? urlWithoutSessionNavigation(window.location.hr
 if (resetUrl !== window.location.href) window.location.replace(resetUrl);
 else {
 const api = new ResourceApi(options);
-const persistenceKey = options.browseRoot
-  ? `supjx.smartbrowser.${options.adapter}.${options.browseRoot}`
-  : `supjx.smartbrowser.${options.adapter}`;
-const persistence = new PersistenceService(window.sessionStorage, persistenceKey);
+const persistenceKey = browserStateKey(options);
+const persistence = new PersistenceService(preferenceStorage(), persistenceKey);
+if (pickerContext) options.pickerRememberedInfo = persistence.load({}).showInfo;
 const viewRegistry = createViewRegistry()
   .register({ id: 'grid', label: 'COM_SMARTBROWSER_GRID', icon: 'fas fa-th', component: ResourceGrid, supportsSize: true, controls: ['sort', 'zoom'], options: { gridSize: 'md' } })
   .register({ id: 'details', label: 'COM_SMARTBROWSER_DETAILS', icon: 'fas fa-list', component: ResourceDetails, supportsSize: false, controls: ['thumbnails', 'dateField'], options: { detailsThumbnails: false, detailsDateMode: 'modified' } });

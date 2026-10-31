@@ -44,11 +44,11 @@ async page => {
   if ((await multiple.locator('.resource-selection-path input').inputValue()).startsWith('images/crop.png#')) throw new Error('Address leaked across active resources');
   await control.getByRole('button', { name: 'Replace', exact: true }).click();
   const picker = page.frameLocator('dialog.smartbrowser-picker iframe');
-  await picker.locator('.resource-picker-titlebar').waitFor();
+  await picker.locator('.sb-browser-heading-copy').waitFor();
   await picker.locator('.resource-item-title').getByText('First image', { exact: true }).last().click();
   await picker.getByRole('button', { name: 'Overlay test', exact: true }).waitFor();
-  if (await picker.locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).isDisabled()) await picker.locator('.resource-item-title').getByText('First image', { exact: true }).last().click();
-  await picker.locator('.resource-actions').getByRole('button', { name: 'Select', exact: true }).click();
+  if (await picker.locator('.resource-picker-select').isDisabled()) await picker.locator('.resource-item-title').getByText('First image', { exact: true }).last().click();
+  await picker.locator('.resource-picker-select').click();
   await page.locator('dialog.smartbrowser-picker').waitFor({ state: 'detached' });
   const stored = await control.locator('[data-sb-value]').evaluate(input => JSON.parse(input.value));
   if (stored.items[0].usage['ext.example.crop']?.ratio !== '4:3') throw new Error('Picker lost extension metadata');

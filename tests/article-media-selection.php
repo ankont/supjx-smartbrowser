@@ -15,6 +15,12 @@ namespace {
     $check(Bridge::imageReference('images/a.jpg') === ['adapter'=>'media','id'=>'local-images:/a.jpg'], 'Configured local root mapping');
     $check(Bridge::imageReference('images/a.jpg#joomlaImage://local-images/a.jpg?width=10')['id'] === 'local-images:/a.jpg', 'Native image marker');
     $check(Bridge::imageReference('https://evil.test/a.jpg') === null, 'External image guessed as local');
+    $form = new class {
+        public function getField($name, $group) { return in_array($name, ['imgclass_intro', 'float_intro']) ? (object) [] : null; }
+        public function getValue($name, $group, $default = null) { return ['imgclass_intro'=>'image-frame', 'float_intro'=>'figure-frame'][$name] ?? $default; }
+    };
+    $check(Bridge::imageUsage($form, 'intro')['media.class'] === 'image-frame', 'Image class incorrectly read from the figure class');
+    $check(Bridge::imageUsage($form, 'intro')['media.figureClass'] === 'figure-frame', 'Figure class not included in Selection Usage');
     $check(Bridge::imageReference('images/../private/a.jpg') === null, 'Traversal accepted');
     $urls = ['urla'=>'', 'urlatext'=>'orphan', 'targeta'=>'3', 'urlb'=>'/second', 'urlbtext'=>'Second', 'targetb'=>'1', 'urlc'=>'0', 'urlctext'=>'Zero', 'targetc'=>'', 'extension'=>'keep'];
     $ordered = Bridge::orderedLinks($urls);

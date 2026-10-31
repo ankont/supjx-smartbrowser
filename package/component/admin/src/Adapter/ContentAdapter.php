@@ -447,7 +447,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         }
         $model->setState('filter.search', trim((string) ($options['search'] ?? '')));
         $model->setState('filter.published', match ($options['stateFilter'] ?? 'active') {
-            'published' => 1, 'unpublished' => 0, 'archived' => 2, 'trashed' => -2, 'all' => '*', default => '',
+            'published' => 1, 'unpublished' => 0, 'archived' => 2, 'trashed' => -2, 'all' => '*', default => \SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserDefaults::states(),
         });
         $model->setState('filter.featured', (string) ($filters['featured'] ?? ''));
         $model->setState('filter.access', (string) ($filters['access'] ?? ''));
@@ -523,8 +523,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
     protected function normalizeArticle(object $article): array
     {
         $id = (int) $article->id;
-        $images = json_decode((string) ($article->images ?? '{}')) ?: new \stdClass();
-        $storedImage = (string) ($images->image_intro ?? '') ?: (string) ($images->image_fulltext ?? '');
+        $storedImage = self::storedImage($article->images ?? null);
         $identity = $this->app->getIdentity();
         $canEdit = SmartAuthorsAccess::canEditArticle($this->app, $identity, $article);
         $canPublish = SmartAuthorsAccess::canChangeArticleState($this->app, $identity, $article, 1);
@@ -547,9 +546,15 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             $publicationTiming = $publishUp !== '' && $publishUp !== $nullDate && Factory::getDate($publishUp, 'UTC')->toUnix() > $now ? 'pending' : '';
             if ($publishDown !== '' && $publishDown !== $nullDate && Factory::getDate($publishDown, 'UTC')->toUnix() < $now) $publicationTiming = 'expired';
             if ($publicationTiming !== '') $statusPresentation = [
-                'icon' => $publicationTiming === 'pending' ? 'fas fa-clock' : 'fas fa-calendar-times',
+                'icon' => $publicationTiming === 'pending' ? 'fas fa-clock' : 'fas fa-minus-circle',
                 'label' => Text::_('JLIB_HTML_PUBLISHED_' . strtoupper($publicationTiming) . '_ITEM'),
                 'tone' => $publicationTiming,
+            ];
+            $categoryState = $this->articleCategoryState($article);
+            if ($categoryState < 1) $statusPresentation = [
+                'icon' => 'fas fa-minus-circle',
+                'label' => Text::_($categoryState === -2 ? 'COM_SMARTBROWSER_PUBLISHED_CATEGORY_TRASHED' : 'COM_SMARTBROWSER_PUBLISHED_CATEGORY_UNPUBLISHED'),
+                'tone' => 'expired',
             ];
         }
         $languageKey = $this->languageKey((string) $article->title);
@@ -566,7 +571,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         if ($state === -2) $statusOverlay['action'] = 'restore';
         $overlays = [$statusOverlay, [
             'id' => 'featured', 'icon' => $featuredTiming !== '' ? ($featuredTiming === 'pending' ? 'fas fa-clock' : 'fas fa-calendar-times') : ($isFeatured ? 'fas fa-star' : 'far fa-star'),
-            'label' => Text::_($featuredTiming !== '' ? 'JLIB_HTML_FEATURED_' . strtoupper($featuredTiming) . '_ITEM' : ($isFeatured ? 'JFEATURED' : 'JUNFEATURED')),
+            'label' => Text::_($featuredTiming !== '' ? 'JLIB_HTML_FEATURED_' . strtoupper($featuredTiming) . '_ITEM' : ($isFeatured ? 'JFEATURED' : 'COM_SMARTBROWSER_NOT_FEATURED')),
             'tone' => $featuredTiming !== '' ? $featuredTiming : ($isFeatured ? 'warning' : 'muted'), 'action' => $isFeatured ? 'unfeature' : 'feature',
         ]];
         if ($checkedOut > 0) {
@@ -599,6 +604,8 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
                 ])),
                 'category' => $categoryTitle,
                 'categoryPath' => implode(' / ', $this->categoryPathTitles((int) $article->catid)),
+                'location' => $categoryTitle,
+                'locationPath' => implode(' / ', $this->categoryPathTitles((int) $article->catid)),
                 'state' => $state, 'stateLabel' => $statusPresentation['label'],
                 'access' => $article->access_level ?? $article->access ?? '',
                 'accessId' => (int) ($article->access ?? 0),
@@ -745,9 +752,16 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         $access = (int) ($resource['metadata']['accessId'] ?? 0);
         if ($access && !in_array($access, $this->app->getIdentity()->getAuthorisedViewLevels(), true)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
         $query = str_starts_with($id, 'article:')
-            ? 'option=com_content&view=article&id=' . (int) substr($id, 8)
+            ? 'option=com_smartbrowser&view=preview&id=' . (int) substr($id, 8)
             : (str_starts_with($id, 'tag:') ? 'option=com_tags&view=tag&id=' . (int) substr($id, 4) : null);
         if ($query === null) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+        if (str_starts_with($id, 'article:')) {
+            $article = $this->contentModel('Article')->getItem((int) substr($id, 8));
+            $preview = \SuperSoft\Component\Smartbrowser\Administrator\Support\ArticlePreview::class;
+            if ($preview::allowed($this->app, $this->app->getIdentity(), $article)) {
+                $query .= '&sbPreview=' . rawurlencode($preview::issue((int) $article->id, (int) $this->app->getIdentity()->id, (string) $this->app->get('secret')));
+            }
+        }
         return ['command' => 'previewUrl', 'url' => Uri::root() . 'index.php?' . $query . '&tmpl=component&Itemid=0', 'title' => $resource['title']];
     }
 
@@ -813,6 +827,20 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             'value' => (string) $option->value,
             'label' => (string) $option->text,
         ], HTMLHelper::_('tag.tags', ['filter.published' => [1]]));
+    }
+
+    protected function articleCategoryState(object $article): int
+    {
+        $state = (int) ($article->category_published ?? 1);
+        try {
+            foreach (array_keys($this->getCategory((int) $article->catid)->getPath()) as $id) {
+                if ((int) $id <= 1) continue;
+                $published = (int) $this->getCategory((int) $id)->published;
+                if ($published === -2) return -2;
+                if ($published < 1) $state = $published;
+            }
+        } catch (\Throwable $error) { /* Retain the native model's category state if its ancestry is unavailable. */ }
+        return $state;
     }
 
     protected function categoryPathTitles(int $categoryId): array
@@ -918,8 +946,19 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
     }
     protected function tagImage(object $tag): ?string
     {
-        $images = json_decode((string) ($tag->images ?? '{}')) ?: new \stdClass();
-        return $this->imageUrl((string) ($images->image_intro ?? '') ?: (string) ($images->image_fulltext ?? ''));
+        return $this->imageUrl(self::storedImage($tag->images ?? null));
+    }
+
+    /** Native models can return the database JSON already decoded. */
+    protected static function storedImage(mixed $images): string
+    {
+        if (is_string($images)) $images = json_decode($images, true);
+        if (is_object($images)) $images = get_object_vars($images);
+        if (!is_array($images)) return '';
+        foreach (['image_intro', 'image_fulltext'] as $key) {
+            if (is_string($images[$key] ?? null) && $images[$key] !== '') return $images[$key];
+        }
+        return '';
     }
 
     protected function imageUrl(string $image): ?string
@@ -984,7 +1023,7 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         }
         return false;
     }
-    protected function matchesState(int $state, string $filter): bool { return match ($filter) { 'published' => $state === 1, 'unpublished' => $state === 0, 'archived' => $state === 2, 'trashed' => $state === -2, 'all' => true, default => in_array($state, [0, 1], true) }; }
+    protected function matchesState(int $state, string $filter): bool { return match ($filter) { 'published' => $state === 1, 'unpublished' => $state === 0, 'archived' => $state === 2, 'trashed' => $state === -2, 'all' => true, default => in_array($state, \SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserDefaults::states(), true) }; }
     protected function hasMatchingDescendant(CategoryNode $category, string $filter): bool
     {
         foreach ($category->getChildren(true) as $child) if ($this->canViewCategory($child) && $this->matchesState((int) $child->published, $filter)) return true;

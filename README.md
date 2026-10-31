@@ -1,5 +1,64 @@
 # SuperSoftJx - SmartBrowser
 
+SmartBrowser is a unified resource browser, picker and selection-field package for Joomla.
+Manage and select articles, categories, tags, menus, users, media and direct links through
+one consistent interface, while retaining Joomla's native data, permissions and editors.
+
+**Current release: 5.0.0** · Joomla 5/6 · GPL-2.0-or-later
+
+## What's new in 5.0
+
+- **A consistent browser and Picker interface.** Responsive toolbars, sticky navigation and
+  list headings, independently scrolling information panels, and a bottom selection drawer
+  keep navigation and actions accessible in administrator, frontend and embedded contexts.
+- **User preferences that follow the account.** Views, columns, sorting, filters, panel
+  layouts and window sizes are cached locally and synchronized to Joomla user profiles.
+  Management browsers and caller-scoped Pickers are independent. A global reset covers all
+  persisted preferences, including pending changes from older tabs.
+- **Native article image and link workflows.** Selection Usage edits map to Joomla image
+  fields. Article links retain complete Selection Addresses, including resource identity,
+  thumbnail overrides and extension data, while ordinary layouts receive clean URLs.
+- **Media editing.** Enabled Joomla image tools provide crop, resize and rotation for
+  JPEG/PNG files. UTF-8 text files have a dedicated editing tab. Content, metadata, Apply,
+  Save as Copy and Reset are integrated into the file editor.
+- **Clearer hierarchy and publication state.** Location paths use Joomla-style separators,
+  preserve the final node when truncated and support hierarchy-aware sorting. Article
+  indicators account for unpublished or trashed categories and their ancestors.
+- **Better integration and extensibility.** Stable native field preference keys, reusable
+  collection views, generic visual overlays and image presentation hooks allow extensions
+  and template overrides to enhance selections without replacing the browser renderer.
+
+See the [changelog](CHANGELOG.md) for the full history.
+
+## Installation and upgrading
+
+Download the installable package from [GitHub Releases](https://github.com/ankont/supjx-smartbrowser/releases)
+and upload **the outer `pkg_smartbrowser-v5.0.0.zip`** through Joomla's extension installer.
+The package includes the component, the Fields picker plugin and the System integration plugin.
+
+Open **SupJx SmartBrowser** in the administrator menu, or configure individual/global native
+replacements under SmartBrowser Options > Integrations. The System integration plugin also
+provides render-time normalization for native article Selection Addresses. Templates that
+only use plain links need no additional implementation; enhanced layouts can consume the
+prepared selection data through the public PHP API.
+
+Existing extension elements, plugin groups, `SuperSoft` PHP namespaces and stored selection
+JSON retain their identities. `SuperSoftJx` is the extension display brand. Version 5 uses
+account-scoped preference storage; older unscoped browser caches are not imported between
+users. Pickers restore their saved view unless the caller explicitly supplies `defaultView`.
+
+## Developer documentation
+
+- [Selection Address contract](docs/selection-address-contract.md): portable resource identity and Usage properties.
+- [Field output and PHP presentation](docs/field-output.md): Joomla layouts, native article links and image providers.
+- [View preferences](docs/view-preferences.md): caller keys, user synchronization and reset semantics.
+- [Browser interface](docs/browser-interface.md): navigation, layouts and native integration behavior.
+- [Visual overlays](docs/visual-overlays.md): extension lifecycle and shared preview actions.
+
+The API examples and capability contracts below cover embedded collections, Selection
+Profiles, Direct Links, visual providers and public resource-read policies. Resources are
+still loaded as complete result sets; incremental loading/pagination is not part of 5.0.
+
 ### Direct Links caller options
 
 Direct Links may have a custom resource name. Named IDs append `.<base64url-name>` to the existing encoded URI ID; unnamed references remain valid. Names are not Selection Usage or resolved snapshots. Rename updates the reference in place in the ordered selection; URI uniqueness ignores the name suffix. Empty names use automatic labels, with entered phone spacing/parentheses retained where applicable.
@@ -67,6 +126,8 @@ contracts. A plain browser without a persistence host cannot create/edit tempora
 - Articles, categories, tags, articles by tag, menus, users, and media adapters.
 - Tree and flat views, scoped browsing, grid and configurable list columns, filters, sorting, and item details.
 - Selection and edit workflows, plus adapter-specific batch actions. Media batch actions include copy/move, rename, and ZIP creation.
+- The file editor embeds enabled Joomla media-action tools for JPEG/PNG images and edits UTF-8 plain text (`txt`, `md`, `csv`, `log`, subject to Media's allowed extensions). Save, Apply, Save as Copy and Reset share the existing editor. Content editing requires Media edit permission, respects browse roots and rejects stale revisions; limits are 10 MB per image and 1 MB per text file. Image edits change the file itself, unlike selection-only presentation extensions.
+
 - Trashed content/category/tag/menu resources offer permanent Delete with native model ACL checks.
 - In an ordering view, batch Sort persists the selected sibling order using the view's sort fields;
   featured articles retain their independent ordering. Unselected sibling slots are preserved.
@@ -79,6 +140,8 @@ contracts. A plain browser without a persistence host cannot create/edit tempora
 - English and Greek interface translations.
 
 Configure display, related-content, and integration settings in **SmartBrowser Options**. The integration plugin must be enabled for the built-in manager-link and field-picker replacements; third-party extensions can invoke the picker directly. SmartAuthors-specific user-field integration is used only when SmartAuthors is installed and enabled.
+
+Native article image selectors bridge all core fields into Selection Options: the image address, alternative text (`media.alt`), decorative flag (`media.decorative`), caption (`media.caption`), image class (`media.class`, Joomla `imgclass_*`) and container class (`media.figureClass`, Joomla `float_*`). Image and container classes remain separate; older forms with only `float_*` retain the existing `media.class` mapping. Values continue to save in Joomla's native article fields. Extra extension fields remain native. The default field-output layout applies the container class to its `<figure>` and the image class to `<img>`.
 
 ## Use from another extension
 
@@ -372,7 +435,7 @@ Image background remains Automatic / Transparent / Checkerboard. Automatic prese
 Grid, list, tree and information-panel visuals share one renderer. Compact visuals promote Small/Medium to Large and Large/Maximum to Maximum without modifying saved settings; badges retain their separate compact scale. List images require thumbnails; the tree remains icon-only and preserves open-folder state. Each profile has a live preview with temporary asset-availability checkboxes. Adapter drawers show inherited rules immediately and create an independent profile override on editing.
 
 Saved 1.6.1 independent-asset settings are mapped into both profiles as a starting point. Plugin event arguments and the asset/status contract are unchanged.
-# Embedded Collection View (1.7.0)
+## Embedded Collection View (1.7.0)
 
 ### Article Creation Defaults
 
@@ -590,7 +653,7 @@ Resource-reference capabilities may declare `visualRole: 'thumbnail'`. Applicabl
 All selectable resources expose optional `visual.thumbnailOverride` and `visual.iconOverride` capabilities. Icons use the existing space-separated CSS classes, for example `fas fa-book`. Overrides change usage visuals, not full Preview. Information visuals use available width and 150px height; Usage visuals remain compact, and both preserve image transparency.
 ## SmartBrowser Picker Custom Field
 
-The package installs **Fields - SuperSoftJx - SmartBrowser Picker** (`fields/smartbrowserpicker`). Enable the plugin, then select **SupJx SmartBrowser Picker (smartbrowser)** as the type of a Joomla custom field. Its field-type identifier is `smartbrowser`. It uses the same Picker, capability/profile intersection, usage editors, collection renderers and ordering API in both administrator and frontend forms. No resource HTML is stored.
+The package installs **Fields - SuperSoftJx - SmartBrowser Picker** (`fields/smartbrowserpicker`). Enable the plugin, then select **SuperSoftJx - SmartBrowser Picker (smartbrowser)** as the type of a Joomla custom field. Its field-type identifier is `smartbrowser`. It uses the same Picker, capability/profile intersection, usage editors, collection renderers and ordering API in both administrator and frontend forms. No resource HTML is stored.
 
 Configuration includes **Allowed adapters**, optional canonical **Browse root** for the first adapter, **Selection target** (`item`, `node`, `both`), comma-separated **Allowed resource types**, **Multiple selection**, **One adapter per collection**, **Allow ordering**, **Editor display** and a JSON **Selection Profile** using the existing capability IDs/contracts. An empty `{}` profile is valid, including Article fields. Auto uses Compact for single selection and Collection for multiple selection. Compact reuses the existing resource details renderer; Collection reuses the embedded grid/details view. Editor display affects only the edit form, never the saved value or frontend rendering.
 

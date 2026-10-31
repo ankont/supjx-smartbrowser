@@ -239,6 +239,8 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             'rename'     => $this->rename($selection, $payload),
             'copy'       => $this->copy($selection, $payload),
             'delete'     => $this->delete($selection),
+            'readFile'   => $this->editableFile($this->requireOne($selection)),
+            'writeFile'  => $this->writeFile($selection, $payload),
             'edit', 'preview', 'share' => $this->getResource($this->requireOne($selection), ['url' => true]),
             'download'   => $this->getResource($this->requireOne($selection), ['url' => true, 'content' => true]),
             default      => throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_UNKNOWN_ACTION'), 400),
@@ -281,6 +283,35 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             }
         });
         return $options;
+    }
+
+    public function editableFile(string $id): array
+    {
+        $this->assertAllowed('core.edit');
+        $this->assertBrowseScope([$id]);
+        $resource = $this->getResource($id, ['url' => true]);
+        $mime = (string) ($resource['metadata']['mimeType'] ?? '');
+        $kind = \SuperSoft\Component\Smartbrowser\Administrator\Support\EditableMedia::kind($resource['title'], $mime);
+        if (!$kind || ($resource['kind'] ?? '') !== 'item') throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+        if (($resource['metadata']['size'] ?? 0) > ($kind === 'text' ? 1048576 : 10485760)) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_FILE_EDITOR_TOO_LARGE'), 413);
+        $resource = $this->getResource($id, ['content' => true, 'url' => true]);
+        $content = base64_decode((string) ($resource['metadata']['content'] ?? ''), true);
+        if ($content === false) throw new \RuntimeException(Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
+        \SuperSoft\Component\Smartbrowser\Administrator\Support\EditableMedia::validate($kind, $mime, $content);
+        return ['resource' => $resource, 'kind' => $kind, 'content' => base64_encode($content), 'revision' => hash('sha256', $content)];
+    }
+
+    private function writeFile(array $selection, array $payload): array
+    {
+        $id = $this->requireOne($selection);
+        $file = $this->editableFile($id);
+        if (!hash_equals($file['revision'], (string) ($payload['revision'] ?? ''))) throw new \RuntimeException(Text::_('COM_SMARTBROWSER_FILE_CHANGED'), 409);
+        $content = base64_decode((string) ($payload['content'] ?? ''), true);
+        if ($content === false) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_UPLOAD'), 400);
+        \SuperSoft\Component\Smartbrowser\Administrator\Support\EditableMedia::validate($file['kind'], $file['resource']['metadata']['mimeType'], $content);
+        [$adapter, $path] = $this->splitId($id);
+        $this->withAllMediaTypes(fn () => $this->apiModel->updateFile($adapter, basename($path), str_replace('\\', '/', dirname($path)), $content));
+        return $this->editableFile($id);
     }
 
     private function createNode(array $payload): array
@@ -369,6 +400,10 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         $isNode = $resource->type === 'dir';
         $mime   = (string) ($resource->mime_type ?? '');
         $image  = !$isNode && str_starts_with($mime, 'image/') ? (string) ($resource->url ?? $resource->thumb ?? '') : null;
+        // Presentation cache version only; metadata.url stays the canonical address.
+        if ($image && !empty($resource->modified_date)) {
+            $image .= (str_contains($image, '?') ? '&' : '?') . 'sbv=' . rawurlencode((string) $resource->modified_date . ':' . ($resource->size ?? 0));
+        }
         [$filesystem, $filesystemPath] = $this->splitId((string) $resource->path);
         $url = (string) ($resource->url ?? '');
         $rootUrl = Uri::root();

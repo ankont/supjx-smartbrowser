@@ -6,8 +6,9 @@ const mounted = new WeakMap();
 export function mountSelectionField(root) {
   if (mounted.has(root)) return mounted.get(root);
   const input = root.querySelector('[data-sb-value]');
-  const initialValue = input.value;
+  let initialValue = input.value;
   const config = JSON.parse(root.dataset.sbField);
+  if (!config.viewPreferenceKey && input.name) config.viewPreferenceKey = `supjx.smartbrowser.field.${input.name.replace(/[^a-zA-Z0-9_.-]/g, '.')}`;
   const row = root.closest('.control-group');
   const label = row?.querySelector(':scope > .control-label');
   const labelWasHidden = label?.hidden;
@@ -20,8 +21,10 @@ export function mountSelectionField(root) {
   let value, disposed = false;
   try { value = selectionFieldValue(input.value, adapters, config.multiple, config.homogeneous); }
   catch (error) { value = selectionFieldValue('', adapters); showError(error); }
-  const persist = () => {
+  const persist = (options = {}) => {
     input.value = value.items.length ? JSON.stringify(value) : '';
+    if (options.initial) initialValue = input.value;
+    if (options.silent) return;
     input.dispatchEvent(new Event('change', { bubbles: true }));
     showError(null);
   };
@@ -61,10 +64,10 @@ export function mountSelectionField(root) {
   instance.setNativeAddress = value => collection.setNativeAddress(value);
   instance.exportAddresses = options => collection.exportAddresses(options);
   instance.importAddresses = (text, options) => collection.importAddresses(text, options);
-  instance.setItems = items => {
+  instance.setItems = async (items, options = {}) => {
     if (disposed || config.readOnly) return;
     value = selectionFieldValue({ version: 1, items }, adapters, config.multiple, config.homogeneous);
-    persist();
+    persist(options);
     return render();
   };
   return instance;

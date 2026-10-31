@@ -12,6 +12,9 @@ final class ResourceDescriptor
             $definitions = $resource['selectionCapabilities'] ?? [];
             $keys = array_column($definitions, 'key');
             foreach (self::visualCapabilities() as $definition) if (!in_array($definition['key'], $keys, true)) $definitions[] = $definition;
+            if (!empty($resource['metadata']['publicUrl']) || !empty($resource['metadata']['url'])) foreach (self::linkCapabilities() as $definition) {
+                if (!in_array($definition['key'], $keys, true)) $definitions[] = $definition;
+            }
             if (($resource['type'] ?? '') === 'article' && !in_array('article.displayedName', $keys, true)) $definitions[] = [
                 'key' => 'article.displayedName', 'type' => 'string', 'editor' => 'text', 'default' => null, 'icon' => 'fas fa-font',
                 'label' => 'COM_SMARTBROWSER_USAGE_DISPLAYED_NAME', 'validation' => ['maxLength' => 255], 'address' => ['name' => 'titleOverride'],
@@ -25,6 +28,17 @@ final class ResourceDescriptor
             return $value !== null && $value !== '';
         }));
         return $resource;
+    }
+
+    public static function linkCapabilities(): array
+    {
+        return [
+            ['key' => 'link.text', 'type' => 'string', 'editor' => 'text', 'label' => 'COM_SMARTBROWSER_LINK_TEXT', 'default' => '', 'validation' => ['maxLength' => 2048]],
+            ['key' => 'link.target', 'type' => 'string', 'editor' => 'select', 'label' => 'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'default' => '', 'options' => [
+                ['value' => '', 'label' => 'JGLOBAL_USE_GLOBAL'], ['value' => '0', 'label' => 'JBROWSERTARGET_PARENT'], ['value' => '1', 'label' => 'JBROWSERTARGET_NEW'],
+                ['value' => '2', 'label' => 'JBROWSERTARGET_POPUP'], ['value' => '3', 'label' => 'JBROWSERTARGET_MODAL'],
+            ]],
+        ];
     }
 
     public static function visualCapabilities(): array

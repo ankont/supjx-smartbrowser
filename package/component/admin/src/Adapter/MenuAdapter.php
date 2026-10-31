@@ -63,6 +63,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             if (($filters['access'] ?? '') !== '' && (int) $item->access !== (int) $filters['access']) continue;
             if (($filters['language'] ?? '') !== '' && (string) $item->language !== (string) $filters['language']) continue;
             if (($filters['component'] ?? '') !== '' && (int) $item->component_id !== (int) $filters['component']) continue;
+            if (($filters['menuItemType'] ?? '') !== '' && $this->typeLabel($item) !== (string) $filters['menuItemType']) continue;
             if (!$this->matchesState((int) $item->published, $stateFilter)) continue;
             if ($search !== '' && !str_contains(mb_strtolower((string) $item->title), $search)
                 && !str_contains(mb_strtolower((string) $item->alias), $search)) continue;
@@ -414,6 +415,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
         return [
             'orderingField' => 'ordering',
             'sortFields' => [
+                ['id' => 'menuItemType', 'label' => 'COM_SMARTBROWSER_MENU_ITEM_TYPE'],
                 ['id' => 'title', 'label' => 'COM_SMARTBROWSER_NAME'], ['id' => 'alias', 'label' => 'COM_SMARTBROWSER_ALIAS_LABEL'],
                 ['id' => 'state', 'label' => 'JSTATUS'], ['id' => 'ordering', 'label' => 'JGRID_HEADING_ORDERING'],
                 ['id' => 'language', 'label' => 'JFIELD_LANGUAGE_LABEL'], ['id' => 'id', 'label' => 'JGLOBAL_FIELD_ID_LABEL'],
@@ -448,6 +450,9 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 ['label' => 'JGLOBAL_FIELD_ID_LABEL', 'source' => 'metadata.id'],
             ],
             'filters' => [[
+                'id' => 'menuItemType', 'label' => 'COM_SMARTBROWSER_MENU_ITEM_TYPE', 'type' => 'select', 'default' => '',
+                'options' => $this->menuItemTypeOptions(),
+            ], [
                 'id' => 'state', 'label' => 'COM_SMARTBROWSER_FILTER_STATE', 'type' => 'select', 'default' => 'active',
                 'options' => [
                     ['value' => 'active', 'label' => 'COM_SMARTBROWSER_SELECT_STATUS'], ['value' => 'published', 'label' => 'COM_SMARTBROWSER_FILTER_PUBLISHED'],
@@ -473,6 +478,16 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
     }
 
     public function getCollectionPresentation(array $resources = []): array { return $this->presentation(); }
+
+    private function menuItemTypeOptions(): array
+    {
+        $types = [];
+        foreach ($this->items() as $item) {
+            if ($this->canView($item)) { $label = $this->typeLabel($item); $types[$label] = $label; }
+        }
+        natcasesort($types);
+        return $this->selectOptions($types, 'COM_SMARTBROWSER_MENU_ITEM_TYPE');
+    }
 
     private function selectOptions(array $values, string $placeholder): array
     {
@@ -611,7 +626,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
             || in_array((int) $item->access, $identity->getAuthorisedViewLevels(), true);
     }
     private function canCreate(string $menuType): bool { return $this->app->getIdentity()->authorise('core.create', 'com_menus.menu.' . (int) $this->menu($menuType)->id); }
-    private function matchesState(int $state, string $filter): bool { return match ($filter) { 'published' => $state === 1, 'unpublished' => $state === 0, 'trashed' => $state === -2, 'all' => true, default => in_array($state, [0, 1], true) }; }
+    private function matchesState(int $state, string $filter): bool { return match ($filter) { 'published' => $state === 1, 'unpublished' => $state === 0, 'trashed' => $state === -2, 'all' => true, default => in_array($state, \SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserDefaults::states(), true) }; }
     private function itemId(string $id): int { return str_starts_with($id, 'menu-item:') ? (int) substr($id, 10) : 0; }
     private function content(): FlatArticleAdapter { return new FlatArticleAdapter($this->app); }
     private function resolverRegistry(): MenuItemResolverRegistry { return $this->resolvers ??= new MenuItemResolverRegistry($this->app, fn (int $id): object => $this->item($id)); }

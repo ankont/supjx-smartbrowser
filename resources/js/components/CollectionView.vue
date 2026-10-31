@@ -4,7 +4,7 @@
       <p v-if="state.error" class="alert alert-danger" role="alert">{{ state.error }}</p>
       <div class="sb-selected-layout" :style="listOpen ? panelTracks : undefined" :class="[`panel-${panelPosition}`, { 'panel-open': panelOpen && config.informationPanel !== false, 'is-collapsed': collapsible && !listOpen }]">
       <div class="sb-selected-items" :class="`view-${state.activeView}`">
-      <div v-if="collapsible" class="sb-collection-count"><button type="button" class="sb-collection-count-toggle" :aria-expanded="listOpen" @click="listOpen = !listOpen"><span :class="listOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: {{ model.getItems().length }}</button></div>
+      <div v-if="collapsible" class="sb-collection-count"><button type="button" class="sb-collection-count-toggle" :aria-expanded="listOpen" @click="toggleList"><span :class="listOpen ? 'fas fa-chevron-up' : 'fas fa-chevron-down'" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: {{ model.getItems().length }}</button></div>
       <div v-show="!collapsible || listOpen" class="sb-selected-list">
       <header class="resource-toolbar sb-collection-toolbar">
         <button v-show="toolbarOverflow" class="resource-icon-button sb-toolbar-scroll" type="button" :disabled="!toolbarCanBack" :aria-label="t('COM_SMARTBROWSER_SCROLL_BACK')" @click="scrollToolbar(-1)"><span class="fas fa-chevron-left" /></button>
@@ -14,8 +14,8 @@
           <button v-if="replaceAction" class="resource-icon-button" type="button" :disabled="!focusedResource || !available(replaceAction, [focusedResource])" :title="t(replaceAction.label)" :aria-label="t(replaceAction.label)" @click="action(replaceAction, focusedResource)"><ResourceActionIcon :icon="replaceAction.icon" /></button>
           <ResourceOrderingControls v-if="model.canOrder && state.sortBy === 'collectionOrder'" :enabled="!state.loading && !state.busy && state.selectedIds.length > 0" :t="t" @reorder="model.move" />
           <button v-if="config.selectedResources && config.multiple !== false && model.canOrder && state.sortBy === 'collectionOrder'" class="resource-icon-button" type="button" :disabled="resources.length < 2 || state.busy || state.loading" :title="t('COM_SMARTBROWSER_COLLECTION_SORT')" :aria-label="t('COM_SMARTBROWSER_COLLECTION_SORT')" @click="collectionSort.open()"><span class="fas fa-sort" /></button>
-          <span class="sb-collection-extra-buttons" />
-          <button v-if="config.selectedResources" type="button" class="resource-icon-button" :disabled="!resources.length || state.loading || state.busy" :title="t('COM_SMARTBROWSER_COPY_ADDRESSES')" :aria-label="t('COM_SMARTBROWSER_COPY_ADDRESSES')" @click="copyAddresses"><span class="fas fa-copy" /></button>
+          <span ref="toolbarExtraHost" />
+          <button v-if="config.selectedResources" type="button" class="resource-icon-button" :disabled="!selectionIds.length || state.loading || state.busy" :title="t('COM_SMARTBROWSER_COPY_ADDRESSES')" :aria-label="t('COM_SMARTBROWSER_COPY_ADDRESSES')" @click="copyAddresses()"><span class="fas fa-copy" /></button>
           <button v-if="config.selectedResources && model.referenceItems && !config.readOnly" type="button" class="resource-icon-button" :disabled="state.loading || state.busy" :title="t('COM_SMARTBROWSER_IMPORT_ADDRESSES')" :aria-label="t('COM_SMARTBROWSER_IMPORT_ADDRESSES')" @click="openAddressImport"><span class="fas fa-paste" /></button>
           <ResourceSortControls v-if="state.activeView === 'grid' && (config.selectedResources || config.layout !== 'compact')" alignment="start" :fields="sortFields" :sort-by="state.sortBy" :sort-direction="state.sortDirection" :default-value="config.allowOrdering === false ? null : 'collectionOrder'" default-label="JGRID_HEADING_ORDERING" :t="t" @sort-by="state.sortBy = $event; state.sortDirection = 'asc'" @sort-direction-value="state.sortDirection = $event" />
           <ResourceColumnPicker v-if="config.selectedResources && state.activeView === 'details'" :columns="availableColumns" :hidden-columns="state.hiddenColumns" :shown-columns="state.shownColumns" :t="t" @toggle-column="toggleColumn" />
@@ -44,25 +44,30 @@
       <div v-if="listOpen && ['left', 'right'].includes(panelPosition)" class="sb-panel-resize" role="separator" tabindex="0" aria-orientation="vertical" :aria-label="t('COM_SMARTBROWSER_RESIZE_INFO')" :aria-valuenow="Math.round(panelWidth || controlWidth * .32)" @pointerdown="startResize" @pointermove="resizePanel" @pointerup="endResize" @pointercancel="endResize" @keydown.left.prevent="adjustPanel(-16)" @keydown.right.prevent="adjustPanel(16)" @dblclick="panelWidth = 0" />
       <ResourceInfoPanel v-if="config.selectedResources && config.informationPanel !== false" v-show="panelOpen" selection-only :resource="focusedResource" :fields="state.presentation.infoFields" :t="t"
         :address="addressValues[resourceKey(focusedResource)] || ''" :usage-mode="usageMode" :usage-definitions="usageDefinitions" :usage-values="usageValues" :usage-errors="usageErrors" :usage-editors="extensions.editors" :resolve-reference="resolveReference"
-        :preview-actions="previewActions" :selection-actions="quickActions" :allow-add="canAdd && verticalPanel" :allow-quick-add="canAdd && verticalPanel && !listOpen" :add-disabled="!addEnabled" :can-preview="Boolean(externalPreview)" :preview-context="previewContext" :native-preview="config.nativePreview" @selection-add="add" @selection-action="command => action(command, focusedResource)" @preview="action(externalPreview, focusedResource)" @usage-change="setUsage" />
+        :preview-actions="previewActions" :selection-actions="quickActions" :allow-add="canAdd && verticalPanel" :allow-quick-add="canAdd && verticalPanel && !listOpen" :add-disabled="!addEnabled" :can-preview="Boolean(externalPreview)" :preview-context="previewContext" :native-preview="config.nativePreview" @selection-add="add" @selection-action="command => action(command, focusedResource)" @preview="action(externalPreview, focusedResource)" @usage-change="setUsage">
+          <template #empty-actions><span ref="emptyExtraHost" class="sb-preview-host-actions" /></template>
+          <template #quick-actions><span ref="quickExtraHost" class="sb-preview-host-actions" /></template>
+        </ResourceInfoPanel>
       <p v-if="focusedResource && addressIssues[resourceKey(focusedResource)]" class="text-danger sb-address-error" role="alert">{{ addressIssues[resourceKey(focusedResource)] }}</p>
       </div>
       </div>
       <footer v-if="config.showCount !== false && !collapsible" class="sb-collection-count">{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: {{ model.getItems().length }}</footer>
+      <Teleport :to="extraActionTarget || 'body'" :disabled="!extraActionTarget"><span class="sb-collection-extra-buttons" /></Teleport>
     </div>
     <ResourceBatchDialog v-if="config.selectedResources && model.canOrder && config.multiple !== false" ref="collectionSort" collection-only :selection="resources" :adapter="config.adapter || 'mixed'" :sort-fields="sortFields" ordering-available :t="t" @apply="applyCollectionSort" />
     <dialog ref="addressDialog" class="resource-batch-preview-dialog sb-address-dialog" :aria-label="t('COM_SMARTBROWSER_IMPORT_ADDRESSES')" @cancel.prevent="!addressImporting && addressDialog.close()">
-      <form @submit.prevent="importAddressText">
+      <div class="sb-address-dialog-body">
         <label :for="addressInputId" class="form-label">{{ t('COM_SMARTBROWSER_IMPORT_ADDRESSES') }}</label>
-        <textarea :id="addressInputId" v-model="addressText" class="form-control" rows="7" maxlength="4194304" :disabled="addressImporting" required />
+        <textarea :id="addressInputId" v-model="addressText" class="form-control" rows="7" maxlength="4194304" :disabled="addressImporting" />
         <label v-if="config.multiple !== false" class="sb-address-append"><input v-model="addressAppend" type="checkbox" :disabled="addressImporting"> {{ t('COM_SMARTBROWSER_ADDRESS_APPEND') }}</label>
         <p v-if="addressError" class="text-danger sb-address-error" role="alert">{{ addressError }}</p>
-        <div class="sb-address-dialog-actions"><button type="submit" class="btn btn-primary" :disabled="addressImporting">{{ t('COM_SMARTBROWSER_IMPORT') }}</button><button type="button" class="btn btn-secondary" :disabled="addressImporting" @click="addressDialog.close()">{{ t('JCANCEL') }}</button></div>
-      </form>
+        <div class="sb-address-dialog-actions"><button type="button" class="btn btn-primary" :disabled="addressImporting" @click="importAddressText">{{ t('COM_SMARTBROWSER_IMPORT') }}</button><button type="button" class="btn btn-secondary" :disabled="addressImporting" @click="addressDialog.close()">{{ t('JCANCEL') }}</button></div>
+      </div>
     </dialog>
   </section>
 </template>
 <script setup>
+import { preferenceStorage } from '../core/userPreferences.js';
 import { computed, onBeforeUnmount, onMounted, ref, watch, useId } from 'vue';
 import ResourceGrid from './ResourceGrid.vue';
 import ResourceDetails from './ResourceDetails.vue';
@@ -100,21 +105,29 @@ async function importAddressText() {
   catch (error) { addressError.value = error.message; }
   finally { addressImporting.value = false; }
 }
-async function copyAddresses() {
-  try { await navigator.clipboard.writeText(await addressOperations.exportAddresses()); }
+async function copyAddresses(ids = selectionIds.value) {
+  if (!ids.length) return;
+  try { await navigator.clipboard.writeText(await addressOperations.exportAddresses({ selectionIds: [...ids] })); }
   catch (error) { state.error = error.message || props.t('COM_SMARTBROWSER_COPY_FAILED'); }
 }
 onBeforeUnmount(() => { addressDisposed = true; addressGeneration++; unsubscribeAddresses(); if (!props.config.addressService) addressService.destroy(); });
 const collapsible = computed(() => props.config.selectedResources && props.config.informationPanel !== false);
 const preferenceKey = `${props.config.viewPreferenceKey || 'supjx.smartbrowser.collection.view'}.${props.config.multiple === false ? 'single' : 'multiple'}-layout`;
 let preference = {};
-try { preference = JSON.parse(localStorage.getItem(preferenceKey) || '{}') || {}; } catch {}
+try { preference = JSON.parse(preferenceStorage().getItem(preferenceKey) || '{}') || {}; } catch {}
 const listOpen = ref(collapsible.value ? preference.listOpen === true : true);
 const infoState = ref(['side', 'vertical', 'hidden'].includes(preference.infoState) ? preference.infoState : props.config.informationPanelOpen === false ? 'hidden' : preference.sideInfo === true ? 'side' : 'vertical');
-function cycleInfo() { infoState.value = { vertical: 'side', side: 'hidden', hidden: 'vertical' }[infoState.value]; }
+function cycleInfo() { infoState.value = { hidden: 'side', side: 'vertical', vertical: 'hidden' }[infoState.value]; }
+function toggleList() {
+  if (listOpen.value) { listOpen.value = false; if (infoState.value === 'hidden') infoState.value = 'vertical'; }
+  else { listOpen.value = true; infoState.value = 'hidden'; }
+}
 watch(listOpen, open => { if (collapsible.value && !open) infoState.value = 'vertical'; }, { immediate: true });
 watch(() => [listOpen.value, infoState.value, state.sortBy, state.sortDirection, state.hiddenColumns, state.shownColumns], () => {
-  if (collapsible.value || props.config.selectedResources) try { localStorage.setItem(preferenceKey, JSON.stringify({ listOpen: listOpen.value, infoState: infoState.value, sortBy: state.sortBy, sortDirection: state.sortDirection, hiddenColumns: state.hiddenColumns, shownColumns: state.shownColumns })); } catch {}
+  if (collapsible.value || props.config.selectedResources) try {
+    const saved = JSON.parse(preferenceStorage().getItem(preferenceKey) || '{}') || {};
+    preferenceStorage().setItem(preferenceKey, JSON.stringify({ ...saved, ...(collapsible.value ? { listOpen: listOpen.value, infoState: infoState.value } : {}), sortBy: state.sortBy, sortDirection: state.sortDirection, hiddenColumns: state.hiddenColumns, shownColumns: state.shownColumns }));
+  } catch {}
 }, { deep: true });
 const canAdd = computed(() => !props.config.readOnly && typeof props.config.onAdd === 'function');
 const adding = ref(false);
@@ -154,7 +167,6 @@ const actions = computed(() => [
   ...(!props.config.readOnly && typeof props.config.onReplace === 'function' ? [{ id: 'collectionReplace', label: 'COM_SMARTBROWSER_COLLECTION_REPLACE', icon: 'arrow-down-up-across-line', requiresSelection: true, collectionCommand: true }] : []),
   ...orderingCommands.value.filter(command => command.id !== 'collectionSort').map(command => ({ ...command, label: command.id === 'collectionMoveUp' ? 'COM_SMARTBROWSER_ITEM_MOVE_UP' : 'COM_SMARTBROWSER_ITEM_MOVE_DOWN' })),
   ...(props.config.selectedResources ? [{ id: 'collectionCopy', label: 'COM_SMARTBROWSER_COPY_ADDRESS', icon: 'fas fa-copy', requiresSelection: true, collectionCommand: true }] : []),
-  ...(props.config.selectedResources && props.model.referenceItems && !props.config.readOnly ? [{ id: 'collectionImport', label: 'COM_SMARTBROWSER_IMPORT_ADDRESS', icon: 'fas fa-paste', requiresSelection: true, collectionCommand: true }] : []),
   ...(!props.config.readOnly ? (props.config.resourceActions || []).map(action => ({ ...action, collectionCommand: true })) : []),
   ...(props.config.contextActions === true && !props.config.readOnly ? state.actions.filter(action => (props.config.contextActionIds || safeActions).includes(action.id)) : []),
 ]);
@@ -174,7 +186,7 @@ const commandSelection = resource => selectionIds.value.includes(resourceKey(res
 const available = (action, selection) => {
   if (state.loading || state.busy) return false;
   if (action.id === 'collectionAdd') return addEnabled.value;
-  if (action.id === 'collectionCopy') return resources.value.length > 0;
+  if (action.id === 'collectionCopy') return selection.length > 0;
   if (action.id === 'collectionImport') return props.model.referenceItems && !props.config.readOnly;
   if (['collectionMoveUp', 'collectionMoveDown', 'collectionSort'].includes(action.id)) {
     if (!orderingCommands.value.some(command => command.id === action.id)) return false;
@@ -183,7 +195,7 @@ const available = (action, selection) => {
     const selected = new Set(commandSelection(selection[0])), delta = action.id === 'collectionMoveUp' ? -1 : 1;
     return resources.value.some((resource, index) => selected.has(resourceKey(resource)) && resources.value[index + delta] && !selected.has(resourceKey(resources.value[index + delta])));
   }
-  return action.id === 'collectionRemove' ? props.model.canRemove : !selection.some(resource => resource.unavailable) && (hostAction(action) ? !props.config.readOnly : selection.every(resource => (!resource.collectionActions || resource.collectionActions.some(candidate => candidate.id === action.id)) && driverFor(resource).available(itemAction(action, resource), [resource])));
+  return action.id === 'collectionRemove' ? props.model.canRemove : hostAction(action) ? !props.config.readOnly : !selection.some(resource => resource.unavailable) && selection.every(resource => (!resource.collectionActions || resource.collectionActions.some(candidate => candidate.id === action.id)) && driverFor(resource).available(itemAction(action, resource), [resource]));
 };
 const resourceDefault = resource => actions.value.find(action => action.id === props.config.defaultResourceActionId && available(action, [resource])) || (props.config.contextActions === true && !props.config.readOnly
   ? defaultResourceAction({ ...resource, activatable: !resource.unavailable }, 'manage', actions.value, available) : null);
@@ -193,7 +205,7 @@ async function action(command, resource) {
   if (['collectionSort', 'collectionAdd', 'collectionCopy', 'collectionImport', 'collectionMoveUp', 'collectionMoveDown'].includes(command?.id) && !available(command, resource ? [resource] : [])) return;
   if (command?.id === 'collectionSort') { if (!command.disabled) collectionSort.value?.open(); return; }
   if (command?.id === 'collectionAdd') return add();
-  if (command?.id === 'collectionCopy') return copyAddresses();
+  if (command?.id === 'collectionCopy') return copyAddresses(commandSelection(resource));
   if (command?.id === 'collectionImport') return openAddressImport();
   if (['collectionMoveUp', 'collectionMoveDown'].includes(command?.id)) {
     if (!resource || command.disabled) return;
@@ -227,6 +239,9 @@ const views = [{ id: 'grid', label: 'COM_SMARTBROWSER_GRID', icon: 'fas fa-th' }
 const allSelected = computed(() => props.model.browser.bulkSelectableResources.value.length > 0 && props.model.browser.bulkSelectableResources.value.every(resource => state.selectedIds.includes(resourceKey(resource))));
 const control = ref(null), controlWidth = ref(0);
 const toolbar = ref(null), toolbarOverflow = ref(false), toolbarCanBack = ref(false), toolbarCanForward = ref(false);
+const toolbarExtraHost = ref(null), emptyExtraHost = ref(null), quickExtraHost = ref(null);
+const extraActionTarget = computed(() => panelOpen.value && verticalPanel.value && !focusedResource.value && emptyExtraHost.value
+  ? emptyExtraHost.value : !listOpen.value && quickExtraHost.value ? quickExtraHost.value : toolbarExtraHost.value);
 function updateToolbar() {
   const element = toolbar.value;
   if (!element) return;
