@@ -1,6 +1,5 @@
 <?php defined('_JEXEC') or die; ?>
 <div class="smartbrowser-dashboard">
-    <h2><?php echo \Joomla\CMS\Language\Text::_('COM_SMARTBROWSER_DASHBOARD'); ?></h2>
     <div class="smartbrowser-dashboard-grid">
         <?php foreach ($this->items as $item) : ?>
             <a class="smartbrowser-dashboard-item" href="<?php echo htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8'); ?>">

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/joomla/media/templates/administrator/atum/css/template.min.css">
+<link rel="stylesheet" href="/package/component/media/css/smartbrowser.css">
+<link rel="stylesheet" href="/package/component/media/css/editor.css">
+<style>
+/* Legacy Joomla template conventions, intentionally loaded after the component. */
+details summary ~ * { margin-top: 1rem; }
+form:not(.form-no-margin) .control-group .control-label { float: left; padding: 5px; }
+form:not(.form-no-margin) .control-group .controls { margin-left: 220px; }
+.btn [class^="icon-"], .btn [class*=" icon-"] { margin-right: .5rem; }
+.template-container { max-width: 1000px; margin: auto; }
+.compat-main { margin: 0; min-height: 0; }
+</style>
+<script src="/joomla/media/system/js/core.js"></script>
+<script src="/joomla/media/system/js/showon.js" defer></script>
+<div class="template-container">
+  <div id="browser" class="smartbrowser compat-main">
+    <nav class="resource-sidebar"><div class="resource-tree-content"><details class="resource-adapter" open>
+      <summary>Articles</summary><div class="resource-adapter-roots"><section class="resource-tree-root">
+        <button type="button">Content</button>
+      </section></div>
+    </details></div></nav>
+    <div class="sb-heading-controls"><button class="btn resource-display-toggle"><span class="icon-expand"></span></button></div>
+  </div>
+</div>
+<div class="com-smartbrowser-editor container-fluid is-aligned-editor compat-main">
+  <form id="adminForm">
+    <div class="smartbrowser-editor-actions">
+      <div class="smartbrowser-editor-tools"><a href="#" class="btn smartbrowser-editor-native"><span class="icon-joomla"></span></a></div>
+      <button type="button" class="btn smartbrowser-editor-size"><span class="icon-expand"></span></button>
+    </div>
+    <div class="row">
+      <div class="col-lg-9"><fieldset class="options-form smartbrowser-editor-tab">
+        <legend>Options</legend>
+        <div class="control-group"><div class="control-label"><label>Enable introduction</label></div><div class="controls">
+          <input id="enable-no" type="radio" name="jform[params][enable]" value="0" checked><label for="enable-no">No</label>
+          <input id="enable-yes" type="radio" name="jform[params][enable]" value="1"><label for="enable-yes">Yes</label>
+        </div></div>
+        <div id="dependent" class="control-group" data-showon='[{"field":"jform[params][enable]","values":["1"],"sign":"=","op":""}]'>
+          <div class="control-label"><label for="dependent-value">Introduction title</label></div><div class="controls"><input id="dependent-value" class="form-control" value="Title"></div>
+        </div>
+        <div id="explicit-hidden" class="control-group" hidden><div class="controls"><input></div></div>
+      </fieldset></div>
+      <div class="col-lg-3"><fieldset class="options-form">
+        <legend>Content settings</legend>
+        <div class="control-group"><div class="control-label"><label for="category">Category</label></div><div class="controls"><select id="category" class="form-select"><option>Category</option></select></div></div>
+        <div class="control-group"><div class="control-label"><label for="note">Note</label></div><div class="controls"><input id="note" class="form-control"></div></div>
+      </fieldset></div>
+    </div>
+  </form>
+</div>
+</html>

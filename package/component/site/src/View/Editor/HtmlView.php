@@ -87,6 +87,7 @@ class HtmlView extends BaseHtmlView
         $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_smartbrowser');
         $this->getDocument()->getWebAssetManager()
             ->useStyle('com_smartbrowser.editor')
+            ->useScript('showon')
             ->useScript('com_smartbrowser.editor-fields');
         if ($app->isClient('administrator') && $this->resourceType === 'article'
             && $app->getInput()->getBool('sbpage') && !$this->editorComplete) {

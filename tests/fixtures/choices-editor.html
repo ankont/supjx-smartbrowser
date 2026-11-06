@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/joomla/media/templates/administrator/atum/css/template.min.css">
+<link rel="stylesheet" href="/joomla/media/vendor/choicesjs/css/choices.min.css">
+<link rel="stylesheet" href="/package/component/media/css/smartbrowser.css">
+<link rel="stylesheet" href="/package/component/media/css/editor.css">
+<script src="/joomla/media/system/js/core.js"></script>
+<script src="/joomla/media/vendor/choicesjs/js/choices.min.js" defer></script>
+<script src="/joomla/media/system/js/fields/joomla-field-fancy-select.js" defer></script>
+<style>body{padding:20px}.com-smartbrowser-editor{width:min(100%,600px)}.narrow{width:242px;max-width:100%}</style>
+<form id="outside"><joomla-field-fancy-select placeholder="Native outside editor"><select multiple><option value="outside">Outside</option></select></joomla-field-fancy-select></form>
+<main class="com-smartbrowser-editor"><form id="adminForm">
+<div class="narrow"><div class="controls">
+<joomla-field-fancy-select id="tags" placeholder="Πληκτρολογήστε ή Επιλέξτε ετικέτες"><select name="tags[]" multiple><option value="history">History</option><option value="school">School and a considerably longer tag label that must wrap in a narrow sidebar</option></select></joomla-field-fancy-select>
+</div></div>
+<div class="controls"><joomla-field-fancy-select id="category" placeholder="Category"><select name="category"><option value="one">Category one</option><option value="two">Category two</option></select></joomla-field-fancy-select></div>
+<div class="narrow"><div class="controls"><joomla-field-fancy-select id="disabled-tags" placeholder="Disabled tags"><select name="disabled[]" multiple disabled><option value="fixed" selected>Fixed</option></select></joomla-field-fancy-select></div></div>
+</form></main></html>

@@ -157,16 +157,16 @@ dialog.com-smartbrowser-editor-picker .btn-close {
   max-height: min(300px, calc(100dvh - 170px));
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"] .choices__inner {
+.com-smartbrowser-editor .choices[data-type*="select"] .choices__inner {
   display: block;
   position: relative;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"]::after {
+.com-smartbrowser-editor .choices[data-type*="select"]::after {
   content: none;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"] .choices__inner::after {
+.com-smartbrowser-editor .choices[data-type*="select"] .choices__inner::after {
   content: "";
   position: absolute;
   top: 50%;
@@ -284,7 +284,7 @@ joomla-dialog.sb-article-preview .sb-preview-maximize {
   border: 0;
 }
 
-body .calendar-container table tbody td.day.selected {
+.com-smartbrowser-editor .calendar-container table tbody td.day.selected {
   color: #fff !important;
   background: #0d6efd !important;
 }
@@ -443,8 +443,24 @@ html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrows
 #toolbar > .smartbrowser-editor-tools { margin-inline-start: auto; flex: 0 0 auto; }
 #toolbar > .smartbrowser-editor-tools > #toolbar-help { margin: 0 !important; }
 .com-smartbrowser-editor[data-resource-type="article"] .options-form { min-width: 0; }
-.com-smartbrowser-editor [data-sb-native-media] .control-group[hidden],
-.com-smartbrowser-editor[data-resource-type="category"] .control-group[hidden] { display: none !important; }
+.com-smartbrowser-editor .control-group[hidden],
+.com-smartbrowser-editor [data-showon].hidden { display: none !important; }
+
+/* Site templates may use legacy horizontal forms with a fixed 220px controls offset. */
+.com-smartbrowser-editor.is-aligned-editor #adminForm .control-group > :is(.control-label, .controls) {
+  float: none;
+  max-inline-size: 100%;
+  margin-inline: 0 !important;
+  box-sizing: border-box;
+}
+
+.com-smartbrowser-editor.is-aligned-editor #adminForm .control-group > .controls {
+  min-inline-size: 0;
+}
+
+.com-smartbrowser-editor.is-aligned-editor .col-lg-3 .controls > :is(input, select, textarea, .choices, joomla-field-fancy-select) {
+  max-inline-size: 100%;
+}
 .com-smartbrowser-editor .smartbrowser-editor-link-row.is-link-collection { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 768px) {
   .com-smartbrowser-editor.is-aligned-editor .options-form .control-group { display: flex; flex-direction: row; align-items: start; }
@@ -459,6 +475,82 @@ html.sb-editor-modal-document .com-smartbrowser-editor:not(.is-page) .smartbrows
 .com-smartbrowser-editor.is-page.container-fluid:has(#smartbrowserEditorTabs[view="tabs"]) {
   height: auto;
 }
+
+/* Joomla 3-style radio groups, Joomla 5/6 input+label buttons, and template
+   radio wrappers share the same field semantics, but not the same markup. */
+.com-smartbrowser-editor .btn-group.radio { display: inline-flex; flex-wrap: wrap; max-width: 100%; padding: 0; gap: 0; }
+.com-smartbrowser-editor .btn-group.radio > .radio { margin: 0; }
+.com-smartbrowser-editor .btn-group.radio label {
+  display: inline-flex; align-items: center; justify-content: center;
+  position: relative; min-height: 42px; margin: 0; padding: .45rem .8rem;
+  color: #223548; background: #fff; border: 1px solid #7a91ac;
+  border-radius: .25rem; line-height: 1.5; cursor: pointer;
+}
+.com-smartbrowser-editor .btn-group.radio input[type="radio"] {
+  position: absolute !important; inline-size: 1px !important; block-size: 1px !important;
+  margin: 0 !important; padding: 0 !important; opacity: 0 !important;
+  clip-path: inset(50%); overflow: hidden;
+}
+.com-smartbrowser-editor .btn-group.radio :is(input:checked + label, label:has(input:checked)) {
+  color: #fff; background: #485561; border-color: #485561;
+}
+.com-smartbrowser-editor .btn-group.radio :is(input:focus-visible + label, label:has(input:focus-visible)) {
+  outline: 2px solid #2563a6; outline-offset: 2px; z-index: 1;
+}
+.com-smartbrowser-editor .btn-group.radio :is(input:disabled + label, label:has(input:disabled)),
+.com-smartbrowser-editor fieldset:disabled .btn-group.radio label,
+.com-smartbrowser-editor .btn-group.radio:is(.disabled, .readonly) label { opacity: .6; cursor: default; }
+
+/* Only style real selects, never the hidden backing select of a Choices widget
+   or the calendar's time selectors. Do not initialize a second widget. */
+.com-smartbrowser-editor .controls > select:is(.form-select, .custom-select):not([hidden]):not(.choices__input),
+.com-smartbrowser-editor .controls > joomla-field-fancy-select > select:is(.form-select, .custom-select):not([hidden]):not(.choices__input) {
+  display: block; box-sizing: border-box; width: min(100%, 360px); min-width: 0;
+  max-width: 100%; min-height: 44px; padding: .5rem 2.8rem .5rem .85rem;
+  appearance: none; color: #223548; background-color: #fff;
+  border: 1px solid #aebdce; border-radius: .25rem; line-height: 1.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m3 6 5 5 5-5' fill='none' stroke='%23223548' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-size: 16px; background-position: right .85rem center;
+}
+.com-smartbrowser-editor .controls > select:is(.form-select, .custom-select):is([multiple], [size]:not([size="1"])) { background-image: none; padding-inline: .85rem; }
+.com-smartbrowser-editor .controls > select:is(.form-select, .custom-select):disabled { background-color: #e9ecef; color: #647078; }
+.com-smartbrowser-editor .controls > select:is(.form-select, .custom-select):focus-visible { outline: 2px solid #2563a6; outline-offset: 2px; }
+.com-smartbrowser-editor .controls > :is(.form-text, .field-description, .help-block) {
+  display: block; clear: both; width: 100%; margin-block-start: .25rem;
+}
+.com-smartbrowser-editor .controls { min-width: 0; }
+.com-smartbrowser-editor .switcher { max-inline-size: 100%; }
+
+/* Choices sizes its search input from the placeholder in ch. In a narrow
+   column that inline minimum can exceed the entire control. Keep the native
+   input and handlers, but let it wrap with the selected items inside one box. */
+.com-smartbrowser-editor .choices[data-type="select-multiple"] .choices__inner {
+  display: flex; flex-wrap: wrap; align-items: center; box-sizing: border-box;
+  min-width: 0; padding-inline-end: 42px;
+}
+.com-smartbrowser-editor .choices[data-type="select-multiple"] .choices__list--multiple {
+  min-width: 0; max-width: 100%;
+}
+.com-smartbrowser-editor .choices[data-type="select-multiple"] .choices__list--multiple .choices__item {
+  box-sizing: border-box; max-width: 100%; overflow-wrap: anywhere;
+}
+.com-smartbrowser-editor .choices[data-type="select-multiple"] .choices__input--cloned {
+  flex: 1 1 10ch; box-sizing: border-box;
+  width: 0 !important; min-width: 0 !important; max-width: 100%;
+  margin: 0; padding: .2rem 0; border: 0 !important; border-radius: 0;
+  background: transparent; box-shadow: none; font: inherit; line-height: 1.5;
+}
+.com-smartbrowser-editor .choices[data-type="select-multiple"] .choices__input--cloned:focus-visible {
+  outline: 2px solid #2563a6; outline-offset: -2px;
+}
+@media (max-width: 767px) {
+  .com-smartbrowser-editor.is-aligned-editor #adminForm .control-group { display: flex; flex-direction: column; align-items: stretch; }
+  .com-smartbrowser-editor.is-aligned-editor #adminForm .control-group > :is(.control-label, .controls) { width: 100%; }
+}
+.com-smartbrowser-editor .js-calendar[popover] { color: inherit; border: 0; }
+.com-smartbrowser-editor .js-calendar .calendar-container { box-sizing: border-box; width: 100%; min-width: 0; }
+.com-smartbrowser-editor .js-calendar .calendar-container table { width: 100%; min-width: 0; table-layout: fixed; }
+.com-smartbrowser-editor .js-calendar .calendar-container .time td select { box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; }
 
 .com-smartbrowser-editor.is-page:has(#smartbrowserEditorTabs[view="tabs"]) :is(#adminForm, .main-card, #smartbrowserEditorTabs[view="tabs"]) {
   height: auto;

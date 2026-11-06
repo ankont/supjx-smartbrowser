@@ -432,12 +432,14 @@ export default class MediaActionDriver {
       }
       if (uploaded) {
         await this.reload();
-        const collectionMode = this.api.options?.pickerContext?.collectionMode || this.api.options?.selectionHost?.collectionMode;
+        const selectionContext = this.api.options?.pickerContext || this.api.options?.selectionHost;
+        const collectionMode = selectionContext?.collectionMode;
         const adapter = this.api.options?.adapter?.replace(/^flat-/, '');
-        const limit = this.api.options?.mode === 'select' ? this.api.options.multiple === false ? 1 : this.api.options.maxSelections || 500 : 500;
+        const limit = this.api.options?.mode === 'select' ? this.api.options.multiple === false ? 1 : selectionContext?.maxSelections ?? this.api.options.maxSelections ?? 500 : 500;
         const keys = uploadedIds.slice(0, limit).map(id => collectionMode ? referenceKey({ adapter, id }) : id);
         this.state.selectedIds = [...new Set(keys)];
         if (keys.length) this.state.focusedId = keys[keys.length - 1];
+        this.state.revealIds = keys;
         Joomla.renderMessages({ success: [this.translate('COM_MEDIA_UPLOAD_SUCCESS')] });
       }
     } finally {

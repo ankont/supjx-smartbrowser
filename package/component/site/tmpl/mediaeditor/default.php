@@ -7,7 +7,7 @@ use Joomla\CMS\Uri\Uri;
 
 $fieldSets = $this->form->getFieldsets();
 ?>
-<form id="media-form" class="media-form" onsubmit="return false">
+<form id="media-form" class="media-form smartbrowser-image-editor" onsubmit="return false">
     <?php // The host owns the responsive tab bar; keep native accordion headings disabled. ?>
     <?php echo HTMLHelper::_('uitab.startTabSet', 'myTab', ['active' => 'attrib-' . reset($fieldSets)->name, 'breakpoint' => 1]); ?>
     <?php echo LayoutHelper::render('joomla.edit.params', $this); ?>

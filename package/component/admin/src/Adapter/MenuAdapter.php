@@ -199,7 +199,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
     {
         return [
             [...$this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_MENU_ITEM', 'fas fa-plus', 'node', true, false, false, false, true), 'creationRole' => 'item'],
-            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true),
+            [...$this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true), 'defaultOnLeaf' => true],
             $this->action('openLink', 'COM_SMARTBROWSER_OPEN_LINK', 'fas fa-external-link-alt', 'resource', false, true, true),
             $this->action('copyLink', 'COM_SMARTBROWSER_COPY_LINK', 'fas fa-copy', 'resource', false, true, true),
             $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'node', false, true, false, false, false, 'publication'),
@@ -635,8 +635,8 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
     private function requireOne(array $selection): string { if (count($selection) !== 1) throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_SINGLE_SELECTION_REQUIRED'), 400); return (string) reset($selection); }
     private function editorResponse(string $url): array { return ['command' => 'openEditor', 'url' => EditorRoute::link($this->app, $url)]; }
     private function action(string $id, string $label, string $icon, string $scope, bool $primary = false, bool $requiresSelection = false, bool $single = false, bool $itemsOnly = false, bool $currentNode = false, ?string $exclusiveGroup = null): array { return compact('id', 'label', 'icon', 'scope', 'primary', 'requiresSelection', 'single', 'itemsOnly', 'currentNode', 'exclusiveGroup'); }
-    private function stateLabel(int $state): string { return match ($state) { 1 => Text::_('JPUBLISHED'), 0 => Text::_('JUNPUBLISHED'), -2 => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), default => (string) $state }; }
-    private function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'fas fa-check', 'label' => Text::_('JPUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'fas fa-times', 'label' => Text::_('JUNPUBLISHED'), 'tone' => 'muted'], -2 => ['icon' => 'fas fa-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'fas fa-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
+    private function stateLabel(int $state): string { return match ($state) { 1 => Text::_('COM_SMARTBROWSER_STATE_PUBLISHED'), 0 => Text::_('COM_SMARTBROWSER_STATE_UNPUBLISHED'), -2 => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), default => (string) $state }; }
+    private function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'fas fa-check', 'label' => Text::_('COM_SMARTBROWSER_STATE_PUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'fas fa-times', 'label' => Text::_('COM_SMARTBROWSER_STATE_UNPUBLISHED'), 'tone' => 'muted'], -2 => ['icon' => 'fas fa-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'fas fa-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
     private function statusOverlay(int $state): array { return ['id' => 'status', ...$this->statusPresentation($state), 'action' => match ($state) { 1 => 'unpublish', 0 => 'publish', default => null }]; }
     private function sortResources(array $resources, string $field, string $direction): array
     {

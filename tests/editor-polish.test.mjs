@@ -27,7 +27,7 @@ test('shared editor controls and media picker handle their visible states', asyn
   assert.match(css, /\.com-smartbrowser-editor \.choices \.choices__list--single \.choices__button_joomla::before \{ content: '\\00d7'/);
   assert.match(css, /\.smartbrowser-picker \{[^}]*overflow: hidden/);
   assert.match(css, /\.smartbrowser-picker iframe \{ display: block/);
-  assert.match(editorCss, /body \.calendar-container table tbody td\.day\.selected \{\s*color: #fff !important;\s*background: #0d6efd !important;/);
+  assert.match(editorCss, /\.com-smartbrowser-editor \.calendar-container table tbody td\.day\.selected \{\s*color: #fff !important;\s*background: #0d6efd !important;/);
 });
 
 test('article featured period and menu home language flags reach both views', async () => {

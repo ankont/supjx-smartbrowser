@@ -1,5 +1,10 @@
 const propertyName = /^[a-zA-Z][a-zA-Z0-9_.-]*$/;
 const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+const sameDefault = (value, fallback) => value === fallback || Boolean(value && fallback
+  && typeof value === 'object' && typeof fallback === 'object'
+  && Array.isArray(value) === Array.isArray(fallback)
+  && Object.keys(value).length === Object.keys(fallback).length
+  && Object.keys(value).every(key => own(fallback, key) && sameDefault(value[key], fallback[key])));
 const reserved = new Set(['ext.selectionAddress']);
 const encode = value => encodeURIComponent(String(value)).replace(/[!'()*]/g, c => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 const queryText = entries => entries.map(([key, value]) => `${encode(key)}=${encode(value)}`).join('&');
@@ -102,6 +107,7 @@ export function createSelectionAddressContract() {
       safeAddressUrl(url, format !== 'joomlaLink');
       const result = `${url}#${format}://${locator}${properties.length ? `?${queryText(properties)}` : ''}`;
       api.parse(result);
+      if (format === 'joomlaLink' && !locator && !properties.length) return url;
       return result;
     },
     reference(address, context = {}) {
@@ -135,7 +141,7 @@ export function createSelectionAddressContract() {
         const name = address.name || definition.key;
         if (!propertyName.test(name) || names.has(name) || keys.has(definition.key) || formatNames.includes(name)) throw new TypeError(`Address property conflict: ${name}`);
         names.add(name); keys.add(definition.key);
-        result.push({ ...definition, ...address, name });
+        result.push({ ...definition, ...address, name, default: own(policy, 'default') ? policy.default : definition.default });
       }
       return result;
     },
@@ -157,9 +163,11 @@ export function createSelectionAddressContract() {
         if (output.some(([key]) => key === definition.name)) throw new TypeError(`Address property conflict: ${definition.name}`);
         if (!definition.codec) {
           if (['string', 'number', 'boolean'].includes(definition.type) && typeof value !== definition.type) throw new TypeError(`Invalid address property type: ${definition.name}`);
+          if (sameDefault(value, definition.default)) continue;
           output.push([definition.name, definition.values?.[String(value)] ?? scalar(value)]);
           continue;
         }
+        if (sameDefault(value, definition.default)) continue;
         const codec = codecs.get(definition.codec);
         if (!codec) throw new TypeError(`Unsupported address codec: ${definition.codec}`);
         const seed = /^[a-z]$/i.test(definition.alias || '') ? definition.alias : definition.name[0].toLowerCase();

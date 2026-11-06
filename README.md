@@ -4,7 +4,7 @@ SmartBrowser is a unified resource browser, picker and selection-field package f
 Manage and select articles, categories, tags, menus, users, media and direct links through
 one consistent interface, while retaining Joomla's native data, permissions and editors.
 
-**Current release: 5.0.0** · Joomla 5/6 · GPL-2.0-or-later
+**Current release: 5.0.15** · Joomla 5/6 · GPL-2.0-or-later
 
 ## What's new in 5.0
 
@@ -33,7 +33,7 @@ See the [changelog](CHANGELOG.md) for the full history.
 ## Installation and upgrading
 
 Download the installable package from [GitHub Releases](https://github.com/ankont/supjx-smartbrowser/releases)
-and upload **the outer `pkg_smartbrowser-v5.0.0.zip`** through Joomla's extension installer.
+and upload **the outer `pkg_smartbrowser-v5.0.15.zip`** through Joomla's extension installer.
 The package includes the component, the Fields picker plugin and the System integration plugin.
 
 Open **SupJx SmartBrowser** in the administrator menu, or configure individual/global native
@@ -531,6 +531,41 @@ Save/Apply/Save as Copy form, while Preview is view-only. Articles and tags open
 native frontend component-only content in a popup; Joomla frontend publication
 and access rules still apply (an unavailable/unpublished page may show a native
 Joomla message rather than content).
+
+Node-management adapters can mark an action `defaultOnLeaf: true`; in Manage mode
+it becomes the default for actionable, activatable nodes explicitly reporting
+`hasChildren: false`, subject to the existing action permissions. Categories,
+menus and tags use Edit, with Open retained in the context menu and through
+Ctrl/Cmd activation. In Pickers these adapters select eligible leaf nodes by
+default instead, independently of edit permission and subject to the Picker's
+selection target. Open remains available through the context menu and Ctrl/Cmd.
+Branches and article/media navigation retain their existing defaults.
+
+Picker status messages float over the results immediately above the bottom
+selection panel, without consuming layout height or scrolling with results. The native Joomla
+message container and dismissal behaviour are retained. Contained Pickers fill
+their viewport or dialog content area as messages, window size and the bottom
+selection drawer change. After upload, successful files are selected within the
+caller's limit and revealed together where space permits, scrolling only the
+results area. Active filters can still exclude resources from the displayed list.
+
+Embedded editors support Joomla's legacy nested radio groups, current radio-button
+layouts, native switchers and both `form-select` and `custom-select` controls.
+Compatibility styles are confined to the SmartBrowser editor; fields keep their
+native values, validation, showon and widget initialization.
+Multiple Choices controls share the editor's dropdown indicator and let their
+search input and selected tags wrap within narrow sidebars, without replacing
+the native widget or changing submitted values. Native calendar popups remain
+descendants of their fields for Joomla event handling, but use a
+manual browser popover where available to escape scroll-container clipping. Their
+position and maximum size follow the editor viewport on scroll and resize, and
+their original styles are restored on close. No template XML changes are required.
+
+The regression fixture `/editor-forms.html` renders radio layouts from the Joomla
+installation selected by `SMARTBROWSER_TEST_JOOMLA_ROOT`. Run
+`tests/editor-forms.browser.mjs` with the fixture server to check native controls,
+keyboard interaction, showon, form values and calendar clipping at desktop/mobile
+widths in LTR and RTL.
 
 An integration can display an ordered selection without mounting browser navigation.
 The original identifier-list API uses one adapter; the opt-in reference-entry API also supports mixed collections. Load the public assets from a Joomla view:

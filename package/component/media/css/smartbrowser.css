@@ -41,6 +41,15 @@
 .smartbrowser:has(> .sb-redesigned-browser.is-contained) { min-height: 0; }
 .sb-redesigned-browser.is-contained { height: var(--sb-browser-available-height, 100dvh); min-height: 0; overflow: hidden; }
 .sb-redesigned-browser.is-contained > .sb-browser-header { position: relative; top: auto; }
+.sb-browser-messages { flex: none; min-height: 0; }
+.sb-redesigned-browser.is-picker > .sb-browser-messages { position: absolute; inset-inline: 0; bottom: var(--sb-picker-footer-height, 0px); z-index: 75; pointer-events: none; }
+.sb-redesigned-browser.is-picker > .sb-browser-messages #system-message-container > * { pointer-events: auto; }
+.sb-redesigned-browser.is-picker .resource-main > .resource-browser > :is(.resource-browser-grid, .resource-details-view) { align-self: start; }
+.sb-redesigned-browser.is-picker .resource-main > .resource-browser > .resource-browser-grid { padding-block-end: calc(14px + var(--sb-picker-message-height, 0px)); }
+.sb-redesigned-browser.is-picker .resource-main > .resource-browser > .resource-details-view { padding-block-end: var(--sb-picker-message-height, 0px); }
+.sb-redesigned-browser.is-picker .sb-browser-messages #system-message-container { background: transparent; }
+.sb-browser-messages #system-message-container:empty { display: none; }
+.sb-browser-messages #system-message-container > :last-child { margin-bottom: 0; }
 .sb-redesigned-browser.is-contained > .smartbrowser-layout { flex: 1 1 0; min-height: 0; overflow: hidden; }
 .sb-redesigned-browser.is-contained .smartbrowser-layout > .resource-main { min-height: 0; overflow: hidden; }
 .sb-redesigned-browser.is-contained .resource-main > .resource-toolbar { position: relative; top: auto; }
@@ -83,6 +92,7 @@ legend.sb-integration-legend .switcher { display: inline-block; width: 9rem; hei
 .sb-icon-row > button { padding: 4px; height: 34px; }
 @media (max-width: 480px) { .sb-icon-row { grid-template-columns: minmax(80px, 1fr) 22px minmax(100px, 1.5fr) 30px; gap: 4px; font-size: 13px; } }
 [data-sb-wide-container] { box-sizing: border-box !important; width: 100% !important; max-width: none !important; min-width: 0 !important; grid-column: 1 / -1 !important; }
+.smartbrowser[data-sb-wide] { box-sizing: border-box; padding-inline: clamp(12px, 1.5vw, 24px); }
 body[data-sb-focus-page] { overflow: hidden; }
 .smartbrowser[data-sb-focus] { position: fixed; inset: 0; z-index: 2147483000; box-sizing: border-box; width: 100%; height: 100%; padding: 8px; margin: 0; overflow: auto; background: var(--body-bg, #fff); }
 .resource-actions > .resource-display-toggle { flex: none; }
@@ -583,7 +593,7 @@ body[data-sb-focus-page] { overflow: hidden; }
 }
 
 /* Atum adds spacing after details summaries; tree roots must stay contiguous. */
-.resource-adapter > summary ~ .resource-adapter-roots { padding-block-start: 0; }
+.resource-adapter > summary ~ .resource-adapter-roots { margin-block-start: 0; padding-block-start: 0; }
 
 .resource-adapter-roots > .resource-tree-root:first-child { margin-block-start: 0; }
 .resource-details-view .resource-column-access { width: 7rem; max-width: 7rem; }
@@ -888,6 +898,29 @@ body[data-sb-focus-page] { overflow: hidden; }
   background: transparent;
   border: 0;
   border-inline-start: 1px solid var(--sb-border);
+}
+
+/* Icon-only controls must not inherit template spacing intended for an adjacent caption. */
+:is(.smartbrowser .resource-icon-button, .smartbrowser .resource-manager-link, .smartbrowser .resource-display-toggle,
+  #sb-native-manager .resource-manager-link, .com-smartbrowser-editor .smartbrowser-editor-native,
+  .com-smartbrowser-editor .smartbrowser-editor-size, .smartbrowser-preview .smartbrowser-editor-size)
+  > :is(.fas, .far, .fab, [class^="icon-"], [class*=" icon-"]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;
+  padding: 0;
+  float: none;
+  line-height: 1;
+}
+
+.com-smartbrowser-editor .smartbrowser-editor-native {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
 }
 
 .resource-icon-button:hover,
@@ -2075,39 +2108,6 @@ dialog.smartbrowser-preview .smartbrowser-preview-actions .btn.smartbrowser-prev
   margin-inline-end: 0 !important;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .btn-group.radio {
-  max-width: 100%;
-  flex-wrap: wrap;
-}
-
-.com-smartbrowser-editor .smartbrowser-editor-tab .btn-group.radio .btn {
-  display: inline-flex;
-  align-items: center;
-  min-height: 42px;
-  color: #223548;
-  background: #fff;
-  border: 1px solid #7a91ac;
-  box-shadow: none;
-}
-
-.com-smartbrowser-editor .smartbrowser-editor-tab .btn-group.radio .btn:has(input:checked) {
-  color: #fff;
-  background: #485561;
-  border-color: #485561;
-}
-
-.com-smartbrowser-editor .smartbrowser-editor-tab .btn-group.radio input[type="radio"] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.com-smartbrowser-editor .smartbrowser-editor-tab .btn-group.radio .btn:has(input:focus-visible) {
-  outline: 2px solid #2563a6;
-  outline-offset: 2px;
-}
-
 .com-smartbrowser-editor .smartbrowser-editor-tab > legend {
   font-size: 1rem;
   font-weight: 600;
@@ -2130,21 +2130,22 @@ dialog.smartbrowser-preview .smartbrowser-preview-actions .btn.smartbrowser-prev
 .com-smartbrowser-editor[data-resource-type="tag"] joomla-field-fancy-select:has(#jform_parent_id) .choices__list--multiple .choices__item { margin: 0; padding: 0; color: #223548; background: transparent; border: 0; border-radius: 0; font-size: inherit; font-weight: normal; }
 .com-smartbrowser-editor[data-resource-type="tag"] joomla-field-fancy-select:has(#jform_parent_id) .choices__button_joomla { display: none; }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"] .choices__inner {
+.com-smartbrowser-editor .choices[data-type*="select"] .choices__inner {
   min-height: 42px;
-  padding: 3px 48px 3px 10px;
+  padding: 3px 10px;
+  padding-inline-end: 48px;
   border: 1px solid #d4dce4;
   border-radius: 5px;
   background: #f8f8f8;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"] :is(.choices__list--single, .choices__list--multiple, .choices__input) {
+.com-smartbrowser-editor .choices[data-type*="select"] :is(.choices__list--single, .choices__list--multiple, .choices__input) {
   background: transparent;
   border: 0;
   box-shadow: none;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"]::before {
+.com-smartbrowser-editor .choices[data-type*="select"]::before {
   content: "";
   position: absolute;
   inset-block: 1px;
@@ -2156,7 +2157,7 @@ dialog.smartbrowser-preview .smartbrowser-preview-actions .btn.smartbrowser-prev
   z-index: 1;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .choices[data-type*="select"]::after {
+.com-smartbrowser-editor .choices[data-type*="select"]::after {
   content: "";
   position: absolute;
   top: calc(50% - 5px);
@@ -2334,22 +2335,8 @@ dialog:is(.smartbrowser-editor, .smartbrowser-preview, .smartbrowser-picker, .co
   border-color: #087cff;
 }
 
-.com-smartbrowser-editor .smartbrowser-editor-tab .controls > input.form-control:not(.field-media-input),
-.com-smartbrowser-editor .smartbrowser-editor-tab .controls > select.custom-select {
+.com-smartbrowser-editor .smartbrowser-editor-tab .controls > input.form-control:not(.field-media-input) {
   width: min(100%, 360px);
-}
-
-.com-smartbrowser-editor .smartbrowser-editor-tab select.custom-select {
-  appearance: none !important;
-  min-height: 44px;
-  padding: 5px 56px 5px 14px;
-  border: 1px solid #d4dce4 !important;
-  border-radius: 5px;
-  background-color: #fff;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m3 6 5 5 5-5' fill='none' stroke='%2317212b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), linear-gradient(#e9edf1, #e9edf1);
-  background-repeat: no-repeat;
-  background-size: 16px 16px, 48px 100%;
-  background-position: right 16px center, right center;
 }
 
 .com-smartbrowser-editor .smartbrowser-editor-title-alias,
@@ -2460,6 +2447,7 @@ dialog:is(.smartbrowser-editor, .smartbrowser-preview, .smartbrowser-picker, .co
 .smartbrowser-preview iframe { display: block; width: 100%; height: 100%; min-height: 0; border: 0; }
 
 .smartbrowser-dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.sb-dashboard-toolbar-title { display: flex; align-items: center; gap: .5rem; margin: 0; margin-inline-end: auto; font-size: 1.25rem; line-height: 1.4; }
 .smartbrowser-dashboard-item { display: grid; grid-template-columns: 36px 1fr; gap: 4px 12px; align-items: center; padding: 18px; border: 1px solid var(--sb-border, #ccd3db); border-radius: 4px; color: inherit; text-decoration: none; background: var(--body-bg, #fff); }
 .smartbrowser-dashboard-item > :is(.fas, .far, .fab, [class^="icon-"]) { grid-row: 1 / 3; color: var(--link-color, #1a5fb4); font-size: 1.6rem; }
 .smartbrowser-dashboard-item > span:last-child { color: var(--secondary-color, #66717d); font-size: .9rem; }
@@ -2644,6 +2632,9 @@ html body dialog.smartbrowser-picker.is-maximized { position: fixed !important; 
 .sb-panel-resize:hover::after, .sb-panel-resize:focus-visible::after { background: var(--sb-primary); }
 .resource-selection-path > span { flex: 1; white-space: pre-line; user-select: text; }
 .resource-selection-path button { border: 0; background: transparent; color: inherit; padding: 2px 4px; }
+.resource-selection-path button:is(:hover, :focus-visible) { background: var(--sb-hover); border-radius: 3px; }
+.resource-selection-path button:active { background: var(--sb-border); box-shadow: inset 0 1px 3px #0003; }
+.resource-selection-path button.is-copied { color: #146c43; background: #d1e7dd; border-radius: 3px; }
 .resource-selection-information dd > .fas { margin-inline-end: 8px; }
 .resource-preview-empty { padding: 10px; text-align: center; font-size: .8rem; }
 .is-selected-resources .resource-info-panel .resource-lightweight-visual.has-unavailable-content { height: 96px; min-height: 96px; }

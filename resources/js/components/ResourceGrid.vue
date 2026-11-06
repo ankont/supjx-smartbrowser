@@ -8,6 +8,7 @@
     <div
       v-for="resource in resources"
       :key="resourceKey(resource)"
+      :data-sb-resource-key="resourceKey(resource)"
       class="resource-browser-item"
       :class="{ selected: selectedIds.includes(resourceKey(resource)), focused: focusedId === resourceKey(resource), active: openMenu === resourceKey(resource), contextual: isContextualResource(resource) }"
       :role="canFocusResource(resource) ? 'button' : undefined"
@@ -35,11 +36,11 @@
         <ResourceVisual :resource="resource" />
         <span v-if="resource.overlays?.length" class="resource-item-overlays">
           <template v-for="overlay in resource.overlays" :key="overlay.id">
-            <button v-if="overlayAction(overlay, resource)" type="button" class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlay.label" @click.stop="$emit('focus', resource); $emit('action', overlayAction(overlay, resource), resource)">
+            <button v-if="overlayAction(overlay, resource)" type="button" class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlayTooltip(overlay, overlayAction(overlay, resource), t)" @click.stop="$emit('focus', resource); $emit('action', overlayAction(overlay, resource), resource)">
                 <img v-if="overlay.image" :src="overlay.image" alt="" aria-hidden="true" />
                 <span v-else :class="overlay.icon" aria-hidden="true" />
             </button>
-            <span v-else class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlay.label">
+            <span v-else class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlayTooltip(overlay, overlayAction(overlay, resource), t)">
                 <img v-if="overlay.image" :src="overlay.image" alt="" aria-hidden="true" />
                 <span v-else :class="overlay.icon" aria-hidden="true" />
             </span>
@@ -56,6 +57,7 @@
 </template>
 
 <script setup>
+import { overlayTooltip } from '../core/overlayTooltip.js';
 import { resourceKey } from '../core/selectionIdentity.js';
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { canActOnResource, canFocusResource, canSelectResource, isContextualResource } from '../core/resourcePolicy.js';

@@ -1,4 +1,4 @@
-import { t as e } from "./visual-runtime-BqvJBmz9.js?v=5.0.0";
+import { t as e } from "./visual-runtime-CSXJ-t_P.js?v=5.0.15";
 //#region resources/js/article-edit-links.js
 var t = new e(null, {}, () => window.location.reload(), (e) => Joomla.Text._(e), "modal", "site");
 document.addEventListener("click", (e) => {

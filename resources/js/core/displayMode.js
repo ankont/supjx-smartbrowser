@@ -45,6 +45,7 @@ export function createDisplayMode(container, onChange = () => {}) {
     const event = new CustomEvent('smartbrowser:display-mode', { bubbles: true, cancelable: true, detail: { mode, previous, container } });
     if (!container.dispatchEvent(event)) return mode;
     if (mode === 'wide') {
+      attribute(container, 'data-sb-wide', '');
       for (let parent = container.parentElement; parent && parent !== doc.body && parent !== doc.documentElement; parent = parent.parentElement) {
         attribute(parent, 'data-sb-wide-container', '');
       }

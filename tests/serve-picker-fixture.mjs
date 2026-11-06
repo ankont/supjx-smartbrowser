@@ -7,6 +7,10 @@ const joomla = resolve(process.env.SMARTBROWSER_TEST_JOOMLA_ROOT || '../joomla')
 const server = createServer(async (request, response) => {
   try {
     const path = new URL(request.url, 'http://localhost').pathname;
+    if (path === '/editor-forms.html') {
+      response.setHeader('Content-Type', 'text/html; charset=utf-8');
+      response.end(execFileSync('php', ['tests/fixtures/editor-forms.php'])); return;
+    }
     if (path === '/selection-output-preview.html') {
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
       response.end(execFileSync('php', ['tests/fixtures/selection-output-preview.php'])); return;

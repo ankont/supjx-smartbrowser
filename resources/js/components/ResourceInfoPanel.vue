@@ -21,7 +21,7 @@
       <h3 v-else>{{ displayTitle }}</h3>
       <div v-if="selectionActions?.length" class="sb-preview-selection-actions"><button v-for="action in selectionActions" :key="action.id" type="button" :disabled="action.disabled" :title="t(action.label)" :aria-label="t(action.label)" :class="{ 'resource-preview-remove': action.id === 'collectionRemove', 'resource-preview-add': action.id === 'collectionAdd' }" @click="$emit('selection-action', action)"><ResourceActionIcon :icon="action.icon" /></button><slot name="quick-actions" /></div>
       <div class="sb-info-details">
-      <dl v-if="selectionOnly" class="resource-selection-information"><div><dt><span class="fas fa-link" aria-hidden="true" />{{ t('COM_SMARTBROWSER_URI') }}</dt><dd class="resource-selection-path"><input type="text" :value="uri" :title="uri" :aria-label="t('COM_SMARTBROWSER_URI')" class="sb-reference-readonly" readonly aria-readonly="true"><button type="button" :title="t('COM_SMARTBROWSER_COPY_PATH')" :aria-label="t('COM_SMARTBROWSER_COPY_PATH')" @click="copyPath(uri)"><span class="fas fa-copy" aria-hidden="true" /></button></dd></div></dl>
+      <dl v-if="selectionOnly" class="resource-selection-information"><div><dt><span class="fas fa-link" aria-hidden="true" />{{ t('COM_SMARTBROWSER_URI') }}</dt><dd class="resource-selection-path"><input type="text" :value="uri" :title="uri" :aria-label="t('COM_SMARTBROWSER_URI')" class="sb-reference-readonly" readonly aria-readonly="true"><button type="button" :class="{ 'is-copied': copiedPath }" :title="t(copiedPath ? 'COM_SMARTBROWSER_COPIED' : 'COM_SMARTBROWSER_COPY_PATH')" :aria-label="t(copiedPath ? 'COM_SMARTBROWSER_COPIED' : 'COM_SMARTBROWSER_COPY_PATH')" @click="copyPath(uri)"><span :class="copiedPath ? 'fas fa-check' : 'fas fa-copy'" aria-hidden="true" /></button><span class="visually-hidden" role="status">{{ copiedPath ? t('COM_SMARTBROWSER_COPIED') : '' }}</span></dd></div></dl>
       <dl v-if="selectionOnly && usageMode === 'readonly' && usageDefinitions?.length" class="resource-selection-usage">
         <div v-for="definition in usageDefinitions" :key="definition.key"><dt><span v-if="definition.key !== 'media.decorative'" :class="usageIcon(definition)" aria-hidden="true" />{{ t(definition.label) }}</dt><dd>{{ usageLabel(definition) }}</dd></div>
       </dl>
@@ -107,10 +107,27 @@ const hasUsage = computed(() => Boolean(props.usageDefinitions?.length || props.
 const showUsage = computed(() => props.selectionOnly || hasUsage.value && tab.value === 'usage');
 const displayTitle = computed(() => props.resource?.unavailable ? props.t('COM_SMARTBROWSER_SELECTION_UNAVAILABLE') : showUsage.value ? selectionPresentation(props.resource, props.usageValues).title : props.resource?.title);
 const usageIcon = iconForUsage;
+const copiedPath = ref(false);
+let copyFeedbackTimer, copyRevision = 0;
+const resetCopyFeedback = () => {
+  copyRevision++;
+  clearTimeout(copyFeedbackTimer);
+  copiedPath.value = false;
+};
+watch(uri, resetCopyFeedback);
+onBeforeUnmount(resetCopyFeedback);
 async function copyPath(value) {
-  try { await navigator.clipboard.writeText(Array.isArray(value) ? value.join('\n') : String(value)); }
+  resetCopyFeedback();
+  const revision = copyRevision;
+  try {
+    await navigator.clipboard.writeText(Array.isArray(value) ? value.join('\n') : String(value));
+    if (revision !== copyRevision) return;
+    copiedPath.value = true;
+    copyFeedbackTimer = setTimeout(resetCopyFeedback, 1600);
+  }
   catch { window.Joomla?.renderMessages?.({ error: [props.t('COM_SMARTBROWSER_COPY_FAILED')] }); }
 }
+
 const usageLabel = definition => {
   const value = props.usageValues?.[definition.key];
   if (value === null || value === undefined || value === '') return '\u2014';

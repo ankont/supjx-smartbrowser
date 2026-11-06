@@ -63,7 +63,7 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
         return array_values(array_filter([
             [...$this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_CATEGORY', 'fas fa-plus', 'node', true, false, false, false, true), 'creationRole' => 'item'],
             $this->canCreateArticle() ? [...$this->action('newArticle', 'COM_SMARTBROWSER_NEW_ARTICLE', 'fas fa-newspaper', 'node', false, false, false, false, true), 'creationRole' => 'contextual'] : null,
-            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true, false, false),
+            [...$this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true, false, false), 'defaultOnLeaf' => true],
             $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'node', false, true, false, false, false, 'publication'),
             $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),
             $this->action('archive', 'COM_SMARTBROWSER_ACTION_ARCHIVE', 'fas fa-archive', 'node', false, true, false, false, false, 'archiveState'),

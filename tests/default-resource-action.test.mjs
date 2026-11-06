@@ -6,6 +6,41 @@ import { itemMenuActions } from '../resources/js/core/itemMenuActions.js';
 const edit = { id: 'edit', requiresSelection: true };
 const item = { kind: 'item', actionable: true, activatable: true, selectable: true };
 
+test('node browsers opt into editing leaves without removing navigation or bypassing permissions', () => {
+  const action = { ...edit, defaultOnLeaf: true };
+  const leaf = { ...item, kind: 'node', navigable: true, hasChildren: false };
+  assert.equal(defaultResourceAction(leaf, 'manage', [action], () => true), action);
+  const open = modifiedResourceAction(leaf, 'manage', [action], () => true);
+  assert.equal(open.id, 'browseOpen');
+  const menu = itemMenuActions([action], leaf, () => true, action, open);
+  assert.equal(menu[0].id, 'edit');
+  assert.equal(menu.find(entry => entry.id === 'browseOpen').isModified, true);
+  for (const resource of [{ ...leaf, hasChildren: true }, { ...leaf, hasChildren: undefined }, { ...leaf, actionable: false }, { ...leaf, activatable: false }, { ...leaf, kind: 'root' }]) {
+    assert.equal(defaultResourceAction(resource, 'manage', [action], () => true).id, 'browseOpen');
+  }
+  assert.equal(defaultResourceAction(leaf, 'manage', [action], () => false).id, 'browseOpen');
+  assert.equal(defaultResourceAction(leaf, 'manage', [edit], () => true).id, 'browseOpen', 'Article/media browsers must retain navigation');
+  assert.equal(defaultResourceAction(leaf, 'select', [action], () => true).id, 'pickerSelect');
+  assert.equal(modifiedResourceAction(leaf, 'select', [action], () => true).id, 'browseOpen');
+});
+
+test('node Pickers select eligible leaves independently of edit permission and retain branch navigation', () => {
+  const action = { ...edit, defaultOnLeaf: true };
+  const leaf = { ...item, kind: 'node', navigable: true, hasChildren: false };
+  assert.equal(defaultResourceAction(leaf, 'select', [action], () => false, 'node').id, 'pickerSelect');
+  assert.equal(defaultResourceAction(leaf, 'select', [action], () => false, 'both').id, 'pickerSelect');
+  for (const resource of [{ ...leaf, hasChildren: true }, { ...leaf, hasChildren: undefined }, { ...leaf, selectable: false }, { ...leaf, activatable: false }]) {
+    assert.equal(defaultResourceAction(resource, 'select', [action], () => true, 'node').id, 'browseOpen');
+  }
+  assert.equal(defaultResourceAction(leaf, 'select', [action], () => true, 'item').id, 'browseOpen');
+  assert.equal(defaultResourceAction(leaf, 'select', [edit], () => true, 'node').id, 'browseOpen');
+  const primary = defaultResourceAction(leaf, 'select', [action], () => false, 'node');
+  const modified = modifiedResourceAction(leaf, 'select', [action], () => false, 'node');
+  const menu = itemMenuActions([action], leaf, () => false, primary, modified);
+  assert.equal(menu[0].id, 'pickerSelect');
+  assert.equal(menu.filter(entry => entry.id === 'browseOpen').length, 1);
+});
+
 test('adapter-declared Ctrl action reuses italic menu indication and respects permissions', () => {
   const action = { ...edit, modifiedDefault: true };
   const primary = defaultResourceAction(item, 'select', [action], () => true);

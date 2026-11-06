@@ -20,7 +20,7 @@ final class CollectionViewSupport
         $app->getLanguage()->load('com_content', JPATH_ADMINISTRATOR, null, true);
         foreach (['JCANCEL', 'JGLOBAL_USE_GLOBAL', 'JBROWSERTARGET_PARENT', 'JBROWSERTARGET_NEW', 'JBROWSERTARGET_POPUP', 'JBROWSERTARGET_MODAL'] as $key) Text::script($key);
         foreach (['COM_CONTENT_FIELD_IMAGE_CAPTION_LABEL', 'COM_CONTENT_FIELD_IMAGE_CLASS_LABEL', 'COM_CONTENT_FIELD_URLA_LINK_TEXT_LABEL', 'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL'] as $key) Text::script($key);
-        foreach ((new BrowserViewSupport($app))->languageKeys() as $key) Text::script($key);
+        foreach ((new BrowserViewSupport($app))->languageKeys() as $key) BrowserLanguage::script($key);
         foreach (['TITLE', 'UNAVAILABLE', 'REMOVE', 'EMPTY'] as $key) Text::script('COM_SMARTBROWSER_COLLECTION_' . $key);
         Text::script('COM_SMARTBROWSER_LOADING');
         Text::script('COM_SMARTBROWSER_NO_IMAGE_SELECTED');

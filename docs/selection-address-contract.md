@@ -362,6 +362,8 @@ Simple properties should remain simple.
 
 Do not include unnecessary placeholders, empty sections or redundant metadata.
 
+Registered properties equal to their effective capability/profile default are omitted on export, including empty strings, false, zero and compound defaults. Different values remain explicit, including an empty string overriding a non-empty or null default. Compound defaults are compared structurally. Opaque retained properties and native image query pairs remain lossless. A `joomlaLink` with no locator or properties is exported as its plain URL; the explicit empty marker remains accepted on import. Other formats retain their resource identity markers.
+
 A native Joomla image must remain compatible with the actual Joomla image field representation.
 
 ### Multiple selections
@@ -587,7 +589,7 @@ Extensions may use `registerProperty(definition)` for existing `ext.*` usage met
 
 `registerCodec(name, { encode, decode })` handles structured properties. `encode(value, context)` returns textual component pairs without the local alias prefix. `decode(pairs, context)` returns `{ value, preserved? }`. Codecs receive `definition` and `resolveReference`; the built-in image codec also receives any preserved native URI. Codec registration does not grant resource access.
 
-The serializer assigns deterministic, collision-free short aliases, reserving ordinary property names and their component prefixes. Imported aliases need not match the generated alias. All query values use standard percent encoding; encoded slashes/colons in component values are equivalent to the readable examples above. String/number/boolean types come from registered descriptors, not guesses based on text. Null/undefined are omitted. Explicitly stored scalar values, including false, zero and empty strings, are retained even when equal to the current capability default: another consumer may have different profile defaults. The serializer does not invent values for absent properties or add placeholder sections.
+The serializer assigns deterministic, collision-free short aliases, reserving ordinary property names and their component prefixes. Imported aliases need not match the generated alias. All query values use standard percent encoding; encoded slashes/colons in component values are equivalent to the readable examples above. String/number/boolean types come from registered descriptors, not guesses based on text. Null/undefined and values equal to the effective capability/profile default are omitted. All different values remain explicit, including false, zero and empty strings. Consequently, omitted defaults inherit the receiving consumer's defaults on import. The serializer does not invent values for absent properties or add placeholder sections.
 
 Unknown textual properties are retained as ordered pairs under existing `ext.selectionAddress` usage metadata, never silently applied as arbitrary capabilities. This same reserved extension metadata retains semantic format choice and compound image URI details that cannot fit into a normalized `{ adapter, id }` thumbnail reference. It is not a new top-level item schema and is not emitted as JSON in Address. Unregistered structured extension data requires a codec and produces an explicit incompatibility until one is registered. Unknown native image parameters, including repeated names, remain intact in the native URI or compound codec.
 

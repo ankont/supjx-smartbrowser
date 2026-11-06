@@ -10,6 +10,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Database\DatabaseInterface;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\EditorRoute;
+use SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserLanguage;
 use SuperSoft\Component\Smartbrowser\Administrator\Support\SmartAuthorsAccess;
 use SuperSoft\Component\Smartbrowser\Administrator\Model\SmartAuthorsArticleModel;
 
@@ -543,11 +544,14 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             $nullDate = Factory::getContainer()->get(DatabaseInterface::class)->getNullDate();
             $publishUp = (string) ($article->publish_up ?? '');
             $publishDown = (string) ($article->publish_down ?? '');
+            if (($publishUp !== '' && $publishUp !== $nullDate) || ($publishDown !== '' && $publishDown !== $nullDate)) {
+                $statusPresentation['label'] = BrowserLanguage::text('JLIB_HTML_PUBLISHED_ITEM');
+            }
             $publicationTiming = $publishUp !== '' && $publishUp !== $nullDate && Factory::getDate($publishUp, 'UTC')->toUnix() > $now ? 'pending' : '';
             if ($publishDown !== '' && $publishDown !== $nullDate && Factory::getDate($publishDown, 'UTC')->toUnix() < $now) $publicationTiming = 'expired';
             if ($publicationTiming !== '') $statusPresentation = [
                 'icon' => $publicationTiming === 'pending' ? 'fas fa-clock' : 'fas fa-minus-circle',
-                'label' => Text::_('JLIB_HTML_PUBLISHED_' . strtoupper($publicationTiming) . '_ITEM'),
+                'label' => BrowserLanguage::text('JLIB_HTML_PUBLISHED_' . strtoupper($publicationTiming) . '_ITEM'),
                 'tone' => $publicationTiming,
             ];
             $categoryState = $this->articleCategoryState($article);
@@ -568,11 +572,13 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         );
         $statusOverlay = $this->statusOverlay($state);
         $statusOverlay = array_replace($statusOverlay, $statusPresentation);
+        if ($state === 1) $statusOverlay['tooltipLines'] = $this->publicationDates($article->publish_up ?? null, $article->publish_down ?? null);
         if ($state === -2) $statusOverlay['action'] = 'restore';
         $overlays = [$statusOverlay, [
             'id' => 'featured', 'icon' => $featuredTiming !== '' ? ($featuredTiming === 'pending' ? 'fas fa-clock' : 'fas fa-calendar-times') : ($isFeatured ? 'fas fa-star' : 'far fa-star'),
             'label' => Text::_($featuredTiming !== '' ? 'JLIB_HTML_FEATURED_' . strtoupper($featuredTiming) . '_ITEM' : ($isFeatured ? 'JFEATURED' : 'COM_SMARTBROWSER_NOT_FEATURED')),
             'tone' => $featuredTiming !== '' ? $featuredTiming : ($isFeatured ? 'warning' : 'muted'), 'action' => $isFeatured ? 'unfeature' : 'feature',
+            'tooltipLines' => $isFeatured ? $this->publicationDates($featuredUp, $featuredDown, true) : [],
         ]];
         if ($checkedOut > 0) {
             $overlays[] = ['id' => 'checkedOut', 'icon' => 'fas fa-lock', 'label' => Text::sprintf('COM_SMARTBROWSER_CHECKED_OUT_BY', (string) ($article->editor ?? '')), 'tone' => 'warning', 'action' => 'checkin'];
@@ -915,8 +921,20 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
     {
         if (!$model->{$method}(...$arguments)) throw new \RuntimeException($model->getError() ?: Text::_('JERROR_AN_ERROR_HAS_OCCURRED'), 500);
     }
-    protected function stateLabel(int $state): string { return match ($state) { 1 => Text::_('JPUBLISHED'), 0 => Text::_('JUNPUBLISHED'), -2 => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 2 => Text::_('JARCHIVED'), default => (string) $state }; }
-    protected function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'fas fa-check', 'label' => Text::_('JPUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'fas fa-times', 'label' => Text::_('JUNPUBLISHED'), 'tone' => 'muted'], 2 => ['icon' => 'fas fa-archive', 'label' => Text::_('JARCHIVED'), 'tone' => 'info'], -2 => ['icon' => 'fas fa-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'fas fa-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
+    protected function publicationDates(?string $start, ?string $end, bool $featured = false): array
+    {
+        $lines = [];
+        $prefix = $featured ? 'JLIB_HTML_FEATURED_' : 'JLIB_HTML_PUBLISHED_';
+        foreach ([[$start, $featured ? 'STARTED' : 'START'], [$end, 'FINISHED']] as [$date, $suffix]) {
+            if (!$date || str_starts_with($date, '0000-00-00')) continue;
+            $date = Factory::getDate($date, 'UTC')->setTimezone($this->app->getIdentity()->getTimezone());
+            $lines[] = sprintf(BrowserLanguage::text($prefix . $suffix), HTMLHelper::_('date', $date, Text::_('DATE_FORMAT_LC5'), 'UTC'));
+        }
+        return $lines;
+    }
+
+    protected function stateLabel(int $state): string { return match ($state) { 1 => Text::_('COM_SMARTBROWSER_STATE_PUBLISHED'), 0 => Text::_('COM_SMARTBROWSER_STATE_UNPUBLISHED'), -2 => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 2 => Text::_('COM_SMARTBROWSER_STATE_ARCHIVED'), default => (string) $state }; }
+    protected function statusPresentation(int $state): array { return match ($state) { 1 => ['icon' => 'fas fa-check', 'label' => Text::_('COM_SMARTBROWSER_STATE_PUBLISHED'), 'tone' => 'success'], 0 => ['icon' => 'fas fa-times', 'label' => Text::_('COM_SMARTBROWSER_STATE_UNPUBLISHED'), 'tone' => 'muted'], 2 => ['icon' => 'fas fa-archive', 'label' => Text::_('COM_SMARTBROWSER_STATE_ARCHIVED'), 'tone' => 'info'], -2 => ['icon' => 'fas fa-trash', 'label' => Text::_('COM_SMARTBROWSER_STATE_TRASHED'), 'tone' => 'danger'], default => ['icon' => 'fas fa-question-circle', 'label' => (string) $state, 'tone' => 'neutral'] }; }
     protected function statusOverlay(int $state): array { return ['id' => 'status', ...$this->statusPresentation($state), 'action' => match ($state) { 1 => 'unpublish', 0 => 'publish', 2 => 'unarchive', default => null }]; }
     protected function languageImage(string $image): ?string { return $image === '' ? null : Uri::root() . 'media/mod_languages/images/' . rawurlencode($image) . '.gif'; }
 

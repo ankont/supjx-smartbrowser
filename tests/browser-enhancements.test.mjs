@@ -29,6 +29,7 @@ test('successful media uploads select all new files after refreshing the view', 
       const expected = ['local-images:/a.png', 'local-images:/b.png'].map(id => collectionMode ? JSON.stringify(['media', id]) : id);
       assert.deepEqual(state.selectedIds, expected);
       assert.equal(state.focusedId, expected[1]);
+      assert.deepEqual(state.revealIds, expected);
       assert.equal(state.busy, false);
     }
   } finally { globalThis.Joomla = previous; }
@@ -40,4 +41,25 @@ test('Paste has no nested form or item context-menu command and embedded control
   assert.doesNotMatch(view, /id: 'collectionImport'/);
   assert.match(view, /type="button"[^>]*@click="importAddressText"/);
   assert.match(readFileSync('package/component/admin/src/Support/CollectionViewSupport.php', 'utf8'), /'JCANCEL'/);
+});
+
+test('upload selection and reveal respect single selection and caller limits', async () => {
+  const previous = globalThis.Joomla;
+  globalThis.Joomla = { renderMessages() {} };
+  try {
+    for (const options of [
+      { mode: 'select', multiple: false },
+      { mode: 'select', multiple: true, maxSelections: 1 },
+      { mode: 'select', multiple: true, pickerContext: { maxSelections: 1 } },
+    ]) {
+      const state = { selectedNode: 'local-images:/' };
+      const api = { options, execute: async (action, ids, payload) => ({ id: payload.name }) };
+      const driver = new MediaActionDriver(api, state, async () => {}, key => key);
+      driver.read = async () => 'encoded';
+      await driver.uploadFiles([{ name: 'first.png' }, { name: 'second.png' }]);
+      assert.deepEqual(state.selectedIds, ['first.png']);
+      assert.deepEqual(state.revealIds, ['first.png']);
+      assert.equal(state.focusedId, 'first.png');
+    }
+  } finally { globalThis.Joomla = previous; }
 });

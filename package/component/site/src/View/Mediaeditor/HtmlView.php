@@ -29,6 +29,7 @@ class HtmlView extends BaseHtmlView
         $wa = $this->getDocument()->getWebAssetManager();
         $wa->getRegistry()->addExtensionRegistryFile('com_media');
         $wa->useScript('core')->useStyle('com_media.mediamanager');
+        $wa->registerAndUseStyle('com_smartbrowser.image-editor', 'com_smartbrowser/media-image-editor.css', ['version' => 'auto'], [], ['com_media.mediamanager']);
         $this->form = (new \Joomla\Component\Media\Administrator\Model\FileModel())->getForm([], false);
         if (!$this->form || !$this->form->getFieldsets()) throw new \RuntimeException(Text::_('COM_SMARTBROWSER_FILE_EDITOR_NO_TOOLS'), 501);
         $this->getDocument()->addScriptOptions('com_media', [

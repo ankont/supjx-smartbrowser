@@ -10,6 +10,54 @@ const descriptor = (key, name, type = 'string', extra = {}) => ({ key, type, def
 const article = (capabilities = []) => ({ id: 'article:43', adapter: 'articles', type: 'article', kind: 'item', metadata: { publicUrl: 'https://example.org/library/article.html' }, selectionCapabilities: capabilities });
 const profileFor = definitions => Object.fromEntries(definitions.map(d => [d.key, {}]));
 
+test('neutral registered settings are omitted for every adapter without losing explicit overrides', async () => {
+  const api = createSelectionAddressContract();
+  const definitions = [
+    { ...descriptor('link.text', 'text'), default: '' },
+    { ...descriptor('link.target', 'target'), default: '' },
+    { ...descriptor('media.alt', 'alt'), default: null },
+    { ...descriptor('example.loading', 'loading'), default: 'auto' },
+    { ...descriptor('example.enabled', 'enabled', 'boolean'), default: true },
+    { ...descriptor('example.limit', 'limit', 'number'), default: 10 },
+    { ...descriptor('example.caption', 'caption'), default: 'Inherited caption' },
+  ];
+  for (const adapter of ['articles', 'media', 'menus', 'direct-links']) {
+    const resource = { ...article(definitions), adapter };
+    const properties = await api.encodeProperties(resource, profileFor(definitions), {
+      'link.text': '', 'link.target': '', 'media.alt': '', 'example.loading': 'auto',
+      'example.enabled': false, 'example.limit': 0, 'example.caption': '',
+    });
+    assert.deepEqual(properties, [['alt', ''], ['enabled', 'false'], ['limit', '0'], ['caption', '']]);
+  }
+  const definition = definitions[3];
+  assert.deepEqual(await api.encodeProperties(article([definition]), { 'example.loading': { default: 'eager' } }, { 'example.loading': 'eager' }), []);
+});
+
+test('plain links omit empty format markers while typed resources keep their identity', () => {
+  const api = createSelectionAddressContract();
+  const url = 'https://www.youtube.com/watch?v=OSw_nFHaQug';
+  assert.equal(api.serialize(api.parse(url + '#joomlaLink://')), url);
+  assert.equal(api.serialize(api.parse(url + '#chapter#joomlaLink://')), url + '#chapter');
+  assert.equal(api.serialize(api.parse(url + '#joomlaLink://?target=_blank')), url + '#joomlaLink://?target=_blank');
+  const typed = url + '#joomlaItem://article/43';
+  assert.equal(api.serialize(api.parse(typed)), typed);
+  assert.equal(api.parse(url).format, 'joomlaLink');
+});
+
+test('Direct Link service exports a clean YouTube URL and retains changed settings', async () => {
+  const url = 'https://www.youtube.com/watch?v=OSw_nFHaQug';
+  const definitions = [
+    { ...descriptor('link.text', 'link.text'), default: '' },
+    { ...descriptor('link.target', 'target'), default: '', address: { name: 'target', values: { '': '', '1': '_blank' } } },
+  ];
+  const resource = { id: 'uri:youtube', adapter: 'direct-links', type: 'uri', metadata: { url }, selectionCapabilities: definitions };
+  const entry = { selection: { adapter: 'direct-links', id: resource.id }, usage: { 'link.text': '', 'link.target': '' } };
+  const service = createSelectionAddressService({ api: {}, config: { adapter: 'direct-links', selectionProfile: profileFor(definitions) } });
+  assert.equal(await service.serialize(entry, resource), url);
+  entry.usage['link.target'] = '1';
+  assert.equal(await service.serialize(entry, resource), url + '#joomlaLink://?target=_blank');
+});
+
 test('all seven semantic formats share one parser/serializer without version fields', () => {
   const api = createSelectionAddressContract();
   const addresses = [imageUri, 'https://example.org/a#joomlaItem://article/43', 'https://example.org/page#joomlaLink://?target=_blank',
@@ -228,15 +276,16 @@ test('an import cannot overwrite an intervening selection edit', async () => {
   f.model.destroy(); f.service.destroy();
 });
 
-test('explicit scalar defaults remain portable across consumers with different profile defaults', async () => {
+test('all explicit defaults are omitted, including false, zero, empty and compound values', async () => {
   const api = createSelectionAddressContract();
-  const definitions = [{ ...descriptor('example.flag', 'flag', 'boolean'), default: false }, { ...descriptor('example.text', 'text'), default: '' }];
+  const definitions = [{ ...descriptor('example.flag', 'flag', 'boolean'), default: false }, { ...descriptor('example.text', 'text'), default: '' },
+    { ...descriptor('example.count', 'count', 'number'), default: 0 },
+    { ...descriptor('example.image', 'image', 'object', { codec: 'example' }), default: { id: 'x', options: [1, 2] } }];
   const resource = article(definitions);
-  const properties = await api.encodeProperties(resource, profileFor(definitions), { 'example.flag': false, 'example.text': '' });
-  assert.deepEqual(properties, [['flag', 'false'], ['text', '']]);
+  const properties = await api.encodeProperties(resource, profileFor(definitions), { 'example.flag': false, 'example.text': '', 'example.count': 0, 'example.image': { options: [1, 2], id: 'x' } });
+  assert.deepEqual(properties, []);
   const decoded = await api.decodeProperties({ properties }, resource, { 'example.flag': { default: true }, 'example.text': { default: 'Receiver default' } });
-  assert.equal(decoded.usage['example.flag'], false);
-  assert.equal(decoded.usage['example.text'], '');
+  assert.deepEqual(decoded.usage, {});
 });
 
 test('Joomla view adapters can roundtrip without turning public URLs into resource identity', () => {

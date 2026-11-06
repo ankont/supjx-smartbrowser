@@ -1,4 +1,4 @@
-import { i as e, t } from "./visual-runtime-DQsy__lt.js?v=5.0.0";
+import { i as e, t } from "./visual-runtime-DQsy__lt.js?v=5.0.15";
 //#region resources/js/adapters/MediaActionDriver.js
 var n = (e) => {
 	if (!e.metadata?.url) return null;
@@ -380,11 +380,11 @@ var n = (e) => {
 			}
 			if (n) {
 				await this.reload();
-				let t = this.api.options?.pickerContext?.collectionMode || this.api.options?.selectionHost?.collectionMode, n = this.api.options?.adapter?.replace(/^flat-/, ""), i = this.api.options?.mode === "select" ? this.api.options.multiple === !1 ? 1 : this.api.options.maxSelections || 500 : 500, a = r.slice(0, i).map((r) => t ? e({
-					adapter: n,
-					id: r
-				}) : r);
-				this.state.selectedIds = [...new Set(a)], a.length && (this.state.focusedId = a[a.length - 1]), Joomla.renderMessages({ success: [this.translate("COM_MEDIA_UPLOAD_SUCCESS")] });
+				let t = this.api.options?.pickerContext || this.api.options?.selectionHost, n = t?.collectionMode, i = this.api.options?.adapter?.replace(/^flat-/, ""), a = this.api.options?.mode === "select" ? this.api.options.multiple === !1 ? 1 : t?.maxSelections ?? this.api.options.maxSelections ?? 500 : 500, o = r.slice(0, a).map((t) => n ? e({
+					adapter: i,
+					id: t
+				}) : t);
+				this.state.selectedIds = [...new Set(o)], o.length && (this.state.focusedId = o[o.length - 1]), this.state.revealIds = o, Joomla.renderMessages({ success: [this.translate("COM_MEDIA_UPLOAD_SUCCESS")] });
 			}
 		} finally {
 			this.state.busy = !1;

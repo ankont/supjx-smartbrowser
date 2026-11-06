@@ -25,8 +25,10 @@ test('display modes cycle and restore original template attributes and DOM locat
   wrapper.setAttribute('data-sb-wide-container', 'original'); menu.setAttribute('inert', 'original');
   const controller = createDisplayMode(root, mode => modes.push(mode));
   assert.equal(controller.cycle(), 'wide');
+  assert.equal(root.getAttribute('data-sb-wide'), '');
   assert.equal(wrapper.getAttribute('data-sb-wide-container'), '');
   assert.equal(controller.cycle(), 'focus');
+  assert.equal(root.getAttribute('data-sb-wide'), null);
   assert.equal(root.parentElement, doc.body); assert.equal(menu.getAttribute('inert'), '');
   assert.equal(controller.cycle(), 'normal');
   assert.equal(root.parentElement, wrapper); assert.equal(menu.getAttribute('inert'), 'original');

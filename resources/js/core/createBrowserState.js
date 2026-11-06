@@ -49,6 +49,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     presentation: options.presentation || {},
     currentResource: null,
     focusedId: null,
+    revealIds: [],
     selectedIds: snapshot ? snapshot.items.map(entry => referenceKey(entry.selection)) : [],
     selectedResources: snapshot?.resources || {},
     virtualResources: snapshot?.virtualResources || {},

@@ -63,5 +63,5 @@ test('media preview uses the editor toolbar labels loaded for browser JavaScript
     assert.match(driver, new RegExp(`this\\.escapeTranslated\\('${key}'\\)`));
     assert.match(browser, new RegExp(`'${key}'`));
   }
-  assert.match(browser, /foreach \(\$this->languageKeys\(\) as \$key\) Text::script\(\$key\)/);
+  assert.match(browser, /foreach \(\$this->languageKeys\(\) as \$key\) BrowserLanguage::script\(\$key\)/);
 });

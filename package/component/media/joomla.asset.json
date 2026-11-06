@@ -1,7 +1,7 @@
 {
   "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
   "name": "com_smartbrowser",
-  "version": "5.0.0",
+  "version": "5.0.15",
   "description": "SuperSoftJx - SmartBrowser",
   "license": "GPL-2.0-or-later",
   "assets": [
@@ -17,7 +17,7 @@
       "attributes": {
         "type": "module"
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.icon-settings",
@@ -29,7 +29,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.collection",
@@ -44,13 +44,13 @@
       "attributes": {
         "type": "module"
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.visual-settings",
       "type": "style",
       "uri": "com_smartbrowser/visual-settings.css",
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.visual-settings",
@@ -59,7 +59,7 @@
       "attributes": {
         "type": "module"
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.app",
@@ -68,7 +68,7 @@
       "dependencies": [
         "fontawesome"
       ],
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.editor",
@@ -77,7 +77,7 @@
       "dependencies": [
         "com_smartbrowser.app"
       ],
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.dialog-dismiss",
@@ -89,7 +89,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.app",
@@ -104,7 +104,7 @@
       "attributes": {
         "type": "module"
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.media-value",
@@ -116,7 +116,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.picker",
@@ -130,7 +130,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.media-field",
@@ -142,7 +142,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.smartauthors-user-field",
@@ -154,7 +154,16 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
+    },
+    {
+      "name": "com_smartbrowser.editor-forms",
+      "type": "script",
+      "uri": "com_smartbrowser/editor-forms.js",
+      "attributes": {
+        "defer": true
+      },
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.editor-fields",
@@ -162,6 +171,7 @@
       "uri": "com_smartbrowser/editor-fields.js",
       "dependencies": [
         "core",
+        "com_smartbrowser.editor-forms",
         "com_smartbrowser.dialog-dismiss",
         "com_smartbrowser.media-value",
         "com_smartbrowser.editor-viewport"
@@ -169,7 +179,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.editor-viewport",
@@ -181,7 +191,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.editor-buttons",
@@ -196,7 +206,7 @@
       "attributes": {
         "type": "module"
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     },
     {
       "name": "com_smartbrowser.associations",
@@ -208,7 +218,7 @@
       "attributes": {
         "defer": true
       },
-      "version": "5.0.0"
+      "version": "5.0.15"
     }
   ]
 }

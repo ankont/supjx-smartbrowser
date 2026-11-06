@@ -1,0 +1,62 @@
+/* Native media-action forms run in a site iframe, without Atum's form layout. */
+#media-form.smartbrowser-image-editor {
+  margin: 0;
+}
+
+/* The native checkerboard uses Atum's --hue, which site templates need not define. */
+#media-form.smartbrowser-image-editor .media-manager-edit {
+  background-color: #fff;
+  background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%),
+    linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%);
+  background-position: 0 0, 10px 10px;
+  background-size: 20px 20px;
+}
+
+/* Joomla may remove hidden while switching responsive tab modes. The host owns navigation. */
+#media-form.smartbrowser-image-editor #myTab > :is([role="tablist"], button[aria-controls]) {
+  display: none !important;
+}
+
+#media-form.smartbrowser-image-editor #myTab > joomla-tab-element {
+  padding: .5rem 0 0;
+}
+
+#media-form.smartbrowser-image-editor .options-form {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0 .5rem .5rem;
+}
+
+/* Keep the fieldset's accessible name without repeating the active host tab visually. */
+#media-form.smartbrowser-image-editor .options-form > legend {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+}
+
+#media-form.smartbrowser-image-editor .control-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-inline-size: 0;
+  margin-block-start: 0;
+  margin-block-end: 1rem;
+}
+
+#media-form.smartbrowser-image-editor .control-group > :is(.control-label, .controls) {
+  float: none;
+  inline-size: auto;
+  min-inline-size: 0;
+  margin-inline-start: 0;
+  padding: 0;
+}
+
+#media-form.smartbrowser-image-editor .control-label {
+  margin-block-end: .4rem;
+}

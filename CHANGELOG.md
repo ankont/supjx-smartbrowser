@@ -1,5 +1,82 @@
 # Changelog
 
+## 5.0.15 - 2026-11-06
+
+- Float Picker messages over the results immediately above the selection panel without consuming layout height; follow panel expansion and retain dismiss interaction.
+
+## 5.0.14 - 2026-11-06
+
+- Keep the Picker message container transparent while retaining template padding and individual alert backgrounds.
+
+## 5.0.13 - 2026-11-06
+
+- Place Picker status messages immediately above the bottom selection panel, outside the results scrolling area, retaining native dismissal and full-height layout.
+
+## 5.0.12 - 2026-11-06
+
+- Apply consistent Choices select styling and dropdown indicators throughout editor fieldsets and sidebars.
+- Let multiple-select search inputs fit narrow columns instead of clipping their placeholder-sized inline minimum; remove the nested input border and retain wrapping tags, keyboard interaction and native values.
+
+## 5.0.11 - 2026-11-06
+
+- Place native Joomla status messages below both Picker header rows, restoring their original container position when the Picker unmounts.
+- Size contained Pickers against actual dialog bounds, retaining full-height results when messages close, the window resizes or the selection drawer toggles.
+- Reveal newly uploaded selections in grid/list without scrolling the surrounding page; respect single-selection and caller-defined limits.
+
+## 5.0.10 - 2026-11-05
+
+- Select eligible leaf nodes by default in category, menu and tag Pickers, while retaining Open in the context menu and Ctrl/Cmd activation.
+- Respect Picker resource-type constraints and selection permissions independently of edit permissions; branches and non-node browsers retain navigation defaults.
+
+## 5.0.9 - 2026-11-05
+
+- Default to Edit for permitted leaf nodes in category, menu and tag management browsers, using existing child metadata without additional requests.
+- Retain Open in the context menu and as the Ctrl/Cmd activation for these leaves; preserve navigation defaults in article/media browsers and Pickers.
+
+## 5.0.8 - 2026-11-05
+
+- Support legacy nested radio groups and current Joomla radio-button layouts throughout embedded editors, including extension-provided fieldsets, without changing field values or initializing replacement widgets.
+- Keep native and legacy selects readable and correctly sized, with help below controls and existing switcher, Choices, validation and showon behaviour preserved.
+- Position native calendar popups within the editor viewport using the browser top layer where available, retaining Joomla keyboard/date handlers and restoring presentation on close.
+- Set the backend Dashboard HTML document title to SmartBrowser Dashboard.
+
+## 5.0.7 - 2026-11-05
+
+- Export only selection properties differing from their effective capability/profile defaults, including scalar and compound values across adapters; retain meaningful empty overrides.
+- Export Direct Links as plain URLs when no additional address information is present, while continuing to accept older explicit markers.
+- Confirm successful address copies with a temporary checkmark, translated accessible feedback and a pressed state.
+- Place the backend Dashboard heading in the Joomla toolbar alongside Options instead of repeating it below the toolbar.
+
+## 5.0.6 - 2026-11-04
+
+- Keep browser tree headings contiguous with their nodes under Joomla administrator summary-spacing rules.
+- Give expanded page-width browsers consistent inline gutters and restore the original spacing when leaving wide mode.
+- Isolate editor controls from legacy template form offsets, keeping sidebar fields inside their columns.
+- Centre icon-only browser and editor controls independently of template icon-caption spacing.
+- Respect Joomla showon visibility under aligned editor layouts and explicitly load its behaviour for extension-provided fields.
+
+## 5.0.5 - 2026-11-01
+
+- Restore the embedded image editor's transparency checkerboard on frontend templates without Atum's color variables.
+
+## 5.0.4 - 2026-11-01
+
+- Keep embedded image-tool navigation hidden through Joomla responsive tab updates, remove duplicate visible tool headings and use compact content spacing.
+
+## 5.0.3 - 2026-11-01
+
+- Remove inherited native fieldset padding that added excessive space between image-tool headings and their first controls.
+
+## 5.0.2 - 2026-11-01
+
+- Give embedded native image-editing forms their own scoped frontend layout so fieldset titles and labels do not overlap under site templates.
+
+## 5.0.1 - 2026-11-01
+
+- Distinguish published, unpublished and trashed states with unambiguous Greek labels across content and menu adapters.
+- Show native Joomla publication timing, start/end dates and permitted action hints in grid/list status tooltips.
+- Export missing frontend browser action translations using an isolated administrator-language fallback, preserving the host page's frontend Save and other core strings.
+
 ## 5.0.0 - 2026-11-01
 
 - Unify administrator/frontend management and Picker layouts with responsive toolbars, sticky controls, independent information scrolling and a bottom selection drawer.

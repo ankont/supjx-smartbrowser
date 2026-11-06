@@ -78,7 +78,7 @@ final class TagAdapter extends ContentAdapter implements ContextResourceProvider
         return array_values(array_filter([
             [...$this->action('createChild', 'COM_SMARTBROWSER_CREATE_CHILD_TAG', 'fas fa-plus', 'node', true, false, false, false, true), 'creationRole' => 'item'],
             $this->canCreateArticle() ? [...$this->action('newArticle', 'COM_SMARTBROWSER_NEW_ARTICLE', 'fas fa-file-alt', 'node', false, false, false, false, true), 'creationRole' => 'contextual'] : null,
-            $this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true),
+            [...$this->action('edit', 'JACTION_EDIT', 'fas fa-edit', 'resource', false, true, true), 'defaultOnLeaf' => true],
             $this->action('preview', 'COM_SMARTBROWSER_ACTION_PREVIEW', 'fas fa-eye', 'resource', false, true, true),
             $this->action('publish', 'JTOOLBAR_PUBLISH', 'fas fa-check', 'node', false, true, false, false, false, 'publication'),
             $this->action('unpublish', 'COM_SMARTBROWSER_ACTION_UNPUBLISH', 'fas fa-times', 'node', false, true, false, false, false, 'publication'),

@@ -1,5 +1,5 @@
 <template>
-  <div ref="shellElement" class="smartbrowser-shell sb-redesigned-browser" :class="{ 'is-site': options.application === 'site', 'is-picker': options.mode === 'select' || !!pickerContext, 'is-contained': options.mode === 'select' || !!pickerContext || displayMode === 'focus' }" :style="{ ...gridWidthStyle, '--sb-browser-available-height': availableHeight }">
+  <div ref="shellElement" class="smartbrowser-shell sb-redesigned-browser" :class="{ 'is-site': options.application === 'site', 'is-picker': options.mode === 'select' || !!pickerContext, 'is-contained': options.mode === 'select' || !!pickerContext || displayMode === 'focus' }" :style="{ ...gridWidthStyle, '--sb-browser-available-height': availableHeight, '--sb-picker-footer-height': pickerFooterHeight, '--sb-picker-message-height': pickerMessageHeight }">
     <div v-if="state.busy" class="smartbrowser-busy" role="status" aria-live="polite">
       <span class="spinner-border" aria-hidden="true" />
       <span>{{ t('COM_SMARTBROWSER_WORKING') }}</span>
@@ -149,7 +149,8 @@
         </div>
       </main>
     </div>
-    <details v-if="pickerMode" class="resource-picker-collection">
+    <div v-if="pickerMode" ref="messagesElement" class="sb-browser-messages" />
+    <details v-if="pickerMode" ref="pickerFooter" class="resource-picker-collection">
       <summary><span class="fas fa-chevron-up resource-picker-collection-chevron" aria-hidden="true" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: <span>{{ state.selectedIds.length }}</span></summary>
       <div class="resource-picker-collection-body"><CollectionView v-if="pickerCollection" :model="pickerCollection" :api="api" :config="pickerCollectionConfig" :t="t" /></div>
     </details>
@@ -158,6 +159,7 @@
 
 <script setup>
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { browserAvailableHeight, revealResources } from '../core/pickerViewport.js';
 import { createDisplayMode } from '../core/displayMode.js';
 import { observeBrowserLayout } from '../core/browserLayout.js';
 import ResourceActions from './ResourceActions.vue';
@@ -187,36 +189,43 @@ const displayEnabled = options.application === 'site' && window.self === window.
 const displayMode = ref('normal');
 const shellElement = ref(null), availableHeight = ref('620px');
 const browserHeader = ref(null);
+const messagesElement = ref(null);
+const pickerFooter = ref(null), pickerFooterHeight = ref('0px');
+const pickerMessageHeight = ref('0px');
+let messageContainer, messagePlaceholder;
 let heightObserver;
 let stopLayout;
 const updateAvailableHeight = () => {
   const shell = shellElement.value;
   if (!shell) return;
-  const container = shell.parentElement;
-  let bottomInset = 0;
-  // The component template (e.g. Atum's padded body) also needs room below us.
-  // Counting only the app border makes an otherwise contained picker overflow.
-  for (let element = container; element; element = element.parentElement) {
-    const style = getComputedStyle(element);
-    bottomInset += (parseFloat(style.paddingBottom) || 0) + (parseFloat(style.borderBottomWidth) || 0) + (parseFloat(style.marginBottom) || 0);
-    if (element.hasAttribute('data-sb-focus') || element === document.body) break;
-  }
-  const pageOffset = container.hasAttribute('data-sb-focus') ? 0 : window.scrollY;
-  availableHeight.value = `${Math.max(0, window.innerHeight - shell.getBoundingClientRect().top - pageOffset - bottomInset)}px`;
+  availableHeight.value = `${browserAvailableHeight(shell)}px`;
+  pickerFooterHeight.value = `${pickerFooter.value?.getBoundingClientRect().height || 0}px`;
+  pickerMessageHeight.value = `${messagesElement.value?.getBoundingClientRect().height || 0}px`;
 };
 let displayController;
 const displayLabel = computed(() => ({ normal: 'COM_SMARTBROWSER_DISPLAY_WIDE', wide: 'COM_SMARTBROWSER_DISPLAY_FOCUS', focus: 'COM_SMARTBROWSER_DISPLAY_NORMAL' })[displayMode.value]);
 const cycleDisplay = () => { displayMode.value = displayController.cycle(); };
 onMounted(() => {
+  messageContainer = document.getElementById('system-message-container');
+  if (messagesElement.value && messageContainer && !messageContainer.contains(shellElement.value)) {
+    messagePlaceholder = document.createComment('SmartBrowser message position');
+    messageContainer.before(messagePlaceholder);
+    messagesElement.value.append(messageContainer);
+  }
   if (displayEnabled) displayController = createDisplayMode(document.getElementById('smartbrowser-app'), mode => { displayMode.value = mode; });
   updateAvailableHeight();
   heightObserver = new ResizeObserver(updateAvailableHeight);
   heightObserver.observe(shellElement.value.parentElement);
+  if (pickerFooter.value) heightObserver.observe(pickerFooter.value);
+  if (messagesElement.value) heightObserver.observe(messagesElement.value);
+  const dialog = shellElement.value.closest('dialog');
+  if (dialog) heightObserver.observe(dialog);
   stopLayout = observeBrowserLayout(shellElement.value, () => browserHeader.value?.element, options.nativeToolbarTarget);
   window.addEventListener('resize', updateAvailableHeight);
 });
 watch(displayMode, () => nextTick(updateAvailableHeight));
 onBeforeUnmount(() => {
+  if (messagePlaceholder?.parentNode) messagePlaceholder.replaceWith(messageContainer);
   heightObserver?.disconnect();
   stopLayout?.();
   window.removeEventListener('resize', updateAvailableHeight);
@@ -226,6 +235,16 @@ const driver = inject('actionDriver');
 const api = inject('resourceApi');
 const registry = inject('viewRegistry');
 const { state, resources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection } = browser;
+watch(() => [state.revealIds, state.busy, state.loading, state.activeView], async () => {
+  if (!state.revealIds?.length || state.busy || state.loading) return;
+  const keys = state.revealIds;
+  await nextTick();
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  if (!unmounted && shellElement.value && keys === state.revealIds) {
+    revealResources(shellElement.value, keys);
+    state.revealIds = [];
+  }
+});
 const pickerContext = options.mode === 'select' ? options.pickerContext || options.selectionHost : options.selectionHost || null;
 const collectionMode = Boolean(pickerContext?.collectionMode);
 const pickerMode = options.mode === 'select' || !!pickerContext;

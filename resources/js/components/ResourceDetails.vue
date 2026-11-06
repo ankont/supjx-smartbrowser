@@ -29,6 +29,7 @@
         <tr
           v-for="resource in resources"
           :key="resourceKey(resource)"
+          :data-sb-resource-key="resourceKey(resource)"
           :class="{ selected: selectedIds.includes(resourceKey(resource)), focused: focusedId === resourceKey(resource), focusable: canFocusResource(resource), contextual: isContextualResource(resource) }"
           :tabindex="canFocusResource(resource) ? 0 : undefined"
           :aria-current="focusedId === resourceKey(resource) ? 'true' : undefined"
@@ -48,11 +49,11 @@
           <td v-for="column in columns.slice(1)" :key="column.id" :class="`resource-column-${column.id}`" :style="statusColumnStyle(column)" :title="cellTitle(resource, column)">
             <span class="resource-cell-content" :class="{ 'resource-status-group': column.format === 'status' }">
             <template v-if="column.format === 'status' && resource.statusPresentation">
-              <button v-if="overlayAction(statusOverlay(resource), resource)" type="button" class="resource-status-icon" :class="status(resource).class" :title="status(resource).label" @click.stop="$emit('focus', resource); $emit('action', overlayAction(statusOverlay(resource), resource), resource)">
+              <button v-if="overlayAction(statusOverlay(resource), resource)" type="button" class="resource-status-icon" :class="status(resource).class" :title="overlayTooltip({ ...statusOverlay(resource), label: status(resource).label }, overlayAction(statusOverlay(resource), resource), t)" @click.stop="$emit('focus', resource); $emit('action', overlayAction(statusOverlay(resource), resource), resource)">
                 <span :class="status(resource).icon" aria-hidden="true" />
                 <span class="visually-hidden">{{ status(resource).label }}</span>
               </button>
-              <span v-else class="resource-status-icon" :class="status(resource).class" :title="status(resource).label">
+              <span v-else class="resource-status-icon" :class="status(resource).class" :title="overlayTooltip({ ...statusOverlay(resource), label: status(resource).label }, overlayAction(statusOverlay(resource), resource), t)">
                 <span :class="status(resource).icon" aria-hidden="true" />
                 <span class="visually-hidden">{{ status(resource).label }}</span>
               </span>
@@ -66,11 +67,11 @@
             <span v-else class="resource-cell-ellipsis">{{ cell(resource, column) }}</span>
             <span v-if="column.overlays && resource.overlays?.length" class="resource-row-overlays">
               <template v-for="overlay in resource.overlays.filter((item) => item.id !== 'status')" :key="overlay.id">
-                <button v-if="overlayAction(overlay, resource)" type="button" class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlay.label" @click.stop="$emit('focus', resource); $emit('action', overlayAction(overlay, resource), resource)">
+                <button v-if="overlayAction(overlay, resource)" type="button" class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlayTooltip(overlay, overlayAction(overlay, resource), t)" @click.stop="$emit('focus', resource); $emit('action', overlayAction(overlay, resource), resource)">
                     <img v-if="overlay.image" :src="overlay.image" alt="" aria-hidden="true" />
                     <span v-else :class="overlay.icon" aria-hidden="true" />
                 </button>
-                <span v-else class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlay.label">
+                <span v-else class="resource-overlay" :class="[`overlay-${overlay.id}`, `tone-${overlay.tone || 'neutral'}`]" :title="overlayTooltip(overlay, overlayAction(overlay, resource), t)">
                     <img v-if="overlay.image" :src="overlay.image" alt="" aria-hidden="true" />
                     <span v-else :class="overlay.icon" aria-hidden="true" />
                 </span>
@@ -97,6 +98,7 @@
 </template>
 
 <script setup>
+import { overlayTooltip } from '../core/overlayTooltip.js';
 import { resourceKey } from '../core/selectionIdentity.js';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { canActOnResource, canFocusResource, canSelectResource, isContextualResource } from '../core/resourcePolicy.js';
