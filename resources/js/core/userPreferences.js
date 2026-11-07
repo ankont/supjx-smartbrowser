@@ -20,7 +20,7 @@ export function createUserPreferenceStorage({ storage, context, send, schedule =
   storage = resilientStorage(storage);
   const prefix = `supjx.smartbrowser.user.${context.userId}.`;
   const generationKey = prefix + '$generation', pendingKey = prefix + '$pending';
-  let pending = {}, timer = null, sending = false, stale = false;
+  let pending = {}, timer = null, sending = false, stale = false, inFlight = null;
   const clear = () => { const keys = []; for (let i = 0; i < storage.length; i++) { const key = storage.key(i); if (key?.startsWith(prefix)) keys.push(key); } keys.forEach(key => storage.removeItem(key)); };
   const sameGeneration = storage.getItem(generationKey) === context.generation;
   if (sameGeneration) { try { pending = JSON.parse(storage.getItem(pendingKey) || '{}'); } catch {} }
@@ -32,20 +32,24 @@ export function createUserPreferenceStorage({ storage, context, send, schedule =
   retain();
   const queue = () => { if (timer == null && !stale && context.userId) timer = schedule(() => { timer = null; void flush(); }); };
   const flush = async () => {
-    if (sending || stale || !current() || !context.userId || !Object.keys(pending).length) return;
+    if (stale || !current()) return false;
+    if (sending) { try { await inFlight; } catch {} return flush(); }
+    if (!context.userId || !Object.keys(pending).length) return true;
     const batch = {}; let size = 0;
     for (const [key, value] of Object.entries(pending)) { const next = new TextEncoder().encode(JSON.stringify([key, value])).length; if ((size + next > 48000 && size) || Object.keys(batch).length >= 100) break; batch[key] = value; size += next; }
     sending = true;
     try {
-      await send({ generation: context.generation, changes: batch });
+      inFlight = send({ generation: context.generation, changes: batch });
+      await inFlight;
       for (const [key, value] of Object.entries(batch)) if (pending[key] === value) delete pending[key];
       retain();
     } catch (error) {
       if (error.status === 409) { stale = true; pending = {}; if (current()) clear(); }
       // Keep an unsent patch locally for the next visit; never overwrite another user's cache.
-      return;
+      return false;
     } finally { sending = false; }
-    if (Object.keys(pending).length) queue();
+    if (Object.keys(pending).length) return flush();
+    return true;
   };
   const api = {
     getItem(key) { return validKey(key) && current() ? storage.getItem(prefix + key) : null; },
@@ -54,6 +58,13 @@ export function createUserPreferenceStorage({ storage, context, send, schedule =
     key(index) { const keys = []; for (let i = 0; i < storage.length; i++) { const key = storage.key(i); if (key?.startsWith(prefix) && validKey(key.slice(prefix.length))) keys.push(key.slice(prefix.length)); } return keys[index] ?? null; },
     get length() { let count = 0; while (api.key(count) !== null) count++; return count; },
     flush,
+    async reset() {
+      if (stale || !current()) throw new Error('Preferences were reset. Reload the page.');
+      const result = await send({ generation: context.generation, operation: 'reset' });
+      if (!result?.generation) throw new Error('Preferences could not be reset.');
+      stale = true; pending = {}; clear(); storage.setItem(generationKey, result.generation);
+      return result;
+    },
   };
   queue();
   return api;
@@ -63,16 +74,33 @@ export function preferenceStorage(win = globalThis.window) {
   let context = win?.Joomla?.getOptions?.('com_smartbrowser.preferences');
   if (!context || typeof context.userId !== 'number') return win?.localStorage;
   let owner = win;
-  try { if (win.parent !== win && win.parent.Joomla?.getOptions?.('com_smartbrowser.preferences')?.userId === context.userId) { owner = win.parent; context = owner.Joomla.getOptions('com_smartbrowser.preferences'); } } catch {}
+  try {
+    const parent = win.parent.Joomla?.getOptions?.('com_smartbrowser.preferences');
+    if (win.parent !== win && parent?.userId === context.userId) {
+      const cachedGeneration = win.parent.localStorage?.getItem(`supjx.smartbrowser.user.${context.userId}.$generation`);
+      if (parent.generation.split(':')[0] !== context.generation.split(':')[0] || cachedGeneration === context.generation && parent.generation !== context.generation) Object.assign(parent, context);
+      owner = win.parent; context = parent;
+    }
+  } catch {}
   const identity = `${context.userId}:${context.generation}`;
   if (owner.__smartbrowserPreferences?.identity === identity) return owner.__smartbrowserPreferences.storage;
   let backing;
   try { backing = owner.localStorage; } catch {}
-  const storage = createUserPreferenceStorage({ storage: backing, context, schedule: callback => owner.setTimeout(callback, 500), send: async payload => {
+  const storage = createUserPreferenceStorage({ storage: backing, context: { ...context }, schedule: callback => owner.setTimeout(callback, 500), send: async payload => {
     const response = await owner.fetch(context.apiUrl, { method: 'POST', credentials: 'same-origin', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...payload, [context.csrfToken]: 1 }) });
     if (!response.ok) throw Object.assign(new Error('Preferences could not be saved.'), { status: response.status });
     const result = await response.json(); if (result.success === false) throw new Error('Preferences could not be saved.');
+    return result.data;
   } });
+  const reset = storage.reset;
+  storage.reset = async () => {
+    const result = await reset();
+    context.generation = result.generation; context.values = {};
+    const childContext = win.Joomla?.getOptions?.('com_smartbrowser.preferences');
+    if (childContext?.userId === context.userId) { childContext.generation = result.generation; childContext.values = {}; }
+    owner.__smartbrowserPreferences = null;
+    return preferenceStorage(owner);
+  };
   owner.__smartbrowserPreferences = { identity, storage };
   owner.addEventListener('pagehide', () => void storage.flush());
   return storage;

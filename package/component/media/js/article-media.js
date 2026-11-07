@@ -1,5 +1,5 @@
-import { a as e, c as t } from "./visual-runtime-NnvsnHf2.js?v=5.0.15";
-import { t as n } from "./visual-runtime-Bn4CTP9_.js?v=5.0.15";
+import { a as e, c as t } from "./visual-runtime-DbGbfChU.js?v=5.2.0";
+import { t as n } from "./visual-runtime-B90WOEAT.js?v=5.2.0";
 //#region resources/js/article-media.js
 var r = /* @__PURE__ */ new WeakSet();
 function i(i) {

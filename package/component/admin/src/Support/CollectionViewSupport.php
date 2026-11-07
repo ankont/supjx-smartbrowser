@@ -37,7 +37,7 @@ final class CollectionViewSupport
             'apiBaseUrl' => Uri::base() . 'index.php?option=com_smartbrowser&format=json',
             'csrfToken' => Session::getFormToken(),
             'application' => $app->isClient('site') ? 'site' : 'administrator',
-            'editorMode' => 'modal',
+            'editorMode' => class_exists(UserViewPreferences::class) ? UserViewPreferences::editorMode($app->isClient('site')) : 'modal',
         ];
         $document->addScriptOptions('com_smartbrowser.collection', $options);
         (new ResourceVisualDecorator($app))->preparePreviews($document);

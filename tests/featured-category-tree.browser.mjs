@@ -1,0 +1,34 @@
+async page => {
+  const check = (value, message) => { if (!value) throw Error(message); };
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto('http://127.0.0.1:8791');
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await page.goto('http://127.0.0.1:8791/tests/fixtures/picker-profiles.html?view=browser&featuredTreeFixture=1');
+  await page.locator('.resource-ordering-moves').waitFor();
+  check(await page.locator('.resource-toolbar-primary > .resource-view-controls').evaluate(controls => controls.firstElementChild.classList.contains('resource-history-controls')), 'History must precede every toolbar control, including ordering arrows');
+  const tree = page.locator('.resource-sidebar');
+  await tree.getByRole('button', { name: 'Parent category', exact: true }).click();
+  await page.waitForURL(/node=category%3A10/);
+  check(await page.locator('.resource-browser-item').count() === 2, 'Tree categories must not appear in article results');
+  check(await tree.getByRole('button', { name: 'Child category', exact: true }).isVisible(), 'Child category missing from tree');
+  await page.locator('.resource-grid-select-all input').check();
+  check(await page.locator('.resource-item-select input:checked').count() === 2, 'Bulk selection must remain article-only');
+  await page.locator('.resource-filter-toggle').click();
+  const category = page.locator('.resource-action-filters select');
+  check(await category.inputValue() === '', 'Tree navigation changed the category dropdown');
+  await category.selectOption('11');
+  await page.waitForFunction(() => document.querySelectorAll('.resource-browser-item').length === 1);
+  check(await page.evaluate(() => featuredRequests.at(-1).node) === 'category:10', 'Dropdown must not navigate the tree');
+  await page.locator('.resource-breadcrumb').getByRole('button', { name: 'Featured Articles', exact: true }).click();
+  await page.waitForURL(/node=featured-articles%3Aroot/);
+  check(await category.inputValue() === '11', 'Root navigation cleared the independent dropdown');
+  await category.selectOption('');
+  await page.waitForFunction(() => document.querySelectorAll('.resource-browser-item').length === 3);
+  await tree.getByRole('button', { name: 'Parent category', exact: true }).click();
+  await page.waitForURL(/node=category%3A10/);
+  await page.locator('.resource-main > .resource-toolbar').getByRole('button', { name: 'List', exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.resource-details-view tbody tr').length === 2);
+  check(await page.locator('.resource-details-view tbody tr').count() === 2, 'List view must not include category rows');
+  check(errors.length === 0, errors.join('\n'));
+  return 'Featured category tree navigates recursively, stays independent of filters, preserves the featured root and leaves grid/list selection article-only';
+}

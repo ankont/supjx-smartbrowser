@@ -35,6 +35,7 @@ final class HtmlView extends BaseHtmlView
             $this->items = (new DashboardProvider($app))->items($params);
         }
 
+        \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::prepareInterface($this->getDocument());
         parent::display($tpl);
     }
 }

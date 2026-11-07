@@ -25,7 +25,8 @@ class ApiController extends BaseController
         $this->respond(function (): array {
             if (!Session::checkToken('json')) throw new \RuntimeException('Invalid token', 403);
             $body = json_decode($this->input->json->getRaw(), true, 32, JSON_THROW_ON_ERROR);
-            return \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::save((int) $this->app->getIdentity()->id, (string) ($body['generation'] ?? ''), (array) ($body['changes'] ?? []));
+            if (!in_array($body['operation'] ?? 'patch', ['patch', 'reset'], true)) throw new \InvalidArgumentException('Invalid preference operation.', 400);
+            return \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::save((int) $this->app->getIdentity()->id, (string) ($body['generation'] ?? ''), (array) ($body['changes'] ?? []), ($body['operation'] ?? '') === 'reset');
         });
     }
 

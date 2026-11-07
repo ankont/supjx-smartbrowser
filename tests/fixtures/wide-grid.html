@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/template-under-test.css">
+<link rel="stylesheet" href="/package/component/media/css/smartbrowser.css">
+<style>
+  body { margin: 0; }
+  .wide-case { margin-block: 16px; }
+  .wide-case .smartbrowser { min-height: 70px; height: 70px; }
+  .fixed-container { width: 800px; margin-inline: auto; }
+  .responsive-container { width: auto; margin-inline: auto; }
+  @media (min-width: 1100px) { .responsive-container { width: 880px; } }
+  .grid-container { display: block; grid-template-columns: 1fr 3fr; gap: 18px; max-width: 960px; margin-inline: auto; }
+  @media (min-width: 1100px) { .grid-container { display: grid; } }
+  .grid-main { grid-column: 2; }
+  .g-container { width: 960px; max-width: calc(100% - 32px); margin-inline: auto; }
+  .g-grid { display: flex; flex-wrap: wrap; margin-inline: -16px; }
+  .g-block { flex: 1 1 100%; min-width: 0; padding-inline: 16px; }
+</style>
+<section class="wide-case" id="bootstrap-case"><div class="container"><div class="row"><main class="col-12"><div class="row"><div class="col-12"><div class="smartbrowser" id="bootstrap-browser">Bootstrap nested rows</div></div></div></main></div></div></section>
+<section class="wide-case" id="fixed-case"><div class="fixed-container"><main><div class="smartbrowser" id="fixed-browser">Fixed-width wrapper</div></main></div></section>
+<section class="wide-case" id="responsive-case"><div class="responsive-container"><main><div class="smartbrowser" id="responsive-browser">Responsive fixed-width wrapper</div></main></div></section>
+<section class="wide-case" id="grid-case"><div class="grid-container"><aside>Sidebar</aside><main class="grid-main"><div class="smartbrowser" id="grid-browser">CSS grid</div></main></div></section>
+<section class="wide-case" id="gantry-case"><div class="g-container"><div class="g-grid"><main class="g-block"><div class="smartbrowser" id="gantry-browser">Flex grid</div></main></div></div></section>
+</html>

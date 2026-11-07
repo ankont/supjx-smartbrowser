@@ -4,7 +4,33 @@ SmartBrowser is a unified resource browser, picker and selection-field package f
 Manage and select articles, categories, tags, menus, users, media and direct links through
 one consistent interface, while retaining Joomla's native data, permissions and editors.
 
-**Current release: 5.0.15** · Joomla 5/6 · GPL-2.0-or-later
+**Current release: 5.2.0** · Joomla 5/6 · GPL-2.0-or-later
+
+## What's new in 5.2
+
+- **Featured-article category navigation.** Filter featured articles by a category and its
+  descendants using the sidebar tree. Ordinary filters remain independent and apply within
+  that subtree. Category nodes are navigation controls; article results and bulk actions stay
+  article-only.
+
+- **My preferences.** Choose editor windows, contextual-resource visibility per resource type and whether to use the
+  administrator-enabled integrations. Preferences are personal; permissions and administrator
+  restrictions remain authoritative. The default toolbar button is available in browsers,
+  Pickers and the Dashboard.
+- **Independent Picker scopes.** Remember appearance separately per caller or share it per
+  adapter. Choose the last-location scope independently: share a folder across image and PDF
+  Pickers while retaining their separate grid/list preferences. Explicit caller starting
+  locations and adapter restrictions still apply.
+- **Recent locations.** The split history control precedes selection inversion. Its main
+  button alternates between the two most recent locations; the dropdown lists other recent
+  full paths and includes a Clear history action. It appears before all other browser
+  toolbar controls. History records successful navigation only, retains at most ten
+  locations and uses the same access checks as normal navigation.
+- **Personal resets.** Reset the current browser view or all account preferences without
+  resetting other users. Account resets invalidate pending writes from older tabs.
+
+Scope and integration changes apply when a view is next opened; no unsaved host form is
+reloaded. Existing caller-specific preference keys continue to work by default.
 
 ## What's new in 5.0
 
@@ -33,7 +59,7 @@ See the [changelog](CHANGELOG.md) for the full history.
 ## Installation and upgrading
 
 Download the installable package from [GitHub Releases](https://github.com/ankont/supjx-smartbrowser/releases)
-and upload **the outer `pkg_smartbrowser-v5.0.15.zip`** through Joomla's extension installer.
+and upload **the outer `pkg_smartbrowser-v5.2.0.zip`** through Joomla's extension installer.
 The package includes the component, the Fields picker plugin and the System integration plugin.
 
 Open **SupJx SmartBrowser** in the administrator menu, or configure individual/global native

@@ -3,7 +3,10 @@
     <div id="smartbrowser-app" class="smartbrowser" aria-live="polite"></div>
 <?php else : ?>
     <div class="smartbrowser-dashboard">
+        <header class="sb-dashboard-heading">
         <h1><span class="icon-sb-brand" aria-hidden="true"></span> <?php echo \Joomla\CMS\Language\Text::_('COM_SMARTBROWSER_DASHBOARD'); ?></h1>
+            <div data-sb-personal-preferences></div>
+        </header>
         <div class="smartbrowser-dashboard-grid">
             <?php foreach ($this->items as $item) : ?>
                 <a class="smartbrowser-dashboard-item" href="<?php echo htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8'); ?>">

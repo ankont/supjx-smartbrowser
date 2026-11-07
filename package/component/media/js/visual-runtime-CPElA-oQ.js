@@ -1,6 +1,6 @@
-import { W as e, u as t } from "./visual-runtime-BEbhjzcM.js?v=5.0.15";
-import { a as n, i as r, n as i } from "./visual-runtime-DQsy__lt.js?v=5.0.15";
-import { a, c as o, i as s, o as c, s as l, t as u, w as d } from "./visual-runtime-NnvsnHf2.js?v=5.0.15";
+import { F as e, t } from "./visual-runtime-CJIQlqNK.js?v=5.2.0";
+import { a as n, c as r, i, o as a, s as o, t as s, w as c } from "./visual-runtime-DbGbfChU.js?v=5.2.0";
+import { a as l, i as u, n as d } from "./visual-runtime-CCt1nnbc.js?v=5.2.0";
 //#region resources/js/core/selectionFieldValue.js
 function f(e, t, n = !0, r = !1) {
 	if (e === "" || e == null) return {
@@ -8,117 +8,117 @@ function f(e, t, n = !0, r = !1) {
 		items: []
 	};
 	if (typeof e == "string" && e.length > 262144) throw TypeError("Field value too large.");
-	let a = typeof e == "string" ? JSON.parse(e) : e;
-	if (a?.version !== 1) throw TypeError("Invalid SmartBrowser field version.");
-	let o = a.items || a.selection?.map((e) => ({
+	let i = typeof e == "string" ? JSON.parse(e) : e;
+	if (i?.version !== 1) throw TypeError("Invalid SmartBrowser field version.");
+	let a = i.items || i.selection?.map((e) => ({
 		selection: e,
-		usage: a.usage?.[e.id] || {}
-	})), s = i(o, {
+		usage: i.usage?.[e.id] || {}
+	})), o = d(a, {
 		allowedAdapters: Array.isArray(t) ? t : t ? [t] : [],
 		homogeneous: r
 	});
-	if (s.length !== o.length || !n && s.length > 1) throw TypeError("Invalid SmartBrowser field selection.");
+	if (o.length !== a.length || !n && o.length > 1) throw TypeError("Invalid SmartBrowser field selection.");
 	return {
 		version: 1,
-		items: s
+		items: o
 	};
 }
-function p(e, t, n, a, o = null, s = !1, c = !1, l = "replace") {
-	let u = t.items || (Array.isArray(t.selection) ? t.selection : [t.selection]).map((r) => ({
+function p(e, t, n, r, i = null, a = !1, o = !1, s = "replace") {
+	let l = t.items || (Array.isArray(t.selection) ? t.selection : [t.selection]).map((r) => ({
 		selection: {
 			adapter: t.adapter || e.items[0]?.selection.adapter || (Array.isArray(n) ? n[0] : n),
 			id: r.id
 		},
 		usage: t.usage?.[r.id] || {}
-	})), p = new Set(e.items.map((e) => r(e.selection))), m = l === "append" ? [...e.items, ...u.filter((e) => !p.has(r(e.selection)))] : o ? e.items.flatMap((e) => r(e.selection) === r(o) ? u.map((t) => ({
+	})), p = new Set(e.items.map((e) => u(e.selection))), m = s === "append" ? [...e.items, ...l.filter((e) => !p.has(u(e.selection)))] : i ? e.items.flatMap((e) => u(e.selection) === u(i) ? l.map((t) => ({
 		...t,
-		usage: c || r(t.selection) === r(e.selection) ? {
-			...d(e.usage),
+		usage: o || u(t.selection) === u(e.selection) ? {
+			...c(e.usage),
 			...t.usage
 		} : t.usage
-	})) : [e]) : u;
+	})) : [e]) : l;
 	return f({
 		version: 1,
-		items: i(m)
-	}, n, a, s);
+		items: d(m)
+	}, n, r, a);
 }
 //#endregion
 //#region resources/js/core/collectionPicker.js
-function m({ config: e, model: t, api: i, open: a, isDisposed: o = () => !1 }) {
-	let s = !1;
-	async function c(c = null, l = !1) {
-		if (s || o() || e.readOnly || t.browser.state.loading || t.browser.state.busy) return;
-		let u = {
+function m({ config: e, model: t, api: n, open: r, isDisposed: i = () => !1 }) {
+	let a = !1;
+	async function o(o = null, s = !1) {
+		if (a || i() || e.readOnly || t.browser.state.loading || t.browser.state.busy) return;
+		let c = {
 			version: 1,
 			items: t.getItems()
 		}, d = e.multiple === !1 ? 1 : e.maxSelections || 500;
-		if (l && u.items.length >= d) return;
-		let m = t.revision.value, h = e.allowedAdapters || (e.adapter ? [e.adapter] : []), g = c?.selection || (c ? {
-			adapter: c.adapter || e.adapter,
-			id: c.id
-		} : null), _ = g?.adapter || u.items[0]?.selection.adapter || e.adapter || h[0], v = g ? u.items.find((e) => r(e.selection) === r(g)) : e.multiple === !1 ? u.items[0] : null, y = { ...e.selectionProfile };
-		if (!l && e.preserveUsageOnReplace && v) for (let [e, t] of Object.entries(y)) t !== !1 && Object.hasOwn(v.usage, e) && (y[e] = {
+		if (s && c.items.length >= d) return;
+		let m = t.revision.value, h = e.allowedAdapters || (e.adapter ? [e.adapter] : []), g = o?.selection || (o ? {
+			adapter: o.adapter || e.adapter,
+			id: o.id
+		} : null), _ = g?.adapter || c.items[0]?.selection.adapter || e.adapter || h[0], v = g ? c.items.find((e) => u(e.selection) === u(g)) : e.multiple === !1 ? c.items[0] : null, y = { ...e.selectionProfile };
+		if (!s && e.preserveUsageOnReplace && v) for (let [e, t] of Object.entries(y)) t !== !1 && Object.hasOwn(v.usage, e) && (y[e] = {
 			...typeof t == "object" ? t : {},
 			default: v.usage[e]
 		});
-		s = !0;
+		a = !0;
 		try {
-			let s = typeof e.pickerOptions == "function" ? e.pickerOptions() : e.pickerOptions || {}, v = await a({
+			let a = typeof e.pickerOptions == "function" ? e.pickerOptions() : e.pickerOptions || {}, v = await r({
 				...e,
-				...s,
+				...a,
 				url: e.pickerUrl,
 				adapter: _,
 				selectionProfile: y,
 				browseRoot: _ === e.adapter ? e.browseRoot : "",
-				allowedAdapters: l && e.homogeneous && u.items.length ? [u.items[0].selection.adapter] : h,
+				allowedAdapters: s && e.homogeneous && c.items.length ? [c.items[0].selection.adapter] : h,
 				homogeneous: e.multiple !== !1 && e.homogeneous,
 				multiple: e.multiple !== !1,
 				resultFormat: "collection",
-				maxSelections: l ? d - u.items.length : d,
+				maxSelections: s ? d - c.items.length : d,
 				initialFocus: g,
 				initialInfoOpen: !!g,
-				initialNode: c?.parentId || "",
-				initialCollection: l ? [] : u.items
+				initialNode: o?.parentId || "",
+				initialCollection: s ? [] : c.items
 			});
-			if (!v || o()) return;
+			if (!v || i()) return;
 			if (m !== t.revision.value) throw Error("Selection changed while the Picker was open.");
 			f({
 				version: 1,
 				items: v.items
 			}, h, e.multiple !== !1, e.homogeneous);
-			let b = p(u, v, h, e.multiple !== !1, e.multiple === !1 ? g : null, e.homogeneous, e.preserveUsageOnReplace === !0, l ? "append" : "replace");
+			let b = p(c, v, h, e.multiple !== !1, e.multiple === !1 ? g : null, e.homogeneous, e.preserveUsageOnReplace === !0, s ? "append" : "replace");
 			if (b.items.length > d) throw Error("Selection limit exceeded.");
-			let x = await i.collection(b.items, {
+			let x = await n.collection(b.items, {
 				referenceItems: !0,
 				homogeneous: e.homogeneous === !0
 			});
-			if (o()) return;
+			if (i()) return;
 			if (m !== t.revision.value) throw Error("Selection changed while the Picker was open.");
-			let S = new Set(v.items.map((e) => r(e.selection))), C = new Set(u.items.map((e) => r(e.selection)));
-			for (let t of x.resources) if (S.has(n(t)) && !(t.unavailable && C.has(n(t))) && (t.unavailable || t.selectable === !1 || e.allowedResourceTypes?.length && !e.allowedResourceTypes.includes(t.type) || e.selectionTarget === "item" && t.kind !== "item" || e.selectionTarget === "node" && t.kind !== "node")) throw Error("Unavailable or disallowed selection.");
+			let S = new Set(v.items.map((e) => u(e.selection))), C = new Set(c.items.map((e) => u(e.selection)));
+			for (let t of x.resources) if (S.has(l(t)) && !(t.unavailable && C.has(l(t))) && (t.unavailable || t.selectable === !1 || e.allowedResourceTypes?.length && !e.allowedResourceTypes.includes(t.type) || e.selectionTarget === "item" && t.kind !== "item" || e.selectionTarget === "node" && t.kind !== "node")) throw Error("Unavailable or disallowed selection.");
 			return await t.setItems(b.items, {
 				resolvedResources: x.resources,
-				reason: l ? "add" : "replace"
+				reason: s ? "add" : "replace"
 			}), t.getItems();
 		} finally {
-			s = !1;
+			a = !1;
 		}
 	}
 	return {
-		add: () => c(null, !0),
-		editSelection: (e) => c(e)
+		add: () => o(null, !0),
+		editSelection: (e) => o(e)
 	};
 }
 //#endregion
 //#region resources/js/collection.js
 var h = /* @__PURE__ */ new WeakMap();
-function g(n, r = {}) {
-	let i = typeof n == "string" ? document.querySelector(n) : n;
-	if (!(i instanceof Element)) throw TypeError("A collection requires a container element.");
-	if (h.has(i)) throw Error("A SmartBrowser collection is already mounted in this container.");
-	let l = window.Joomla?.getOptions("com_smartbrowser.collection", {}) || {}, d = e({
-		...l,
-		...r
+function g(o, c = {}) {
+	let l = typeof o == "string" ? document.querySelector(o) : o;
+	if (!(l instanceof Element)) throw TypeError("A collection requires a container element.");
+	if (h.has(l)) throw Error("A SmartBrowser collection is already mounted in this container.");
+	let u = window.Joomla?.getOptions("com_smartbrowser.collection", {}) || {}, d = e({
+		...u,
+		...c
 	});
 	if (!d.apiBaseUrl || !d.csrfToken) throw TypeError("Collection apiBaseUrl and csrfToken are required.");
 	if (d.layout && ![
@@ -140,14 +140,14 @@ function g(n, r = {}) {
 		"readonly",
 		"editable"
 	].includes(d.selectionUseData)) throw TypeError("Invalid selection use data presentation.");
-	let f = d.translate || ((e) => window.Joomla?.Text?._(e, e) || e), p = new o({
+	let f = d.translate || ((e) => window.Joomla?.Text?._(e, e) || e), p = new r({
 		...d,
 		mode: d.readOnly ? "readonly" : "manage"
-	}), g = !1, _ = /* @__PURE__ */ new Map(), v, y = u({
+	}), g = !1, _ = /* @__PURE__ */ new Map(), v, y = s({
 		config: d,
 		api: p,
 		notify: (e) => {
-			g || (i.dispatchEvent(new CustomEvent("smartbrowser:collection-change", {
+			g || (l.dispatchEvent(new CustomEvent("smartbrowser:collection-change", {
 				detail: e,
 				bubbles: !0
 			})), d.onChange?.(e));
@@ -161,24 +161,24 @@ function g(n, r = {}) {
 		isDisposed: () => g
 	});
 	d.selectedResources && y.referenceItems && d.pickerUrl && !d.readOnly && (d.onAdd === void 0 && d.allowAdd !== !1 && (d.onAdd = b.add), d.onReplace === void 0 && d.allowReplace !== !1 && (d.onReplace = b.editSelection), d.defaultResourceActionId === void 0 && d.onReplace && (d.defaultResourceActionId = "collectionReplace"));
-	let x = a({
+	let x = n({
 		api: p,
 		config: d
 	});
-	d.addressService = x, Object.assign(d, c({
+	d.addressService = x, Object.assign(d, a({
 		model: y,
 		api: p,
 		config: d,
 		service: x,
 		isDisposed: () => g
 	}));
-	let S = t(s, {
+	let S = t(i, {
 		model: y,
 		api: p,
 		config: d,
 		t: f
 	}).provide("smartBrowserOptions", y.options).provide("resourceApi", p);
-	S.mount(i);
+	S.mount(l);
 	let C = y.refresh();
 	C.catch((e) => d.onError?.(e));
 	let w = {
@@ -197,7 +197,7 @@ function g(n, r = {}) {
 		},
 		attachPreview(e) {
 			if (g || !(e instanceof HTMLElement) || v) return;
-			let t = i.querySelector(".sb-native-preview-host");
+			let t = l.querySelector(".sb-native-preview-host");
 			if (!t) return;
 			let n = document.createComment("SmartBrowser preview");
 			e.before(n), t.append(e), v = {
@@ -211,7 +211,7 @@ function g(n, r = {}) {
 			if (!_.has(e)) {
 				e.textContent.trim() || (e.dataset.sbHostLabel = e.getAttribute("aria-label") || e.title || "");
 				let t = document.createComment("SmartBrowser toolbar button");
-				e.before(t), _.set(e, t), i.querySelector(".sb-collection-extra-buttons").append(e);
+				e.before(t), _.set(e, t), l.querySelector(".sb-collection-extra-buttons").append(e);
 			}
 			return () => {
 				let t = _.get(e);
@@ -221,16 +221,16 @@ function g(n, r = {}) {
 		destroy() {
 			g || (_.forEach((e, t) => {
 				e.replaceWith(t), delete t.dataset.sbHostLabel;
-			}), _.clear(), v && v.marker.replaceWith(v.element), g = !0, x.destroy(), y.destroy(), S.unmount(), h.delete(i));
+			}), _.clear(), v && v.marker.replaceWith(v.element), g = !0, x.destroy(), y.destroy(), S.unmount(), h.delete(l));
 		}
 	};
-	return h.set(i, w), w;
+	return h.set(l, w), w;
 }
 window.SmartBrowser = {
 	...window.SmartBrowser,
 	mountCollection: g,
-	SelectionAddress: l,
-	createSelectionAddressService: a
+	SelectionAddress: o,
+	createSelectionAddressService: n
 }, document.dispatchEvent(new CustomEvent("smartbrowser:collection-ready"));
 //#endregion
 export { f as n, g as t };

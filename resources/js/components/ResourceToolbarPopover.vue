@@ -31,6 +31,7 @@ function position() {
   panel.value.style.top = `${Math.max(8, below < bounds.height && anchor.top > below ? anchor.top - bounds.height : anchor.bottom)}px`;
   panel.value.style.maxHeight = `${Math.max(80, Math.max(below, anchor.top - 8))}px`;
 }
+defineExpose({ close: () => close() });
 function close(restoreFocus = false) {
   if (panel.value?.matches(':popover-open')) panel.value.hidePopover();
   open.value = false;

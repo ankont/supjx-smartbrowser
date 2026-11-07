@@ -25,7 +25,7 @@ test('flat root resets its filters and media preview exposes save, copy and down
     source('resources/js/adapters/MediaActionDriver.js'),
     source('resources/js/components/ResourceDetails.vue'),
   ]);
-  assert.match(app, /flatActive && nodeId === state\.selectedNode && nodeId === state\.roots\[0\]\?\.id/);
+  assert.match(app, /options\.adapter\.startsWith\('flat-'\) && nodeId === state\.selectedNode && nodeId === state\.roots\[0\]\?\.id/);
   assert.match(app, /await clearFilters\(\)/);
   assert.match(driver, /data-action="save"/);
   assert.match(driver, /data-action="apply"/);

@@ -3,6 +3,14 @@
     <div class="resource-toolbar-primary">
       <ResourceBreadcrumb :breadcrumb="breadcrumb" :root="root" :root-icon="rootIcon" :icon-only-root="iconOnlyRoot" @open="$emit('open', $event)" />
       <div class="resource-view-controls">
+        <div class="resource-history-controls" role="group" :aria-label="t('COM_SMARTBROWSER_HISTORY_TITLE')">
+          <button type="button" class="resource-icon-button" :disabled="!historyPrevious" :title="historyPrevious ? t('COM_SMARTBROWSER_HISTORY_BACK') + ': ' + historyPrevious.title : t('COM_SMARTBROWSER_HISTORY_BACK')" :aria-label="t('COM_SMARTBROWSER_HISTORY_BACK')" @click="$emit('history-back')"><span class="fas fa-history" aria-hidden="true" /></button>
+          <ResourceToolbarPopover ref="historyPopup" :label="t('COM_SMARTBROWSER_HISTORY_TITLE')" icon="fas fa-caret-down" :width="360" panel-class="resource-history-menu">
+            <p v-if="!historyEntries?.length" class="resource-history-empty">{{ t('COM_SMARTBROWSER_HISTORY_EMPTY') }}</p>
+            <button v-for="entry in historyEntries" :key="entry.id" type="button" class="btn btn-outline-secondary" :title="entry.title" @click="historyPopup?.close(); $emit('history-open', entry.id)">{{ entry.title }}</button>
+            <button v-if="historyEntries?.length" type="button" class="resource-history-clear" @click="historyPopup?.close(); $emit('history-clear')"><span class="fas fa-eraser" aria-hidden="true" /> {{ t('COM_SMARTBROWSER_HISTORY_CLEAR') }}</button>
+          </ResourceToolbarPopover>
+        </div>
         <ResourceOrderingControls v-if="reorderVisible" :enabled="reorderEnabled" :t="t" @reorder="$emit('reorder', $event)" />
         <button v-if="multiple" type="button" class="resource-icon-button" :disabled="!canInvert" :title="t('COM_SMARTBROWSER_INVERT_SELECTION')" :aria-label="t('COM_SMARTBROWSER_INVERT_SELECTION')" @click="$emit('invert-selection')">
           <span class="fas fa-retweet" aria-hidden="true" />
@@ -42,15 +50,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import ResourceBreadcrumb from './ResourceBreadcrumb.vue';
 import ResourceOrderingControls from './ResourceOrderingControls.vue';
 import ResourceColumnPicker from './ResourceColumnPicker.vue';
 import ResourceSortControls from './ResourceSortControls.vue';
 import ResourceToolbarPopover from './ResourceToolbarPopover.vue';
 
-const props = defineProps({ breadcrumb: Array, root: Object, rootIcon: String, iconOnlyRoot: Boolean, search: String, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, views: Array, activeView: String, gridSize: String, detailsThumbnails: Boolean, multiple: Boolean, columns: Array, hiddenColumns: Array, shownColumns: Array, showInfo: Boolean, canInvert: Boolean, reorderVisible: Boolean, reorderEnabled: Boolean, t: Function });
-defineEmits(['open', 'invert-selection', 'reorder', 'search', 'sort-by', 'sort-direction-value', 'resize', 'toggle-thumbnails', 'toggle-date-field', 'toggle-column', 'view', 'info']);
+const props = defineProps({ historyEntries: Array, historyPrevious: Object, breadcrumb: Array, root: Object, rootIcon: String, iconOnlyRoot: Boolean, search: String, sortBy: String, sortDirection: String, sortFields: Array, orderingField: String, views: Array, activeView: String, gridSize: String, detailsThumbnails: Boolean, multiple: Boolean, columns: Array, hiddenColumns: Array, shownColumns: Array, showInfo: Boolean, canInvert: Boolean, reorderVisible: Boolean, reorderEnabled: Boolean, t: Function });
+defineEmits(['history-back', 'history-open', 'history-clear', 'open', 'invert-selection', 'reorder', 'search', 'sort-by', 'sort-direction-value', 'resize', 'toggle-thumbnails', 'toggle-date-field', 'toggle-column', 'view', 'info']);
+const historyPopup = ref(null);
 const activeDefinition = computed(() => props.views.find((view) => view.id === props.activeView) || {});
 const defaultSortFields = [
   { id: 'title', label: 'COM_SMARTBROWSER_NAME' },

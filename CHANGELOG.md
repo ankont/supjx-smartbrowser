@@ -1,5 +1,61 @@
 # Changelog
 
+## 5.2.0 - 2026-11-07
+
+- Add My preferences with account-owned editor and integration choices, per-resource contextual visibility, independently scoped selection appearance and last locations, and personal resets.
+- Add bounded recent-location history with alternating navigation and a split dropdown, shared through existing user-profile and local preference storage.
+- Introduce category-tree filtering for featured articles with recursive category scope, independent dropdown filters and preserved featured ordering.
+- Place recent-location history before all other browser toolbar controls, including ordering arrows.
+- Add a plain Clear history footer that clears saved recent locations without navigating away from the current location.
+- Center frontend browser heading controls and add a small top inset while preserving template-owned outer spacing.
+- Define frontend Dashboard heading spacing on its wrapper, with 24px block margins, a margin-free title and centered preference controls.
+- Widen frontend containers without forcing percentage widths on intermediate grid wrappers; preserve negative gutters, handle responsive width constraints and restore the original layout on exit.
+
+## 5.1.7 - 2026-11-07
+
+- Add category-tree navigation to featured articles, recursively scoping results while keeping dropdown filters independent.
+- Reuse flat article scope resolution, retain access and browse-root restrictions, and keep category navigation nodes out of article results and bulk selection.
+- Preserve featured ordering, breadcrumb navigation, saved locations and the featured-only constraint when returning to root.
+
+## 5.1.6 - 2026-11-07
+
+- Clarify that contextual visibility controls related articles or menu content, with concise resource-type labels and generic label fallback.
+
+## 5.1.5 - 2026-11-07
+
+- Preserve template-defined frontend Dashboard title margins instead of replacing them with fixed heading spacing.
+
+## 5.1.4 - 2026-11-07
+
+- Move contextual preferences below general and location settings with a small visual separation.
+- Add an explicit SmartBrowser integration choice while retaining administrator restrictions.
+- Center and style empty recent-location messages; align frontend Dashboard preferences with the title.
+
+## 5.1.3 - 2026-11-07
+
+- Group personal preferences into responsive two- and three-column rows, wrapping contextual controls without narrowing them as resource types grow.
+- Replace field terminology in personal preference labels and help with user-facing wording.
+
+## 5.1.2 - 2026-11-07
+
+- Restore native toolbar spacing between Dashboard personal preferences and Options.
+
+## 5.1.1 - 2026-11-07
+
+- Repair Greek preference labels and replace technical terms with user-facing selection-window and resource-type wording.
+- Show administrator defaults in inherited preference options and add Joomla inline help with integration warnings.
+- Correct Save & Close text, use a red Cancel action and align Dashboard preferences next to Options.
+- Integrate the history dropdown into a narrow strip on the main history button.
+- Store contextual-resource preferences separately for categories, tags and menus; show the current browser's setting and expose all three on the Dashboard.
+
+## 5.1.0 - 2026-11-06
+
+- Add account-owned My preferences with editor, contextual-resource and integration overrides, reusing Joomla user profiles and local caching.
+- Let Picker appearance and last-location scopes be configured independently per caller or adapter while keeping management browsers separate.
+- Add a bounded recent-location split control with alternating back/forward navigation and full-path dropdown entries.
+- Add current-view and personal-account resets with generation checks against stale tab writes.
+- Expose the default preference button before native Joomla/maximize controls and on both Dashboards.
+
 ## 5.0.15 - 2026-11-06
 
 - Float Picker messages over the results immediately above the selection panel without consuming layout height; follow panel expansion and retain dismiss interaction.

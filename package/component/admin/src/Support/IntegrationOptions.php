@@ -19,6 +19,9 @@ final class IntegrationOptions
 
     public static function enabled(string $key, ?object $params = null): bool
     {
+        if (str_starts_with($key, 'replace_') && $key !== 'replace_all' && class_exists(UserViewPreferences::class)
+            && UserViewPreferences::option('integration', 'inherit') === 'native') return false;
+        // Explicit SmartBrowser preference, like inheritance, stays within administrator-enabled integrations.
         $params ??= ComponentHelper::getParams('com_smartbrowser');
         return ($key !== 'hide_component_menu' && (bool) $params->get('replace_all', 0)) || (string) $params->get($key, '0') === '1';
     }

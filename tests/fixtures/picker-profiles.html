@@ -87,6 +87,11 @@ Object.assign(labels, { COM_SMARTBROWSER_COPY_ADDRESSES: 'Copy resource addresse
 window.fixtureOptions = { adapter: params.get('adapter') || 'media', adapters: [{ id: 'media', title: 'COM_SMARTBROWSER_ADAPTER_MEDIA', icon: 'fas fa-photo-video' }, { id: 'articles', title: 'COM_SMARTBROWSER_ADAPTER_ARTICLES', icon: 'fas fa-book-open' }], application: params.get('application') || 'administrator', mode: 'select', multiple: params.get('multiple') === '1', selectionTarget: 'item', roots, actions: [], defaultView: params.get('defaultView') || null, currentNode: 'local-images:/', initialNode: 'local-images:/',
   allowedResourceTypes: (params.get('allowedResourceTypes') || '').split(',').filter(Boolean), apiBaseUrl: location.origin + '/index.php?option=com_smartbrowser', csrfToken: 'test', pickerInstance: params.get('pickerInstance') || '', showContextResources: false };
 Object.assign(labels, { COM_SMARTBROWSER_PICKER_SELECT_TITLE: 'Select', COM_SMARTBROWSER_ADAPTER_MEDIA: 'Files & Media' });
+if (params.has('featuredTreeFixture')) {
+  const root = { id: 'featured-articles:root', title: 'Featured Articles', kind: 'node', type: 'root', icon: 'fas fa-star', visible: false, navigable: true };
+  Object.assign(fixtureOptions, { adapter: 'featured-articles', mode: 'manage', multiple: true, defaultSortBy: 'ordering', defaultSortDirection: 'asc', currentNode: root.id, initialNode: root.id, roots: [root], adapters: [{ id: 'featured-articles', title: 'Featured Articles', icon: 'fas fa-star' }] });
+  window.featuredRequests = [];
+}
 if (params.has('flatTreeFixture')) Object.assign(fixtureOptions, {
   adapter: 'flat-media', adapters: [{ id: 'flat-media', title: 'Files & Media', icon: 'fas fa-photo-video' }],
   flatTreeNode: params.get('flatFromNode') || 'local-images:/', flatTreeRoot: null,
@@ -126,6 +131,20 @@ window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptio
       ? body.operation === 'reorder' ? { items: [...body.items].reverse() } : body.referenceItems ? { items: body.items, resources: body.items.map(entry => ({ ...(resources.find(resource => resource.id === entry.selection.id) || { id: entry.selection.id, title: entry.selection.id, unavailable: true, metadata: {}, capabilities: {} }), adapter: entry.selection.adapter, selection: entry.selection, selectionKey: JSON.stringify([entry.selection.adapter, entry.selection.id]), collectionActions: [], collectionPresentation: { columns: [{ id: 'title', label: 'COM_SMARTBROWSER_NAME' }], infoFields: [] } })) }
         : { identifiers: body.items, resources: body.items.map(id => resources.find(resource => resource.id === id) || { id, title: id, unavailable: true, metadata: {}, capabilities: {} }) }
       : { nodes: [], items, breadcrumb: roots, actions: [{ id: 'edit', label: 'Edit', requiresSelection: true, single: true, icon: 'fas fa-pen' }, { id: 'checkin', label: 'Check in', requiresSelection: true, icon: 'fas fa-lock' }] };
+    if (params.has('featuredTreeFixture') && request.searchParams.get('task') === 'api.resources') {
+      const node = request.searchParams.get('node'), filters = JSON.parse(request.searchParams.get('filters') || '{}');
+      window.featuredRequests.push({ node, filters });
+      const category = (id, title) => ({ id: 'category:' + id, title, kind: 'node', type: 'category', navigable: true, selectable: true, icon: 'fas fa-box', metadata: {} });
+      response.nodes = node === 'featured-articles:root' ? [category(10, 'Parent category'), category(20, 'Other category')] : node === 'category:10' ? [category(11, 'Child category')] : [];
+      response.breadcrumb = [fixtureOptions.roots[0], ...(node === 'category:10' || node === 'category:11' ? [category(10, 'Parent category')] : []), ...(node === 'category:11' ? [category(11, 'Child category')] : [])];
+      response.items = [10, 11, 20].filter(id => (node === 'featured-articles:root' || node === 'category:10' && [10, 11].includes(id) || node === 'category:' + id) && (!filters.category || filters.category === String(id))).map(id => ({ id: 'article:' + id, title: 'Featured article ' + id, kind: 'item', type: 'article', selectable: true, parentId: 'category:' + id, metadata: { id, ordering: id }, capabilities: {} }));
+      response.presentation = { navigationOnlyNodes: true, orderingField: 'ordering', sortFields: [{ id: 'ordering', label: 'Ordering' }], columns: [{ id: 'title', label: 'Name', source: 'title' }], filters: [{ id: 'category', label: 'Category', type: 'select', default: '', options: [{ value: '', label: 'All categories' }, { value: '11', label: 'Child category' }] }] };
+    }
+    if (params.has('historyFixture') && request.searchParams.get('task') === 'api.resources') {
+      const node = request.searchParams.get('node') || roots[0].id;
+      response.breadcrumb = node === roots[0].id ? roots : [...roots, { id: node, title: node.split('/').pop() }];
+      response.nodes = ['Alpha', 'Beta', 'Gamma'].map(title => ({ id: 'local-images:/' + title, title, type: 'folder', navigable: true, selectable: true, icon: 'fas fa-folder', metadata: {} }));
+    }
     if (params.has('flatTreeFixture') && request.searchParams.get('adapter') === 'media') {
       Object.assign(response, { roots: [roots[0], { ...roots[0], id: 'local-files:/', title: 'Files' }], nodeId: request.searchParams.get('node'), nodes: [{ ...roots[0], id: 'local-images:/child', title: 'Child folder' }], breadcrumb: roots });
     }

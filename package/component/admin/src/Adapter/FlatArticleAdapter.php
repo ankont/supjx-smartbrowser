@@ -31,29 +31,8 @@ class FlatArticleAdapter extends ArticleCollectionAdapter
 
     public function getResources(string $nodeId, array $options = []): array
     {
-        if ($nodeId !== static::ROOT_ID) {
-            throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
-        }
         $stateFilter = (string) ($options['filters']['state'] ?? 'active');
-        $maxLevels = FlatLevels::limit($options);
-        $selectedCategory = (int) ($options['filters']['category'] ?? 0);
-        $categoryIds = null;
-        if ($maxLevels || $selectedCategory > 0) {
-            $scope = $this->browseRoot ? $this->getCategory($this->browseRootNumericId()) : $this->categoryRoot();
-            if ($selectedCategory > 0 && $this->browseRoot && !$this->categoryWithinBrowseRoot($selectedCategory)) {
-                $categoryIds = [];
-            } else {
-                $root = $selectedCategory > 0 ? $this->getCategory($selectedCategory) : $scope;
-                $rootLevel = (int) $root->level;
-                $firstLevel = (int) $root->id > 1 ? 1 : 0;
-                $categoryIds = [(int) $root->id];
-                foreach ($root->getChildren(true) as $category) {
-                    if ($this->canViewCategory($category) && (!$maxLevels || (int) $category->level - $rootLevel + $firstLevel <= $maxLevels)) {
-                        $categoryIds[] = (int) $category->id;
-                    }
-                }
-            }
-        }
+        $categoryIds = $this->articleCategoryScope($nodeId, $options);
         $presentation = $this->articlePresentation(true, true, true);
         $presentation['filters'] = array_values(array_filter($presentation['filters'], static fn (array $filter): bool => $filter['id'] !== 'category'));
         $presentation['filters'][] = [
@@ -88,6 +67,33 @@ class FlatArticleAdapter extends ArticleCollectionAdapter
             'presentation' => $presentation,
             'currentResource' => $this->getRoots()[0],
         ];
+    }
+
+    protected function articleCategoryScope(string $nodeId, array $options): ?array
+    {
+        if ($nodeId !== static::ROOT_ID) {
+            throw new \InvalidArgumentException(Text::_('COM_SMARTBROWSER_ERROR_INVALID_RESOURCE'), 400);
+        }
+        $maxLevels = FlatLevels::limit($options);
+        $selectedCategory = (int) ($options['filters']['category'] ?? 0);
+        $categoryIds = null;
+        if ($maxLevels || $selectedCategory > 0) {
+            $scope = $this->browseRoot ? $this->getCategory($this->browseRootNumericId()) : $this->categoryRoot();
+            if ($selectedCategory > 0 && $this->browseRoot && !$this->categoryWithinBrowseRoot($selectedCategory)) {
+                $categoryIds = [];
+            } else {
+                $root = $selectedCategory > 0 ? $this->getCategory($selectedCategory) : $scope;
+                $rootLevel = (int) $root->level;
+                $firstLevel = (int) $root->id > 1 ? 1 : 0;
+                $categoryIds = [(int) $root->id];
+                foreach ($root->getChildren(true) as $category) {
+                    if ($this->canViewCategory($category) && (!$maxLevels || (int) $category->level - $rootLevel + $firstLevel <= $maxLevels)) {
+                        $categoryIds[] = (int) $category->id;
+                    }
+                }
+            }
+        }
+        return $categoryIds;
     }
 
     public function getBreadcrumb(string $nodeId): array

@@ -303,7 +303,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         $app = $this->getApplication();
         if (!$app->isClient('site') || $app->getIdentity()->guest
             || !IntegrationOptions::enabled('replace_editor_article_site')
-            || ComponentHelper::getParams('com_smartbrowser')->get('editor_site', 'modal') !== 'modal'
+            || \SuperSoft\Component\Smartbrowser\Administrator\Support\UserViewPreferences::editorMode(true) !== 'modal'
             || $app->getInput()->getCmd('tmpl', '') === 'component') return;
         $document = $app->getDocument();
         if (!method_exists($document, 'getWebAssetManager')) return;

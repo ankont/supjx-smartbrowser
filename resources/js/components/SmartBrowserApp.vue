@@ -40,6 +40,7 @@
       @complete="completeSelection(selection)"
       @no-user="completeSelection([{ id: 'user:0', type: 'user', title: '' }])"
     >
+      <template #preferences><PersonalPreferencesDialog :t="t" :adapter="options.adapter" current-view @saved="personalSaved" @reset-view="resetPersonalView" /></template>
       <template #display-controls>
         <button v-if="pickerContext?.toggleSize" type="button" class="resource-icon-button resource-display-toggle" :class="{ active: pickerMaximized }" :aria-pressed="pickerMaximized" :title="t(pickerMaximized ? 'COM_SMARTBROWSER_EDITOR_RESTORE' : 'COM_SMARTBROWSER_EDITOR_MAXIMIZE')" :aria-label="t(pickerMaximized ? 'COM_SMARTBROWSER_EDITOR_RESTORE' : 'COM_SMARTBROWSER_EDITOR_MAXIMIZE')" @click="pickerMaximized = pickerContext.toggleSize()">
           <span :class="pickerMaximized ? 'fas fa-compress' : 'fas fa-expand'" aria-hidden="true" />
@@ -60,6 +61,7 @@
       </div>
       <main class="resource-main">
         <ResourceToolbar
+          :history-entries="historyEntries" :history-previous="historyPrevious" @history-back="historyBack" @history-open="historyOpen" @history-clear="clearHistory"
           :breadcrumb="toolbarBreadcrumb"
           :root="state.roots[0]"
           :root-icon="openNodeIcon"
@@ -163,12 +165,15 @@ import { browserAvailableHeight, revealResources } from '../core/pickerViewport.
 import { createDisplayMode } from '../core/displayMode.js';
 import { observeBrowserLayout } from '../core/browserLayout.js';
 import ResourceActions from './ResourceActions.vue';
+import PersonalPreferencesDialog from './PersonalPreferencesDialog.vue';
+import { createNodeHistory } from '../core/nodeHistory.js';
+import { pickerScope, nodePreferenceKey } from '../core/personalPreferences.js';
 import ResourceBatchDialog from './ResourceBatchDialog.vue';
 import ResourceInfoPanel from './ResourceInfoPanel.vue';
 import ResourceToolbar from './ResourceToolbar.vue';
 import ResourceTree from './ResourceTree.vue';
 import { flatRootUrl, flatUiStorageKey, flatViewUrl, regularViewUrl } from '../core/flatViewNavigation.js';
-import { isManagementBrowser } from '../services/PersistenceService.js';
+import { isManagementBrowser, browserStateKey } from '../services/PersistenceService.js';
 import { preferenceStorage } from '../core/userPreferences.js';
 import { columnCatalog } from '../core/columnCatalog.js';
 import { defaultResourceAction, resourcePreviewAction, modifiedResourceAction } from '../core/defaultResourceAction.js';
@@ -185,6 +190,7 @@ import { asPrimaryResource, canSelectResource } from '../core/resourcePolicy.js'
 
 const browser = inject('browser');
 const options = inject('smartBrowserOptions');
+const persistence = inject('persistence');
 const displayEnabled = options.application === 'site' && window.self === window.top;
 const displayMode = ref('normal');
 const shellElement = ref(null), availableHeight = ref('620px');
@@ -511,12 +517,48 @@ const toolbarBreadcrumb = computed(() => {
   if (options.flatBreadcrumb.length === 1) return state.breadcrumb;
   return options.flatBreadcrumb;
 });
+const historyEntries = ref([]), historyPrevious = ref(null);
+let nodeHistory;
+const refreshHistory = () => { historyEntries.value = nodeHistory.entries(); historyPrevious.value = nodeHistory.previous(); };
+const setupHistory = () => { nodeHistory = createNodeHistory(preferenceStorage(), nodePreferenceKey(options), options.browseRoot || ''); refreshHistory(); };
+setupHistory();
+watch(() => state.navigationRevision, () => {
+  nodeHistory.visit(options.flatTreeNode || state.selectedNode, toolbarBreadcrumb.value);
+  refreshHistory();
+});
+const historyOpen = async id => {
+  await openTreeNode(id);
+  if (!treeApi && (state.error || state.selectedNode !== id)) { nodeHistory.remove(id); refreshHistory(); }
+};
+const clearHistory = () => {
+  nodeHistory.clear();
+  nodeHistory.visit(options.flatTreeNode || state.selectedNode, toolbarBreadcrumb.value);
+  refreshHistory();
+};
+const historyBack = () => { const entry = nodeHistory.back(); refreshHistory(); if (entry) historyOpen(entry.id); };
+function resetPersonalView() {
+  const storage = preferenceStorage();
+  if (persistence) { persistence.storage = storage; persistence.key = browserStateKey(options, storage); persistence.nodeKey = nodePreferenceKey(options, storage); }
+  storage.removeItem(browserStateKey(options, storage)); storage.removeItem(uiKey); storage.removeItem(nodePreferenceKey(options, storage));
+  state.activeView = options.defaultView || 'grid'; state.showInfo = false; state.search = ''; state.hiddenColumns = []; state.shownColumns = [];
+  state.sortBy = options.defaultSortBy || ''; state.sortDirection = options.defaultSortDirection || ''; state.viewOptions = { gridSize: 'md', detailsThumbnails: false, detailsDateMode: 'modified' };
+  state.filters = { ...(options.initialFilters || {}) };
+  for (const filter of state.presentation.filters || []) if (state.filters[filter.id] === undefined) state.filters[filter.id] = filter.default;
+  filtersOpen.value = false; treeCollapsed.value = !!treeApi; storedUi = {}; setupHistory();
+}
+function personalSaved(settings) {
+  // New picker scopes take effect on its next opening; never reload an unsaved host form.
+  const defaults = Joomla.getOptions?.('com_smartbrowser.preferences', {}) || {};
+  options.editorMode = settings.editorMode === 'inherit' ? defaults.editorDefault || 'modal' : settings.editorMode;
+  driver.editorMode = options.editorMode;
+  setupHistory();
+}
 const flatNavigating = ref(false);
 const gridWidthStyle = Object.fromEntries(
   Object.entries(options.gridWidths || {}).map(([size, width]) => [`--sb-grid-${size}`, `${width}px`]),
 );
 const uiKey = isManagementBrowser(options) ? flatUiStorageKey(options.adapter, options.browseRoot, window.location.href, true)
-  : `supjx.smartbrowser.ui.picker.${encodeURIComponent(pickerContext?.viewPreferenceKey || options.viewPreferenceKey || 'default')}.${options.adapter.replace(/^flat-/, '')}`;
+  : `supjx.smartbrowser.ui.picker.${pickerScope(options)}.${options.adapter.replace(/^flat-/, '')}`;
 let storedUi = (() => { try { return JSON.parse(preferenceStorage().getItem(uiKey) || '{}'); } catch { return {}; } })();
 const filtersOpen = ref(storedUi.filtersOpen === true);
 const saveUi = (values) => {
@@ -642,7 +684,7 @@ const openNode = async (nodeId) => {
     await navigateFlat(flatViewUrl(window.location.href, options.adapter.replace(/^flat-/, ''), nodeId, originalRoot));
     return;
   }
-  if (flatActive && nodeId === state.selectedNode && nodeId === state.roots[0]?.id) {
+  if (options.adapter.startsWith('flat-') && nodeId === state.selectedNode && nodeId === state.roots[0]?.id) {
     state.search = '';
     state.sortBy = options.defaultSortBy || '';
     state.sortDirection = options.defaultSortDirection || '';

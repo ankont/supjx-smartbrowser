@@ -20,13 +20,16 @@ final class BrowserViewSupport
 
     public function prepare(object $document): array
     {
-        if (class_exists(UserViewPreferences::class)) UserViewPreferences::prepare($document);
+        if (class_exists(UserViewPreferences::class)) {
+            UserViewPreferences::prepare($document);
+        }
         $language = $this->app->getLanguage();
         $language->load('joomla', $this->app->isClient('administrator') ? JPATH_ADMINISTRATOR : JPATH_SITE, null, true);
         $language->load('com_smartbrowser', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_media', JPATH_ADMINISTRATOR, null, true);
         $language->load('com_content', JPATH_ADMINISTRATOR, null, true);
         foreach (['COM_CONTENT_FIELD_IMAGE_CAPTION_LABEL', 'COM_CONTENT_FIELD_IMAGE_CLASS_LABEL', 'COM_CONTENT_FIELD_URLA_LINK_TEXT_LABEL', 'COM_CONTENT_URL_FIELD_BROWSERNAV_LABEL', 'JGLOBAL_USE_GLOBAL', 'JBROWSERTARGET_PARENT', 'JBROWSERTARGET_NEW', 'JBROWSERTARGET_POPUP', 'JBROWSERTARGET_MODAL'] as $key) Text::script($key);
+        if (class_exists(UserViewPreferences::class)) foreach (UserViewPreferences::languageKeys() as $key) BrowserLanguage::script($key);
         foreach ($this->languageKeys() as $key) BrowserLanguage::script($key);
         Text::script('COM_SMARTBROWSER_RESIZE_INFO');
         Text::script('COM_SMARTBROWSER_LINK_TEXT');
@@ -121,7 +124,7 @@ final class BrowserViewSupport
             'browserDescription' => Text::_(str_starts_with($adapterId, 'flat-') ? 'COM_SMARTBROWSER_FLAT_BROWSER_DESC' : 'COM_SMARTBROWSER_DASHBOARD_' . strtoupper(str_replace('-', '_', $adapterId)) . '_DESC'),
             'nativeToolbarTarget' => $this->app->isClient('administrator') && $mode === 'manage' && $input->getCmd('tmpl') !== 'component' ? '#sb-native-actions' : null,
             'integrated' => IntegrationOptions::browserEnabled($adapterId, $this->app->isClient('administrator'), $mode),
-            'editorMode' => (string) ComponentHelper::getParams('com_smartbrowser')->get($this->app->isClient('site') ? 'editor_site' : 'editor_admin', 'modal'),
+            'editorMode' => UserViewPreferences::editorMode($this->app->isClient('site')),
             'mode' => $mode, 'multiple' => $mode === 'manage' || $input->getBool('multiple', false),
             'pickerInstance' => $mode === 'select' ? $input->getCmd('pickerInstance', '') : '',
             'selectionTarget' => $selectionTarget, 'allowNoUser' => $mode === 'select' && in_array($adapterId, ['users', 'flat-users'], true) && $input->getBool('allowNoUser', false),

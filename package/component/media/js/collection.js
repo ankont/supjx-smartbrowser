@@ -1,2 +1,2 @@
-import { t as e } from "./visual-runtime-BhQjLoBm.js?v=5.0.15";
+import { t as e } from "./visual-runtime-CPElA-oQ.js?v=5.2.0";
 export { e as mountCollection };

@@ -1,45 +1,46 @@
-import { B as e, C as t, E as n, F as r, G as i, H as a, J as o, L as s, P as c, S as l, T as u, V as d, W as f, X as p, _ as m, a as h, b as g, c as _, d as v, i as y, l as b, o as x, q as S, r as C, s as w, t as T, u as E, w as D, x as O, y as k } from "./visual-runtime-BEbhjzcM.js?v=5.0.15";
+import { E as e, F as t, I as n, M as r, N as i, O as a, R as o, T as s, V as c, _ as l, c as u, d, f, g as p, h as m, j as h, m as g, n as _, p as v, t as y, u as b, z as x } from "./visual-runtime-CJIQlqNK.js?v=5.2.0";
+import { a as S, c as C, i as w, l as T, o as E, r as D, s as O, t as k } from "./visual-runtime-DAGXuL4O.js?v=5.2.0";
 //#region resources/js/components/VisualProfileSettings.vue
 var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-buttons" }, M = [
 	"disabled",
 	"title",
 	"aria-label",
 	"onClick"
-], N = [
+], ee = [
 	"disabled",
 	"title",
 	"aria-label",
 	"onClick"
-], ee = [
+], te = [
 	"aria-label",
 	"value",
 	"onChange"
-], te = ["value"], ne = [
+], N = ["value"], P = [
 	"title",
 	"aria-label",
 	"value",
 	"onChange"
-], P = [
+], F = [
 	"aria-label",
 	"value",
 	"onChange"
-], F = ["value"], I = [
+], I = ["value"], L = [
 	"aria-label",
 	"value",
 	"onChange"
-], L = ["value"], R = [
+], R = ["value"], z = [
 	"aria-label",
 	"value",
 	"onChange"
-], z = ["value"], B = [
+], B = ["value"], V = [
 	"aria-label",
 	"value",
 	"onChange"
-], V = { value: "item" }, H = ["value"], U = [
+], H = { value: "item" }, U = ["value"], W = [
 	"title",
 	"aria-label",
 	"onClick"
-], W = { class: "sb-rule-commands" }, G = ["title", "aria-label"], K = ["title", "aria-label"], q = {
+], G = { class: "sb-rule-commands" }, K = ["title", "aria-label"], q = ["title", "aria-label"], J = {
 	__name: "VisualProfileSettings",
 	props: {
 		adapter: String,
@@ -50,136 +51,136 @@ var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-b
 		available: Object
 	},
 	emits: ["change"],
-	setup(n, { emit: a }) {
-		let s = n, u = a, d = i(s.value?.custom === !0 || s.value?.custom === 1), f = i(x(s.value)), v = k(() => s.adapter && !d.value ? x(s.globalSettings) : f.value), C = k(() => v.value.map((e, t) => ({
+	setup(t, { emit: r }) {
+		let i = t, a = r, l = n(i.value?.custom === !0 || i.value?.custom === 1), f = n(E(i.value)), p = b(() => i.adapter && !l.value ? E(i.globalSettings) : f.value), m = b(() => p.value.map((e, t) => ({
 			rule: e,
 			index: t
-		}))), T = k(() => [
+		}))), _ = b(() => [
 			"base",
 			"identity",
 			"image"
-		]), E = k(() => w(C.value.map((e) => e.rule))), D = k(() => new Set(h(v.value, s.available || {}).map((e) => e.ruleIndex))), O = (e) => {
-			d.value = !!s.adapter, f.value = y(e);
-		}, q = (e, t, n) => O(v.value.map((r, i) => i === e ? {
+		]), y = b(() => O(m.value.map((e) => e.rule))), D = b(() => new Set(S(p.value, i.available || {}).map((e) => e.ruleIndex))), k = (e) => {
+			l.value = !!i.adapter, f.value = w(e);
+		}, J = (e, t, n) => k(p.value.map((r, i) => i === e ? {
 			...r,
 			[t]: n
-		} : r)), J = (e, t) => {
-			let n = C.value.findIndex((t) => t.index === e), r = C.value[n + t]?.index;
+		} : r)), Y = (e, t) => {
+			let n = m.value.findIndex((t) => t.index === e), r = m.value[n + t]?.index;
 			if (r === void 0) return;
-			let i = [...v.value];
-			[i[e], i[r]] = [i[r], i[e]], O(i);
-		}, Y = (e) => O(v.value.filter((t, n) => n !== e)), X = () => O([...v.value, {
+			let i = [...p.value];
+			[i[e], i[r]] = [i[r], i[e]], k(i);
+		}, X = (e) => k(p.value.filter((t, n) => n !== e)), Z = () => k([...p.value, {
 			asset: "base",
 			style: "center",
 			size: "medium",
 			position: "top-left",
 			anchor: "item",
-			priority: Math.max(0, ...v.value.map((e) => e.priority || 0)) + 1
-		}]), Z = () => {
-			d.value = !1;
+			priority: Math.max(0, ...p.value.map((e) => e.priority || 0)) + 1
+		}]), Q = () => {
+			l.value = !1;
 		};
-		return e([f, d], () => u("change", s.adapter && !d.value ? { custom: !1 } : {
+		return h([f, l], () => a("change", i.adapter && !l.value ? { custom: !1 } : {
 			rules: f.value,
-			...s.adapter ? { custom: !0 } : {}
+			...i.adapter ? { custom: !0 } : {}
 		}), {
 			deep: !0,
 			immediate: !0
-		}), (e, i) => (c(), t("div", A, [(c(!0), t(m, null, r(C.value, ({ rule: e, index: a }, s) => (c(), t("div", {
-			key: a,
-			class: o(["sb-appearance-row sb-appearance-rule", { "is-active": D.value.has(a) }])
+		}), (n, r) => (s(), g("div", A, [(s(!0), g(u, null, e(m.value, ({ rule: n, index: i }, a) => (s(), g("div", {
+			key: i,
+			class: x(["sb-appearance-row sb-appearance-rule", { "is-active": D.value.has(i) }])
 		}, [
-			g("span", j, [g("button", {
+			d("span", j, [d("button", {
 				type: "button",
-				disabled: s === C.value.length - 1,
-				title: n.labels.down,
-				"aria-label": n.labels.down,
-				onClick: (e) => J(a, 1)
-			}, [...i[0] ||= [g("span", { class: "fas fa-chevron-down" }, null, -1)]], 8, M), g("button", {
+				disabled: a === m.value.length - 1,
+				title: t.labels.down,
+				"aria-label": t.labels.down,
+				onClick: (e) => Y(i, 1)
+			}, [...r[0] ||= [d("span", { class: "fas fa-chevron-down" }, null, -1)]], 8, M), d("button", {
 				type: "button",
-				disabled: s === 0,
-				title: n.labels.up,
-				"aria-label": n.labels.up,
-				onClick: (e) => J(a, -1)
-			}, [...i[1] ||= [g("span", { class: "fas fa-chevron-up" }, null, -1)]], 8, N)]),
-			g("select", {
-				"aria-label": n.labels.asset,
-				value: e.asset,
-				onChange: (e) => q(a, "asset", e.target.value)
-			}, [(c(!0), t(m, null, r(T.value, (e) => (c(), t("option", {
+				disabled: a === 0,
+				title: t.labels.up,
+				"aria-label": t.labels.up,
+				onClick: (e) => Y(i, -1)
+			}, [...r[1] ||= [d("span", { class: "fas fa-chevron-up" }, null, -1)]], 8, ee)]),
+			d("select", {
+				"aria-label": t.labels.asset,
+				value: n.asset,
+				onChange: (e) => J(i, "asset", e.target.value)
+			}, [(s(!0), g(u, null, e(_.value, (e) => (s(), g("option", {
 				key: e,
 				value: e
-			}, p(n.labels[e]), 9, te))), 128))], 40, ee),
-			g("input", {
+			}, c(t.labels[e]), 9, N))), 128))], 40, te),
+			d("input", {
 				class: "sb-rule-z",
 				type: "number",
 				min: "1",
 				step: "1",
-				title: n.labels.z_index,
-				"aria-label": n.labels.z_index,
-				value: e.priority,
-				onChange: (e) => q(a, "priority", Math.max(1, Number(e.target.value) || 1))
-			}, null, 40, ne),
-			g("select", {
-				"aria-label": n.labels.position,
-				value: e.style,
-				onChange: (e) => q(a, "style", e.target.value)
-			}, [(c(), t(m, null, r([
+				title: t.labels.z_index,
+				"aria-label": t.labels.z_index,
+				value: n.priority,
+				onChange: (e) => J(i, "priority", Math.max(1, Number(e.target.value) || 1))
+			}, null, 40, P),
+			d("select", {
+				"aria-label": t.labels.position,
+				value: n.style,
+				onChange: (e) => J(i, "style", e.target.value)
+			}, [(s(), g(u, null, e([
 				"center",
 				"corner",
 				"badge"
-			], (e) => g("option", {
+			], (e) => d("option", {
 				key: e,
 				value: e
-			}, p(n.labels[e]), 9, F)), 64))], 40, P),
-			e.style === "center" ? l("", !0) : (c(), t("select", {
+			}, c(t.labels[e]), 9, I)), 64))], 40, F),
+			n.style === "center" ? v("", !0) : (s(), g("select", {
 				key: 0,
-				"aria-label": n.labels.position,
-				value: e.position,
-				onChange: (e) => q(a, "position", e.target.value)
-			}, [(c(!0), t(m, null, r(S(_), (e) => (c(), t("option", {
+				"aria-label": t.labels.position,
+				value: n.position,
+				onChange: (e) => J(i, "position", e.target.value)
+			}, [(s(!0), g(u, null, e(o(C), (e) => (s(), g("option", {
 				key: e,
 				value: e
-			}, p(n.labels[e.replaceAll("-", "_")]), 9, L))), 128))], 40, I)),
-			g("select", {
-				"aria-label": n.labels.size,
-				value: e.size,
-				onChange: (e) => q(a, "size", e.target.value)
-			}, [(c(!0), t(m, null, r(S(b), (e) => (c(), t("option", {
+			}, c(t.labels[e.replaceAll("-", "_")]), 9, R))), 128))], 40, L)),
+			d("select", {
+				"aria-label": t.labels.size,
+				value: n.size,
+				onChange: (e) => J(i, "size", e.target.value)
+			}, [(s(!0), g(u, null, e(o(T), (e) => (s(), g("option", {
 				key: e,
 				value: e
-			}, p(n.labels[e]), 9, z))), 128))], 40, R),
-			e.style === "badge" ? (c(), t("select", {
+			}, c(t.labels[e]), 9, B))), 128))], 40, z),
+			n.style === "badge" ? (s(), g("select", {
 				key: 1,
-				"aria-label": n.labels.anchor,
-				value: E.value.includes(e.anchor) ? e.anchor : "item",
-				onChange: (e) => q(a, "anchor", e.target.value)
-			}, [g("option", V, p(n.labels.item), 1), (c(!0), t(m, null, r(E.value, (e) => (c(), t("option", {
+				"aria-label": t.labels.anchor,
+				value: y.value.includes(n.anchor) ? n.anchor : "item",
+				onChange: (e) => J(i, "anchor", e.target.value)
+			}, [d("option", H, c(t.labels.item), 1), (s(!0), g(u, null, e(y.value, (e) => (s(), g("option", {
 				key: e,
 				value: e
-			}, p(e === "center" ? n.labels.center : `${n.labels.corner}: ${n.labels[e.slice(7).replaceAll("-", "_")]}`), 9, H))), 128))], 40, B)) : l("", !0),
-			g("button", {
+			}, c(e === "center" ? t.labels.center : `${t.labels.corner}: ${t.labels[e.slice(7).replaceAll("-", "_")]}`), 9, U))), 128))], 40, V)) : v("", !0),
+			d("button", {
 				class: "sb-rule-command",
 				type: "button",
-				title: n.labels.remove,
-				"aria-label": n.labels.remove,
-				onClick: (e) => Y(a)
-			}, [...i[2] ||= [g("span", { class: "fas fa-trash-alt" }, null, -1)]], 8, U)
-		], 2))), 128)), g("div", W, [g("button", {
+				title: t.labels.remove,
+				"aria-label": t.labels.remove,
+				onClick: (e) => X(i)
+			}, [...r[2] ||= [d("span", { class: "fas fa-trash-alt" }, null, -1)]], 8, W)
+		], 2))), 128)), d("div", G, [d("button", {
 			class: "sb-rule-command",
 			type: "button",
-			title: n.labels.add,
-			"aria-label": n.labels.add,
-			onClick: X
-		}, [...i[3] ||= [g("span", { class: "fas fa-plus" }, null, -1)]], 8, G), n.adapter && d.value ? (c(), t("button", {
+			title: t.labels.add,
+			"aria-label": t.labels.add,
+			onClick: Z
+		}, [...r[3] ||= [d("span", { class: "fas fa-plus" }, null, -1)]], 8, K), t.adapter && l.value ? (s(), g("button", {
 			key: 0,
 			class: "sb-rule-command",
 			type: "button",
-			title: n.labels.inherited,
-			"aria-label": n.labels.inherited,
-			onClick: Z
-		}, [...i[4] ||= [g("span", { class: "fas fa-undo" }, null, -1)]], 8, K)) : l("", !0)])]));
+			title: t.labels.inherited,
+			"aria-label": t.labels.inherited,
+			onClick: Q
+		}, [...r[4] ||= [d("span", { class: "fas fa-undo" }, null, -1)]], 8, q)) : v("", !0)])]));
 	}
-}, J = { class: "sb-appearance-editor" }, Y = { key: 0 }, X = { class: "sb-appearance-profile" }, Z = { class: "sb-appearance-previews" }, re = { class: "sb-preview-body" }, Q = { class: "sb-appearance-preview-tile" }, ie = { class: "sb-preview-assets" }, ae = ["onUpdate:modelValue"], oe = { class: "sb-appearance-profile" }, se = {
+}, Y = { class: "sb-appearance-editor" }, X = { key: 0 }, Z = { class: "sb-appearance-profile" }, Q = { class: "sb-appearance-previews" }, ne = { class: "sb-preview-body" }, re = { class: "sb-appearance-preview-tile" }, ie = { class: "sb-preview-assets" }, ae = ["onUpdate:modelValue"], oe = { class: "sb-appearance-profile" }, se = {
 	__name: "VisualSettings",
 	props: {
 		adapter: String,
@@ -193,11 +194,11 @@ var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-b
 		}
 	},
 	emits: ["change"],
-	setup(e, { emit: n }) {
-		let o = e, h = n, _ = i({
-			nodes: o.value?.nodes || o.value || {},
-			items: o.value?.items || o.value || {}
-		}), y = f({
+	setup(o, { emit: l }) {
+		let h = o, y = l, b = n({
+			nodes: h.value?.nodes || h.value || {},
+			items: h.value?.items || h.value || {}
+		}), x = t({
 			nodes: {
 				base: !0,
 				identity: !0,
@@ -208,26 +209,26 @@ var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-b
 				identity: !0,
 				image: !0
 			}
-		}), b = (e) => ({ rules: x(o.adapter && !_.value[e]?.custom ? o.globalSettings?.[e] : _.value[e]) }), S = (e) => ({
+		}), S = (e) => ({ rules: E(h.adapter && !b.value[e]?.custom ? h.globalSettings?.[e] : b.value[e]) }), C = (e) => ({
 			kind: e === "nodes" ? "node" : "item",
 			type: e === "nodes" ? "category" : "article",
 			icon: e === "nodes" ? "fas fa-folder" : "fas fa-file-alt",
 			badgeIcon: "fas fa-book",
-			image: o.sampleImage
-		}), C = (e, t) => {
-			_.value[e] = t, h("change", { ..._.value });
+			image: h.sampleImage
+		}), w = (e, t) => {
+			b.value[e] = t, y("change", { ...b.value });
 		};
-		return (n, i) => (c(), t("div", J, [(c(), O(s(e.adapter ? "details" : "div"), { class: "sb-appearance-overrides" }, {
-			default: d(() => [
-				e.adapter ? (c(), t("summary", Y, p(e.labels.adapter_title), 1)) : l("", !0),
-				g("section", X, [g("h4", null, p(e.labels.nodes), 1), u(q, {
-					adapter: e.adapter,
+		return (t, n) => (s(), g("div", Y, [(s(), f(a(o.adapter ? "details" : "div"), { class: "sb-appearance-overrides" }, {
+			default: r(() => [
+				o.adapter ? (s(), g("summary", X, c(o.labels.adapter_title), 1)) : v("", !0),
+				d("section", Z, [d("h4", null, c(o.labels.nodes), 1), p(J, {
+					adapter: o.adapter,
 					kind: "nodes",
-					labels: e.labels,
-					value: e.value?.nodes || e.value || {},
-					"global-settings": e.globalSettings?.nodes,
-					available: y.nodes,
-					onChange: i[0] ||= (e) => C("nodes", e)
+					labels: o.labels,
+					value: o.value?.nodes || o.value || {},
+					"global-settings": o.globalSettings?.nodes,
+					available: x.nodes,
+					onChange: n[0] ||= (e) => w("nodes", e)
 				}, null, 8, [
 					"adapter",
 					"labels",
@@ -235,35 +236,35 @@ var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-b
 					"global-settings",
 					"available"
 				])]),
-				g("div", Z, [(c(), t(m, null, r(["nodes", "items"], (n) => g("figure", {
-					key: n,
+				d("div", Q, [(s(), g(u, null, e(["nodes", "items"], (t) => d("figure", {
+					key: t,
 					class: "sb-appearance-preview"
-				}, [g("figcaption", null, p(e.labels.preview) + ": " + p(e.labels[n]), 1), g("div", re, [g("span", Q, [u(T, {
-					resource: S(n),
-					settings: b(n),
-					"available-assets": y[n],
-					background: e.background
+				}, [d("figcaption", null, c(o.labels.preview) + ": " + c(o.labels[t]), 1), d("div", ne, [d("span", re, [p(k, {
+					resource: C(t),
+					settings: S(t),
+					"available-assets": x[t],
+					background: o.background
 				}, null, 8, [
 					"resource",
 					"settings",
 					"available-assets",
 					"background"
-				])]), g("div", ie, [(c(), t(m, null, r([
+				])]), d("div", ie, [(s(), g(u, null, e([
 					"base",
 					"identity",
 					"image"
-				], (t) => g("label", { key: t }, [a(g("input", {
-					"onUpdate:modelValue": (e) => y[n][t] = e,
+				], (e) => d("label", { key: e }, [i(d("input", {
+					"onUpdate:modelValue": (n) => x[t][e] = n,
 					type: "checkbox"
-				}, null, 8, ae), [[v, y[n][t]]]), D(p(e.labels[t]), 1)])), 64))])])])), 64))]),
-				g("section", oe, [g("h4", null, p(e.labels.items), 1), u(q, {
-					adapter: e.adapter,
+				}, null, 8, ae), [[_, x[t][e]]]), m(c(o.labels[e]), 1)])), 64))])])])), 64))]),
+				d("section", oe, [d("h4", null, c(o.labels.items), 1), p(J, {
+					adapter: o.adapter,
 					kind: "items",
-					labels: e.labels,
-					value: e.value?.items || e.value || {},
-					"global-settings": e.globalSettings?.items,
-					available: y.items,
-					onChange: i[1] ||= (e) => C("items", e)
+					labels: o.labels,
+					value: o.value?.items || o.value || {},
+					"global-settings": o.globalSettings?.items,
+					available: x.items,
+					onChange: n[1] ||= (e) => w("items", e)
 				}, null, 8, [
 					"adapter",
 					"labels",
@@ -276,11 +277,11 @@ var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-b
 		}))]));
 	}
 }, $ = () => {
-	let e = [...document.querySelectorAll("[data-sb-visual-settings]")], t = e.find((e) => !JSON.parse(e.dataset.sbVisualSettings).adapter);
-	if (!t) return;
-	let r = f(C(JSON.parse(t.dataset.sbVisualSettings).value)), i = new URL("data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='26%2028%20108%20110'%3e%3crect%20x='28'%20y='30'%20width='104'%20height='106'%20rx='6'%20fill='%23e2edf4'%20stroke='%2391adbf'%20stroke-width='3'/%3e%3crect%20x='38'%20y='40'%20width='84'%20height='58'%20rx='3'%20fill='%23c6e4ee'/%3e%3ccircle%20cx='98'%20cy='58'%20r='10'%20fill='%23f0c651'/%3e%3cpath%20d='M38%2098L63%2064%2086%2088%20101%2076%20122%2098Z'%20fill='%2347957b'/%3e%3cpath%20d='M40%20112H119M40%20123H98'%20stroke='%237896aa'%20stroke-width='5'/%3e%3c/svg%3e", "" + import.meta.url).href, a = document.querySelector("select[name=\"jform[params][image_background]\"], select[name=\"jform[image_background]\"]") || document.getElementById("jform_image_background"), o = t.closest(".control-group"), s = a?.closest(".control-group");
+	let e = [...document.querySelectorAll("[data-sb-visual-settings]")], n = e.find((e) => !JSON.parse(e.dataset.sbVisualSettings).adapter);
+	if (!n) return;
+	let r = t(D(JSON.parse(n.dataset.sbVisualSettings).value)), i = new URL("data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='26%2028%20108%20110'%3e%3crect%20x='28'%20y='30'%20width='104'%20height='106'%20rx='6'%20fill='%23e2edf4'%20stroke='%2391adbf'%20stroke-width='3'/%3e%3crect%20x='38'%20y='40'%20width='84'%20height='58'%20rx='3'%20fill='%23c6e4ee'/%3e%3ccircle%20cx='98'%20cy='58'%20r='10'%20fill='%23f0c651'/%3e%3cpath%20d='M38%2098L63%2064%2086%2088%20101%2076%20122%2098Z'%20fill='%2347957b'/%3e%3cpath%20d='M40%20112H119M40%20123H98'%20stroke='%237896aa'%20stroke-width='5'/%3e%3c/svg%3e", "" + import.meta.url).href, a = document.querySelector("select[name=\"jform[params][image_background]\"], select[name=\"jform[image_background]\"]") || document.getElementById("jform_image_background"), o = n.closest(".control-group"), s = a?.closest(".control-group");
 	s && o && s !== o && o.before(s);
-	let c = f({ background: a?.value || "auto" });
+	let c = t({ background: a?.value || "auto" });
 	a?.addEventListener("change", () => {
 		c.background = a.value;
 	});
@@ -288,14 +289,14 @@ var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-b
 		if (t.dataset.sbVisualMounted) continue;
 		let e = JSON.parse(t.dataset.sbVisualSettings);
 		e.adapter ? t.closest(".control-group")?.classList.add("sb-appearance-adapter") : t.closest(".control-group")?.classList.add("sb-appearance-general");
-		let a = document.getElementById(e.id);
-		a && (t.dataset.sbVisualMounted = "true", E({ setup: () => () => n(se, {
+		let n = document.getElementById(e.id);
+		n && (t.dataset.sbVisualMounted = "true", y({ setup: () => () => l(se, {
 			...e,
 			globalSettings: r,
 			sampleImage: i,
 			background: c.background,
 			onChange(t) {
-				a.value = JSON.stringify(t), a.dispatchEvent(new Event("change", { bubbles: !0 })), e.adapter || Object.assign(r, C(t));
+				n.value = JSON.stringify(t), n.dispatchEvent(new Event("change", { bubbles: !0 })), e.adapter || Object.assign(r, D(t));
 			}
 		}) }).mount(t));
 	}

@@ -54,6 +54,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     selectedResources: snapshot?.resources || {},
     virtualResources: snapshot?.virtualResources || {},
     search: '',
+    navigationRevision: 0,
     loading: false,
     busy: false,
     error: '',
@@ -63,7 +64,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     const query = state.search.trim().toLocaleLowerCase();
     const matches = (item) => !query || [item.title, item.subtitle, item.metadata?.alias]
       .some((value) => String(value || '').toLocaleLowerCase().includes(query));
-    const nodes = state.nodes.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
+    const nodes = (state.presentation.navigationOnlyNodes ? [] : state.nodes).map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
     const sourceItems = state.presentation.selectionScoped && options.selectionState
       ? Object.values(state.virtualResources).filter(resource => resource && (resource.selection?.adapter || resource.adapter || adapter) === adapter && resource.parentId === state.selectedNode)
       : state.items;
@@ -132,6 +133,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       const url = new URL(window.location.href);
       url.searchParams.set('node', nodeId);
       window.history.replaceState({}, '', url);
+      state.navigationRevision++;
     } catch (error) {
       if (nodeId !== options.initialNode && [403, 404].includes(error.status)) {
         state.selectedNode = options.initialNode;

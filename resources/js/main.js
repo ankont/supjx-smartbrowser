@@ -10,8 +10,13 @@ import { resetPreferencesIfNeeded } from './core/resetPreferences.js';
 import { resetSessionNavigationIfNeeded, urlWithoutSessionNavigation } from './core/resetSessionNavigation.js';
 import ResourceApi from './services/ResourceApi.js';
 import { preferenceStorage } from './core/userPreferences.js';
+import { personalPreferences, personalContextItems } from './core/personalPreferences.js';
 
 const options = Joomla.getOptions('com_smartbrowser', {});
+const personal = personalPreferences();
+const contextItems = personalContextItems(personal, options.adapter);
+if (contextItems !== 'inherit') options.showContextResources = contextItems === 'show';
+if (personal.editorMode !== 'inherit') options.editorMode = personal.editorMode;
 let pickerContext = null;
 try { pickerContext = window.parent !== window && options.pickerInstance
   ? window.parent.SmartBrowserPicker?.context(options.pickerInstance, window) : null; } catch {}
@@ -23,7 +28,7 @@ if (resetUrl !== window.location.href) window.location.replace(resetUrl);
 else {
 const api = new ResourceApi(options);
 const persistenceKey = browserStateKey(options);
-const persistence = new PersistenceService(preferenceStorage(), persistenceKey);
+const persistence = new PersistenceService(preferenceStorage(), persistenceKey, options);
 if (pickerContext) options.pickerRememberedInfo = persistence.load({}).showInfo;
 const viewRegistry = createViewRegistry()
   .register({ id: 'grid', label: 'COM_SMARTBROWSER_GRID', icon: 'fas fa-th', component: ResourceGrid, supportsSize: true, controls: ['sort', 'zoom'], options: { gridSize: 'md' } })
@@ -46,6 +51,7 @@ window.SmartBrowser = {
 
 createApp(SmartBrowserApp)
   .provide('browser', browser)
+  .provide('persistence', persistence)
   .provide('resourceApi', api)
   .provide('smartBrowserOptions', options)
   .provide('viewRegistry', viewRegistry)
