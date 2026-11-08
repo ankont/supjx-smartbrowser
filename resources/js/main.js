@@ -34,7 +34,15 @@ const viewRegistry = createViewRegistry()
   .register({ id: 'grid', label: 'COM_SMARTBROWSER_GRID', icon: 'fas fa-th', component: ResourceGrid, supportsSize: true, controls: ['sort', 'zoom'], options: { gridSize: 'md' } })
   .register({ id: 'details', label: 'COM_SMARTBROWSER_DETAILS', icon: 'fas fa-list', component: ResourceDetails, supportsSize: false, controls: ['thumbnails', 'dateField'], options: { detailsThumbnails: false, detailsDateMode: 'modified' } });
 const browser = createBrowserState({ options, api, persistence, viewRegistry });
-const actionDriver = new MediaActionDriver(api, browser.state, () => browser.load(), (key) => Joomla.Text?._(key, key) || key, options.editorMode, options.application);
+const actionDriver = new MediaActionDriver(api, browser.state, () => {
+  // Page changes retain selections; mutation/editor refreshes clear management
+  // selections so off-page descriptors cannot retain obsolete state or permissions.
+  if (options.mode === 'manage' && browser.state.pagination && !options.selectionState) {
+    browser.state.selectedIds = [];
+    browser.state.selectedResources = {};
+  }
+  return browser.load();
+}, (key) => Joomla.Text?._(key, key) || key, options.editorMode, options.application);
 
 window.SmartBrowser = {
   ...window.SmartBrowser,

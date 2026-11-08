@@ -51,7 +51,7 @@ final class HtmlView extends BaseHtmlView
         ToolbarHelper::title($title, $icon);
         $toolbar = $this->getDocument()->getToolbar();
         if (!empty($options['nativeToolbarTarget'])) {
-            $toolbar->customButton('smartbrowser-intro')->html('<div id="sb-native-intro"></div><div id="sb-native-manager"></div>');
+            $toolbar->customButton('smartbrowser-intro')->html('<div id="sb-native-intro"></div><div id="sb-native-preferences"></div><div id="sb-native-manager"></div>');
             $toolbar->customButton('smartbrowser-actions')->html('<div id="sb-native-actions"></div>');
         }
         if ($this->getCurrentUser()->authorise('core.admin', 'com_smartbrowser')

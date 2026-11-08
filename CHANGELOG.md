@@ -1,5 +1,57 @@
 # Changelog
 
+## 6.0.0 - 2026-11-08
+
+- Release unified pagination and smart loading across built-in adapters, retaining native defaults and selections across batches.
+- Default new installations to smart loading with batches of 50, preserving explicitly saved loading preferences.
+- Show a simple total when smart loading completes and keep result counts outside the navigation tree.
+- Place Handling Large Lists below Default View State in Options.
+- Clear the personal page-size override when its numeric control reaches zero, revealing the inherited-default hint.
+
+## 5.4.3 - 2026-11-08
+
+- Place Load more on the left and Load all on the right, keeping counts centered; add subtle borders and visible hover/keyboard focus.
+- Load remaining batches on demand without changing the saved loading preference; stop on errors or navigation.
+
+## 5.4.2 - 2026-11-08
+
+- Use native Joomla article ordering when no explicit sort is selected.
+- Place result counts consistently below results, independent of the navigation tree; show counts for full loading and single-page results too.
+
+## 5.4.1 - 2026-11-08
+
+- Preserve natural category and user-group ordering when pagination is enabled without an explicit sort.
+- Keep contextual article ordering identical in full, paged and smart loading modes.
+- Verify exact first/middle/last page order against full listings on Joomla 5 and 6.
+
+## 5.4.0 - 2026-11-08
+
+- Extend pagination to all built-in adapters and combine primary/contextual resources within one page limit.
+- Add optional smart scroll loading with stable selection/focus, duplicate-request guards, retained results on failure and manual retry.
+- Page hierarchical users and contextual articles through native database queries; preserve full sidebar navigation.
+- Add adapter-specific flat-view descriptions and clarify source-enumeration limits for Media and generic flat adapters.
+- Correct multi-state article filtering and menu nested-set ordering normalization.
+
+## 5.3.1 - 2026-11-07
+
+- Keep page navigation visible at the top and throughout scrolling, including flat layouts; reserve room for floating Picker messages above pagination.
+- Move personal preferences before native Options in the administrator browser toolbar.
+- Add an inherited account-wide numeric page size beside the large-list preference, accepting arbitrary positive integers and ignoring legacy per-view sizes.
+- Refresh only the current browser when loading preferences are saved, retaining selections and preserving the surrounding form.
+- Clarify page-scoped selection tooltips and remove the unrelated range tooltip.
+
+## 5.3.0 - 2026-11-07
+
+- Add opt-in server pagination for hierarchical and flat Article browsers, reusing Joomla access/filter queries and enriching only requested article rows.
+- Retain complete sidebar navigation separately from result pages, use stable server ordering and preserve selections across pages.
+- Add component loading defaults, a shared personal loading preference, saved page sizes and responsive page controls for administrator, frontend and selection windows.
+- Preserve valid results on failed requests, ignore superseded responses and clamp pages after totals shrink.
+- Keep unsupported adapters on full loading; contextual paging, Media optimization and scroll loading remain subsequent rollout stages.
+
+## 5.2.1 - 2026-11-07
+
+- Persist source-adapter locations instead of synthetic flat roots, preventing forbidden scopes when reopening flat browsers; recover previously saved flat-root locations without changing access checks.
+
 ## 5.2.0 - 2026-11-07
 
 - Add My preferences with account-owned editor and integration choices, per-resource contextual visibility, independently scoped selection appearance and last locations, and personal resets.

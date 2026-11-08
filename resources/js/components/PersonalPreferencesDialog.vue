@@ -12,7 +12,8 @@
       <section v-for="group in fieldGroups" :key="group.id" class="sb-personal-group" :class="{ 'sb-personal-context-group': group.id === 'context', 'has-single-field': group.fields.length === 1 }">
       <h3 v-if="group.id === 'context'" class="sb-personal-group-title">{{ t('COM_SMARTBROWSER_PERSONAL_CONTEXT') }}</h3>
       <label v-for="field in group.fields" :key="field.key" class="sb-personal-field"><span>{{ field.adapter ? contextLabel(field.adapter) : t(field.label) }}</span>
-        <select :value="field.adapter ? settings.contextItemsByAdapter[field.adapter] : settings[field.key]" @change="field.adapter ? settings.contextItemsByAdapter[field.adapter] = $event.target.value : settings[field.key] = $event.target.value" class="form-select" :disabled="busy" :aria-describedby="showHelp ? (field.adapter ? titleId + '-context-help' : titleId + '-' + field.key) : undefined"><option v-for="value in field.values" :key="value" :value="value">{{ optionLabel(field, value) }}</option></select>
+        <input v-if="field.key === 'pageSize'" v-model.number="settings.pageSize" @input="clearInheritedSize" type="number" min="0" :max="Number.MAX_SAFE_INTEGER" step="1" class="form-control" :placeholder="pageSizeHint" :disabled="busy" :aria-describedby="showHelp ? titleId + '-pageSize' : undefined">
+        <select v-else :value="field.adapter ? settings.contextItemsByAdapter[field.adapter] : settings[field.key]" @change="field.adapter ? settings.contextItemsByAdapter[field.adapter] = $event.target.value : settings[field.key] = $event.target.value" class="form-select" :disabled="busy" :aria-describedby="showHelp ? (field.adapter ? titleId + '-context-help' : titleId + '-' + field.key) : undefined"><option v-for="value in field.values" :key="value" :value="value">{{ optionLabel(field, value) }}</option></select>
         <small v-if="showHelp && !field.adapter" :id="titleId + '-' + field.key" class="form-text" :class="{ 'sb-personal-integration-help': field.key === 'integration' }">{{ t(field.label + '_DESC') }}</small>
       </label>
       <small v-if="showHelp && group.id === 'context'" :id="titleId + '-context-help'" class="form-text sb-personal-group-help">{{ t('COM_SMARTBROWSER_PERSONAL_CONTEXT_DESC') }}</small>
@@ -50,6 +51,8 @@ function optionLabel(field, value) {
   return global ? `${label} (${props.t('COM_SMARTBROWSER_PERSONAL_VALUE_' + global.toUpperCase())})` : label;
 }
 const fields = computed(() => [
+  { key: 'loadingMode', label: 'COM_SMARTBROWSER_PERSONAL_LOADING', values: ['inherit', 'all', 'smart', 'pages'] },
+  { key: 'pageSize', label: 'COM_SMARTBROWSER_PERSONAL_PAGE_SIZE' },
   { key: 'editorMode', label: 'COM_SMARTBROWSER_PERSONAL_EDITOR', values: ['inherit', 'modal', 'page'] },
   ...contextAdapters.filter(adapter => !props.adapter || adapter === props.adapter.replace(/^flat-/, '')).map(adapter => ({ key: 'contextItemsByAdapter.' + adapter, adapter, label: 'COM_SMARTBROWSER_PERSONAL_CONTEXT', values: ['inherit', 'show', 'hide'] })),
   { key: 'integration', label: 'COM_SMARTBROWSER_PERSONAL_INTEGRATION', values: ['inherit', 'smartbrowser', 'native'] },
@@ -59,9 +62,17 @@ const fields = computed(() => [
 const fieldGroups = computed(() => [
   { id: 'general', fields: fields.value.filter(field => ['editorMode', 'integration'].includes(field.key)) },
   { id: 'remember', fields: fields.value.filter(field => ['pickerStateScope', 'pickerNodeScope'].includes(field.key)) },
+  { id: 'loading', fields: fields.value.filter(field => ['loadingMode', 'pageSize'].includes(field.key)) },
   { id: 'context', fields: fields.value.filter(field => field.adapter) },
 ].filter(group => group.fields.length));
+const pageSizeHint = computed(() => `${props.t('COM_SMARTBROWSER_PERSONAL_VALUE_INHERIT')} (${window.Joomla?.getOptions?.('com_smartbrowser.preferences', {})?.globalDefaults?.pageSize || 50})`);
 function open() { settings.value = personalPreferences(); error.value = ''; notice.value = ''; dialog.value.showModal(); }
+function clearInheritedSize(event) {
+  if (event.target.value !== '' && Number(event.target.value) <= 0) {
+    settings.value.pageSize = null;
+    event.target.value = '';
+  }
+}
 async function save() {
   busy.value = true; error.value = '';
   try { const value = await savePersonalPreferences(settings.value); emit('saved', value); dialog.value.close(); }

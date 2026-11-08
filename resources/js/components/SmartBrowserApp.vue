@@ -52,7 +52,7 @@
     </ResourceActions>
     <ResourceBatchDialog ref="batchDialog" :selection="selection" :adapter="options.adapter" :filters="state.presentation.filters" :batch-options="state.presentation.batchOptions" :sort-fields="state.presentation.sortFields" :ordering-available="reorderVisible" :t="t" @apply="applyBatch" />
     <div class="smartbrowser-layout" :class="{ 'tree-collapsed': treeCollapsed }">
-      <ResourceTree v-if="!treeCollapsed && (!treeApi || flatTree)" :adapters="treeAdapters" :active-adapter="options.adapter" :roots="flatTree?.roots || state.roots" :nodes="flatTree?.nodes || state.nodes" :breadcrumb="flatTree?.breadcrumb || state.breadcrumb" :selected-node="flatTree?.nodeId || state.selectedNode" :t="t" @open="openTreeNode" @adapter="switchAdapter" />
+      <ResourceTree v-if="!treeCollapsed && (!treeApi || flatTree)" :adapters="treeAdapters" :active-adapter="options.adapter" :roots="flatTree?.roots || state.roots" :nodes="flatTree?.nodes || state.navigationNodes || state.nodes" :breadcrumb="flatTree?.breadcrumb || state.breadcrumb" :selected-node="flatTree?.nodeId || state.selectedNode" :t="t" @open="openTreeNode" @adapter="switchAdapter"></ResourceTree>
       <div class="sb-tree-handle-rail">
       <button type="button" class="resource-sidebar-handle" :title="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-label="t(treeCollapsed ? 'COM_SMARTBROWSER_SHOW_TREE' : 'COM_SMARTBROWSER_HIDE_TREE')" :aria-expanded="!treeCollapsed" :aria-busy="flatTreeLoading" @click="treeCollapsed = !treeCollapsed">
         <span v-if="flatTreeLoading" class="spinner-border spinner-border-sm" aria-hidden="true" />
@@ -84,7 +84,7 @@
           :can-invert="options.multiple && bulkSelectableResources.length > 0"
           :reorder-visible="reorderVisible"
           :reorder-enabled="reorderEnabled"
-          :t="t"
+          :t="listingText"
           @open="openNode"
           @invert-selection="invertSelection"
           @reorder="moveSelection"
@@ -132,7 +132,7 @@
             :ordering-field="state.presentation.orderingField"
             :columns="visibleColumns"
             :grid-fields="state.presentation.gridFields"
-            :t="t"
+            :t="listingText"
             @select="toggle"
             @focus="focus"
             @select-all="selectAll"
@@ -140,7 +140,7 @@
             @activate="activate"
             @action="runItemAction"
             @sort="sortFromTable"
-          />
+          ><template #end><ResourceLoadSentinel v-if="state.loadingMode === 'smart'" :enabled="!!state.pagination?.hasMore && !state.loading && !state.loadingMore && !state.loadingAll && !state.error" :request-key="`${state.navigationRevision}:${state.pagination?.nextOffset}`" @load="browser.loadMore()" /></template></component>
           <div v-if="isMedia && dragging" class="resource-drop-overlay"><span class="fas fa-cloud-upload-alt" />{{ t('COM_SMARTBROWSER_DROP_UPLOAD') }}</div>
           <div v-if="showInfo" class="sb-browser-info-rail">
           <ResourceInfoPanel :resource="focusedResource" :fields="focusedResource?.collectionPresentation?.infoFields || state.presentation.infoFields" :t="t"
@@ -149,6 +149,7 @@
             :preview-actions="previewActions" :preview-context="previewContext" :can-preview="Boolean(resourcePreview(focusedResource)) && driverFor(focusedResource).canPreview(focusedResource) && !state.busy" @preview="runItemAction(resourcePreview(focusedResource), focusedResource)" @usage-change="setUsage" />
           </div>
         </div>
+        <ResourcePagination :page="state.pagination" :total="resources.length" :smart="state.loadingMode === 'smart'" :loaded="state.loadedCount" :busy="state.loading || state.loadingMore || state.loadingAll" :t="t" @page="changePage" @more="browser.loadMore()" @all="browser.loadAll()" />
       </main>
     </div>
     <div v-if="pickerMode" ref="messagesElement" class="sb-browser-messages" />
@@ -172,6 +173,8 @@ import ResourceBatchDialog from './ResourceBatchDialog.vue';
 import ResourceInfoPanel from './ResourceInfoPanel.vue';
 import ResourceToolbar from './ResourceToolbar.vue';
 import ResourceTree from './ResourceTree.vue';
+import ResourcePagination from './ResourcePagination.vue';
+import ResourceLoadSentinel from './ResourceLoadSentinel.vue';
 import { flatRootUrl, flatUiStorageKey, flatViewUrl, regularViewUrl } from '../core/flatViewNavigation.js';
 import { isManagementBrowser, browserStateKey } from '../services/PersistenceService.js';
 import { preferenceStorage } from '../core/userPreferences.js';
@@ -194,6 +197,13 @@ const persistence = inject('persistence');
 const displayEnabled = options.application === 'site' && window.self === window.top;
 const displayMode = ref('normal');
 const shellElement = ref(null), availableHeight = ref('620px');
+const viewportWidth = ref(window.innerWidth);
+async function changePage(offset) {
+  await load(state.selectedNode, { offset });
+  if (state.error) return;
+  const viewport = shellElement.value?.querySelector('.resource-browser');
+  if (viewport && getComputedStyle(viewport).overflowY !== 'visible') viewport.scrollTop = 0;
+}
 const browserHeader = ref(null);
 const messagesElement = ref(null);
 const pickerFooter = ref(null), pickerFooterHeight = ref('0px');
@@ -202,6 +212,7 @@ let messageContainer, messagePlaceholder;
 let heightObserver;
 let stopLayout;
 const updateAvailableHeight = () => {
+  viewportWidth.value = window.innerWidth;
   const shell = shellElement.value;
   if (!shell) return;
   availableHeight.value = `${browserAvailableHeight(shell)}px`;
@@ -255,6 +266,7 @@ const pickerContext = options.mode === 'select' ? options.pickerContext || optio
 const collectionMode = Boolean(pickerContext?.collectionMode);
 const pickerMode = options.mode === 'select' || !!pickerContext;
 const t = (key) => Joomla.Text?._(key, key) || key;
+const listingText = key => t(state.pagination && ['COM_SMARTBROWSER_SELECT_ALL', 'COM_SMARTBROWSER_INVERT_SELECTION'].includes(key) ? key + (state.loadingMode === 'smart' ? '_LOADED' : '_PAGE') : key);
 const browserTitle = computed(() => t(options.adapters?.find(adapter => adapter.id === options.adapter)?.title || options.adapters?.find(adapter => adapter.id === options.adapter.replace(/^flat-/, ''))?.title || 'COM_SMARTBROWSER_RESOURCE'));
 const itemDrivers = new Map();
 const driverFor = resource => {
@@ -480,7 +492,7 @@ const moveSelection = async (direction) => {
     const result = await api.execute('reorder', ids, { direction: canonicalDirection });
     if (result.updated?.length) {
       await load();
-      state.selectedIds = ids.filter((id) => resources.value.some((resource) => resource.id === id));
+      state.selectedIds = state.pagination ? ids : ids.filter((id) => resources.value.some((resource) => resource.id === id));
       state.focusedId = state.selectedIds.includes(focusedId) ? focusedId : state.selectedIds[0] || null;
     }
   } catch (error) {
@@ -491,7 +503,7 @@ const moveSelection = async (direction) => {
 };
 const flatAvailable = options.adapter !== 'featured-articles' && ['articles', 'categories', 'tags', 'articles-by-tag', 'menus', 'users', 'media'].includes(options.adapter.replace(/^flat-/, ''));
 const flatActive = options.adapter.startsWith('flat-') || options.adapter === 'featured-articles';
-const treeApi = options.adapter.startsWith('flat-') ? new ResourceApi({ ...options, adapter: options.adapter.slice(5), browseRoot: options.flatTreeRoot || null, flatScope: null }) : null;
+const treeApi = options.adapter.startsWith('flat-') ? new ResourceApi({ ...options, adapter: options.adapter.slice(5), browseRoot: options.flatTreeRoot || null, flatScope: null, navigationOnly: true }) : null;
 const treeAdapters = computed(() => (options.adapters || []).filter(adapter =>
   (!treeApi || adapter.id !== options.adapter.slice(5)) && (!pickerContext?.allowedAdapters?.length || pickerContext.allowedAdapters.includes(adapter.id.replace(/^flat-/, '')))));
 watch(treeCollapsed, async collapsed => {
@@ -552,6 +564,7 @@ function personalSaved(settings) {
   options.editorMode = settings.editorMode === 'inherit' ? defaults.editorDefault || 'modal' : settings.editorMode;
   driver.editorMode = options.editorMode;
   setupHistory();
+  void browser.applyLoadingPreferences(settings);
 }
 const flatNavigating = ref(false);
 const gridWidthStyle = Object.fromEntries(
@@ -595,6 +608,9 @@ const applyBatch = async ({ selection: ids, payload, resolve, reject }) => {
       link.download = result.download.name;
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
+    }
+    if (state.pagination && options.mode === 'manage' && !collectionMode && !options.selectionState) {
+      state.selectedIds = []; state.selectedResources = {};
     }
     await load();
     resolve(result);

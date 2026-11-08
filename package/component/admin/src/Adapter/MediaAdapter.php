@@ -69,7 +69,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         $rawItems = $this->withAllMediaTypes(fn () => $this->apiModel->getFiles($adapter, $path, [
             'url'       => true,
             'content'   => false,
-            'search'    => $options['search'] ?? null,
+            'search'    => !empty($options['listingPaged']) ? null : ($options['search'] ?? null),
             'recursive' => false,
         ]));
 
@@ -78,6 +78,7 @@ final class MediaAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
         $allItems = [];
 
         foreach ($rawItems as $rawItem) {
+            if (!empty($options['navigationOnly']) && $rawItem->type !== 'dir') continue;
             $normalized = $this->normalize($rawItem);
 
             if ($normalized['kind'] === 'node') {

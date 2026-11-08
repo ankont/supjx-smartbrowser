@@ -1,4 +1,5 @@
-import { computed, reactive, watch } from 'vue';
+import { computed, nextTick, reactive, watch } from 'vue';
+import { personalPreferences, resolveLoadingPreferences } from './personalPreferences.js';
 import { asContextualResource, asPrimaryResource, canBulkSelectResource, canFocusResource, canSelectResource } from './resourcePolicy.js';
 
 import { compareResources as compare } from './resourceSort.js';
@@ -10,7 +11,13 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   const selectionLimit = (collectionMode || options.mode === 'select') && options.multiple === false
     ? 1 : selectionContext?.maxSelections ?? options.maxSelections ?? 500;
   const snapshot = collectionMode ? selectionContext.getCollectionSnapshot() : null;
-  const preserveSelection = Boolean(collectionMode || options.selectionState || options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
+  let preferences = { loadingMode: 'inherit', pageSize: null };
+  try { if (options.paginationSupported) preferences = personalPreferences(); } catch {}
+  const loading = resolveLoadingPreferences(preferences, options);
+  let loadingMode = options.paginationSupported ? loading.mode : 'all';
+  let paged = ['pages', 'smart'].includes(loadingMode);
+  const hostPreservesSelection = Boolean(collectionMode || options.selectionState || options.pickerContext && (Object.keys(options.pickerContext.selectionProfile || {}).length || options.pickerContext.initialSelection?.length));
+  let preserveSelection = paged || hostPreservesSelection;
   const adapter = options.adapter?.replace(/^flat-/, '');
   const identify = resource => collectionMode ? { ...resource, adapter, selection: { adapter, id: resource.id }, selectionKey: referenceKey({ adapter, id: resource.id }) } : resource;
   const foreignAdapter = resource => collectionMode && options.multiple && selectionContext.homogeneous && state.selectedIds.length
@@ -29,11 +36,13 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     sortDirection: options.defaultSortDirection || '',
     showInfo: false,
     filters: {},
+    pageSize: loading.pageSize,
   };
   const restored = persistence.load(defaults);
   restored.filters = { ...(restored.filters || {}), ...(options.initialFilters || {}) };
   if (!Array.isArray(restored.hiddenColumns)) restored.hiddenColumns = [];
   if (!Array.isArray(restored.shownColumns)) restored.shownColumns = [];
+  restored.pageSize = loading.pageSize;
   if (options.currentNode) restored.selectedNode = options.currentNode;
   if (options.defaultView) restored.activeView = options.defaultView;
   if (!viewRegistry.has(restored.activeView)) restored.activeView = 'grid';
@@ -42,6 +51,12 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     ...restored,
     roots: options.roots,
     nodes: [],
+    navigationNodes: null,
+    pagination: null,
+    loadingMode,
+    loadedCount: 0,
+    loadingMore: false,
+    loadingAll: false,
     items: [],
     contextItems: [],
     breadcrumb: [],
@@ -61,16 +76,16 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   });
 
   const resources = computed(() => {
-    const query = state.search.trim().toLocaleLowerCase();
+    const query = paged ? '' : state.search.trim().toLocaleLowerCase();
     const matches = (item) => !query || [item.title, item.subtitle, item.metadata?.alias]
       .some((value) => String(value || '').toLocaleLowerCase().includes(query));
     const nodes = (state.presentation.navigationOnlyNodes ? [] : state.nodes).map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
-    const sourceItems = state.presentation.selectionScoped && options.selectionState
+    const sourceItems = state.presentation.selectionScoped && options.selectionState && !paged
       ? Object.values(state.virtualResources).filter(resource => resource && (resource.selection?.adapter || resource.adapter || adapter) === adapter && resource.parentId === state.selectedNode)
       : state.items;
     const items = sourceItems.map(identify).map(asPrimaryResource).map(applySelectionConstraints).filter(matches);
     const contextItems = state.contextItems.map(asContextualResource);
-    if (!state.sortBy) return [...nodes, ...items, ...contextItems];
+    if (paged || !state.sortBy) return [...nodes, ...items, ...contextItems];
     return [
       ...nodes.sort(compare(state.sortBy, state.sortDirection)),
       ...items.sort(compare(state.sortBy, state.sortDirection)),
@@ -91,21 +106,48 @@ export default function createBrowserState({ options, api, persistence, viewRegi
   const focusedResource = computed(() => resources.value.find((resource) => resourceKey(resource) === state.focusedId)
     || (preserveSelection ? state.selectedResources[state.focusedId] : null) || null);
 
-  async function load(nodeId = state.selectedNode) {
-    state.loading = true;
+  let requestRevision = 0, lastQuery = '', applyingLoading = false;
+  const queryKey = () => JSON.stringify([loadingMode, state.search, state.sortBy, state.sortDirection, state.filters, state.pageSize]);
+  async function loadAll() {
+    if (state.loadingAll || state.loading || state.loadingMore || loadingMode !== 'smart') return;
+    const node = state.selectedNode, query = queryKey(), navigation = state.navigationRevision;
+    state.loadingAll = true;
+    try {
+      while (state.pagination?.hasMore && node === state.selectedNode && query === queryKey() && navigation === state.navigationRevision) {
+        const offset = state.pagination.nextOffset;
+        if (!await load(node, { append: true }) || state.error || state.pagination?.nextOffset <= offset) break;
+      }
+    } finally { state.loadingAll = false; }
+  }
+  async function load(nodeId = state.selectedNode, paging = {}) {
+    const query = queryKey();
+    const sameContext = nodeId === state.selectedNode && query === lastQuery;
+    const append = Boolean(paging.append && sameContext && loadingMode === 'smart');
+    if (paging.append && (!append || state.loading || state.loadingMore || !state.pagination?.hasMore)) return;
+    const revision = ++requestRevision;
+    const offset = paged ? (paging.offset ?? (append ? state.pagination.nextOffset : sameContext && loadingMode === 'pages' ? state.pagination?.offset || 0 : 0)) : 0;
+    state.loading = !append;
+    state.loadingMore = append;
     state.error = '';
-    if (!preserveSelection) state.selectedIds = [];
-    state.focusedId = null;
+
     try {
       const data = await api.getResources(nodeId, {
         search: state.search,
         sortBy: state.sortBy,
         sortDirection: state.sortDirection,
         filters: state.filters,
+        ...(paged ? { offset, limit: state.pageSize } : {}),
       });
+      if (revision !== requestRevision) return;
+      if (!applyingLoading && (!preserveSelection || paged && !collectionMode && !options.selectionState && nodeId !== state.selectedNode)) { state.selectedIds = []; state.selectedResources = {}; }
+      if (append && data.pagination?.total !== state.pagination.total) return load(nodeId, { offset: 0 });
+      if (!append) state.focusedId = null;
+      state.pagination = data.pagination ? { ...data.pagination, nextOffset: data.pagination.offset + data.pagination.limit } : null;
+      state.navigationNodes = data.navigationNodes || null;
       state.selectedNode = nodeId;
-      state.nodes = data.nodes;
-      state.items = data.items;
+      const merge = (before, next) => [...new Map([...before, ...next].map(resource => [resourceKey(identify(resource)), resource])).values()];
+      state.nodes = append ? merge(state.nodes, data.nodes) : data.nodes;
+      state.items = append ? merge(state.items, data.items) : data.items;
       if (data.presentation?.selectionScoped) {
         for (const item of data.items) {
           const resource = identify(item);
@@ -118,7 +160,8 @@ export default function createBrowserState({ options, api, persistence, viewRegi
           if (state.selectedIds.includes(resourceKey(resource))) state.selectedResources[resourceKey(resource)] = applySelectionConstraints(asPrimaryResource(resource));
         }
       }
-      state.contextItems = data.contextItems || [];
+      state.contextItems = append ? merge(state.contextItems, data.contextItems || []) : data.contextItems || [];
+      state.loadedCount = (data.presentation?.navigationOnlyNodes ? 0 : state.nodes.length) + state.items.length + state.contextItems.length;
       state.breadcrumb = data.breadcrumb;
       state.actions = options.mode === 'readonly' ? [] : data.actions;
       state.presentation = data.presentation || state.presentation;
@@ -133,8 +176,11 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       const url = new URL(window.location.href);
       url.searchParams.set('node', nodeId);
       window.history.replaceState({}, '', url);
-      state.navigationRevision++;
+      lastQuery = queryKey();
+      if (!append) state.navigationRevision++;
+      return true;
     } catch (error) {
+      if (revision !== requestRevision) return;
       if (nodeId !== options.initialNode && [403, 404].includes(error.status)) {
         state.selectedNode = options.initialNode;
         await load(options.initialNode);
@@ -142,9 +188,36 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       }
       state.error = error.message;
       Joomla.renderMessages({ error: [error.message] });
+      return false;
     } finally {
-      state.loading = false;
+      if (revision === requestRevision) { state.loading = false; state.loadingMore = false; }
     }
+  }
+
+  watch(() => [state.search, state.sortBy, state.sortDirection, state.pageSize], () => { if (paged && state.pagination && !applyingLoading) void load(state.selectedNode, { offset: 0 }); });
+
+  async function applyLoadingPreferences(settings) {
+    if (!options.paginationSupported) return;
+    const next = resolveLoadingPreferences(settings, options);
+    const nextPaged = ['pages', 'smart'].includes(next.mode);
+    if (next.mode === loadingMode && next.pageSize === state.pageSize) return;
+    const previous = { paged, mode: loadingMode, size: state.pageSize };
+    for (const resource of selection.value) state.selectedResources[resourceKey(resource)] = resource;
+    applyingLoading = true;
+    ++requestRevision;
+    loadingMode = next.mode; state.loadingMode = loadingMode;
+    paged = nextPaged; preserveSelection = paged || hostPreservesSelection;
+    state.pageSize = next.pageSize;
+    await nextTick();
+    const result = await load(state.selectedNode, { offset: 0 });
+    if (result === false) {
+      loadingMode = previous.mode; state.loadingMode = loadingMode;
+      paged = previous.paged; preserveSelection = paged || hostPreservesSelection;
+      state.pageSize = previous.size;
+    }
+    await nextTick();
+    applyingLoading = false;
+    return result;
   }
 
   function toggle(resource, additive = true) {
@@ -187,7 +260,7 @@ export default function createBrowserState({ options, api, persistence, viewRegi
     state.selectedIds = [...selected].slice(0, selectionLimit);
   }
 
-  watch(() => [state.selectedNode, state.activeView, state.viewOptions, state.hiddenColumns, state.shownColumns, state.sortBy, state.sortDirection, state.showInfo, state.filters], () => persistence.save(state), { deep: true });
+  watch(() => [state.selectedNode, state.activeView, state.pageSize, state.viewOptions, state.hiddenColumns, state.shownColumns, state.sortBy, state.sortDirection, state.showInfo, state.filters], () => persistence.save(state), { deep: true });
 
   function canAddSelection(targetAdapter, type) {
     if (options.multiple && state.selectedIds.length >= selectionLimit) return false;
@@ -246,5 +319,5 @@ export default function createBrowserState({ options, api, persistence, viewRegi
       : snapshot?.items.find(entry => referenceKey(entry.selection) === key);
   }).filter(Boolean);
 
-  return { state, resources, selectableResources, bulkSelectableResources, selection, focusedResource, load, focus, toggle, selectAll, invertSelection, canAddSelection, canCreateSelectionResource, replaceSelectionResource, deleteVirtualResources };
+  return { state, resources, selectableResources, bulkSelectableResources, selection, focusedResource, load, loadAll, loadMore: () => load(state.selectedNode, { append: true }), applyLoadingPreferences, focus, toggle, selectAll, invertSelection, canAddSelection, canCreateSelectionResource, replaceSelectionResource, deleteVirtualResources };
 }

@@ -433,7 +433,10 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
 
     private function queryArticles(array $options, int|array|null $categoryId = null): array
     {
-        $model = $this->contentModel('Articles');
+        $page = $options['pagination'] ?? null;
+        $model = new \SuperSoft\Component\Smartbrowser\Administrator\Model\PagedArticlesModel(
+            ['ignore_request' => true], $this->app->bootComponent('com_content')->getMVCFactory()
+        );
         $sortBy = (string) ($options['sortBy'] ?? '');
         $ordering = match ($sortBy) {
             'title' => 'a.title', 'alias' => 'a.alias', 'state' => 'a.state', 'author' => 'a.created_by',
@@ -448,8 +451,11 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
         }
         $model->setState('filter.search', trim((string) ($options['search'] ?? '')));
         $model->setState('filter.published', match ($options['stateFilter'] ?? 'active') {
-            'published' => 1, 'unpublished' => 0, 'archived' => 2, 'trashed' => -2, 'all' => '*', default => \SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserDefaults::states(),
+            'published' => 1, 'unpublished' => 0, 'archived' => 2, 'trashed' => -2, default => '*',
         });
+        if (($options['stateFilter'] ?? 'active') === 'active') {
+            $model->setState('smartbrowser.states', \SuperSoft\Component\Smartbrowser\Administrator\Support\BrowserDefaults::states());
+        }
         $model->setState('filter.featured', (string) ($filters['featured'] ?? ''));
         $model->setState('filter.access', (string) ($filters['access'] ?? ''));
         $model->setState('filter.language', (string) ($filters['language'] ?? ''));
@@ -460,8 +466,17 @@ abstract class ContentAdapter implements ResourceAdapterInterface, BrowseRootAwa
             $model->setState('list.ordering', $ordering);
             $model->setState('list.direction', strtoupper(($options['sortDirection'] ?? 'asc') === 'desc' ? 'DESC' : 'ASC'));
         }
-        $model->setState('list.limit', 0);
+        if ($page) {
+            if ($sortBy !== '') $model->setState('smartbrowser.sort', $sortBy);
+            $model->setState('smartbrowser.featured', $this->getId() === 'featured-articles');
+            $model->setState('list.direction', ($options['sortDirection'] ?? 'asc') === 'desc' ? 'DESC' : 'ASC');
+            $page->count((int) $model->getTotal());
+            if (!$page->itemLimit()) return [];
+            $model->setState('list.start', $page->itemOffset());
+            $model->setState('list.limit', $page->itemLimit());
+        } else $model->setState('list.limit', 0);
         $items = $model->getItems();
+        if (!empty($options['referencesOnly'])) return array_map(static fn (object $item): array => ['parentId' => 'category:' . (int) $item->catid], $items);
         $tags = $this->articleTags(array_map(static fn (object $item): int => (int) $item->id, $items));
         return array_values(array_map(function (object $item) use ($tags): array {
             $resource = $this->normalizeArticle($item);

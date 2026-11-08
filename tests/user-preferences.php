@@ -11,7 +11,13 @@ $params = new class {
     public function get($name, $default = null) { return $this->values[$name] ?? $default; }
     public function toArray() { return $this->values; }
 };
-if (Preferences::globalDefaults($params, false) !== ['editorMode' => 'page', 'contextItems' => 'mixed', 'contextItemsByAdapter' => ['categories' => 'show', 'tags' => 'hide', 'menus' => 'hide'], 'integration' => 'partial']) throw new RuntimeException('Incorrect global preference summary');
+if (Preferences::globalDefaults($params, false) !== ['editorMode' => 'page', 'loadingMode' => 'smart', 'pageSize' => 50, 'contextItems' => 'mixed', 'contextItemsByAdapter' => ['categories' => 'show', 'tags' => 'hide', 'menus' => 'hide'], 'integration' => 'partial']) throw new RuntimeException('Incorrect global preference summary');
+Preferences::validate(['supjx.smartbrowser.personal' => '{"pageSize":237,"loadingMode":"pages"}']);
+Preferences::validate(['supjx.smartbrowser.personal' => '{"pageSize":null}']);
+foreach ([0, -2, 1.5, '37'] as $size) {
+    try { Preferences::validate(['supjx.smartbrowser.personal' => json_encode(['pageSize' => $size])]); throw new LogicException('Invalid page size accepted'); }
+    catch (InvalidArgumentException) {}
+}
 if (Preferences::globalDefaults($params, false, 'flat-categories')['contextItems'] !== 'show') throw new RuntimeException('Incorrect adapter global context');
 $params->values['replace_all'] = 1;
 if (Preferences::globalDefaults($params, true)['integration'] !== 'enabled') throw new RuntimeException('Incorrect global integration summary');

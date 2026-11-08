@@ -15,8 +15,10 @@ final class ArticleAdapter extends ArticleCollectionAdapter
         $categoryId = $this->categoryId($nodeId);
         $category = $categoryId ? $this->getCategory($categoryId) : $this->categoryRoot();
         $stateFilter = (string) ($options['filters']['state'] ?? 'active');
+        $unpagedOptions = $options;
+        unset($unpagedOptions['pagination']);
         $articleCategories = $stateFilter === 'trashed'
-            ? array_fill_keys(array_column($this->getAllArticles($options + ['stateFilter' => 'trashed']), 'parentId'), true) : [];
+            ? array_fill_keys(array_column($this->getAllArticles($unpagedOptions + ['stateFilter' => 'trashed', 'referencesOnly' => true]), 'parentId'), true) : [];
         $nodes = [];
         foreach ($category->getChildren(false) as $child) {
             $containsArticle = isset($articleCategories['category:' . (int) $child->id]);
@@ -29,9 +31,29 @@ final class ArticleAdapter extends ArticleCollectionAdapter
                 $nodes[] = $this->normalizeCategory($child);
             }
         }
+        $navigationNodes = $nodes;
+        $page = $options['pagination'] ?? null;
+        if ($page) {
+            $search = trim((string) ($options['search'] ?? ''));
+            if ($search !== '') $nodes = array_values(array_filter($nodes, static fn (array $node): bool => mb_stripos(
+                implode(' ', [$node['title'], $node['subtitle'] ?? '', $node['metadata']['alias'] ?? '']), $search, 0, 'UTF-8'
+            ) !== false));
+            // The API's fallback article order must not reorder category nodes.
+            $field = ($options['explicitSort'] ?? true) ? ($options['sortBy'] ?? '') : '';
+            if ($field !== '') usort($nodes, static function (array $a, array $b) use ($field, $options): int {
+                $left = $a[$field] ?? $a['metadata'][$field] ?? '';
+                $right = $b[$field] ?? $b['metadata'][$field] ?? '';
+                $comparison = is_string($left) && is_string($right) ? strnatcasecmp($left, $right) : $left <=> $right;
+                return (($options['sortDirection'] ?? 'asc') === 'desc' ? -$comparison : $comparison) ?: strcmp($a['id'], $b['id']);
+            });
+            $page->prefix = count($nodes);
+            if (!$categoryId) $page->count(0);
+        }
+        $items = $categoryId && empty($options['navigationOnly']) ? $this->getArticles($categoryId, $options + ['stateFilter' => $stateFilter]) : [];
         return [
-            'nodeId' => $nodeId, 'nodes' => $nodes,
-            'items' => $categoryId ? $this->getArticles($categoryId, $options + ['stateFilter' => $stateFilter]) : [],
+            ...($page ? ['pagination' => $page->descriptor(), 'navigationNodes' => $navigationNodes] : []),
+            'nodeId' => $nodeId, 'nodes' => $page ? $page->nodes($nodes) : $nodes,
+            'items' => $items,
             'breadcrumb' => $this->getBreadcrumb($nodeId), 'actions' => $this->getActions([]),
             'presentation' => $this->articlePresentation(false, false),
             'currentResource' => $categoryId ? $this->normalizeCategory($category) : $this->getRoots()[0],

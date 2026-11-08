@@ -36,6 +36,7 @@
       </div>
     </details>
     </div>
+    <slot name="footer" />
   </nav>
 </template>
 

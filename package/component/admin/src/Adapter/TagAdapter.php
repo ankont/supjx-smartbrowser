@@ -51,10 +51,11 @@ final class TagAdapter extends ContentAdapter implements ContextResourceProvider
         }
 
         return $this->contextualArticles($this->getArticlesByTag($tagId, [
-            'stateFilter' => 'active',
+            ...$options,
+            'stateFilter' => isset($options['pagination']) ? ($options['filters']['state'] ?? 'active') : 'active',
             'sortBy' => 'title',
             'sortDirection' => 'asc',
-            'filters' => [],
+            'filters' => isset($options['pagination']) ? ($options['filters'] ?? []) : [],
         ]));
     }
 

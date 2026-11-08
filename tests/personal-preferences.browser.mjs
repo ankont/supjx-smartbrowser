@@ -51,7 +51,7 @@ async page => {
     check(await preferenceButton.evaluate(button => !!(button.compareDocumentPosition(document.querySelector('.resource-manager-link')) & Node.DOCUMENT_POSITION_FOLLOWING)), 'Preferences must precede native Joomla');
     await preferenceButton.click();
     const dialog = page.locator('.sb-personal-preferences[open]');
-    check(await dialog.locator('select').count() === 5, 'Missing preference fields');
+    check(await dialog.locator('select').count() === 6, 'Missing preference fields');
     check(await dialog.locator('select').nth(1).locator('option').count() === 3, 'Integration preferences must offer inherit, SmartBrowser and native Joomla');
     await dialog.locator('select').nth(1).selectOption('smartbrowser');
     check(await dialog.locator('select').first().locator('option[value=inherit]').innerText() === `${messages.COM_SMARTBROWSER_PERSONAL_VALUE_INHERIT} (${messages.COM_SMARTBROWSER_PERSONAL_VALUE_MODAL})`, 'Missing effective global setting');
@@ -59,10 +59,10 @@ async page => {
     check(await dialog.locator('button').last().evaluate(button => button.classList.contains('btn-danger')), 'Cancel must be red');
     check(await dialog.locator('.form-text').count() === 0, 'Inline help should start hidden');
     await dialog.getByRole('button', { name: 'Toggle Inline Help', exact: true }).click();
-    check(await dialog.locator('.form-text').count() === 5, 'Inline help did not reveal every field description');
+    check(await dialog.locator('.form-text').count() === 7, 'Inline help did not reveal every field description');
     check(await dialog.locator('.sb-personal-integration-help').innerText() === messages.COM_SMARTBROWSER_PERSONAL_INTEGRATION_DESC, 'Integration warning missing');
     await dialog.locator('select').nth(3).selectOption('adapter');
-    await dialog.locator('select').nth(4).selectOption('hide');
+    await dialog.locator('select').nth(5).selectOption('hide');
     await dialog.locator('button[type=submit]').click();
     check(JSON.parse(values['supjx.smartbrowser.personal']).pickerNodeScope === 'adapter', 'Personal settings did not reach the server');
     const contexts = JSON.parse(values['supjx.smartbrowser.personal']).contextItemsByAdapter;
@@ -134,13 +134,13 @@ async page => {
   });
   await page.locator('#dashboard-preferences-fixture > button').click();
   const dashboardDialog = page.locator('.sb-personal-preferences[open]');
-  check(await dashboardDialog.locator('select').count() === 7, 'Dashboard must expose all three contextual settings');
+  check(await dashboardDialog.locator('select').count() === 8, 'Dashboard must expose all three contextual settings');
   check(await dashboardDialog.locator('.sb-personal-field').filter({ hasText: 'Categories' }).count() === 1, 'Dashboard category setting missing');
   const compact = await dashboardDialog.evaluate(dialog => {
-    const rows = [...dialog.querySelectorAll('.sb-personal-group')].map(group => [...group.querySelectorAll('select')].map(select => select.getBoundingClientRect()));
+    const rows = [...dialog.querySelectorAll('.sb-personal-group')].map(group => [...group.querySelectorAll('select, input')].map(select => select.getBoundingClientRect()));
     return rows.map(row => ({ count: row.length, aligned: row.every(rect => Math.abs(rect.top - row[0].top) < 2) }));
   });
-  check(compact.map(row => row.count).join(',') === '2,2,3' && compact.every(row => row.aligned), 'Dashboard preferences must use compact 2/2/3 rows');
+  check(compact.map(row => row.count).join(',') === '2,2,2,3' && compact.every(row => row.aligned), 'Dashboard preferences must use compact 2/2/2/3 rows');
   await page.setViewportSize({ width: 390, height: 740 });
   check(await dashboardDialog.evaluate(dialog => dialog.scrollWidth <= dialog.clientWidth), 'Compact Dashboard overflows on mobile');
   check(await dashboardDialog.locator('.sb-personal-group').first().evaluate(group => {

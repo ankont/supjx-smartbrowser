@@ -1,5 +1,5 @@
-import { t as e } from "./visual-runtime-B90WOEAT.js?v=5.2.0";
-import { mountNativeSelection as t } from "./article-media.js?v=5.2.0";
+import { t as e } from "./visual-runtime-DGPCwcxA.js?v=6.0.0";
+import { mountNativeSelection as t } from "./article-media.js?v=6.0.0";
 //#region resources/js/image-selectors.js
 var n = /* @__PURE__ */ new WeakSet(), r = Joomla.getOptions("com_smartbrowser.image-selectors", {});
 function i(e) {

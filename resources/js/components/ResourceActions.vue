@@ -19,7 +19,7 @@
     <Teleport :to="nativeManager || 'body'" :disabled="!nativeManager">
       <div class="sb-heading-controls">
         <button v-if="canCancel" type="button" class="btn btn-danger resource-picker-cancel" :title="t('JCANCEL')" :aria-label="t('JCANCEL')" @click="$emit('cancel')"><span class="fas fa-times" aria-hidden="true" /> <span>{{ t('JCANCEL') }}</span></button>
-        <slot name="preferences" />
+        <Teleport :to="nativePreferences || 'body'" :disabled="!nativePreferences"><slot name="preferences" /></Teleport>
         <a v-if="managerUrl" class="btn resource-manager-link" :href="managerUrl" :target="managerNewTab ? '_blank' : undefined" :rel="managerNewTab ? 'noopener noreferrer' : undefined" :title="t('COM_SMARTBROWSER_OPEN_JOOMLA_MANAGER')" :aria-label="t('COM_SMARTBROWSER_OPEN_JOOMLA_MANAGER')"><span class="fab fa-joomla" aria-hidden="true" /></a>
         <slot name="display-controls" />
       </div>
@@ -84,6 +84,7 @@
           <option v-for="option in filter.options" :key="option.value" :value="option.value">{{ optionLabel(filter, option) }}</option>
         </select>
       </label>
+      <slot name="filters" />
     </div>
   </div>
   </Teleport>
@@ -96,6 +97,7 @@ const props = defineProps({ headingTitle: String, headingSubtitle: String, headi
 const nativeToolbar = props.nativeToolbarTarget ? document.querySelector(props.nativeToolbarTarget) : null;
 const nativeIntro = nativeToolbar?.parentElement.querySelector('#sb-native-intro');
 const nativeManager = nativeToolbar?.parentElement.querySelector('#sb-native-manager');
+const nativePreferences = nativeToolbar?.parentElement.querySelector('#sb-native-preferences');
 const headerElement = ref(null);
 defineExpose({ element: headerElement });
 defineEmits(['action', 'batch', 'cancel', 'toggle-flat', 'toggle-filters', 'filter', 'clear-filters', 'complete', 'no-user']);

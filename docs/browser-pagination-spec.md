@@ -1,7 +1,42 @@
 # SmartBrowser Browser Pagination
 
-Status: planned; not implemented.
-Date: 2026-10-28.
+Status: first implementation for Articles; remaining adapters and scroll loading planned.
+Updated: 2026-11-07.
+
+## Agreed loading contract and first implementation
+
+- Extend the existing `api.resources` endpoint and `getResources()` adapter method.
+  Optional `offset` and `limit` (positive integer) return `pagination` containing `offset`,
+  `limit`, accessible `total` and `hasMore`. Omission retains full loading.
+- One personal `loadingMode` applies across browsers and selection windows:
+  inherit the component default, full loading or pages. Scroll loading will be
+  offered only after implementation. Appearance/location scopes stay independent.
+- Component Browsers > Handling large lists defines the default mode and page size.
+  Current supported adapters are `articles` and `flat-articles`; unsupported paths,
+  including featured articles, keep full loading until their semantics are tested.
+- Article pagination reuses native Joomla article queries and access filters,
+  retrieves counts and only enriches the requested article rows. Nodes precede
+  articles within one bounded result sequence. Complete `navigationNodes` are
+  independent of the page and retain the complete sidebar.
+- Server ordering is authoritative for paginated responses, with an ID tie-breaker;
+  hierarchy location and ordering use category tree position. Full-loading behavior
+  remains unchanged. No second filtering/sorting pass runs over individual pages.
+- Contextual resources must count and page as ordinary results when their adapters
+  gain paging support, retaining their existing interaction restrictions. Never
+  append an unbounded contextual listing to each page.
+- Media uses Joomla providers. No separate file index or new storage system.
+- Selection descriptors survive page changes. Page Select All/Invert never select
+  unseen resources. Existing ordering services retain their full parent scope.
+- Page position is transient; page size is an inherited account preference.
+  Changed query parameters restart at zero; refresh retains the current page and
+  shrinking counts clamp to a valid page. Stale responses are ignored and failures
+  preserve the preceding valid listing and selected descriptors.
+- Flat Article sidebar requests use `navigationOnly=1` to avoid loading an entire
+  unpaged article list just to populate category navigation.
+- The first implementation replaces pages. Append-on-scroll, duplicate suppression
+  across appended batches, scroll restoration and virtualization are not implemented.
+
+The sections below retain the broader rollout requirements.
 
 ## Goal and scope
 
@@ -12,9 +47,9 @@ backend and frontend, and browser pickers. Flat view is not the only target.
 
 This specification does not introduce pagination of the stored Selection View
 collection. It does cover browsing resources when adding or replacing selections.
-Do not implement this feature as part of recording this specification.
+Stored Selection View collections remain outside the pagination scope.
 
-## Current architecture
+## Architecture before pagination
 
 - `ResourceApi.getResources()` requests the current listing without pagination.
 - `createBrowserState.load()` waits for that response and replaces the listing.
@@ -30,14 +65,17 @@ after retrieving and enriching every resource does not constitute server paginat
 
 Add a Loading group to the component's Browsers settings:
 
-- Pagination: administrator opt-in; disabled by default for compatibility.
+- Loading mode: full loading by default for compatibility; pagination is opt-in.
 - Page size: configurable, initially proposed default 50.
 - All: preserves the existing unpaginated behavior.
 
-When pagination is enabled, expose page size in Filter Options rather than adding
-another permanent toolbar control. The administrator must control whether All is
-available when pagination is enabled; the exact options and allowed sizes remain
-an implementation decision to confirm before development.
+Expose the page size beside the handling-mode control in My preferences, rather
+than in Filter Options or another permanent toolbar control. The administrator owns the default; the personal loading choice can override it
+with full loading or pages. This supersedes the earlier proposed restriction on All.
+Any positive integer page size is accepted. An empty personal size inherits the
+current component size; legacy per-view sizes are ignored. Saving either loading
+preference refreshes the current supported browser in place, retaining selections
+and the surrounding host form.
 
 Reuse existing configuration, browser state and preference mechanisms. Do not add
 a parallel selection or storage system. Existing callers must remain compatible.
@@ -54,7 +92,9 @@ Use a compact previous/next control with a visible range and total, for example:
 - Keep tree scrolling separate so a long hierarchy does not push the control
   out of the sidebar viewport.
 - With the tree hidden, in flat mode, or when a responsive layout removes the
-  sidebar, place the same control below the grid/list. Render only one instance.
+  sidebar, dock the same control below the grid/list within the visible viewport.
+  Render only one instance. Keep it visible at initial scroll position as well
+  as while scrolling. Floating Picker messages sit above the pagination dock.
 - Do not put pagination arrows on the left/right edges of the results: they can
   be confused with the existing tree-collapse arrow.
 - Do not consume additional space in the already crowded frontend toolbars.
@@ -152,3 +192,20 @@ Implement incrementally by adapter capability, clearly documenting any Media/fla
 performance limitations. Do not enable an adapter path until its paging, counts,
 selection and action semantics are correct. No release/version bump is required
 for this planning document alone.
+
+
+## Implemented in 5.4
+
+All built-in adapters expose pages and smart loading. Primary and contextual
+resources occupy one shared window; navigation-only nodes are not counted.
+Articles (including category/tag contexts and featured articles) and hierarchical
+users use native SQL limits. Other adapters sort/filter their complete source
+before slicing and decorating the requested page. Generic recursive flat paths
+still repeat source enumeration per request. The optimization goal above is not
+fully met for these paths; no filesystem index or new cache/storage was introduced.
+
+Smart loading uses an observer inside the actual results, appends keyed resources
+without replacing existing rows, and offers a manual Load more fallback. Duplicate
+requests are guarded; stale responses are ignored. Errors retain loaded resources
+and require retry, while changed totals restart the query. Select All/Invert apply
+to loaded resources only. There is no virtualization or persisted scroll position.

@@ -10,7 +10,7 @@ defined('_JEXEC') or die;
 
 final class ResourceVisualDecorator
 {
-    private const GROUPS = ['roots', 'nodes', 'items', 'contextItems', 'breadcrumb', 'resources'];
+    private const GROUPS = ['roots', 'nodes', 'navigationNodes', 'items', 'contextItems', 'breadcrumb', 'resources'];
     private const TONES = ['neutral', 'success', 'warning', 'danger', 'info', 'muted', 'expired', 'pending'];
     private static ?\WeakMap $previewDocuments = null;
 

@@ -24,11 +24,19 @@ final class ArticlesByTagAdapter extends ArticleCollectionAdapter
         $tree = $this->tagTree();
         $nodes = $this->getTagChildren($nodeId, ['filters' => ['state' => 'active']]);
         $stateFilter = (string) ($options['filters']['state'] ?? 'active');
-
+        $navigationNodes = $nodes;
+        $page = $options['pagination'] ?? null;
+        if ($page) {
+            $nodes = \SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceListing::ordered($nodes, array_replace($options, ['sortBy' => ($options['explicitSort'] ?? true) ? ($options['sortBy'] ?? '') : '']));
+            $page->prefix = count($nodes);
+            if (!$tagId) $page->count(0);
+        }
+        $items = $tagId && empty($options['navigationOnly']) ? $this->getArticlesByTag($tagId, $options + ['stateFilter' => $stateFilter]) : [];
         return [
+            ...($page ? ['pagination' => $page->descriptor(), 'navigationNodes' => $navigationNodes] : []),
             'nodeId' => $nodeId,
-            'nodes' => $nodes,
-            'items' => $tagId ? $this->getArticlesByTag($tagId, $options + ['stateFilter' => $stateFilter]) : [],
+            'nodes' => $page ? $page->nodes($nodes) : $nodes,
+            'items' => $items,
             'breadcrumb' => $this->getBreadcrumb($nodeId),
             'actions' => $this->getActions([]),
             'presentation' => $this->articlePresentation(true, true, false, false),

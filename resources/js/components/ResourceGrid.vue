@@ -1,7 +1,7 @@
 <template>
   <div class="resource-browser-grid" :class="`size-${options.gridSize}`">
     <div v-if="selectionControls" class="resource-view-icons" :class="{ active: allSelected }">
-      <label class="resource-grid-select-all">
+      <label class="resource-grid-select-all" :title="t('COM_SMARTBROWSER_SELECT_ALL')">
         <input type="checkbox" :checked="allSelected" :aria-label="t('COM_SMARTBROWSER_SELECT_ALL')" @change="$emit('select-all')">
       </label>
     </div>
@@ -53,6 +53,7 @@
         <span class="resource-item-metadata-text">{{ line.value }}</span>
       </span>
     </div>
+    <slot name="end" />
   </div>
 </template>
 

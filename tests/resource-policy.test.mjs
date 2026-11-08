@@ -21,7 +21,7 @@ test('CategoryAdapter is a registered ContentAdapter and contextual provider', a
   assert.match(category, /class CategoryAdapter extends ContentAdapter implements ContextResourceProviderInterface/);
   assert.match(category, /'nodes' => \$nodes[\s\S]*'items' => \[\]/);
   assert.match(category, /empty\(\$options\['showContextResources'\]\)/);
-  assert.match(category, /'sortBy' => 'ordering'[\s\S]*'sortDirection' => 'asc'/);
+  assert.match(category, /'sortBy' => [^\n]*'ordering'[\s\S]*'sortDirection' => [^\n]*'asc'/);
   assert.match(registry, /'categories' => new CategoryAdapter/);
   assert.match(registry, /'id' => 'categories'/);
 });
@@ -93,7 +93,7 @@ test('ArticlesByTagAdapter reuses Tag hierarchy and loads direct-tag Articles as
   assert.match(adapter, /class ArticlesByTagAdapter extends ArticleCollectionAdapter/);
   assert.match(adapter, /getTagChildren\(\$nodeId/);
   assert.match(adapter, /getTagBreadcrumb\(\$nodeId\)/);
-  assert.match(adapter, /'items' => \$tagId \? \$this->getArticlesByTag\(\$tagId/);
+  assert.match(adapter, /\$items = \$tagId && empty\(\$options\['navigationOnly'\]\)[\s\S]*\$this->getArticlesByTag\(\$tagId/);
   assert.match(adapter, /articlePresentation\(true, true, false, false\)/);
   assert.match(adapter, /executeArticleAction\(\$action, \$articleSelection, true\)/);
   assert.match(adapter, /tagRootResource\(\)/);
@@ -148,7 +148,7 @@ test('Media provider roots are resolved without fetching an empty-name media ite
 
 test('loading clears interaction state and resets inaccessible persisted nodes', async () => {
   const state = await readFile(new URL('../resources/js/core/createBrowserState.js', import.meta.url), 'utf8');
-  assert.match(state, /state\.selectedIds = \[\];[\s\S]*state\.focusedId = null;[\s\S]*api\.getResources/);
+  assert.match(state, /api\.getResources[\s\S]*revision !== requestRevision[\s\S]*state\.selectedIds = \[\];[\s\S]*state\.focusedId = null;/);
   assert.match(state, /nodeId !== options\.initialNode && \[403, 404\]\.includes\(error\.status\)/);
   assert.match(state, /await load\(options\.initialNode\)/);
 });
@@ -438,7 +438,7 @@ test('UsersAdapter uses User Groups as scoped hierarchy and Users as primary res
   const users = await readFile(new URL('../package/component/admin/src/Adapter/UsersAdapter.php', import.meta.url), 'utf8');
   const registry = await readFile(new URL('../package/component/admin/src/Adapter/AdapterRegistry.php', import.meta.url), 'utf8');
   assert.match(users, /class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInterface/);
-  assert.match(users, /'nodes' => \$nodes,[\s\S]*'items' => \$groupId > 0 \? \$this->usersForGroup/);
+  assert.match(users, /\$items = \$groupId > 0 && empty\(\$options\['navigationOnly'\]\)[\s\S]*\$this->usersForGroup/);
   assert.match(users, /setState\('filter\.group_id', \$groupId\)/);
   assert.doesNotMatch(users, /getAuthorisedGroups|recursive.*membership/i);
   assert.match(users, /'selectable' => false, 'bulkSelectable' => false[\s\S]*'navigable' => true/);

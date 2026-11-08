@@ -4,7 +4,7 @@
       <thead><tr>
         <th class="resource-type-column resource-details-select-column" scope="col">
           <span class="resource-details-select-controls">
-            <label v-if="selectionControls" class="resource-details-select-all">
+            <label v-if="selectionControls" class="resource-details-select-all" :title="t('COM_SMARTBROWSER_SELECT_ALL')">
               <input type="checkbox" :checked="allSelected" :title="t('COM_SMARTBROWSER_SELECT_ALL')" :aria-label="t('COM_SMARTBROWSER_SELECT_ALL')" @change="$emit('select-all')">
             </label>
             <button v-if="orderingField" type="button" class="resource-ordering-sort" :title="t('COM_SMARTBROWSER_ORDERING')" :aria-label="t('COM_SMARTBROWSER_ORDERING')" @click="$emit('sort', orderingField)">
@@ -94,6 +94,7 @@
         </tr>
       </tbody>
     </table>
+    <slot name="end" />
   </div>
 </template>
 

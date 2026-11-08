@@ -51,10 +51,11 @@ class CategoryAdapter extends ContentAdapter implements ContextResourceProviderI
         }
 
         return $this->contextualArticles($this->getArticles($categoryId, [
-            'stateFilter' => 'active',
+            ...$options,
+            'stateFilter' => isset($options['pagination']) ? ($options['filters']['state'] ?? 'active') : 'active',
             'sortBy' => 'ordering',
             'sortDirection' => 'asc',
-            'filters' => [],
+            'filters' => isset($options['pagination']) ? ($options['filters'] ?? []) : [],
         ]));
     }
 

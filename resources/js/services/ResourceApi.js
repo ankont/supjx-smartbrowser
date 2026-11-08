@@ -21,11 +21,16 @@ export default class ResourceApi {
     if (this.options.browseRoot) url.searchParams.set('browseRoot', this.options.browseRoot);
     if (this.options.flatScope) url.searchParams.set('flatScope', this.options.flatScope);
     url.searchParams.set('node', nodeId);
+    if (this.options.navigationOnly) url.searchParams.set('navigationOnly', '1');
     if (this.options.adapterOptions) url.searchParams.set('adapterOptions', JSON.stringify(this.options.adapterOptions));
     if (options.search) url.searchParams.set('search', options.search);
     if (options.sortBy) url.searchParams.set('sortBy', options.sortBy);
     if (options.sortDirection) url.searchParams.set('sortDirection', options.sortDirection);
     if (options.filters) url.searchParams.set('filters', JSON.stringify(options.filters));
+    if (options.limit) {
+      url.searchParams.set('limit', options.limit);
+      url.searchParams.set('offset', options.offset || 0);
+    }
     url.searchParams.set('showContextResources', this.options.showContextResources ? '1' : '0');
 
     if (this.options.selectionItems) return this.request(url, { method: 'POST', body: JSON.stringify({ items: this.options.selectionItems(), [this.options.csrfToken]: 1 }) });

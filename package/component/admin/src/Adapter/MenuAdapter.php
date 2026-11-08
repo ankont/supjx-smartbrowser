@@ -372,7 +372,7 @@ final class MenuAdapter implements ResourceAdapterInterface, BrowseRootAwareInte
                 'access' => $this->accessLevels()[(int) $item->access] ?? (string) $item->access,
                 'accessId' => (int) $item->access, 'language' => (string) $item->language,
                 'languageImage' => $this->languageImage((string) $item->language),
-                'componentId' => (int) $item->component_id, 'ordering' => (int) $item->ordering,
+                'componentId' => (int) $item->component_id, 'ordering' => (int) ($item->ordering ?? $item->lft ?? 0),
                 'link' => (string) $item->link, 'aliasOf' => $aliasTarget ?: null,
             ],
         ];

@@ -101,7 +101,7 @@ if (params.get('nativeToolbar')) {
   Object.assign(fixtureOptions, { mode: 'manage', nativeToolbarTarget: '#sb-native-actions', dashboardUrl: '/dashboard', managerUrl: '/native', browserDescription: 'Browse files and folders.' });
   if (params.get('nativeToolbar') !== 'missing') {
     const toolbar = document.createElement('div'); toolbar.className = 'btn-toolbar d-flex'; toolbar.id = 'toolbar';
-    toolbar.innerHTML = '<div id="sb-native-intro"></div><div id="sb-native-manager"></div><div id="sb-native-actions"></div><a class="btn sb-options-icon" title="SmartBrowser Options" aria-label="SmartBrowser Options">SB<span class="sb-options-label">SmartBrowser Options</span></a><joomla-toolbar-button class="ms-auto"><a class="btn button-options">Options</a></joomla-toolbar-button>';
+    toolbar.innerHTML = '<div id="sb-native-intro"></div><div id="sb-native-preferences"></div><div id="sb-native-manager"></div><div id="sb-native-actions"></div><a class="btn sb-options-icon" title="SmartBrowser Options" aria-label="SmartBrowser Options">SB<span class="sb-options-label">SmartBrowser Options</span></a><joomla-toolbar-button class="ms-auto"><a class="btn button-options">Options</a></joomla-toolbar-button>';
     const subhead = document.createElement('div'); subhead.className = 'subhead'; subhead.append(toolbar);
     document.querySelector('#smartbrowser-app').before(subhead);
   }
@@ -117,10 +117,24 @@ if (params.has('frontendFixture')) {
     const app = document.getElementById('smartbrowser-app'); app.before(wrapper); wrapper.append(app);
   }
 }
-window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; (document.getElementById('system-message-container') || document.body).prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
+if (params.has('paginationFixture')) {
+  Object.assign(fixtureOptions, { adapter: 'articles', mode: params.get('mode') || 'manage', paginationSupported: true, loadingMode: params.get('loadingMode') || 'pages', pageSize: Number(params.get('paginationSize')) || 10, multiple: true, currentNode: 'content:root', initialNode: 'content:root', roots: [{ id: 'content:root', title: 'Articles', kind: 'node', type: 'root', visible: false }] });
+  if (params.has('paginationFlat') || params.get('adapter') === 'flat-articles') Object.assign(fixtureOptions, { adapter: 'flat-articles', flatTreeNode: 'content:root', flatBreadcrumb: [{ id: 'flat-articles:root', title: 'All Articles', kind: 'node', type: 'root' }], currentNode: 'flat-articles:root', initialNode: 'flat-articles:root', roots: [{ id: 'flat-articles:root', title: 'All Articles', kind: 'node', type: 'root', visible: false }] });
+  Object.assign(labels, { COM_SMARTBROWSER_PERSONAL_TITLE: 'My preferences', COM_SMARTBROWSER_PERSONAL_SAVE_CLOSE: 'Save & Close', COM_SMARTBROWSER_PERSONAL_LOADING: 'Handling large lists', COM_SMARTBROWSER_PERSONAL_PAGE_SIZE: 'Resources per page', COM_SMARTBROWSER_PERSONAL_VALUE_INHERIT: 'Use global setting', COM_SMARTBROWSER_PERSONAL_VALUE_ALL: 'Full loading', COM_SMARTBROWSER_PERSONAL_VALUE_PAGES: 'Pagination', COM_SMARTBROWSER_LOAD_ALL: 'Load all', COM_SMARTBROWSER_LOAD_MORE: 'Load more', COM_SMARTBROWSER_PERSONAL_VALUE_SMART: 'Smart loading', COM_SMARTBROWSER_PAGE_PREVIOUS: 'Previous page', COM_SMARTBROWSER_PAGE_NEXT: 'Next page', COM_SMARTBROWSER_ITEM_COUNT: 'Items: %s', COM_SMARTBROWSER_PAGE_RANGE: 'Items: %1$s–%2$s of %3$s', COM_SMARTBROWSER_PAGINATION: 'Resource pages', COM_SMARTBROWSER_SELECT_ALL_PAGE: 'Select all on this page', COM_SMARTBROWSER_PAGE_SIZE: 'Resources per page' });
+}
+window.Joomla = { getOptions: name => name === 'com_smartbrowser' ? fixtureOptions : params.has('paginationFixture') && name === 'com_smartbrowser.preferences' ? { globalDefaults: { loadingMode: 'pages', pageSize: fixtureOptions.pageSize } } : { url: location.origin + '/index.php' }, Text: { _: key => labels[key] || key }, renderMessages(messages) { let box = document.getElementById('fixture-messages'); if (!box) { box = document.createElement('div'); box.id = 'fixture-messages'; box.className = 'alert alert-danger'; (document.getElementById('system-message-container') || document.body).prepend(box); } box.textContent = Object.values(messages).flat().join(' '); },
   request(config) {
     const request = new URL(config.url);
     const body = config.data ? JSON.parse(config.data) : null;
+    if (params.has('paginationFixture') && request.searchParams.get('task') === 'api.resources') {
+      const total = Number(params.get('paginationTotal')) || 25;
+      const limit = Number(request.searchParams.get('limit')) || total, offset = Number(request.searchParams.get('offset')) || 0;
+      (window.paginationRequests ||= []).push({ offset, limit });
+      if (params.has('failAppend') && offset > 0 && !window.fixtureAppendFailed) { window.fixtureAppendFailed = true; const timer = setTimeout(() => config.onSuccess(JSON.stringify({ success: false, code: 503, message: 'Temporary failure' })), 20); return { abort() { clearTimeout(timer); } }; }
+      const pageItems = Array.from({ length: Math.max(0, Math.min(limit, total - offset)) }, (_, index) => ({ ...articleResource, id: `article:${offset + index + 1}`, title: `Article ${offset + index + 1}` }));
+      const timer = setTimeout(() => config.onSuccess(JSON.stringify({ success: true, data: { nodes: [], navigationNodes: [{ id: 'category:2', title: 'Complete tree', kind: 'node', type: 'category', navigable: true }], items: pageItems, breadcrumb: fixtureOptions.roots, actions: [], presentation: { columns: [{ id: 'title', source: 'title', label: 'Name' }], filters: [{ id: 'state', type: 'select', label: 'State', default: '', options: [{ value: '', label: 'All' }] }], sortFields: [] }, ...(request.searchParams.has('limit') ? { pagination: { offset, limit, total, hasMore: offset + limit < total } } : {}) } })), 20);
+      return { abort() { clearTimeout(timer); } };
+    }
     if (params.has('uploadFixture') && body?.action === 'upload') {
       const resource = { ...resources[0], id: `local-images:/${body.payload.name}`, title: body.payload.name };
       resources.push(resource);

@@ -114,8 +114,10 @@ class ApiController extends BaseController
             $filters = json_decode($this->input->getString('filters', '{}'), true);
 
             $options = [
+                'navigationOnly' => $this->input->getBool('navigationOnly', false),
                 'search' => $this->input->getString('search') ?: null,
-                'sortBy' => $this->input->getCmd('sortBy', 'modified'),
+                'sortBy' => $this->input->getCmd('sortBy', ''),
+                'explicitSort' => $this->input->getCmd('sortBy') !== '',
                 'sortDirection' => $this->input->getCmd('sortDirection', 'desc'),
                 'filters' => is_array($filters) ? $filters : [],
                 'showContextResources' => $this->input->getBool('showContextResources', ContextOptions::enabled($adapter->getId(), $this->app->isClient('site'))),
@@ -125,11 +127,26 @@ class ApiController extends BaseController
                 $body = json_decode($this->input->json->getRaw(), true, 32, JSON_THROW_ON_ERROR);
                 $options['selection'] = \SuperSoft\Component\Smartbrowser\Administrator\Support\CollectionResources::entries($body['items'] ?? []);
             }
+            $page = null;
+            if (!$options['navigationOnly'] && $this->input->getInt('limit', 0) > 0) {
+                $options['listingPaged'] = true;
+                $page = new \SuperSoft\Component\Smartbrowser\Administrator\Support\ResourcePagination(
+                    $this->input->getInt('offset', 0), $this->input->getInt('limit')
+                );
+                if (in_array($adapter->getId(), ['articles', 'flat-articles', 'featured-articles', 'articles-by-tag', 'users'], true)) $options['pagination'] = $page;
+            }
+            $listingOptions = $options;
+            $listingOptions['flatListing'] = str_starts_with($adapter->getId(), 'flat-');
+            if ($this->input->getCmd('sortBy') === '') $listingOptions['sortBy'] = '';
             $result = $adapter->getResources($nodeId, $options);
             if ($this->input->getCmd('mode') === 'readonly') $result['actions'] = [];
-            $contextItems = $options['showContextResources'] && $adapter instanceof ContextResourceProviderInterface
-                ? $adapter->getContextResources($nodeId, $options)
-                : [];
+            $hasContext = !$options['navigationOnly'] && $options['showContextResources'] && $adapter instanceof ContextResourceProviderInterface;
+            if ($page && $hasContext && in_array($adapter->getId(), ['categories', 'tags'], true)) {
+                $result = \SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceListing::contextPage(
+                    $result, $listingOptions, $page, fn ($contextPage) => $adapter->getContextResources($nodeId, $options + ['pagination' => $contextPage])
+                );
+                $contextItems = $result['contextItems'];
+            } else $contextItems = $hasContext ? $adapter->getContextResources($nodeId, $options) : [];
             $result['contextItems'] = array_map(static fn (array $resource): array => [
                 ...$resource,
                 'role' => 'contextual',
@@ -142,6 +159,12 @@ class ApiController extends BaseController
                 'interactiveOverlays' => false,
                 'capabilities' => [],
             ], $contextItems);
+
+            if ($page && !isset($result['pagination'])) $result = \SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceListing::page($result, $listingOptions, $page);
+            if ($page && !empty($result['presentation']['navigationOnlyNodes'])) {
+                $result['navigationNodes'] ??= $result['nodes'];
+                $result['nodes'] = [];
+            }
 
             return (new ResourceVisualDecorator($this->app))->decorate($result, $adapter->getId());
         });

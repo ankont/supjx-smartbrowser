@@ -1,5 +1,5 @@
-import { E as e, F as t, I as n, M as r, N as i, O as a, R as o, T as s, V as c, _ as l, c as u, d, f, g as p, h as m, j as h, m as g, n as _, p as v, t as y, u as b, z as x } from "./visual-runtime-CJIQlqNK.js?v=5.2.0";
-import { a as S, c as C, i as w, l as T, o as E, r as D, s as O, t as k } from "./visual-runtime-DAGXuL4O.js?v=5.2.0";
+import { E as e, F as t, I as n, M as r, N as i, O as a, R as o, T as s, V as c, _ as l, c as u, d, f, g as p, h as m, j as h, m as g, n as _, p as v, t as y, u as b, z as x } from "./visual-runtime-CJIQlqNK.js?v=6.0.0";
+import { a as S, c as C, i as w, l as T, o as E, r as D, s as O, t as k } from "./visual-runtime-OkZmZGOK.js?v=6.0.0";
 //#region resources/js/components/VisualProfileSettings.vue
 var A = { class: "sb-appearance-controls" }, j = { class: "sb-appearance-layer-buttons" }, M = [
 	"disabled",

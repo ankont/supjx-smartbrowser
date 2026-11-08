@@ -77,6 +77,21 @@ export function observeBrowserLayout(shell, getHeader, nativeTarget) {
     set('--sb-results-top', contentTop + (shell.querySelector('.resource-main > .resource-toolbar')?.getBoundingClientRect().height || 0));
     const resultsTop = contentTop + (shell.querySelector('.resource-main > .resource-toolbar')?.getBoundingClientRect().height || 0);
     set('--sb-tree-height', Math.max(0, win.innerHeight - contentTop));
+    const pager = shell.querySelector('.resource-pagination');
+    const pagerHeight = pager?.getBoundingClientRect().height || 0;
+    set('--sb-pagination-height', pagerHeight);
+    const footerHeight = shell.querySelector('.resource-picker-collection')?.getBoundingClientRect().height || 0;
+    set('--sb-pagination-message-offset', isolated && pager
+      ? Math.max(0, shell.getBoundingClientRect().bottom - pager.getBoundingClientRect().top - footerHeight)
+      : 0);
+    const sidebar = pager?.closest('.resource-sidebar');
+    if (sidebar && !isolated) {
+      const box = sidebar.getBoundingClientRect();
+      const top = Math.max(contentTop, box.top);
+      const bottom = Math.min(win.innerHeight, box.bottom);
+      set('--sb-pagination-tree-height', Math.max(0, bottom - top - pagerHeight));
+      set('--sb-pagination-top', Math.max(top, bottom - pagerHeight));
+    }
     set('--sb-info-height', isolated ? shell.querySelector('.resource-main > .resource-browser')?.clientHeight || Math.max(0, win.innerHeight - resultsTop) : Math.max(0, win.innerHeight - resultsTop));
     const rail = shell.querySelector('.sb-tree-handle-rail')?.getBoundingClientRect();
     const visibleTop = Math.max(contentTop, rail?.top ?? contentTop);
@@ -85,7 +100,7 @@ export function observeBrowserLayout(shell, getHeader, nativeTarget) {
   };
   const schedule = () => { if (disposed) return; win.cancelAnimationFrame(frame); frame = win.requestAnimationFrame(measure); };
   const observer = new win.ResizeObserver(schedule);
-  [getHeader(), nativeBar, shell.querySelector('.resource-main > .resource-toolbar'), shell.querySelector('.resource-main > .resource-browser'), shell.querySelector('.smartbrowser-layout')].filter(Boolean).forEach(element => observer.observe(element));
+  [doc.body, getHeader(), nativeBar, shell.querySelector('.resource-main > .resource-toolbar'), shell.querySelector('.resource-main > .resource-browser'), shell.querySelector('.smartbrowser-layout')].filter(Boolean).forEach(element => observer.observe(element));
   win.addEventListener('resize', schedule);
   win.addEventListener('scroll', schedule, { passive: true });
   doc.addEventListener('smartbrowser:display-mode', schedule);

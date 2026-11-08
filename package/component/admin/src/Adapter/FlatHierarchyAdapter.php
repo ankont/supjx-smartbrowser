@@ -90,6 +90,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
         $showNodes = in_array($this->source->getId(), ['tags', 'menus', 'media'], true);
         $showItems = in_array($this->source->getId(), ['articles-by-tag', 'users', 'media'], true);
         $nodes = $items = $visited = [];
+        $scopePresentation = null;
         $scopeTitle = $this->scopeResource()['title'];
         $queue = [[$this->scope, $scopeTitle, 0, true, null, null]];
         $paths = [$this->scope => [$this->scope]];
@@ -128,6 +129,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
             if (isset($visited[$parentId])) continue;
             $visited[$parentId] = true;
             $page = $this->source->getResources($parentId, $traversalOptions);
+            if ($parentId === $this->scope) $scopePresentation = $page['presentation'];
             $children = $page['nodes'] ?? [];
             usort($children, static function (array $left, array $right): int {
                 $a = $left['metadata']['ordering'] ?? null;
@@ -169,7 +171,7 @@ final class FlatHierarchyAdapter implements ResourceAdapterInterface, BrowseRoot
             if ($maxLevels && $level > $maxLevels) continue;
             if ($this->matches($entry['resource'], $options)) $visibleItems[] = $entry['resource'];
         }
-        $presentation = $this->source->getResources($this->scope, ['filters' => []])['presentation'];
+        $presentation = $scopePresentation ?? $this->source->getResources($this->scope, ['filters' => []])['presentation'];
         if ($this->source->getId() === 'media') {
             $resources = array_column($items, 'resource');
             foreach ($presentation['filters'] as &$filter) {

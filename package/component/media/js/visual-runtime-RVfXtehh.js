@@ -1,4 +1,4 @@
-import { t as e } from "./visual-runtime-9kQymmoE.js?v=5.2.0";
+import { t as e } from "./visual-runtime-9kQymmoE.js?v=6.0.0";
 //#region resources/js/core/selectionIdentity.js
 function t(e) {
 	return !e || typeof e != "object" || Array.isArray(e) || typeof e.adapter != "string" || !/^[a-z][a-z0-9-]*$/.test(e.adapter) || typeof e.id != "string" || !e.id || e.id.length > 2048 ? null : {

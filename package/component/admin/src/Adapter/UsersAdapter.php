@@ -55,10 +55,20 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             array_filter($this->groups(), fn (object $group): bool => (int) $group->parent_id === $groupId)
         ));
 
+        $navigationNodes = $nodes;
+        $page = $options['pagination'] ?? null;
+        if ($page) {
+            $nodes = \SuperSoft\Component\Smartbrowser\Administrator\Support\ResourceListing::ordered($nodes, array_replace($options, ['sortBy' => ($options['explicitSort'] ?? true) ? ($options['sortBy'] ?? '') : '']));
+            $page->prefix = count($nodes);
+            if (!$groupId) $page->count(0);
+        }
+        $items = $groupId > 0 && empty($options['navigationOnly']) ? $this->usersForGroup($groupId, $options) : [];
+
         return [
+            ...($page ? ['pagination' => $page->descriptor(), 'navigationNodes' => $navigationNodes] : []),
             'nodeId' => $nodeId,
-            'nodes' => $nodes,
-            'items' => $groupId > 0 ? $this->usersForGroup($groupId, $options) : [],
+            'nodes' => $page ? $page->nodes($nodes) : $nodes,
+            'items' => $items,
             'breadcrumb' => $this->getBreadcrumb($nodeId),
             'actions' => $this->getActions([]),
             'presentation' => $this->presentation(),
@@ -255,7 +265,10 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
 
     private function usersForGroup(int $groupId, array $options): array
     {
-        $model = $this->app->bootComponent('com_users')->getMVCFactory()->createModel('Users', 'Administrator', ['ignore_request' => true]);
+        $page = $options['pagination'] ?? null;
+        $factory = $this->app->bootComponent('com_users')->getMVCFactory();
+        $model = $page ? new \SuperSoft\Component\Smartbrowser\Administrator\Model\PagedUsersModel(['ignore_request' => true], $factory)
+            : $factory->createModel('Users', 'Administrator', ['ignore_request' => true]);
         $sortBy = (string) ($options['sortBy'] ?? 'name');
         $model->setState('filter.group_id', $groupId);
         $model->setState('filter.search', trim((string) ($options['search'] ?? '')));
@@ -274,11 +287,17 @@ final class UsersAdapter implements ResourceAdapterInterface, BrowseRootAwareInt
             'id' => 'a.id', default => 'a.name',
         });
         $model->setState('list.direction', strtoupper(($options['sortDirection'] ?? 'asc') === 'desc' ? 'DESC' : 'ASC'));
-        $model->setState('list.limit', 0);
+        if ($page) {
+            $model->setState('smartbrowser.group', (int) ($filters['group'] ?? 0));
+            $page->count((int) $model->getTotal());
+            if (!$page->itemLimit()) return [];
+            $model->setState('list.limit', $page->itemLimit());
+            $model->setState('list.start', $page->itemOffset());
+        } else $model->setState('list.limit', 0);
 
         $users = $model->getItems() ?: [];
         $selectedGroup = (int) ($filters['group'] ?? 0);
-        if ($selectedGroup > 0) {
+        if ($selectedGroup > 0 && !$page) {
             $users = array_filter($users, fn (object $user): bool => in_array($selectedGroup, $this->userGroupIds((int) $user->id), true));
         }
         return array_values(array_map(fn (object $user): array => $this->normalizeUser($user, $groupId), $users));

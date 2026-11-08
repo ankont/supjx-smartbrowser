@@ -4,7 +4,28 @@ SmartBrowser is a unified resource browser, picker and selection-field package f
 Manage and select articles, categories, tags, menus, users, media and direct links through
 one consistent interface, while retaining Joomla's native data, permissions and editors.
 
-**Current release: 5.2.0** · Joomla 5/6 · GPL-2.0-or-later
+**Current version: 6.0.0** · Joomla 5/6 · GPL-2.0-or-later
+
+## What's new in 6.0
+
+- **Pagination across adapters.** Browse articles, featured articles, categories, tags,
+  articles by tag, menus, users, media and direct links in pages, including flat views.
+  Contextual resources share the same page limit; sidebar navigation remains complete.
+- **Smart loading by default.** New installations use batches of 50. Optionally append batches while scrolling in grid or list views.
+  A Load more button supports keyboard use and retries. Selections survive loading;
+  Select All and Invert apply only to loaded results in this mode.
+- **Personal loading preferences.** Choose full loading, smart loading or pages, with
+  any positive page size or inherited defaults, without reloading the surrounding form.
+- **Useful flat-view descriptions.** Each adapter explains its scope and navigation.
+
+Articles and hierarchical user queries page at the database. Media providers and
+other generic flat adapters still enumerate their source before slicing: transfer,
+enrichment and rendering are bounded, but source retrieval can remain expensive.
+Load more and Load all controls support manual continuation without changing preferences.
+Completed smart loading shows a simple total count. Set a personal page size to zero
+to clear it and inherit the administrator default.
+
+Smart loading retains loaded DOM rows; it does not virtualize or restore scroll position.
 
 ## What's new in 5.2
 
@@ -59,7 +80,7 @@ See the [changelog](CHANGELOG.md) for the full history.
 ## Installation and upgrading
 
 Download the installable package from [GitHub Releases](https://github.com/ankont/supjx-smartbrowser/releases)
-and upload **the outer `pkg_smartbrowser-v5.2.0.zip`** through Joomla's extension installer.
+and upload **the outer `pkg_smartbrowser-v6.0.0.zip`** through Joomla's extension installer.
 The package includes the component, the Fields picker plugin and the System integration plugin.
 
 Open **SupJx SmartBrowser** in the administrator menu, or configure individual/global native

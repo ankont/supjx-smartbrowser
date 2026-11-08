@@ -2,10 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { personalKey, personalPreferences, personalContextItems, nodePreferenceKey, savePersonalPreferences } from '../resources/js/core/personalPreferences.js';
-import { browserStateKey } from '../resources/js/services/PersistenceService.js';
+import PersistenceService, { browserStateKey } from '../resources/js/services/PersistenceService.js';
 import { createNodeHistory } from '../resources/js/core/nodeHistory.js';
 import { createUserPreferenceStorage, preferenceStorage } from '../resources/js/core/userPreferences.js';
 const memory = () => { const map = new Map(); return { getItem: key => map.get(key) ?? null, setItem: (key, value) => map.set(key, value), removeItem: key => map.delete(key), key: index => [...map.keys()][index] ?? null, get length() { return map.size; } }; };
+
+test('flat locations reopen through their source adapter without persisting synthetic roots', () => {
+  for (const [adapter, location, root] of [['users', 'user-group:3', 'users:root'], ['menus', 'menu:main', 'menus:root'], ['media', 'local-images:/photos', 'media:root'], ['tags', 'tag:7', 'tags:root']]) {
+    const storage = memory();
+    const options = { adapter: `flat-${adapter}`, mode: 'manage', flatTreeNode: location };
+    const flat = new PersistenceService(storage, browserStateKey(options, storage), options);
+    flat.save({ selectedNode: `flat-${adapter}:root`, activeView: 'details', showInfo: true });
+    const regularOptions = { ...options, adapter, flatTreeNode: null };
+    const regular = new PersistenceService(storage, browserStateKey(regularOptions, storage), regularOptions);
+    assert.equal(regular.load({ selectedNode: root }).selectedNode, location);
+    assert.equal(regular.load({ selectedNode: root }).activeView, 'details');
+    storage.setItem(nodePreferenceKey(options, storage), JSON.stringify({ selectedNode: `flat-${adapter}:root` }));
+    assert.equal(regular.load({ selectedNode: root }).selectedNode, root);
+  }
+});
 test('personal preference translations retain UTF-8 Greek and plain ampersands', async () => {
   const server = await readFile(new URL('../package/component/admin/src/Support/UserViewPreferences.php', import.meta.url), 'utf8');
   const required = [...server.matchAll(/'(COM_SMARTBROWSER_PERSONAL_[A-Z_]+)'/g)].map(match => match[1]);

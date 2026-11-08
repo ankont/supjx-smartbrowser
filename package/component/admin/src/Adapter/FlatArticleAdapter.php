@@ -58,7 +58,11 @@ class FlatArticleAdapter extends ArticleCollectionAdapter
         }
         unset($item);
 
+        $page = $options['pagination'] ?? null;
+        if ($page && $categoryIds === []) $page->count(0);
+
         return [
+            ...($page ? ['pagination' => $page->descriptor()] : []),
             'nodeId' => $nodeId,
             'nodes' => [],
             'items' => $items,

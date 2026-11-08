@@ -51,3 +51,22 @@ including selection panels, columns, filters, window sizes and offline pending c
 Stale requests receive 409 and cannot restore old values. Reset does not erase selections
 or modify resources. Unscoped legacy session/local entries are no longer used for logged-in
 accounts; they are not imported across identities.
+
+## Loading preferences (5.4)
+
+`supjx.smartbrowser.personal.loadingMode` is a single account preference: `inherit`,
+`all`, `pages` or `smart`. It does not vary by caller, adapter or application. The component
+`loading_mode` supplies the inherited value. Saving it refreshes the current supported browser in place;
+all built-in adapters support these modes. Smart loading appends batches as the result sentinel approaches the viewport, with a manual Load more fallback.
+
+`supjx.smartbrowser.personal.pageSize` is a positive integer or `null` to inherit
+the component size. It is shared across all views. Legacy appearance-key page
+sizes are ignored so they cannot mask later component-default edits. Saving a
+changed mode or size refreshes the list without reloading the host form. Offsets are
+transient and never persisted as locations or selection data. Changing a node or
+query resets the offset. Page changes retain selected descriptors; leaving a node
+still follows the host's existing selection policy.
+
+New installations from 6.0 default to smart loading in batches of 50. Explicit saved
+settings remain authoritative. Decrementing the personal batch size to zero clears
+the override and restores the inherited-default hint.
