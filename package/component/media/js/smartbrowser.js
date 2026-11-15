@@ -1,11 +1,11 @@
-import { B as e, C as t, D as n, E as r, I as i, M as a, O as o, R as s, S as c, T as l, V as u, c as d, d as f, f as p, g as m, h, j as g, l as _, m as v, p as y, s as b, t as x, u as S, v as C, w, x as T, z as E } from "./visual-runtime-CJIQlqNK.js?v=6.0.0";
-import { t as D } from "./visual-runtime-9kQymmoE.js?v=6.0.0";
-import { a as O, i as k, n as ee, r as A } from "./visual-runtime-rMzcxeX1.js?v=6.0.0";
-import { t as te } from "./visual-runtime-gxqZ9DlQ.js?v=6.0.0";
-import { C as ne, S as re, T as ie, _ as ae, a as oe, b as se, c as ce, d as le, f as ue, g as de, h as fe, i as pe, l as me, m as he, n as ge, p as _e, r as ve, t as ye, u as be, v as xe, x as Se, y as j } from "./visual-runtime-B0C71vnA.js?v=6.0.0";
-import { a as M, i as Ce, o as we } from "./visual-runtime-RVfXtehh.js?v=6.0.0";
-import { t as Te } from "./visual-runtime-OkZmZGOK.js?v=6.0.0";
-import { t as Ee } from "./visual-runtime-CMW4NWo-.js?v=6.0.0";
+import { B as e, C as t, D as n, E as r, I as i, M as a, O as o, R as s, S as c, T as l, V as u, c as d, d as f, f as p, g as m, h, j as g, l as _, m as v, p as y, s as b, t as x, u as S, v as C, w, x as T, z as E } from "./visual-runtime-CJIQlqNK.js?v=6.0.5";
+import { t as D } from "./visual-runtime-9kQymmoE.js?v=6.0.5";
+import { a as O, i as k, n as ee, r as A } from "./visual-runtime-B91GxeME.js?v=6.0.5";
+import { t as te } from "./visual-runtime-w5tRYetL.js?v=6.0.5";
+import { C as ne, S as re, T as ie, _ as ae, a as oe, b as se, c as ce, d as le, f as ue, g as de, h as fe, i as pe, l as me, m as he, n as ge, p as _e, r as ve, t as ye, u as be, v as xe, x as Se, y as j } from "./visual-runtime-XWyKrf96.js?v=6.0.5";
+import { a as M, i as Ce, o as we } from "./visual-runtime-Dq3mkt99.js?v=6.0.5";
+import { t as Te } from "./visual-runtime-WZ_FYdjB.js?v=6.0.5";
+import { t as Ee } from "./visual-runtime-05AZpB6i.js?v=6.0.5";
 //#region resources/js/core/pickerViewport.js
 function De(e) {
 	let t = e.ownerDocument.defaultView, n = t.innerHeight, r = 0, i = !1;
@@ -39,7 +39,7 @@ var N = [
 	"wide",
 	"focus"
 ], ke = "smartbrowser.displayMode";
-function P(e) {
+function Ae(e) {
 	let t = e.ownerDocument.defaultView;
 	if (!t.getComputedStyle) return null;
 	let n = "", r = null;
@@ -56,7 +56,7 @@ function P(e) {
 		attachment: r?.backgroundAttachment || "scroll"
 	};
 }
-function Ae(e, t = () => {}) {
+function je(e, t = () => {}) {
 	let n = "normal", r = [], i = null, a = null, o = e.ownerDocument, s;
 	try {
 		s = D(o.defaultView);
@@ -103,7 +103,7 @@ function Ae(e, t = () => {}) {
 			}, a();
 		}
 		if (n === "focus") {
-			let t = P(e);
+			let t = Ae(e);
 			if (t) {
 				let n = e.getAttribute("style");
 				for (let [n, r] of Object.entries(t)) e.style.setProperty(`--sb-focus-background-${n}`, r);
@@ -136,7 +136,7 @@ function Ae(e, t = () => {}) {
 }
 //#endregion
 //#region resources/js/core/browserLayout.js
-function je(e, t, n) {
+function Me(e, t, n) {
 	let r = e.ownerDocument, i = r.defaultView, a = 0, o = !1, s = null, c = n ? r.querySelector(n)?.closest(".subhead") : null, l = c && parseFloat(i.getComputedStyle(c).top) || 0, u = c ? ["--sb-native-top", "--sb-native-heading-offset"].map((e) => [
 		e,
 		c.style.getPropertyValue(e),
@@ -175,7 +175,7 @@ function je(e, t, n) {
 		let a = t(), o = e.classList.contains("is-picker") || e.parentElement.hasAttribute("data-sb-focus");
 		if (e.classList.contains("is-site") && s !== e.parentElement.parentElement) {
 			s = e.parentElement.parentElement;
-			let t = P(e);
+			let t = Ae(e);
 			if (t) for (let [n, r] of Object.entries(t)) e.style.setProperty(`--sb-page-background-${n}`, r);
 		}
 		h(o);
@@ -223,67 +223,67 @@ function je(e, t, n) {
 }
 //#endregion
 //#region resources/js/components/ResourceActions.vue
-var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-leading" }, Pe = [
+var Ne = { class: "sb-browser-heading" }, Pe = { class: "sb-browser-heading-leading" }, Fe = [
 	"disabled",
 	"title",
 	"aria-label"
-], Fe = [
+], Ie = [
 	"href",
 	"title",
 	"aria-label"
-], F = { class: "sb-browser-heading-copy" }, Ie = {
+], P = { class: "sb-browser-heading-copy" }, Le = {
 	key: 1,
 	class: "sb-browser-description"
-}, I = { class: "sb-heading-controls" }, L = ["title", "aria-label"], Le = [
+}, F = { class: "sb-heading-controls" }, I = ["title", "aria-label"], Re = [
 	"href",
 	"target",
 	"rel",
 	"title",
 	"aria-label"
-], R = ["title", "aria-label"], z = { class: "resource-action-label" }, B = [
+], L = ["title", "aria-label"], R = { class: "resource-action-label" }, z = [
 	"title",
 	"aria-label",
 	"disabled",
 	"onClick"
-], Re = {
+], ze = {
 	key: 0,
 	class: "resource-action-label"
-}, ze = [
+}, Be = [
 	"aria-expanded",
 	"title",
 	"aria-label"
-], Be = { class: "resource-action-label" }, Ve = {
+], Ve = { class: "resource-action-label" }, He = {
 	key: 0,
 	class: "resource-action-menu",
 	role: "menu"
-}, V = ["disabled", "onClick"], H = [
+}, B = ["disabled", "onClick"], V = [
 	"disabled",
 	"title",
 	"aria-label"
-], He = { class: "resource-action-label" }, U = {
+], Ue = { class: "resource-action-label" }, H = {
 	key: 3,
 	class: "resource-filter-buttons"
-}, Ue = [
+}, We = [
 	"aria-expanded",
 	"title",
 	"aria-label"
-], We = { class: "resource-action-label" }, Ge = {
+], Ge = { class: "resource-action-label" }, Ke = {
 	key: 0,
 	class: "badge bg-primary"
-}, Ke = ["disabled", "title"], qe = [
+}, qe = ["disabled", "title"], Je = [
 	"title",
 	"aria-label",
 	"aria-pressed",
 	"aria-busy",
 	"disabled"
-], Je = ["aria-label"], Ye = {
+], Ye = ["aria-label"], Xe = {
 	key: 1,
 	class: "fas fa-layer-group",
 	"aria-hidden": "true"
-}, Xe = { class: "resource-action-label" }, W = {
+}, Ze = { class: "resource-action-label" }, U = {
 	key: 0,
 	class: "resource-action-filters"
-}, Ze = ["value", "onChange"], Qe = ["value"], $e = {
+}, Qe = ["value", "onChange"], $e = ["value"], et = {
 	__name: "ResourceActions",
 	props: {
 		headingTitle: String,
@@ -386,10 +386,10 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 			ref: D,
 			class: E(["resource-actions-area sb-browser-header", { "is-native-header": !!s(b) }])
 		}, [
-			f("header", Me, [(l(), p(_, {
+			f("header", Ne, [(l(), p(_, {
 				to: s(x) || "body",
 				disabled: !s(x)
-			}, [f("div", Ne, [
+			}, [f("div", Pe, [
 				e.selectionMode ? (l(), v("button", {
 					key: 0,
 					type: "button",
@@ -405,7 +405,7 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 					}, null, -1),
 					i[9] ||= h(),
 					f("span", null, u(e.confirmLabel || e.t("COM_SMARTBROWSER_SELECT")), 1)
-				], 8, Pe)) : y("", !0),
+				], 8, Fe)) : y("", !0),
 				e.dashboardUrl ? (l(), v("a", {
 					key: 1,
 					class: "btn resource-dashboard-link",
@@ -419,8 +419,8 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 					}, null, -1),
 					i[11] ||= h(),
 					f("span", null, u(e.t(e.integrated ? "COM_SMARTBROWSER_DASHBOARD" : "COM_SMARTBROWSER_BACK_TO_DASHBOARD")), 1)
-				], 8, Fe)) : y("", !0),
-				f("div", F, [s(b) ? y("", !0) : (l(), p(o(e.selectionMode ? "h2" : "h1"), {
+				], 8, Ie)) : y("", !0),
+				f("div", P, [s(b) ? y("", !0) : (l(), p(o(e.selectionMode ? "h2" : "h1"), {
 					key: 0,
 					class: "sb-browser-title"
 				}, {
@@ -429,11 +429,11 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 						"aria-hidden": "true"
 					}, null, 2), h(" " + u(e.headingTitle), 1)]),
 					_: 1
-				})), e.headingSubtitle ? (l(), v("p", Ie, u(e.headingSubtitle), 1)) : y("", !0)])
+				})), e.headingSubtitle ? (l(), v("p", Le, u(e.headingSubtitle), 1)) : y("", !0)])
 			])], 8, ["to", "disabled"])), (l(), p(_, {
 				to: s(C) || "body",
 				disabled: !s(C)
-			}, [f("div", I, [
+			}, [f("div", F, [
 				e.canCancel ? (l(), v("button", {
 					key: 0,
 					type: "button",
@@ -448,7 +448,7 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 					}, null, -1),
 					i[13] ||= h(),
 					f("span", null, u(e.t("JCANCEL")), 1)
-				], 8, L)) : y("", !0),
+				], 8, I)) : y("", !0),
 				(l(), p(_, {
 					to: s(T) || "body",
 					disabled: !s(T)
@@ -464,7 +464,7 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 				}, [...i[14] ||= [f("span", {
 					class: "fab fa-joomla",
 					"aria-hidden": "true"
-				}, null, -1)]], 8, Le)) : y("", !0),
+				}, null, -1)]], 8, Re)) : y("", !0),
 				n(t.$slots, "display-controls")
 			])], 8, ["to", "disabled"]))]),
 			f("div", {
@@ -485,8 +485,8 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 						"aria-hidden": "true"
 					}, null, -1),
 					i[16] ||= h(),
-					f("span", z, u(e.t("JOPTION_NO_USER")), 1)
-				], 8, R)) : y("", !0),
+					f("span", R, u(e.t("JOPTION_NO_USER")), 1)
+				], 8, L)) : y("", !0),
 				(l(!0), v(d, null, r(ue.value, (n) => (l(), v("button", {
 					key: n.id,
 					type: "button",
@@ -512,7 +512,7 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 				}, [f("span", {
 					class: E(n.icon),
 					"aria-hidden": "true"
-				}, null, 2), n.creationRole === "contextual" ? y("", !0) : (l(), v("span", Re, u(e.t(n.label)), 1))], 10, B))), 128)),
+				}, null, 2), n.creationRole === "contextual" ? y("", !0) : (l(), v("span", ze, u(e.t(n.label)), 1))], 10, z))), 128)),
 				de.value.length ? (l(), v("div", {
 					key: 1,
 					ref_key: "actionMenu",
@@ -531,13 +531,13 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 						"aria-hidden": "true"
 					}, null, -1),
 					i[18] ||= h(),
-					f("span", Be, u(e.t("COM_SMARTBROWSER_ACTIONS")), 1),
+					f("span", Ve, u(e.t("COM_SMARTBROWSER_ACTIONS")), 1),
 					i[19] ||= h(),
 					i[20] ||= f("span", {
 						class: "fas fa-angle-down",
 						"aria-hidden": "true"
 					}, null, -1)
-				], 8, ze), O.value ? (l(), v("div", Ve, [(l(!0), v(d, null, r(de.value, (n) => (l(), v("div", {
+				], 8, Be), O.value ? (l(), v("div", He, [(l(!0), v(d, null, r(de.value, (n) => (l(), v("div", {
 					key: n.id,
 					class: "resource-action-menu-item",
 					role: "none"
@@ -556,7 +556,7 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 				}, [f("span", {
 					class: E(n.icon),
 					"aria-hidden": "true"
-				}, null, 2), h(" " + u(e.t(n.label)), 1)], 10, V)]))), 128))])) : y("", !0)], 512)) : y("", !0),
+				}, null, 2), h(" " + u(e.t(n.label)), 1)], 10, B)]))), 128))])) : y("", !0)], 512)) : y("", !0),
 				e.batchAvailable ? (l(), v("button", {
 					key: 2,
 					type: "button",
@@ -571,9 +571,9 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 						"aria-hidden": "true"
 					}, null, -1),
 					i[22] ||= h(),
-					f("span", He, u(e.t("COM_SMARTBROWSER_BATCH")), 1)
-				], 8, H)) : y("", !0),
-				e.filters?.length ? (l(), v("div", U, [f("button", {
+					f("span", Ue, u(e.t("COM_SMARTBROWSER_BATCH")), 1)
+				], 8, V)) : y("", !0),
+				e.filters?.length ? (l(), v("div", H, [f("button", {
 					type: "button",
 					class: E(["btn resource-filter-toggle", { active: e.filtersOpen }]),
 					"aria-expanded": e.filtersOpen,
@@ -586,19 +586,19 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 						"aria-hidden": "true"
 					}, null, -1),
 					i[24] ||= h(),
-					f("span", We, u(e.t("COM_SMARTBROWSER_FILTER_OPTIONS")), 1),
-					oe.value ? (l(), v("span", Ge, u(oe.value), 1)) : y("", !0),
+					f("span", Ge, u(e.t("COM_SMARTBROWSER_FILTER_OPTIONS")), 1),
+					oe.value ? (l(), v("span", Ke, u(oe.value), 1)) : y("", !0),
 					f("span", {
 						class: E(["fas fa-angle-down resource-filter-caret", { open: e.filtersOpen }]),
 						"aria-hidden": "true"
 					}, null, 2)
-				], 10, Ue), f("button", {
+				], 10, We), f("button", {
 					type: "button",
 					class: "btn resource-filter-clear",
 					disabled: !oe.value,
 					title: e.t("JCLEAR"),
 					onClick: i[6] ||= (e) => t.$emit("clear-filters")
-				}, u(e.t("JCLEAR")), 9, Ke)])) : y("", !0),
+				}, u(e.t("JCLEAR")), 9, qe)])) : y("", !0),
 				e.flatAvailable ? (l(), v("button", {
 					key: 4,
 					type: "button",
@@ -614,9 +614,9 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 					class: "spinner-border spinner-border-sm",
 					role: "status",
 					"aria-label": e.t("COM_SMARTBROWSER_WORKING")
-				}, null, 8, Je)) : (l(), v("span", Ye)), f("span", Xe, u(e.t("COM_SMARTBROWSER_FLAT_VIEW")), 1)], 10, qe)) : y("", !0)
+				}, null, 8, Ye)) : (l(), v("span", Xe)), f("span", Ze, u(e.t("COM_SMARTBROWSER_FLAT_VIEW")), 1)], 10, Je)) : y("", !0)
 			], 2),
-			e.filters?.length && e.filtersOpen ? (l(), v("div", W, [(l(!0), v(d, null, r(e.filters, (n) => (l(), v("label", { key: n.id }, [f("span", null, u(e.t(n.label)), 1), n.type === "select" ? (l(), v("select", {
+			e.filters?.length && e.filtersOpen ? (l(), v("div", U, [(l(!0), v(d, null, r(e.filters, (n) => (l(), v("label", { key: n.id }, [f("span", null, u(e.t(n.label)), 1), n.type === "select" ? (l(), v("select", {
 				key: 0,
 				class: "form-select",
 				value: e.filterValues[n.id] ?? n.default,
@@ -627,13 +627,13 @@ var Me = { class: "sb-browser-heading" }, Ne = { class: "sb-browser-heading-lead
 			}, [(l(!0), v(d, null, r(n.options, (e) => (l(), v("option", {
 				key: e.value,
 				value: e.value
-			}, u(se(n, e)), 9, Qe))), 128))], 40, Ze)) : y("", !0)]))), 128)), n(t.$slots, "filters")])) : y("", !0)
+			}, u(se(n, e)), 9, $e))), 128))], 40, Qe)) : y("", !0)]))), 128)), n(t.$slots, "filters")])) : y("", !0)
 		], 2)], 8, ["to", "disabled"]));
 	}
 };
 //#endregion
 //#region resources/js/core/nodeHistory.js
-function et(e, t, n = "") {
+function tt(e, t, n = "") {
 	let r;
 	try {
 		r = JSON.parse(e.getItem(t) || "{}");
@@ -690,17 +690,17 @@ function et(e, t, n = "") {
 }
 //#endregion
 //#region resources/js/components/ResourceBreadcrumb.vue
-var tt = {
+var nt = {
 	class: "resource-breadcrumb",
 	"aria-label": "Breadcrumb"
-}, nt = [
+}, rt = [
 	"title",
 	"aria-label",
 	"onClick"
-], rt = {
+], it = {
 	key: 1,
 	class: "resource-breadcrumb-title"
-}, G = {
+}, W = {
 	__name: "ResourceBreadcrumb",
 	props: {
 		breadcrumb: Array,
@@ -714,7 +714,7 @@ var tt = {
 			let e = t.breadcrumb || [], n = e[0] || t.root;
 			return n ? [n, ...e.slice(1).filter((e) => e.visible !== !1)] : [];
 		});
-		return (t, i) => (l(), v("nav", tt, [(l(!0), v(d, null, r(n.value, (n, r) => (l(), v("button", {
+		return (t, i) => (l(), v("nav", nt, [(l(!0), v(d, null, r(n.value, (n, r) => (l(), v("button", {
 			key: n.id,
 			type: "button",
 			class: E({ "root-crumb": r === 0 && e.iconOnlyRoot }),
@@ -725,27 +725,27 @@ var tt = {
 			key: 0,
 			class: E(n.useResourceIcon ? n.openIcon || n.icon : e.rootIcon),
 			"aria-hidden": "true"
-		}, null, 2)) : y("", !0), r !== 0 || !e.iconOnlyRoot ? (l(), v("span", rt, u(n.title), 1)) : y("", !0)], 10, nt))), 128))]));
+		}, null, 2)) : y("", !0), r !== 0 || !e.iconOnlyRoot ? (l(), v("span", it, u(n.title), 1)) : y("", !0)], 10, rt))), 128))]));
 	}
-}, it = {
+}, at = {
 	class: "resource-toolbar",
 	role: "toolbar"
-}, K = { class: "resource-toolbar-primary" }, at = { class: "resource-view-controls" }, q = ["aria-label"], ot = [
+}, G = { class: "resource-toolbar-primary" }, ot = { class: "resource-view-controls" }, K = ["aria-label"], st = [
 	"disabled",
 	"title",
 	"aria-label"
-], st = {
+], ct = {
 	key: 0,
 	class: "resource-history-empty"
-}, ct = ["title", "onClick"], lt = [
+}, lt = ["title", "onClick"], ut = [
 	"disabled",
 	"title",
 	"aria-label"
-], ut = [
+], dt = [
 	"value",
 	"aria-label",
 	"placeholder"
-], dt = ["title", "aria-label"], ft = ["disabled"], pt = ["disabled"], mt = ["title"], ht = { "aria-hidden": "true" }, gt = { class: "resource-mode-controls" }, _t = ["title", "onClick"], vt = ["title"], yt = {
+], ft = ["title", "aria-label"], pt = ["disabled"], mt = ["disabled"], ht = ["title"], gt = { "aria-hidden": "true" }, _t = { class: "resource-mode-controls" }, vt = ["title", "onClick"], yt = ["title"], bt = {
 	__name: "ResourceToolbar",
 	props: {
 		historyEntries: Array,
@@ -828,7 +828,7 @@ var tt = {
 			modified: "M",
 			both: "M&C"
 		})[t.detailsDateMode] || "M"), _ = S(() => `${t.t("COM_SMARTBROWSER_DATE")}: ${g.value}`), x = (e) => o.value.controls?.includes(e);
-		return (t, i) => (l(), v("div", it, [f("div", K, [m(G, {
+		return (t, i) => (l(), v("div", at, [f("div", G, [m(W, {
 			breadcrumb: e.breadcrumb,
 			root: e.root,
 			"root-icon": e.rootIcon,
@@ -839,7 +839,7 @@ var tt = {
 			"root",
 			"root-icon",
 			"icon-only-root"
-		]), f("div", at, [
+		]), f("div", ot, [
 			f("div", {
 				class: "resource-history-controls",
 				role: "group",
@@ -854,7 +854,7 @@ var tt = {
 			}, [...i[15] ||= [f("span", {
 				class: "fas fa-history",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, ot), m(j, {
+			}, null, -1)]], 8, st), m(j, {
 				ref_key: "historyPopup",
 				ref: n,
 				label: e.t("COM_SMARTBROWSER_HISTORY_TITLE"),
@@ -863,7 +863,7 @@ var tt = {
 				"panel-class": "resource-history-menu"
 			}, {
 				default: a(() => [
-					e.historyEntries?.length ? y("", !0) : (l(), v("p", st, u(e.t("COM_SMARTBROWSER_HISTORY_EMPTY")), 1)),
+					e.historyEntries?.length ? y("", !0) : (l(), v("p", ct, u(e.t("COM_SMARTBROWSER_HISTORY_EMPTY")), 1)),
 					(l(!0), v(d, null, r(e.historyEntries, (e) => (l(), v("button", {
 						key: e.id,
 						type: "button",
@@ -872,7 +872,7 @@ var tt = {
 						onClick: (r) => {
 							n.value?.close(), t.$emit("history-open", e.id);
 						}
-					}, u(e.title), 9, ct))), 128)),
+					}, u(e.title), 9, lt))), 128)),
 					e.historyEntries?.length ? (l(), v("button", {
 						key: 1,
 						type: "button",
@@ -886,7 +886,7 @@ var tt = {
 					}, null, -1), h(" " + u(e.t("COM_SMARTBROWSER_HISTORY_CLEAR")), 1)])) : y("", !0)
 				]),
 				_: 1
-			}, 8, ["label"])], 8, q),
+			}, 8, ["label"])], 8, K),
 			e.reorderVisible ? (l(), p(se, {
 				key: 0,
 				enabled: e.reorderEnabled,
@@ -904,7 +904,7 @@ var tt = {
 			}, [...i[17] ||= [f("span", {
 				class: "fas fa-retweet",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, lt)) : y("", !0),
+			}, null, -1)]], 8, ut)) : y("", !0),
 			m(j, {
 				label: e.t("COM_SMARTBROWSER_SEARCH"),
 				icon: "fas fa-search",
@@ -922,7 +922,7 @@ var tt = {
 					"aria-label": e.t("COM_SMARTBROWSER_SEARCH"),
 					placeholder: e.t("COM_SMARTBROWSER_SEARCH"),
 					onInput: i[5] ||= (e) => t.$emit("search", e.target.value)
-				}, null, 40, ut), f("button", {
+				}, null, 40, dt), f("button", {
 					type: "submit",
 					class: "btn btn-primary",
 					title: e.t("COM_SMARTBROWSER_SEARCH"),
@@ -930,7 +930,7 @@ var tt = {
 				}, [...i[18] ||= [f("span", {
 					class: "fas fa-search",
 					"aria-hidden": "true"
-				}, null, -1)]], 8, dt)], 32)]),
+				}, null, -1)]], 8, ft)], 32)]),
 				_: 1
 			}, 8, ["label"]),
 			x("sort") ? (l(), p(ae, {
@@ -957,7 +957,7 @@ var tt = {
 			}, [...i[19] ||= [f("span", {
 				class: "fas fa-search-minus",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, ft)) : y("", !0),
+			}, null, -1)]], 8, pt)) : y("", !0),
 			x("zoom") ? (l(), v("button", {
 				key: 4,
 				type: "button",
@@ -968,7 +968,7 @@ var tt = {
 			}, [...i[20] ||= [f("span", {
 				class: "fas fa-search-plus",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, pt)) : y("", !0),
+			}, null, -1)]], 8, mt)) : y("", !0),
 			x("thumbnails") ? (l(), v("button", {
 				key: 5,
 				type: "button",
@@ -988,7 +988,7 @@ var tt = {
 			}, [i[22] ||= f("span", {
 				class: "fas fa-calendar",
 				"aria-hidden": "true"
-			}, null, -1), f("small", ht, u(g.value), 1)], 8, mt)) : y("", !0),
+			}, null, -1), f("small", gt, u(g.value), 1)], 8, ht)) : y("", !0),
 			x("dateField") && e.columns?.length ? (l(), p(xe, {
 				key: 7,
 				columns: e.columns,
@@ -1002,7 +1002,7 @@ var tt = {
 				"shown-columns",
 				"t"
 			])) : y("", !0),
-			f("div", gt, [(l(!0), v(d, null, r(e.views, (n) => (l(), v("button", {
+			f("div", _t, [(l(!0), v(d, null, r(e.views, (n) => (l(), v("button", {
 				key: n.id,
 				type: "button",
 				class: E(["resource-icon-button", { active: e.activeView === n.id }]),
@@ -1011,7 +1011,7 @@ var tt = {
 			}, [f("span", {
 				class: E(n.icon),
 				"aria-hidden": "true"
-			}, null, 2)], 10, _t))), 128))]),
+			}, null, 2)], 10, vt))), 128))]),
 			f("button", {
 				type: "button",
 				class: E(["resource-icon-button", { active: e.showInfo }]),
@@ -1020,10 +1020,10 @@ var tt = {
 			}, [...i[23] ||= [f("span", {
 				class: "fas fa-info",
 				"aria-hidden": "true"
-			}, null, -1)]], 10, vt)
+			}, null, -1)]], 10, yt)
 		])])]));
 	}
-}, bt = {
+}, xt = {
 	__name: "ResourceNodeVisual",
 	props: {
 		resource: Object,
@@ -1038,13 +1038,13 @@ var tt = {
 			"align-base-start": ""
 		}, null, 8, ["resource", "open"]));
 	}
-}, xt = ["aria-label"], St = { class: "resource-tree-content" }, Ct = ["open", "onToggle"], wt = ["onClick"], J = {
+}, St = ["aria-label"], Ct = { class: "resource-tree-content" }, wt = ["open", "onToggle"], Tt = ["onClick"], q = {
 	key: 0,
 	class: "resource-adapter-roots"
-}, Tt = ["onClick"], Et = {
+}, Et = ["onClick"], Dt = {
 	key: 1,
 	class: "resource-tree-branch"
-}, Dt = ["onClick"], Ot = ["onClick"], kt = {
+}, Ot = ["onClick"], kt = ["onClick"], At = {
 	__name: "ResourceTree",
 	props: {
 		adapters: Array,
@@ -1065,7 +1065,7 @@ var tt = {
 		return (i, a) => (l(), v("nav", {
 			class: "resource-sidebar",
 			"aria-label": t.t("COM_SMARTBROWSER_VIEW")
-		}, [f("div", St, [(l(!0), v(d, null, r(t.adapters, (n) => (l(), v("details", {
+		}, [f("div", Ct, [(l(!0), v(d, null, r(t.adapters, (n) => (l(), v("details", {
 			key: n.id,
 			class: "resource-adapter",
 			open: n.id === t.activeAdapter,
@@ -1073,7 +1073,7 @@ var tt = {
 		}, [f("summary", { onClick: b((e) => c(n.id), ["prevent"]) }, [f("span", {
 			class: E(n.icon),
 			"aria-hidden": "true"
-		}, null, 2), h(" " + u(n.title), 1)], 8, wt), n.id !== t.activeAdapter || _.value ? (l(), v("div", J, [(l(!0), v(d, null, r(n.id === t.activeAdapter ? t.roots : [], (a) => (l(), v("section", {
+		}, null, 2), h(" " + u(n.title), 1)], 8, Tt), n.id !== t.activeAdapter || _.value ? (l(), v("div", q, [(l(!0), v(d, null, r(n.id === t.activeAdapter ? t.roots : [], (a) => (l(), v("section", {
 			key: a.id,
 			class: E(["resource-tree-root", { "root-hidden": a.visible === !1 }])
 		}, [a.visible === !1 ? y("", !0) : (l(), v("button", {
@@ -1084,52 +1084,60 @@ var tt = {
 		}, [f("span", {
 			class: E(["resource-tree-root-icon", a.useResourceIcon ? a.icon : n.icon]),
 			"aria-hidden": "true"
-		}, null, 2), f("span", null, u(a.title), 1)], 10, Tt)), p(a) ? (l(), v("div", Et, [(l(!0), v(d, null, r(g(a), (n) => (l(), v("button", {
+		}, null, 2), f("span", null, u(a.title), 1)], 10, Et)), p(a) ? (l(), v("div", Dt, [(l(!0), v(d, null, r(g(a), (n) => (l(), v("button", {
 			key: n.id,
 			type: "button",
 			class: E({ active: t.selectedNode === n.id }),
 			style: e(x(a, g(a).indexOf(n))),
 			onClick: (e) => i.$emit("open", n.id)
-		}, [m(bt, {
+		}, [m(xt, {
 			resource: n,
 			open: !0
-		}, null, 8, ["resource"]), f("span", null, u(n.title), 1)], 14, Dt))), 128)), (l(!0), v(d, null, r(t.nodes, (t) => (l(), v(d, { key: t.id }, [t.navigable === !1 ? (l(), v("div", {
+		}, null, 8, ["resource"]), f("span", null, u(n.title), 1)], 14, Ot))), 128)), (l(!0), v(d, null, r(t.nodes, (t) => (l(), v(d, { key: t.id }, [t.navigable === !1 ? (l(), v("div", {
 			key: 1,
 			class: "resource-tree-entry resource-tree-static",
 			style: e(x(a, g(a).length))
-		}, [m(bt, { resource: t }, null, 8, ["resource"]), f("span", null, u(t.title), 1)], 4)) : (l(), v("button", {
+		}, [m(xt, { resource: t }, null, 8, ["resource"]), f("span", null, u(t.title), 1)], 4)) : (l(), v("button", {
 			key: 0,
 			type: "button",
 			class: "resource-tree-entry",
 			style: e(x(a, g(a).length)),
 			onClick: (e) => i.$emit("open", t.id)
-		}, [m(bt, { resource: t }, null, 8, ["resource"]), f("span", null, u(t.title), 1)], 12, Ot))], 64))), 128))])) : y("", !0)], 2))), 128))])) : y("", !0)], 40, Ct))), 128))]), n(i.$slots, "footer")], 8, xt));
+		}, [m(xt, { resource: t }, null, 8, ["resource"]), f("span", null, u(t.title), 1)], 12, kt))], 64))), 128))])) : y("", !0)], 2))), 128))])) : y("", !0)], 40, wt))), 128))]), n(i.$slots, "footer")], 8, St));
 	}
-}, At = ["aria-label", "aria-busy"], jt = [
+}, jt = ["aria-label", "aria-busy"], Mt = [
 	"disabled",
 	"title",
 	"aria-label"
-], Mt = {
+], Nt = {
 	key: 1,
 	role: "status",
 	"aria-live": "polite"
-}, Nt = {
+}, Pt = {
 	key: 2,
 	role: "status",
 	"aria-live": "polite"
-}, Pt = [
+}, Ft = [
 	"disabled",
 	"title",
 	"aria-label"
-], Ft = ["disabled"], It = {
+], It = [
+	"disabled",
+	"title",
+	"aria-label"
+], Lt = {
 	key: 0,
 	class: "spinner-border spinner-border-sm",
 	"aria-hidden": "true"
-}, Lt = {
+}, Rt = {
 	key: 1,
 	class: "fas fa-angle-down",
 	"aria-hidden": "true"
-}, Rt = ["disabled"], zt = {
+}, zt = { class: "resource-load-label" }, J = [
+	"disabled",
+	"title",
+	"aria-label"
+], Y = { class: "resource-load-label" }, Bt = {
 	__name: "ResourcePagination",
 	props: {
 		page: Object,
@@ -1165,9 +1173,9 @@ var tt = {
 			}, [...r[4] ||= [f("span", {
 				class: "fas fa-chevron-left",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, jt)) : y("", !0),
-			n.value ? (l(), v("span", Mt, u(e.t("COM_SMARTBROWSER_PAGE_RANGE").replace("%1$s", String(e.page.total ? e.smart ? 1 : e.page.offset + 1 : 0)).replace("%2$s", String(e.smart ? e.loaded : Math.min(e.page.offset + e.page.limit, e.page.total))).replace("%3$s", String(e.page.total))), 1)) : y("", !0),
-			n.value ? y("", !0) : (l(), v("span", Nt, u(e.t("COM_SMARTBROWSER_ITEM_COUNT").replace("%s", String(e.page?.total ?? e.total))), 1)),
+			}, null, -1)]], 8, Mt)) : y("", !0),
+			n.value ? (l(), v("span", Nt, u(e.t("COM_SMARTBROWSER_PAGE_RANGE").replace("%1$s", String(e.page.total ? e.smart ? 1 : e.page.offset + 1 : 0)).replace("%2$s", String(e.smart ? e.loaded : Math.min(e.page.offset + e.page.limit, e.page.total))).replace("%3$s", String(e.page.total))), 1)) : y("", !0),
+			n.value ? y("", !0) : (l(), v("span", Pt, u(e.t("COM_SMARTBROWSER_ITEM_COUNT").replace("%s", String(e.page?.total ?? e.total))), 1)),
 			n.value && !e.smart ? (l(), v("button", {
 				key: 3,
 				type: "button",
@@ -1179,26 +1187,30 @@ var tt = {
 			}, [...r[5] ||= [f("span", {
 				class: "fas fa-chevron-right",
 				"aria-hidden": "true"
-			}, null, -1)]], 8, Pt)) : e.smart && e.page?.hasMore ? (l(), v("button", {
+			}, null, -1)]], 8, Ft)) : e.smart && e.page?.hasMore ? (l(), v("button", {
 				key: 4,
 				type: "button",
 				class: "btn btn-outline-secondary resource-load-more",
 				disabled: e.busy,
+				title: e.t("COM_SMARTBROWSER_LOAD_MORE"),
+				"aria-label": e.t("COM_SMARTBROWSER_LOAD_MORE"),
 				onClick: r[2] ||= (e) => t.$emit("more")
-			}, [e.busy ? (l(), v("span", It)) : (l(), v("span", Lt)), h(u(e.t(e.busy ? "COM_SMARTBROWSER_LOADING" : "COM_SMARTBROWSER_LOAD_MORE")), 1)], 8, Ft)) : y("", !0),
+			}, [e.busy ? (l(), v("span", Lt)) : (l(), v("span", Rt)), f("span", zt, u(e.t(e.busy ? "COM_SMARTBROWSER_LOADING" : "COM_SMARTBROWSER_LOAD_MORE")), 1)], 8, It)) : y("", !0),
 			e.smart && e.page?.hasMore ? (l(), v("button", {
 				key: 5,
 				type: "button",
 				class: "btn btn-outline-secondary resource-load-more resource-load-all",
 				disabled: e.busy,
+				title: e.t("COM_SMARTBROWSER_LOAD_ALL"),
+				"aria-label": e.t("COM_SMARTBROWSER_LOAD_ALL"),
 				onClick: r[3] ||= (e) => t.$emit("all")
 			}, [r[6] ||= f("span", {
 				class: "fas fa-angle-double-down",
 				"aria-hidden": "true"
-			}, null, -1), h(u(e.t("COM_SMARTBROWSER_LOAD_ALL")), 1)], 8, Rt)) : y("", !0)
-		], 10, At));
+			}, null, -1), f("span", Y, u(e.t("COM_SMARTBROWSER_LOAD_ALL")), 1)], 8, J)) : y("", !0)
+		], 10, jt));
 	}
-}, Bt = {
+}, Vt = {
 	__name: "ResourceLoadSentinel",
 	props: {
 		enabled: Boolean,
@@ -1224,13 +1236,18 @@ var tt = {
 				bottom: innerHeight
 			};
 			e.top <= t.bottom + 180 && e.bottom >= t.top && (f = r.requestKey, a("load"));
+		}, _ = () => {
+			cancelAnimationFrame(d), d = requestAnimationFrame(h);
 		};
 		return t(() => {
-			m();
+			m(), document.addEventListener("scroll", _, {
+				capture: !0,
+				passive: !0
+			}), window.addEventListener("resize", _, { passive: !0 }), window.visualViewport?.addEventListener("resize", _, { passive: !0 }), _();
 		}), g(() => [r.enabled, r.requestKey], async () => {
 			await T(), !p && (cancelAnimationFrame(d), d = requestAnimationFrame(h));
 		}), c(() => {
-			p = !0, s?.disconnect(), cancelAnimationFrame(d);
+			p = !0, s?.disconnect(), cancelAnimationFrame(d), document.removeEventListener("scroll", _, !0), window.removeEventListener("resize", _), window.visualViewport?.removeEventListener("resize", _);
 		}), (e, t) => (l(), v("div", {
 			ref_key: "sentinel",
 			ref: o,
@@ -1238,7 +1255,7 @@ var tt = {
 			"aria-hidden": "true"
 		}, null, 512));
 	}
-}, Y = /* @__PURE__ */ new Set([
+}, Ht = /* @__PURE__ */ new Set([
 	"articles",
 	"categories",
 	"tags",
@@ -1246,12 +1263,12 @@ var tt = {
 	"menus",
 	"users",
 	"media"
-]), Vt = (e, t, n, r = !1) => {
+]), Ut = (e, t, n, r = !1) => {
 	let i = r ? "" : e.startsWith("flat-") ? new URL(n).searchParams.get("flatFromBrowseRoot") || "" : t || "";
 	return `supjx.smartbrowser.ui.${e.replace(/^flat-/, "")}.${i}`;
-}, Ht = (e, t, n, r) => {
+}, Wt = (e, t, n, r) => {
 	let i = new URL(e);
-	if (!Y.has(t)) return i.toString();
+	if (!Ht.has(t)) return i.toString();
 	i.searchParams.set("flatFromAdapter", t), i.searchParams.set("flatFromNode", n), r ? i.searchParams.set("flatFromBrowseRoot", r) : i.searchParams.delete("flatFromBrowseRoot");
 	let a = `flat-${t}`;
 	if (i.searchParams.set("adapter", a), i.searchParams.set("node", `${a}:root`), t === "articles" || t === "categories") {
@@ -1259,8 +1276,8 @@ var tt = {
 		e?.startsWith("category:") ? i.searchParams.set("browseRoot", e) : i.searchParams.delete("browseRoot"), i.searchParams.delete("flatScope");
 	} else r ? i.searchParams.set("browseRoot", r) : i.searchParams.delete("browseRoot"), i.searchParams.set("flatScope", n);
 	return i.toString();
-}, Ut = (e, t) => {
-	let n = new URL(e), r = n.searchParams.get("flatFromAdapter"), i = Y.has(r) ? r : "articles", a = n.searchParams.get("flatFromBrowseRoot") || (r ? null : t), o = n.searchParams.get("flatFromNode") || a || "content:root";
+}, Gt = (e, t) => {
+	let n = new URL(e), r = n.searchParams.get("flatFromAdapter"), i = Ht.has(r) ? r : "articles", a = n.searchParams.get("flatFromBrowseRoot") || (r ? null : t), o = n.searchParams.get("flatFromNode") || a || "content:root";
 	n.searchParams.set("adapter", i), n.searchParams.set("node", o), a ? n.searchParams.set("browseRoot", a) : n.searchParams.delete("browseRoot");
 	for (let e of [
 		"flatFromAdapter",
@@ -1269,7 +1286,7 @@ var tt = {
 		"flatScope"
 	]) n.searchParams.delete(e);
 	return n.toString();
-}, Wt = (e, t) => {
+}, Kt = (e, t) => {
 	let n = new URL(e);
 	if (!n.searchParams.get("adapter")?.startsWith("flat-") || !t) return n.toString();
 	let r = n.searchParams.get("adapter");
@@ -1278,7 +1295,7 @@ var tt = {
 		e ? n.searchParams.set("browseRoot", e) : n.searchParams.delete("browseRoot"), n.searchParams.delete("flatScope");
 	} else n.searchParams.set("flatScope", t);
 	return n.toString();
-}, Gt = (e) => e.mode === "manage" && !e.pickerInstance && !e.pickerContext, Kt = (e, t = D()) => Gt(e) ? `supjx.smartbrowser.${e.adapter.replace(/^flat-/, "")}` : `supjx.smartbrowser.picker.${O(e, k(t))}.${e.adapter.replace(/^flat-/, "")}`, X = class {
+}, qt = (e) => e.mode === "manage" && !e.pickerInstance && !e.pickerContext, Jt = (e, t = D()) => qt(e) ? `supjx.smartbrowser.${e.adapter.replace(/^flat-/, "")}` : `supjx.smartbrowser.picker.${O(e, k(t))}.${e.adapter.replace(/^flat-/, "")}`, Yt = class {
 	constructor(e = D(), t = "supjx.smartbrowser.media", n = null) {
 		this.storage = e, this.key = t, this.options = n, this.nodeKey = n ? ee(n, e) : null;
 	}
@@ -1316,7 +1333,7 @@ var tt = {
 			}));
 		}
 	}
-}, qt = {
+}, Xt = {
 	articles: [
 		["tagPaths", "COM_SMARTBROWSER_TAGS"],
 		["access", "JFIELD_ACCESS_LABEL"],
@@ -1349,12 +1366,12 @@ var tt = {
 			"size"
 		]
 	]
-}, Jt = (e) => ({
+}, Zt = (e) => ({
 	stateLabel: "status",
 	width: "dimension",
 	link: "url"
 })[e.split(".").pop()] || e.split(".").pop();
-function Yt(e, t) {
+function Qt(e, t) {
 	let n = e?.columns || [], r = n.map((e) => ({
 		...e,
 		defaultVisible: !0
@@ -1365,8 +1382,8 @@ function Yt(e, t) {
 			label: "COM_SMARTBROWSER_LOCATION",
 			source: "metadata.location"
 		},
-		...(qt[o] || []).map(([e, t, n]) => ({
-			id: Jt(e),
+		...(Xt[o] || []).map(([e, t, n]) => ({
+			id: Zt(e),
 			label: t,
 			source: `metadata.${e}`,
 			format: n
@@ -1374,7 +1391,7 @@ function Yt(e, t) {
 	], c = i.has("dates");
 	for (let e of s) {
 		if (!e.source || !e.label || e.source === "metadata.locationPath" || o === "articles" && e.source === "metadata.categoryPath") continue;
-		let t = e.id || Jt(e.source);
+		let t = e.id || Zt(e.source);
 		i.has(t) || a.has(e.source) || c && ["created", "modified"].includes(t) || (i.add(t), a.add(e.source), r.push({
 			id: t,
 			label: o === "articles" && t === "tagPaths" ? "COM_SMARTBROWSER_TAGS" : e.label,
@@ -1388,142 +1405,142 @@ function Yt(e, t) {
 }
 //#endregion
 //#region resources/js/components/SmartBrowserApp.vue
-var Xt = {
+var $t = {
 	key: 0,
 	class: "smartbrowser-busy",
 	role: "status",
 	"aria-live": "polite"
-}, Zt = [
+}, en = [
 	"aria-pressed",
 	"title",
 	"aria-label"
-], Qt = [
+], tn = [
 	"aria-pressed",
 	"title",
 	"aria-label"
-], $t = { class: "sb-tree-handle-rail" }, en = [
+], nn = { class: "sb-tree-handle-rail" }, rn = [
 	"title",
 	"aria-label",
 	"aria-expanded",
 	"aria-busy"
-], tn = {
+], an = {
 	key: 0,
 	class: "spinner-border spinner-border-sm",
 	"aria-hidden": "true"
-}, nn = { class: "resource-main" }, rn = ["aria-busy"], an = {
+}, on = { class: "resource-main" }, sn = ["aria-busy"], cn = {
 	key: 0,
 	class: "resource-loader",
 	role: "status",
 	"aria-live": "polite"
-}, on = {
+}, ln = {
 	key: 1,
 	class: "resource-empty"
-}, sn = {
+}, un = {
 	key: 3,
 	class: "resource-drop-overlay"
-}, cn = {
+}, dn = {
 	key: 4,
 	class: "sb-browser-info-rail"
-}, ln = { class: "resource-picker-collection-body" }, un = {
+}, fn = { class: "resource-picker-collection-body" }, pn = {
 	__name: "SmartBrowserApp",
 	setup(n) {
 		let r = C("browser"), d = C("smartBrowserOptions"), _ = C("persistence"), x = d.application === "site" && window.self === window.top, w = i("normal"), k = i(null), A = i("620px"), ae = i(window.innerWidth);
 		async function se(e) {
-			if (await B(I.selectedNode, { offset: e }), I.error) return;
+			if (await z(F.selectedNode, { offset: e }), F.error) return;
 			let t = k.value?.querySelector(".resource-browser");
 			t && getComputedStyle(t).overflowY !== "visible" && (t.scrollTop = 0);
 		}
-		let me = i(null), ge = i(null), ve = i(null), be = i("0px"), xe = i("0px"), j, Te, N, ke, P = () => {
+		let me = i(null), ge = i(null), ve = i(null), be = i("0px"), xe = i("0px"), j, Te, N, ke, Ae = () => {
 			ae.value = window.innerWidth;
 			let e = k.value;
 			e && (A.value = `${De(e)}px`, be.value = `${ve.value?.getBoundingClientRect().height || 0}px`, xe.value = `${ge.value?.getBoundingClientRect().height || 0}px`);
-		}, Me, Ne = S(() => ({
+		}, Ne, Pe = S(() => ({
 			normal: "COM_SMARTBROWSER_DISPLAY_WIDE",
 			wide: "COM_SMARTBROWSER_DISPLAY_FOCUS",
 			focus: "COM_SMARTBROWSER_DISPLAY_NORMAL"
-		})[w.value]), Pe = () => {
-			w.value = Me.cycle();
+		})[w.value]), Fe = () => {
+			w.value = Ne.cycle();
 		};
 		t(() => {
-			j = document.getElementById("system-message-container"), ge.value && j && !j.contains(k.value) && (Te = document.createComment("SmartBrowser message position"), j.before(Te), ge.value.append(j)), x && (Me = Ae(document.getElementById("smartbrowser-app"), (e) => {
+			j = document.getElementById("system-message-container"), ge.value && j && !j.contains(k.value) && (Te = document.createComment("SmartBrowser message position"), j.before(Te), ge.value.append(j)), x && (Ne = je(document.getElementById("smartbrowser-app"), (e) => {
 				w.value = e;
-			})), P(), N = new ResizeObserver(P), N.observe(k.value.parentElement), ve.value && N.observe(ve.value), ge.value && N.observe(ge.value);
+			})), Ae(), N = new ResizeObserver(Ae), N.observe(k.value.parentElement), ve.value && N.observe(ve.value), ge.value && N.observe(ge.value);
 			let e = k.value.closest("dialog");
-			e && N.observe(e), ke = je(k.value, () => me.value?.element, d.nativeToolbarTarget), window.addEventListener("resize", P);
-		}), g(w, () => T(P)), c(() => {
-			Te?.parentNode && Te.replaceWith(j), N?.disconnect(), ke?.(), window.removeEventListener("resize", P), Me?.destroy();
+			e && N.observe(e), ke = Me(k.value, () => me.value?.element, d.nativeToolbarTarget), window.addEventListener("resize", Ae);
+		}), g(w, () => T(Ae)), c(() => {
+			Te?.parentNode && Te.replaceWith(j), N?.disconnect(), ke?.(), window.removeEventListener("resize", Ae), Ne?.destroy();
 		});
-		let Fe = C("actionDriver"), F = C("resourceApi"), Ie = C("viewRegistry"), { state: I, resources: L, bulkSelectableResources: Le, selection: R, focusedResource: z, load: B, focus: Re, toggle: ze, selectAll: Be, invertSelection: Ve } = r;
+		let Ie = C("actionDriver"), P = C("resourceApi"), Le = C("viewRegistry"), { state: F, resources: I, bulkSelectableResources: Re, selection: L, focusedResource: R, load: z, focus: ze, toggle: Be, selectAll: Ve, invertSelection: He } = r;
 		g(() => [
-			I.revealIds,
-			I.busy,
-			I.loading,
-			I.activeView
+			F.revealIds,
+			F.busy,
+			F.loading,
+			F.activeView
 		], async () => {
-			if (!I.revealIds?.length || I.busy || I.loading) return;
-			let e = I.revealIds;
-			await T(), await new Promise((e) => requestAnimationFrame(() => requestAnimationFrame(e))), !J && k.value && e === I.revealIds && (Oe(k.value, e), I.revealIds = []);
+			if (!F.revealIds?.length || F.busy || F.loading) return;
+			let e = F.revealIds;
+			await T(), await new Promise((e) => requestAnimationFrame(() => requestAnimationFrame(e))), !q && k.value && e === F.revealIds && (Oe(k.value, e), F.revealIds = []);
 		});
-		let V = d.mode === "select" ? d.pickerContext || d.selectionHost : d.selectionHost || null, H = !!V?.collectionMode, He = d.mode === "select" || !!V, U = (e) => Joomla.Text?._(e, e) || e, Ue = (e) => U(I.pagination && ["COM_SMARTBROWSER_SELECT_ALL", "COM_SMARTBROWSER_INVERT_SELECTION"].includes(e) ? e + (I.loadingMode === "smart" ? "_LOADED" : "_PAGE") : e), We = S(() => U(d.adapters?.find((e) => e.id === d.adapter)?.title || d.adapters?.find((e) => e.id === d.adapter.replace(/^flat-/, ""))?.title || "COM_SMARTBROWSER_RESOURCE")), Ge = /* @__PURE__ */ new Map(), Ke = (e) => {
+		let B = d.mode === "select" ? d.pickerContext || d.selectionHost : d.selectionHost || null, V = !!B?.collectionMode, Ue = d.mode === "select" || !!B, H = (e) => Joomla.Text?._(e, e) || e, We = (e) => H(F.pagination && ["COM_SMARTBROWSER_SELECT_ALL", "COM_SMARTBROWSER_INVERT_SELECTION"].includes(e) ? e + (F.loadingMode === "smart" ? "_LOADED" : "_PAGE") : e), Ge = S(() => H(d.adapters?.find((e) => e.id === d.adapter)?.title || d.adapters?.find((e) => e.id === d.adapter.replace(/^flat-/, ""))?.title || "COM_SMARTBROWSER_RESOURCE")), Ke = /* @__PURE__ */ new Map(), qe = (e) => {
 			let t = e?.selection?.adapter || e?.adapter;
-			if (!t || t === d.adapter.replace(/^flat-/, "")) return Fe;
-			if (!Ge.has(t)) {
+			if (!t || t === d.adapter.replace(/^flat-/, "")) return Ie;
+			if (!Ke.has(t)) {
 				let e = new ce({
 					...d,
 					adapter: t,
 					browseRoot: null,
 					flatScope: null
 				});
-				Ge.set(t, {
+				Ke.set(t, {
 					api: e,
-					driver: new Ee(e, I, async () => {
-						await W?.refresh();
-						for (let e of W?.browser.state.items || []) I.selectedResources[M(e)] = fe(e);
-						await B();
-					}, U, d.editorMode, d.application)
+					driver: new Ee(e, F, async () => {
+						await U?.refresh();
+						for (let e of U?.browser.state.items || []) F.selectedResources[M(e)] = fe(e);
+						await z();
+					}, H, d.editorMode, d.application)
 				});
 			}
-			return Ge.get(t).driver.selectionHost = at, Ge.get(t).driver;
-		}, qe = (e) => e?.collectionActions || I.actions, Je = (e, t) => qe(t).find((t) => t.id === e.id) || e, Ye = (e, t) => {
-			if (!H || e.currentNode || !t.length) return Fe.available(e, t);
+			return Ke.get(t).driver.selectionHost = ot, Ke.get(t).driver;
+		}, Je = (e) => e?.collectionActions || F.actions, Ye = (e, t) => Je(t).find((t) => t.id === e.id) || e, Xe = (e, t) => {
+			if (!V || e.currentNode || !t.length) return Ie.available(e, t);
 			if (e.single && t.length !== 1) return !1;
-			let n = (t) => (!t.collectionActions || t.collectionActions.some((t) => t.id === e.id)) && Ke(t).available(Je(e, t), [t]);
+			let n = (t) => (!t.collectionActions || t.collectionActions.some((t) => t.id === e.id)) && qe(t).available(Ye(e, t), [t]);
 			return e.exclusiveGroup ? t.some(n) : t.every(n);
-		}, Xe = async (e, t) => {
-			if (!Ye(e, t)) return;
-			if (!H || e.currentNode || !t.length) return Fe.execute(e, t);
+		}, Ze = async (e, t) => {
+			if (!Xe(e, t)) return;
+			if (!V || e.currentNode || !t.length) return Ie.execute(e, t);
 			let n = /* @__PURE__ */ new Map();
 			for (let e of t) {
-				let t = Ke(e);
+				let t = qe(e);
 				n.has(t) || n.set(t, []), n.get(t).push(e);
 			}
-			for (let [t, r] of n) await t.execute(Je(e, r[0]), r);
+			for (let [t, r] of n) await t.execute(Ye(e, r[0]), r);
 		};
-		c(() => Ge.forEach(({ api: e, driver: t }) => {
+		c(() => Ke.forEach(({ api: e, driver: t }) => {
 			t.destroy(), e.destroy();
 		}));
-		let W, Ze = !1, Qe = (e) => H ? e : {
+		let U, Qe = !1, $e = (e) => V ? e : {
 			...e,
 			selectionKey: void 0
-		}, tt = {
+		}, nt = {
 			referenceItems: !0,
-			homogeneous: V?.homogeneous === !0,
+			homogeneous: B?.homogeneous === !0,
 			readOnly: !1,
 			showCount: !1,
-			selectionProfile: V?.selectionProfile || {},
-			addressContract: V?.addressContract,
+			selectionProfile: B?.selectionProfile || {},
+			addressContract: B?.addressContract,
 			adapter: d.adapter.replace(/^flat-/, ""),
-			allowedAdapters: V?.allowedAdapters || (V?.collectionMode ? [] : [d.adapter.replace(/^flat-/, "")]),
+			allowedAdapters: B?.allowedAdapters || (B?.collectionMode ? [] : [d.adapter.replace(/^flat-/, "")]),
 			allowedResourceTypes: d.allowedResourceTypes,
 			selectionTarget: d.selectionTarget,
-			maxSelections: V?.maxSelections || 500,
+			maxSelections: B?.maxSelections || 500,
 			selectedResources: !0,
 			informationPanel: !1,
 			multiple: d.multiple,
-			items: V?.getCollectionSnapshot?.().items || [],
+			items: B?.getCollectionSnapshot?.().items || [],
 			layout: "compact",
 			allowRemove: !0,
-			allowOrdering: d.multiple && V?.allowOrdering !== !1,
+			allowOrdering: d.multiple && B?.allowOrdering !== !1,
 			contextActions: !1,
 			resourceActions: [{
 				id: "selectionFocus",
@@ -1536,180 +1553,180 @@ var Xt = {
 			csrfToken: d.csrfToken,
 			application: d.application,
 			onResourceAction: (e, t) => {
-				t = Qe(t), I.selectedResources[M(t)] = t, I.focusedId = M(t);
+				t = $e(t), F.selectedResources[M(t)] = t, F.focusedId = M(t);
 			}
-		}, nt = /* @__PURE__ */ new Map();
-		async function rt(e, t = {}) {
+		}, rt = /* @__PURE__ */ new Map();
+		async function it(e, t = {}) {
 			let n = JSON.stringify([e.adapter, t.browseRoot || ""]);
-			return nt.has(n) || nt.set(n, new ce({
+			return rt.has(n) || rt.set(n, new ce({
 				...d,
 				adapter: e.adapter,
 				mode: "select",
 				browseRoot: t.browseRoot || null,
 				flatScope: null
-			})), (await nt.get(n).collection([e.id])).resources[0];
+			})), (await rt.get(n).collection([e.id])).resources[0];
 		}
-		let G = ne({
-			profile: V?.selectionProfile || {},
-			initialUsage: V?.initialUsage || {},
-			editors: V?.editors || {},
-			resolveReference: rt
-		}), it = () => I.selectedIds.flatMap((e) => {
-			let t = R.value.find((t) => M(t) === e);
+		let W = ne({
+			profile: B?.selectionProfile || {},
+			initialUsage: B?.initialUsage || {},
+			editors: B?.editors || {},
+			resolveReference: it
+		}), at = () => F.selectedIds.flatMap((e) => {
+			let t = L.value.find((t) => M(t) === e);
 			if (t) return [{
 				selection: we(t, d.adapter.replace(/^flat-/, "")),
-				usage: G.get(t)
+				usage: W.get(t)
 			}];
-			let n = V?.getCollectionSnapshot?.().items.find((t) => Ce(t.selection) === e);
+			let n = B?.getCollectionSnapshot?.().items.find((t) => Ce(t.selection) === e);
 			return n ? [n] : [];
-		}), K = () => {
-			H && V.commitCollection?.({
-				items: it(),
-				resources: Object.fromEntries(R.value.map((e) => [M(e), e])),
-				virtualResources: I.virtualResources
+		}), G = () => {
+			V && B.commitCollection?.({
+				items: at(),
+				resources: Object.fromEntries(L.value.map((e) => [M(e), e])),
+				virtualResources: F.virtualResources
 			});
-		}, at = d.selectionState && (V || d.selectionHost) ? {
-			editorContext: V?.selectionEditorContext || {},
+		}, ot = d.selectionState && (B || d.selectionHost) ? {
+			editorContext: B?.selectionEditorContext || {},
 			canAdd: (e, t) => r.canAddSelection(e, t),
 			canCreate: (e) => r.canCreateSelectionResource(e),
 			remove: (e) => {
-				r.deleteVirtualResources(e), e.forEach((e) => G.forget(e)), q.value++, K(), d.selectionHost?.onChange?.({ items: it() });
+				r.deleteVirtualResources(e), e.forEach((e) => W.forget(e)), K.value++, G(), d.selectionHost?.onChange?.({ items: at() });
 			},
 			replace: (e, t) => {
-				let n = t ? { ...G.get(t) } : {}, i = r.replaceSelectionResource(e, t);
-				for (let e of G.definitions(i)) Object.prototype.hasOwnProperty.call(n, e.key) && G.set(i, e.key, n[e.key]);
-				return q.value++, K(), d.selectionHost?.onChange?.({ items: it() }), t && M(t) !== M(i) && G.forget(t), i;
+				let n = t ? { ...W.get(t) } : {}, i = r.replaceSelectionResource(e, t);
+				for (let e of W.definitions(i)) Object.prototype.hasOwnProperty.call(n, e.key) && W.set(i, e.key, n[e.key]);
+				return K.value++, G(), d.selectionHost?.onChange?.({ items: at() }), t && M(t) !== M(i) && W.forget(t), i;
 			}
 		} : null;
-		Fe.selectionHost = at, g(() => [I.selectedIds, I.selectedResources], K, {
+		Ie.selectionHost = ot, g(() => [F.selectedIds, F.selectedResources], G, {
 			deep: !0,
 			flush: "sync"
-		}), c(K);
-		let q = i(0);
-		He && (W = ye({
-			config: tt,
-			api: F,
-			translate: U,
+		}), c(G);
+		let K = i(0);
+		Ue && (U = ye({
+			config: nt,
+			api: P,
+			translate: H,
 			notify: (e) => {
-				Ze = !0;
+				Qe = !0;
 				for (let t of e.items) {
 					let n = e.resources.find((e) => M(e) === Ce(t.selection));
-					if (n) for (let [e, r] of Object.entries(t.usage)) G.set(Qe(n), e, r);
+					if (n) for (let [e, r] of Object.entries(t.usage)) W.set($e(n), e, r);
 				}
-				I.selectedResources = Object.fromEntries(e.resources.map(Qe).map((e) => [M(e), fe(e)])), I.selectedIds = e.items.map((e) => H ? Ce(e.selection) : e.selection.id), q.value++, Ze = !1, K();
+				F.selectedResources = Object.fromEntries(e.resources.map($e).map((e) => [M(e), fe(e)])), F.selectedIds = e.items.map((e) => V ? Ce(e.selection) : e.selection.id), K.value++, Qe = !1, G();
 			}
-		}), W.refresh().catch((e) => Joomla.renderMessages({ error: [e.message] })), g(() => [I.selectedIds, q.value], () => {
-			Ze || W.setItems(it()).catch((e) => Joomla.renderMessages({ error: [e.message] }));
+		}), U.refresh().catch((e) => Joomla.renderMessages({ error: [e.message] })), g(() => [F.selectedIds, K.value], () => {
+			Qe || U.setItems(at()).catch((e) => Joomla.renderMessages({ error: [e.message] }));
 		}, {
 			deep: !0,
 			flush: "sync"
-		}), c(() => W.destroy()));
-		let ot = i(V?.isMaximized?.() || !1), st = S(() => {
-			if (V?.title) return V.title;
+		}), c(() => U.destroy()));
+		let st = i(B?.isMaximized?.() || !1), ct = S(() => {
+			if (B?.title) return B.title;
 			let e = d.adapters?.find((e) => e.id === d.adapter) || d.adapters?.find((e) => e.id === d.adapter.replace(/^flat-/, ""));
-			return `${U("COM_SMARTBROWSER_PICKER_SELECT_TITLE")} \u2014 ${U(e?.title || "COM_SMARTBROWSER_RESOURCE")}`;
-		}), ct = i(0), lt = i({}), ut = i(!1), dt = S(() => G.definitions(z.value).filter((e) => e.presentation !== "hidden")), ft = S(() => (q.value, G.get(z.value))), pt = S(() => !!(V && Object.keys(V.selectionProfile || {}).length)), mt = !!(V && Object.keys(V.selectionProfile || {}).length), ht = i(V?.initialInfoOpen === !0 || (typeof d.pickerRememberedInfo == "boolean" ? d.pickerRememberedInfo : Object.values(V?.selectionProfile || {}).some((e) => e !== !1 && e?.presentation !== "hidden") || I.showInfo)), gt = S(() => mt || V?.initialInfoOpen === !0 ? ht.value : I.showInfo), _t = () => {
-			mt || V?.initialInfoOpen === !0 ? (ht.value = !ht.value, I.showInfo = ht.value) : I.showInfo = !I.showInfo;
-		}, vt = (e, t, n) => {
-			e && !J && (G.set(e, t, n), lt.value = {
-				...lt.value,
+			return `${H("COM_SMARTBROWSER_PICKER_SELECT_TITLE")} \u2014 ${H(e?.title || "COM_SMARTBROWSER_RESOURCE")}`;
+		}), lt = i(0), ut = i({}), dt = i(!1), ft = S(() => W.definitions(R.value).filter((e) => e.presentation !== "hidden")), pt = S(() => (K.value, W.get(R.value))), mt = S(() => !!(B && Object.keys(B.selectionProfile || {}).length)), ht = !!(B && Object.keys(B.selectionProfile || {}).length), gt = i(B?.initialInfoOpen === !0 || (typeof d.pickerRememberedInfo == "boolean" ? d.pickerRememberedInfo : Object.values(B?.selectionProfile || {}).some((e) => e !== !1 && e?.presentation !== "hidden") || F.showInfo)), _t = S(() => ht || B?.initialInfoOpen === !0 ? gt.value : F.showInfo), vt = () => {
+			ht || B?.initialInfoOpen === !0 ? (gt.value = !gt.value, F.showInfo = gt.value) : F.showInfo = !F.showInfo;
+		}, yt = (e, t, n) => {
+			e && !q && (W.set(e, t, n), ut.value = {
+				...ut.value,
 				[M(e)]: {}
-			}, q.value++, K());
-		}, bt = (e, t) => vt(z.value, e, t), xt = S(() => {
-			let e = z.value;
+			}, K.value++, G());
+		}, xt = (e, t) => yt(R.value, e, t), St = S(() => {
+			let e = R.value;
 			return le({
 				resource: e,
-				overlayRegistry: V || window.SmartBrowserPicker,
-				isReadOnly: !V || d.mode === "readonly",
+				overlayRegistry: B || window.SmartBrowserPicker,
+				isReadOnly: !B || d.mode === "readonly",
 				fieldElement: null,
-				isCurrent: () => !J && M(z.value) === M(e),
-				getAddress: () => G.get(e)["ext.address"] ?? re(e),
+				isCurrent: () => !q && M(R.value) === M(e),
+				getAddress: () => W.get(e)["ext.address"] ?? re(e),
 				getDefaultAddress: () => re(e),
-				resetAddress: () => vt(e, "ext.address", null),
-				setAddress: (t) => vt(e, "ext.address", t),
-				profile: V?.selectionProfile || {},
-				values: ft.value,
-				getValues: () => G.get(e),
-				setValue: (t, n) => vt(e, t, n),
-				refresh: () => B(),
+				resetAddress: () => yt(e, "ext.address", null),
+				setAddress: (t) => yt(e, "ext.address", t),
+				profile: B?.selectionProfile || {},
+				values: pt.value,
+				getValues: () => W.get(e),
+				setValue: (t, n) => yt(e, t, n),
+				refresh: () => z(),
 				selectResource: (e) => window.SmartBrowserPicker.open(e)
 			});
-		}), St = i(V?.previewActions || []), Ct = V?.subscribePreviewActions?.((e) => {
-			St.value = e;
+		}), Ct = i(B?.previewActions || []), wt = B?.subscribePreviewActions?.((e) => {
+			Ct.value = e;
 		});
-		c(() => Ct?.());
-		let wt = S(() => St.value.filter((e) => {
+		c(() => wt?.());
+		let Tt = S(() => Ct.value.filter((e) => {
 			try {
-				return z.value && (!xt.value.isReadOnly || e.allowReadOnly === !0) && (!e.applies || e.applies(xt.value));
+				return R.value && (!St.value.isReadOnly || e.allowReadOnly === !0) && (!e.applies || e.applies(St.value));
 			} catch {
 				return !1;
 			}
-		})), J = !1;
+		})), q = !1;
 		c(() => {
-			J = !0, nt.forEach((e) => e.destroy());
+			q = !0, rt.forEach((e) => e.destroy());
 		});
-		let Tt = Ie.all(), Et = S(() => Ie.get(I.activeView)), Dt = i(!1), Ot = S(() => I.loading || Dt.value), At = async (e) => {
-			if (!(I.activeView === e || I.loading || I.busy || Dt.value)) {
-				Dt.value = !0;
+		let Et = Le.all(), Dt = S(() => Le.get(F.activeView)), Ot = i(!1), kt = S(() => F.loading || Ot.value), jt = async (e) => {
+			if (!(F.activeView === e || F.loading || F.busy || Ot.value)) {
+				Ot.value = !0;
 				try {
-					await T(), await new Promise((e) => requestAnimationFrame(() => requestAnimationFrame(e))), I.activeView = e, await T();
+					await T(), await new Promise((e) => requestAnimationFrame(() => requestAnimationFrame(e))), F.activeView = e, await T();
 				} finally {
-					Dt.value = !1;
+					Ot.value = !1;
 				}
 			}
-		}, jt = i({}), Mt = oe({
-			api: F,
+		}, Mt = i({}), Nt = oe({
+			api: P,
 			config: {
 				...d,
-				selectionProfile: V?.selectionProfile || {},
-				addressContract: V?.addressContract
+				selectionProfile: B?.selectionProfile || {},
+				addressContract: B?.addressContract
 			}
-		}), Nt = 0;
-		g(() => [L.value, q.value], async () => {
-			if (!V) return;
-			let e = ++Nt, t = {};
-			for (let e of L.value) try {
-				t[M(e)] = await Mt.serialize({
+		}), Pt = 0;
+		g(() => [I.value, K.value], async () => {
+			if (!B) return;
+			let e = ++Pt, t = {};
+			for (let e of I.value) try {
+				t[M(e)] = await Nt.serialize({
 					selection: we(e, d.adapter.replace(/^flat-/, "")),
-					usage: G.get(e)
+					usage: W.get(e)
 				}, e);
 			} catch {
 				t[M(e)] = "";
 			}
-			e === Nt && (jt.value = t);
+			e === Pt && (Mt.value = t);
 		}, { immediate: !0 }), c(() => {
-			Nt++, Mt.destroy();
+			Pt++, Nt.destroy();
 		});
-		let Pt = S(() => V ? L.value.map((e) => ({
+		let Ft = S(() => B ? I.value.map((e) => ({
 			...e,
-			selectionAddress: jt.value[M(e)] || ""
-		})) : L.value), Ft = S(() => {
-			let e = Yt(I.presentation, d.adapter);
-			return V && !e.some((e) => e.id === "selectionAddress") && e.push({
+			selectionAddress: Mt.value[M(e)] || ""
+		})) : I.value), It = S(() => {
+			let e = Qt(F.presentation, d.adapter);
+			return B && !e.some((e) => e.id === "selectionAddress") && e.push({
 				id: "selectionAddress",
 				source: "selectionAddress",
 				label: "COM_SMARTBROWSER_URI",
 				headerIcon: "fas fa-link",
 				defaultVisible: !1
 			}), e;
-		}), It = S(() => Ft.value.filter((e) => e.id === "title" || e.id === "name" || (e.defaultVisible ? !I.hiddenColumns.includes(e.id) : I.shownColumns.includes(e.id)))), Lt = (e) => {
-			let t = Ft.value.find((t) => t.id === e);
+		}), Lt = S(() => It.value.filter((e) => e.id === "title" || e.id === "name" || (e.defaultVisible ? !F.hiddenColumns.includes(e.id) : F.shownColumns.includes(e.id)))), Rt = (e) => {
+			let t = It.value.find((t) => t.id === e);
 			if (!t || ["title", "name"].includes(e)) return;
 			let n = t.defaultVisible ? "hiddenColumns" : "shownColumns";
-			I[n] = I[n].includes(e) ? I[n].filter((t) => t !== e) : [...I[n], e];
-		}, Rt = i(!1), Y = i(d.adapter.startsWith("flat-")), X = i(null), qt = i(!1), Jt = i(null), un = S(() => d.adapter === "media"), dn = S(() => d.mode === "manage" && ["details", "grid"].includes(I.activeView) && I.presentation.orderingField && I.sortBy === I.presentation.orderingField && ["asc", "desc"].includes(I.sortDirection) && (d.adapter === "featured-articles" || String(I.filters.featured ?? "") !== "1")), fn = S(() => dn.value && !I.busy && R.value.length > 0 && R.value.every((e) => e.capabilities?.reorder === !0)), pn = async (e) => {
-			if (!fn.value || !["up", "down"].includes(e)) return;
-			let t = R.value.map((e) => e.id), n = I.focusedId;
-			I.busy = !0;
+			F[n] = F[n].includes(e) ? F[n].filter((t) => t !== e) : [...F[n], e];
+		}, zt = i(!1), J = i(d.adapter.startsWith("flat-")), Y = i(null), Ht = i(!1), Yt = i(null), Xt = S(() => d.adapter === "media"), Zt = S(() => d.mode === "manage" && ["details", "grid"].includes(F.activeView) && F.presentation.orderingField && F.sortBy === F.presentation.orderingField && ["asc", "desc"].includes(F.sortDirection) && (d.adapter === "featured-articles" || String(F.filters.featured ?? "") !== "1")), pn = S(() => Zt.value && !F.busy && L.value.length > 0 && L.value.every((e) => e.capabilities?.reorder === !0)), mn = async (e) => {
+			if (!pn.value || !["up", "down"].includes(e)) return;
+			let t = L.value.map((e) => e.id), n = F.focusedId;
+			F.busy = !0;
 			try {
-				let r = I.sortDirection === "desc" ? e === "up" ? "down" : "up" : e;
-				(await F.execute("reorder", t, { direction: r })).updated?.length && (await B(), I.selectedIds = I.pagination ? t : t.filter((e) => L.value.some((t) => t.id === e)), I.focusedId = I.selectedIds.includes(n) ? n : I.selectedIds[0] || null);
+				let r = F.sortDirection === "desc" ? e === "up" ? "down" : "up" : e;
+				(await P.execute("reorder", t, { direction: r })).updated?.length && (await z(), F.selectedIds = F.pagination ? t : t.filter((e) => I.value.some((t) => t.id === e)), F.focusedId = F.selectedIds.includes(n) ? n : F.selectedIds[0] || null);
 			} catch (e) {
 				Joomla.renderMessages({ error: [e.message] });
 			} finally {
-				I.busy = !1;
+				F.busy = !1;
 			}
-		}, mn = d.adapter !== "featured-articles" && [
+		}, hn = d.adapter !== "featured-articles" && [
 			"articles",
 			"categories",
 			"tags",
@@ -1717,63 +1734,63 @@ var Xt = {
 			"menus",
 			"users",
 			"media"
-		].includes(d.adapter.replace(/^flat-/, "")), Z = d.adapter.startsWith("flat-") || d.adapter === "featured-articles", Q = d.adapter.startsWith("flat-") ? new ce({
+		].includes(d.adapter.replace(/^flat-/, "")), X = d.adapter.startsWith("flat-") || d.adapter === "featured-articles", Z = d.adapter.startsWith("flat-") ? new ce({
 			...d,
 			adapter: d.adapter.slice(5),
 			browseRoot: d.flatTreeRoot || null,
 			flatScope: null,
 			navigationOnly: !0
-		}) : null, hn = S(() => (d.adapters || []).filter((e) => (!Q || e.id !== d.adapter.slice(5)) && (!V?.allowedAdapters?.length || V.allowedAdapters.includes(e.id.replace(/^flat-/, "")))));
-		g(Y, async (e) => {
-			if (!(e || !Q || X.value || qt.value)) {
-				qt.value = !0;
+		}) : null, gn = S(() => (d.adapters || []).filter((e) => (!Z || e.id !== d.adapter.slice(5)) && (!B?.allowedAdapters?.length || B.allowedAdapters.includes(e.id.replace(/^flat-/, "")))));
+		g(J, async (e) => {
+			if (!(e || !Z || Y.value || Ht.value)) {
+				Ht.value = !0;
 				try {
-					let e = (await Q.getResources("")).roots || [], t = d.flatTreeNode || e[0]?.id;
-					X.value = {
-						...t ? await Q.getResources(t) : {},
+					let e = (await Z.getResources("")).roots || [], t = d.flatTreeNode || e[0]?.id;
+					Y.value = {
+						...t ? await Z.getResources(t) : {},
 						roots: e
 					};
 				} catch (e) {
-					J || Joomla.renderMessages({ error: [e.message] });
+					q || Joomla.renderMessages({ error: [e.message] });
 				} finally {
-					qt.value = !1;
+					Ht.value = !1;
 				}
 			}
-		}), c(() => Q?.destroy());
-		let gn = async (e) => {
-			if (!Q) return B(e);
-			K(), await Pn(Ht(window.location.href, d.adapter.slice(5), e, d.flatTreeRoot || null));
-		}, _n = S(() => !Z || !d.flatBreadcrumb?.length || d.flatBreadcrumb.length === 1 ? I.breadcrumb : d.flatBreadcrumb), vn = i([]), yn = i(null), $, bn = () => {
+		}), c(() => Z?.destroy());
+		let Q = async (e) => {
+			if (!Z) return z(e);
+			G(), await Pn(Wt(window.location.href, d.adapter.slice(5), e, d.flatTreeRoot || null));
+		}, _n = S(() => !X || !d.flatBreadcrumb?.length || d.flatBreadcrumb.length === 1 ? F.breadcrumb : d.flatBreadcrumb), vn = i([]), yn = i(null), $, bn = () => {
 			vn.value = $.entries(), yn.value = $.previous();
 		}, xn = () => {
-			$ = et(D(), ee(d), d.browseRoot || ""), bn();
+			$ = tt(D(), ee(d), d.browseRoot || ""), bn();
 		};
-		xn(), g(() => I.navigationRevision, () => {
-			$.visit(d.flatTreeNode || I.selectedNode, _n.value), bn();
+		xn(), g(() => F.navigationRevision, () => {
+			$.visit(d.flatTreeNode || F.selectedNode, _n.value), bn();
 		});
 		let Sn = async (e) => {
-			await gn(e), !Q && (I.error || I.selectedNode !== e) && ($.remove(e), bn());
+			await Q(e), !Z && (F.error || F.selectedNode !== e) && ($.remove(e), bn());
 		}, Cn = () => {
-			$.clear(), $.visit(d.flatTreeNode || I.selectedNode, _n.value), bn();
+			$.clear(), $.visit(d.flatTreeNode || F.selectedNode, _n.value), bn();
 		}, wn = () => {
 			let e = $.back();
 			bn(), e && Sn(e.id);
 		};
 		function Tn() {
 			let e = D();
-			_ && (_.storage = e, _.key = Kt(d, e), _.nodeKey = ee(d, e)), e.removeItem(Kt(d, e)), e.removeItem(kn), e.removeItem(ee(d, e)), I.activeView = d.defaultView || "grid", I.showInfo = !1, I.search = "", I.hiddenColumns = [], I.shownColumns = [], I.sortBy = d.defaultSortBy || "", I.sortDirection = d.defaultSortDirection || "", I.viewOptions = {
+			_ && (_.storage = e, _.key = Jt(d, e), _.nodeKey = ee(d, e)), e.removeItem(Jt(d, e)), e.removeItem(kn), e.removeItem(ee(d, e)), F.activeView = d.defaultView || "grid", F.showInfo = !1, F.search = "", F.hiddenColumns = [], F.shownColumns = [], F.sortBy = d.defaultSortBy || "", F.sortDirection = d.defaultSortDirection || "", F.viewOptions = {
 				gridSize: "md",
 				detailsThumbnails: !1,
 				detailsDateMode: "modified"
-			}, I.filters = { ...d.initialFilters || {} };
-			for (let e of I.presentation.filters || []) I.filters[e.id] === void 0 && (I.filters[e.id] = e.default);
-			jn.value = !1, Y.value = !!Q, An = {}, xn();
+			}, F.filters = { ...d.initialFilters || {} };
+			for (let e of F.presentation.filters || []) F.filters[e.id] === void 0 && (F.filters[e.id] = e.default);
+			jn.value = !1, J.value = !!Z, An = {}, xn();
 		}
 		function En(e) {
 			let t = Joomla.getOptions?.("com_smartbrowser.preferences", {}) || {};
-			d.editorMode = e.editorMode === "inherit" ? t.editorDefault || "modal" : e.editorMode, Fe.editorMode = d.editorMode, xn(), r.applyLoadingPreferences(e);
+			d.editorMode = e.editorMode === "inherit" ? t.editorDefault || "modal" : e.editorMode, Ie.editorMode = d.editorMode, xn(), r.applyLoadingPreferences(e);
 		}
-		let Dn = i(!1), On = Object.fromEntries(Object.entries(d.gridWidths || {}).map(([e, t]) => [`--sb-grid-${e}`, `${t}px`])), kn = Gt(d) ? Vt(d.adapter, d.browseRoot, window.location.href, !0) : `supjx.smartbrowser.ui.picker.${O(d)}.${d.adapter.replace(/^flat-/, "")}`, An = (() => {
+		let Dn = i(!1), On = Object.fromEntries(Object.entries(d.gridWidths || {}).map(([e, t]) => [`--sb-grid-${e}`, `${t}px`])), kn = qt(d) ? Ut(d.adapter, d.browseRoot, window.location.href, !0) : `supjx.smartbrowser.ui.picker.${O(d)}.${d.adapter.replace(/^flat-/, "")}`, An = (() => {
 			try {
 				return JSON.parse(D().getItem(kn) || "{}");
 			} catch {
@@ -1788,9 +1805,9 @@ var Xt = {
 		}, Nn = () => {
 			jn.value = !jn.value, Mn({ filtersOpen: jn.value });
 		}, Pn = async (e) => {
-			Dn.value || (Dn.value = !0, I.loading = !0, await T(), await new Promise((e) => requestAnimationFrame(() => requestAnimationFrame(e))), window.location.assign(e));
+			Dn.value || (Dn.value = !0, F.loading = !0, await T(), await new Promise((e) => requestAnimationFrame(() => requestAnimationFrame(e))), window.location.assign(e));
 		}, Fn = () => {
-			Mn({ flat: !Z }), Pn(Z ? Ut(window.location.href, d.browseRoot) : Ht(window.location.href, d.adapter, I.selectedNode, d.browseRoot));
+			Mn({ flat: !X }), Pn(X ? Gt(window.location.href, d.browseRoot) : Wt(window.location.href, d.adapter, F.selectedNode, d.browseRoot));
 		}, In = S(() => d.adapters?.find((e) => e.id === d.adapter)?.icon || d.adapters?.find((e) => e.id === d.adapter.replace(/^flat-/, ""))?.icon || "fas fa-list"), Ln = S(() => d.adapters?.find((e) => e.id === d.adapter)?.nodeOpenIcon || {
 			media: "fas fa-folder-open",
 			articles: "fas fa-box-open",
@@ -1808,29 +1825,29 @@ var Xt = {
 			"xl"
 		], zn = async ({ selection: e, payload: t, resolve: n, reject: r }) => {
 			try {
-				let r = await F.execute("batch", e, t);
+				let r = await P.execute("batch", e, t);
 				if (r.download) {
 					let e = atob(r.download.content), t = Uint8Array.from(e, (e) => e.charCodeAt(0)), n = URL.createObjectURL(new Blob([t], { type: "application/zip" })), i = document.createElement("a");
 					i.href = n, i.download = r.download.name, i.click(), setTimeout(() => URL.revokeObjectURL(n), 6e4);
 				}
-				I.pagination && d.mode === "manage" && !H && !d.selectionState && (I.selectedIds = [], I.selectedResources = {}), await B(), n(r);
+				F.pagination && d.mode === "manage" && !V && !d.selectionState && (F.selectedIds = [], F.selectedResources = {}), await z(), n(r);
 			} catch (e) {
 				r(e);
 			}
 		}, Bn = async (e) => {
-			if (ut.value || !e.length) return;
-			ut.value = !0;
-			let t = q.value, n;
+			if (dt.value || !e.length) return;
+			dt.value = !0;
+			let t = K.value, n;
 			try {
-				n = await G.validate(e);
+				n = await W.validate(e);
 			} finally {
-				ut.value = !1;
+				dt.value = !1;
 			}
-			if (J || t !== q.value) return;
-			if (lt.value = n.errors, !n.valid) {
-				Object.keys(n.profileErrors).length && Joomla.renderMessages({ error: [U("COM_SMARTBROWSER_USAGE_PROFILE_INVALID")] });
+			if (q || t !== K.value) return;
+			if (ut.value = n.errors, !n.valid) {
+				Object.keys(n.profileErrors).length && Joomla.renderMessages({ error: [H("COM_SMARTBROWSER_USAGE_PROFILE_INVALID")] });
 				let e = Object.keys(n.errors).find((e) => Object.keys(n.errors[e]).some((t) => !n.profileErrors[e]?.[t]));
-				e && (I.focusedId = e, ct.value++, gt.value || Joomla.renderMessages({ error: [U("COM_SMARTBROWSER_USAGE_INVALID")] }));
+				e && (F.focusedId = e, lt.value++, _t.value || Joomla.renderMessages({ error: [H("COM_SMARTBROWSER_USAGE_INVALID")] }));
 				return;
 			}
 			let r = {
@@ -1838,26 +1855,26 @@ var Xt = {
 				mode: d.mode,
 				resources: [...e]
 			};
-			H && (r.collectionItems = e.map((e) => ({
+			V && (r.collectionItems = e.map((e) => ({
 				selection: we(e, d.adapter.replace(/^flat-/, "")),
 				usage: n.usage[M(e)] || {}
-			}))), V && (r.pickerInstance = d.pickerInstance, r.usage = n.usage), document.dispatchEvent(new CustomEvent("smartbrowser:select", { detail: r })), window.parent !== window && window.parent.document.dispatchEvent(new CustomEvent("smartbrowser:select", { detail: r }));
+			}))), B && (r.pickerInstance = d.pickerInstance, r.usage = n.usage), document.dispatchEvent(new CustomEvent("smartbrowser:select", { detail: r })), window.parent !== window && window.parent.document.dispatchEvent(new CustomEvent("smartbrowser:select", { detail: r }));
 		}, Vn = (e) => {
-			let t = Rn.indexOf(I.viewOptions.gridSize);
-			I.viewOptions.gridSize = Rn[Math.max(0, Math.min(Rn.length - 1, t + e))];
-		}, Hn = (e) => ue(e, d.mode, qe(e), Ye, d.selectionTarget || "both"), Un = (e) => he(e, d.mode, qe(e), Ye), Wn = (e) => _e(e, d.mode, qe(e), Ye, d.selectionTarget || "both"), Gn = (e, t) => !I.busy && (e.local ? t.every((t) => Hn(t)?.id === e.id || Wn(t)?.id === e.id) : Ye(e, t)), Kn = (e) => {
+			let t = Rn.indexOf(F.viewOptions.gridSize);
+			F.viewOptions.gridSize = Rn[Math.max(0, Math.min(Rn.length - 1, t + e))];
+		}, Hn = (e) => ue(e, d.mode, Je(e), Xe, d.selectionTarget || "both"), Un = (e) => he(e, d.mode, Je(e), Xe), Wn = (e) => _e(e, d.mode, Je(e), Xe, d.selectionTarget || "both"), Gn = (e, t) => !F.busy && (e.local ? t.every((t) => Hn(t)?.id === e.id || Wn(t)?.id === e.id) : Xe(e, t)), Kn = (e) => {
 			let t = Hn(e);
 			t && qn(t, e);
 		}, qn = (e, t) => {
-			if (e && t && Gn(e, [t])) return e.id === "browseOpen" ? B(t.id) : e.id === "pickerSelect" ? H ? (I.selectedIds.includes(M(t)) || ze(t, !0), Bn(R.value)) : Bn([t]) : Xe(e, [t]);
+			if (e && t && Gn(e, [t])) return e.id === "browseOpen" ? z(t.id) : e.id === "pickerSelect" ? V ? (F.selectedIds.includes(M(t)) || Be(t, !0), Bn(L.value)) : Bn([t]) : Ze(e, [t]);
 		}, Jn = (e) => {
-			if (V?.allowedAdapters?.length && !V.allowedAdapters.includes(e.replace(/^flat-/, "")) || e === d.adapter) return;
-			K();
+			if (B?.allowedAdapters?.length && !B.allowedAdapters.includes(e.replace(/^flat-/, "")) || e === d.adapter) return;
+			G();
 			let t = new URL(window.location.href);
-			t.searchParams.set("adapter", e), t.searchParams.delete("node"), t.searchParams.delete("browseRoot"), V?.initialBrowseRoot && e.replace(/^flat-/, "") === V.initialAdapter.replace(/^flat-/, "") && t.searchParams.set("browseRoot", V.initialBrowseRoot), t.searchParams.delete("initialResource"), t.searchParams.delete("flatScope"), window.location.href = t.toString();
+			t.searchParams.set("adapter", e), t.searchParams.delete("node"), t.searchParams.delete("browseRoot"), B?.initialBrowseRoot && e.replace(/^flat-/, "") === B.initialAdapter.replace(/^flat-/, "") && t.searchParams.set("browseRoot", B.initialBrowseRoot), t.searchParams.delete("initialResource"), t.searchParams.delete("flatScope"), window.location.href = t.toString();
 		}, Yn = async ({ id: e, value: t }) => {
-			if (I.filters[e] = t, e === "menu" && t && !d.browseRoot && d.adapter === "menus") {
-				await B(`menu:${t}`);
+			if (F.filters[e] = t, e === "menu" && t && !d.browseRoot && d.adapter === "menus") {
+				await z(`menu:${t}`);
 				return;
 			}
 			if (e === "menu" && t && !d.browseRoot && d.adapter === "flat-menus") {
@@ -1865,87 +1882,87 @@ var Xt = {
 				e.searchParams.set("flatScope", `menu:${t}`), e.searchParams.set("flatFromNode", `menu:${t}`), window.location.assign(e.toString());
 				return;
 			}
-			await B(I.selectedNode);
+			await z(F.selectedNode);
 		}, Xn = async () => {
-			(I.presentation.filters || []).forEach((e) => {
-				I.filters[e.id] = e.default ?? "";
-			}), await B(I.selectedNode);
+			(F.presentation.filters || []).forEach((e) => {
+				F.filters[e.id] = e.default ?? "";
+			}), await z(F.selectedNode);
 		}, Zn = async (e) => {
-			if (Z && d.flatBreadcrumb?.some((t) => t.id === e)) {
+			if (X && d.flatBreadcrumb?.some((t) => t.id === e)) {
 				if (e === d.flatBreadcrumb.at(-1)?.id) return;
 				let t = new URL(window.location.href), n = t.searchParams.get("flatFromBrowseRoot") || (t.searchParams.has("flatFromAdapter") ? null : d.browseRoot);
-				await Pn(Ht(window.location.href, d.adapter.replace(/^flat-/, ""), e, n));
+				await Pn(Wt(window.location.href, d.adapter.replace(/^flat-/, ""), e, n));
 				return;
 			}
-			if (d.adapter.startsWith("flat-") && e === I.selectedNode && e === I.roots[0]?.id) {
-				I.search = "", I.sortBy = d.defaultSortBy || "", I.sortDirection = d.defaultSortDirection || "";
-				let e = Wt(window.location.href, d.flatRootNode);
+			if (d.adapter.startsWith("flat-") && e === F.selectedNode && e === F.roots[0]?.id) {
+				F.search = "", F.sortBy = d.defaultSortBy || "", F.sortDirection = d.defaultSortDirection || "";
+				let e = Kt(window.location.href, d.flatRootNode);
 				if (e !== window.location.href) {
-					(I.presentation.filters || []).forEach((e) => {
-						I.filters[e.id] = e.default ?? "";
+					(F.presentation.filters || []).forEach((e) => {
+						F.filters[e.id] = e.default ?? "";
 					}), await T(), window.location.assign(e);
 					return;
 				}
 				await Xn();
 				return;
 			}
-			await B(e);
+			await z(e);
 		}, Qn = (e) => {
-			I.sortBy === e ? I.sortDirection === "asc" ? I.sortDirection = "desc" : (I.sortBy = "", I.sortDirection = "") : (I.sortBy = e, I.sortDirection = "asc");
+			F.sortBy === e ? F.sortDirection === "asc" ? F.sortDirection = "desc" : (F.sortBy = "", F.sortDirection = "") : (F.sortBy = e, F.sortDirection = "asc");
 		}, $n = (e) => {
-			I.sortBy = e, I.sortDirection = e ? I.sortDirection || "asc" : "";
+			F.sortBy = e, F.sortDirection = e ? F.sortDirection || "asc" : "";
 		}, er = () => {
 			let e = [
 				"modified",
 				"created",
 				"both"
-			], t = e.indexOf(I.viewOptions.detailsDateMode);
-			I.viewOptions.detailsDateMode = e[(t + 1) % e.length];
+			], t = e.indexOf(F.viewOptions.detailsDateMode);
+			F.viewOptions.detailsDateMode = e[(t + 1) % e.length];
 		}, tr = async (e) => {
-			Rt.value = !1, un.value && await Fe.uploadFiles(e.dataTransfer?.files);
+			zt.value = !1, Xt.value && await Ie.uploadFiles(e.dataTransfer?.files);
 		};
 		return t(() => {
-			if (Z && Mn({ flat: !0 }), !Z && mn && An.flat === !0) {
-				window.location.replace(Ht(window.location.href, d.adapter, I.selectedNode, d.browseRoot));
+			if (X && Mn({ flat: !0 }), !X && hn && An.flat === !0) {
+				window.location.replace(Wt(window.location.href, d.adapter, F.selectedNode, d.browseRoot));
 				return;
 			}
-			B(I.selectedNode).then(async () => {
-				if (H) {
-					let e = V.getCollectionSnapshot();
+			z(F.selectedNode).then(async () => {
+				if (V) {
+					let e = B.getCollectionSnapshot();
 					try {
-						let t = await F.collection(e.items, {
+						let t = await P.collection(e.items, {
 							referenceItems: !0,
-							homogeneous: V.homogeneous
+							homogeneous: B.homogeneous
 						});
-						if (J) return;
-						if (I.selectedResources = Object.fromEntries(t.resources.map((e) => [M(e), fe(e)])), I.selectedIds = t.items.map((e) => Ce(e.selection)), I.focusedId = I.selectedIds.find((e) => L.value.some((t) => M(t) === e)) || I.selectedIds[0] || null, V.initialFocus) {
-							let e = Ce(V.initialFocus);
-							I.selectedIds.includes(e) && (I.focusedId = e);
+						if (q) return;
+						if (F.selectedResources = Object.fromEntries(t.resources.map((e) => [M(e), fe(e)])), F.selectedIds = t.items.map((e) => Ce(e.selection)), F.focusedId = F.selectedIds.find((e) => I.value.some((t) => M(t) === e)) || F.selectedIds[0] || null, B.initialFocus) {
+							let e = Ce(B.initialFocus);
+							F.selectedIds.includes(e) && (F.focusedId = e);
 						}
 					} catch (e) {
-						J || Joomla.renderMessages({ error: [e.message] });
+						q || Joomla.renderMessages({ error: [e.message] });
 					}
 				}
-				if (!H && V?.initialSelection?.length && (!V.initialAdapter || V.initialAdapter.replace(/^flat-/, "") === d.adapter.replace(/^flat-/, ""))) {
-					let e = V.initialSelection.map((e) => e && typeof e == "object" ? e.id : e);
+				if (!V && B?.initialSelection?.length && (!B.initialAdapter || B.initialAdapter.replace(/^flat-/, "") === d.adapter.replace(/^flat-/, ""))) {
+					let e = B.initialSelection.map((e) => e && typeof e == "object" ? e.id : e);
 					try {
-						let t = await F.collection(d.multiple ? e : e.slice(0, 1));
-						if (J) return;
+						let t = await P.collection(d.multiple ? e : e.slice(0, 1));
+						if (q) return;
 						let n = new Set(d.allowedResourceTypes || []), r = t.resources.filter((e) => !e.unavailable && de(e, d.selectionTarget) && (!n.size || n.has(e.type)));
-						I.selectedIds = r.map((e) => e.id), I.selectedResources = Object.fromEntries(r.map((e) => [e.id, e])), I.focusedId = I.selectedIds[0] || null;
+						F.selectedIds = r.map((e) => e.id), F.selectedResources = Object.fromEntries(r.map((e) => [e.id, e])), F.focusedId = F.selectedIds[0] || null;
 					} catch (e) {
-						J || Joomla.renderMessages({ error: [e.message] });
+						q || Joomla.renderMessages({ error: [e.message] });
 					}
 				}
-				d.adapter === "media" && d.initialResource && L.value.some((e) => e.id === d.initialResource) && (I.focusedId = M(L.value.find((e) => e.id === d.initialResource)));
+				d.adapter === "media" && d.initialResource && I.value.some((e) => e.id === d.initialResource) && (F.focusedId = M(I.value.find((e) => e.id === d.initialResource)));
 			});
 		}), (t, n) => (l(), v("div", {
 			ref_key: "shellElement",
 			ref: k,
 			class: E(["smartbrowser-shell sb-redesigned-browser", {
 				"is-site": s(d).application === "site",
-				"is-picker": s(d).mode === "select" || !!s(V),
-				"is-contained": s(d).mode === "select" || !!s(V) || w.value === "focus"
+				"is-picker": s(d).mode === "select" || !!s(B),
+				"is-contained": s(d).mode === "select" || !!s(B) || w.value === "focus"
 			}]),
 			style: e({
 				...s(On),
@@ -1954,45 +1971,45 @@ var Xt = {
 				"--sb-picker-message-height": xe.value
 			})
 		}, [
-			s(I).busy ? (l(), v("div", Xt, [n[17] ||= f("span", {
+			s(F).busy ? (l(), v("div", $t, [n[17] ||= f("span", {
 				class: "spinner-border",
 				"aria-hidden": "true"
-			}, null, -1), f("span", null, u(U("COM_SMARTBROWSER_WORKING")), 1)])) : y("", !0),
-			m($e, {
+			}, null, -1), f("span", null, u(H("COM_SMARTBROWSER_WORKING")), 1)])) : y("", !0),
+			m(et, {
 				ref_key: "browserHeader",
 				ref: me,
 				"native-toolbar-target": s(d).nativeToolbarTarget,
-				"heading-title": s(V) || s(d).mode === "select" ? st.value : We.value,
-				"heading-subtitle": s(V) || s(d).mode === "select" ? s(V)?.subtitle : s(d).browserDescription,
+				"heading-title": s(B) || s(d).mode === "select" ? ct.value : Ge.value,
+				"heading-subtitle": s(B) || s(d).mode === "select" ? s(B)?.subtitle : s(d).browserDescription,
 				"heading-icon": In.value,
-				actions: s(I).actions,
-				available: (e) => Ye(e, s(R)),
-				selection: s(R),
+				actions: s(F).actions,
+				available: (e) => Xe(e, s(L)),
+				selection: s(L),
 				"batch-available": s(d).mode === "manage",
-				"can-cancel": typeof s(V)?.cancel == "function",
-				"flat-available": s(mn),
-				"flat-active": s(Z),
+				"can-cancel": typeof s(B)?.cancel == "function",
+				"flat-available": s(hn),
+				"flat-active": s(X),
 				"flat-busy": Dn.value,
 				"filters-open": jn.value,
-				filters: s(I).presentation.filters,
-				"filter-values": s(I).filters,
+				filters: s(F).presentation.filters,
+				"filter-values": s(F).filters,
 				"manager-url": s(d).managerUrl,
 				"manager-new-tab": s(d).application === "site",
 				"dashboard-url": s(d).dashboardUrl,
 				integrated: s(d).integrated,
 				"selection-mode": s(d).mode === "select",
 				"allow-no-user": s(d).allowNoUser,
-				"can-complete": s(R).length > 0 && !ut.value,
-				"confirm-label": s(V)?.confirmLabel,
-				t: U,
-				onAction: n[1] ||= (e) => Xe(e, s(R)),
-				onBatch: n[2] ||= (e) => Jt.value?.open(),
-				onCancel: n[3] ||= (e) => s(V)?.cancel(),
+				"can-complete": s(L).length > 0 && !dt.value,
+				"confirm-label": s(B)?.confirmLabel,
+				t: H,
+				onAction: n[1] ||= (e) => Ze(e, s(L)),
+				onBatch: n[2] ||= (e) => Yt.value?.open(),
+				onCancel: n[3] ||= (e) => s(B)?.cancel(),
 				onToggleFlat: Fn,
 				onToggleFilters: Nn,
 				onFilter: Yn,
 				onClearFilters: Xn,
-				onComplete: n[4] ||= (e) => Bn(s(R)),
+				onComplete: n[4] ||= (e) => Bn(s(L)),
 				onNoUser: n[5] ||= (e) => Bn([{
 					id: "user:0",
 					type: "user",
@@ -2000,35 +2017,35 @@ var Xt = {
 				}])
 			}, {
 				preferences: a(() => [m(te, {
-					t: U,
+					t: H,
 					adapter: s(d).adapter,
 					"current-view": "",
 					onSaved: En,
 					onResetView: Tn
 				}, null, 8, ["adapter"])]),
-				"display-controls": a(() => [s(V)?.toggleSize ? (l(), v("button", {
+				"display-controls": a(() => [s(B)?.toggleSize ? (l(), v("button", {
 					key: 0,
 					type: "button",
-					class: E(["resource-icon-button resource-display-toggle", { active: ot.value }]),
-					"aria-pressed": ot.value,
-					title: U(ot.value ? "COM_SMARTBROWSER_EDITOR_RESTORE" : "COM_SMARTBROWSER_EDITOR_MAXIMIZE"),
-					"aria-label": U(ot.value ? "COM_SMARTBROWSER_EDITOR_RESTORE" : "COM_SMARTBROWSER_EDITOR_MAXIMIZE"),
-					onClick: n[0] ||= (e) => ot.value = s(V).toggleSize()
+					class: E(["resource-icon-button resource-display-toggle", { active: st.value }]),
+					"aria-pressed": st.value,
+					title: H(st.value ? "COM_SMARTBROWSER_EDITOR_RESTORE" : "COM_SMARTBROWSER_EDITOR_MAXIMIZE"),
+					"aria-label": H(st.value ? "COM_SMARTBROWSER_EDITOR_RESTORE" : "COM_SMARTBROWSER_EDITOR_MAXIMIZE"),
+					onClick: n[0] ||= (e) => st.value = s(B).toggleSize()
 				}, [f("span", {
-					class: E(ot.value ? "fas fa-compress" : "fas fa-expand"),
+					class: E(st.value ? "fas fa-compress" : "fas fa-expand"),
 					"aria-hidden": "true"
-				}, null, 2)], 10, Zt)) : y("", !0), s(x) ? (l(), v("button", {
+				}, null, 2)], 10, en)) : y("", !0), s(x) ? (l(), v("button", {
 					key: 1,
 					type: "button",
 					class: E(["resource-icon-button resource-display-toggle", { active: w.value !== "normal" }]),
 					"aria-pressed": w.value !== "normal",
-					title: U(Ne.value),
-					"aria-label": U(Ne.value),
-					onClick: Pe
+					title: H(Pe.value),
+					"aria-label": H(Pe.value),
+					onClick: Fe
 				}, [f("span", {
 					class: E(w.value === "normal" ? "fas fa-arrows-alt-h" : w.value === "wide" ? "fas fa-expand" : "fas fa-compress"),
 					"aria-hidden": "true"
-				}, null, 2)], 10, Qt)) : y("", !0)]),
+				}, null, 2)], 10, tn)) : y("", !0)]),
 				_: 1
 			}, 8, [
 				"native-toolbar-target",
@@ -2057,14 +2074,14 @@ var Xt = {
 			]),
 			m(ie, {
 				ref_key: "batchDialog",
-				ref: Jt,
-				selection: s(R),
+				ref: Yt,
+				selection: s(L),
 				adapter: s(d).adapter,
-				filters: s(I).presentation.filters,
-				"batch-options": s(I).presentation.batchOptions,
-				"sort-fields": s(I).presentation.sortFields,
-				"ordering-available": dn.value,
-				t: U,
+				filters: s(F).presentation.filters,
+				"batch-options": s(F).presentation.batchOptions,
+				"sort-fields": s(F).presentation.sortFields,
+				"ordering-available": Zt.value,
+				t: H,
 				onApply: zn
 			}, null, 8, [
 				"selection",
@@ -2074,17 +2091,17 @@ var Xt = {
 				"sort-fields",
 				"ordering-available"
 			]),
-			f("div", { class: E(["smartbrowser-layout", { "tree-collapsed": Y.value }]) }, [
-				!Y.value && (!s(Q) || X.value) ? (l(), p(kt, {
+			f("div", { class: E(["smartbrowser-layout", { "tree-collapsed": J.value }]) }, [
+				!J.value && (!s(Z) || Y.value) ? (l(), p(At, {
 					key: 0,
-					adapters: hn.value,
+					adapters: gn.value,
 					"active-adapter": s(d).adapter,
-					roots: X.value?.roots || s(I).roots,
-					nodes: X.value?.nodes || s(I).navigationNodes || s(I).nodes,
-					breadcrumb: X.value?.breadcrumb || s(I).breadcrumb,
-					"selected-node": X.value?.nodeId || s(I).selectedNode,
-					t: U,
-					onOpen: gn,
+					roots: Y.value?.roots || s(F).roots,
+					nodes: Y.value?.nodes || s(F).navigationNodes || s(F).nodes,
+					breadcrumb: Y.value?.breadcrumb || s(F).breadcrumb,
+					"selected-node": Y.value?.nodeId || s(F).selectedNode,
+					t: H,
+					onOpen: Q,
 					onAdapter: Jn
 				}, null, 8, [
 					"adapters",
@@ -2094,216 +2111,213 @@ var Xt = {
 					"breadcrumb",
 					"selected-node"
 				])) : y("", !0),
-				f("div", $t, [f("button", {
+				f("div", nn, [f("button", {
 					type: "button",
 					class: "resource-sidebar-handle",
-					title: U(Y.value ? "COM_SMARTBROWSER_SHOW_TREE" : "COM_SMARTBROWSER_HIDE_TREE"),
-					"aria-label": U(Y.value ? "COM_SMARTBROWSER_SHOW_TREE" : "COM_SMARTBROWSER_HIDE_TREE"),
-					"aria-expanded": !Y.value,
-					"aria-busy": qt.value,
-					onClick: n[6] ||= (e) => Y.value = !Y.value
-				}, [qt.value ? (l(), v("span", tn)) : (l(), v("span", {
+					title: H(J.value ? "COM_SMARTBROWSER_SHOW_TREE" : "COM_SMARTBROWSER_HIDE_TREE"),
+					"aria-label": H(J.value ? "COM_SMARTBROWSER_SHOW_TREE" : "COM_SMARTBROWSER_HIDE_TREE"),
+					"aria-expanded": !J.value,
+					"aria-busy": Ht.value,
+					onClick: n[6] ||= (e) => J.value = !J.value
+				}, [Ht.value ? (l(), v("span", an)) : (l(), v("span", {
 					key: 1,
-					class: E(Y.value ? "fas fa-chevron-right" : "fas fa-chevron-left"),
+					class: E(J.value ? "fas fa-chevron-right" : "fas fa-chevron-left"),
 					"aria-hidden": "true"
-				}, null, 2))], 8, en)]),
-				f("main", nn, [
-					m(yt, {
-						"history-entries": vn.value,
-						"history-previous": yn.value,
-						onHistoryBack: wn,
-						onHistoryOpen: Sn,
-						onHistoryClear: Cn,
-						breadcrumb: _n.value,
-						root: s(I).roots[0],
-						"root-icon": Ln.value,
-						"icon-only-root": _n.value.length > 1,
-						search: s(I).search,
-						"sort-by": s(I).sortBy,
-						"sort-direction": s(I).sortDirection,
-						"sort-fields": s(I).presentation.sortFields,
-						"ordering-field": s(I).presentation.orderingField,
-						views: s(Tt),
-						"active-view": s(I).activeView,
-						"grid-size": s(I).viewOptions.gridSize,
-						"details-thumbnails": s(I).viewOptions.detailsThumbnails,
-						"details-date-mode": s(I).viewOptions.detailsDateMode,
-						columns: Ft.value,
-						"hidden-columns": s(I).hiddenColumns,
-						"shown-columns": s(I).shownColumns,
-						"show-info": gt.value,
-						multiple: s(d).multiple,
-						"can-invert": s(d).multiple && s(Le).length > 0,
-						"reorder-visible": dn.value,
-						"reorder-enabled": fn.value,
-						t: Ue,
-						onOpen: Zn,
-						onInvertSelection: s(Ve),
-						onReorder: pn,
-						onSearch: n[7] ||= (e) => s(I).search = e,
-						onSortBy: $n,
-						onSortDirectionValue: n[8] ||= (e) => s(I).sortDirection = e,
-						onResize: Vn,
-						onToggleThumbnails: n[9] ||= (e) => s(I).viewOptions.detailsThumbnails = !s(I).viewOptions.detailsThumbnails,
-						onToggleDateField: er,
-						onToggleColumn: Lt,
-						onView: At,
-						onInfo: _t
-					}, null, 8, [
-						"history-entries",
-						"history-previous",
-						"breadcrumb",
-						"root",
-						"root-icon",
-						"icon-only-root",
-						"search",
+				}, null, 2))], 8, rn)]),
+				f("main", on, [m(bt, {
+					"history-entries": vn.value,
+					"history-previous": yn.value,
+					onHistoryBack: wn,
+					onHistoryOpen: Sn,
+					onHistoryClear: Cn,
+					breadcrumb: _n.value,
+					root: s(F).roots[0],
+					"root-icon": Ln.value,
+					"icon-only-root": _n.value.length > 1,
+					search: s(F).search,
+					"sort-by": s(F).sortBy,
+					"sort-direction": s(F).sortDirection,
+					"sort-fields": s(F).presentation.sortFields,
+					"ordering-field": s(F).presentation.orderingField,
+					views: s(Et),
+					"active-view": s(F).activeView,
+					"grid-size": s(F).viewOptions.gridSize,
+					"details-thumbnails": s(F).viewOptions.detailsThumbnails,
+					"details-date-mode": s(F).viewOptions.detailsDateMode,
+					columns: It.value,
+					"hidden-columns": s(F).hiddenColumns,
+					"shown-columns": s(F).shownColumns,
+					"show-info": _t.value,
+					multiple: s(d).multiple,
+					"can-invert": s(d).multiple && s(Re).length > 0,
+					"reorder-visible": Zt.value,
+					"reorder-enabled": pn.value,
+					t: We,
+					onOpen: Zn,
+					onInvertSelection: s(He),
+					onReorder: mn,
+					onSearch: n[7] ||= (e) => s(F).search = e,
+					onSortBy: $n,
+					onSortDirectionValue: n[8] ||= (e) => s(F).sortDirection = e,
+					onResize: Vn,
+					onToggleThumbnails: n[9] ||= (e) => s(F).viewOptions.detailsThumbnails = !s(F).viewOptions.detailsThumbnails,
+					onToggleDateField: er,
+					onToggleColumn: Rt,
+					onView: jt,
+					onInfo: vt
+				}, null, 8, [
+					"history-entries",
+					"history-previous",
+					"breadcrumb",
+					"root",
+					"root-icon",
+					"icon-only-root",
+					"search",
+					"sort-by",
+					"sort-direction",
+					"sort-fields",
+					"ordering-field",
+					"views",
+					"active-view",
+					"grid-size",
+					"details-thumbnails",
+					"details-date-mode",
+					"columns",
+					"hidden-columns",
+					"shown-columns",
+					"show-info",
+					"multiple",
+					"can-invert",
+					"reorder-visible",
+					"reorder-enabled",
+					"onInvertSelection"
+				]), f("div", {
+					class: E(["resource-browser", {
+						loading: kt.value,
+						"is-dragging": zt.value,
+						"info-open": _t.value,
+						"usage-open": mt.value
+					}]),
+					"aria-busy": kt.value,
+					onDragenter: n[12] ||= b((e) => zt.value = Xt.value, ["prevent"]),
+					onDragover: n[13] ||= b(() => {}, ["prevent"]),
+					onDragleave: n[14] ||= b((e) => zt.value = !1, ["self"]),
+					onDrop: b(tr, ["prevent"])
+				}, [
+					kt.value ? (l(), v("div", cn, [n[18] ||= f("span", {
+						class: "spinner-border",
+						"aria-hidden": "true"
+					}, null, -1), f("span", null, u(H("COM_SMARTBROWSER_LOADING")), 1)])) : s(I).length ? (l(), p(o(Dt.value.component), {
+						key: 2,
+						resources: Ft.value,
+						"selected-ids": s(F).selectedIds,
+						"focused-id": s(F).focusedId,
+						"all-selected": s(Re).length > 0 && s(Re).every((e) => s(F).selectedIds.includes(s(M)(e))),
+						options: s(F).viewOptions,
+						"selection-controls": !s(B) || s(d).multiple !== !1,
+						actions: s(F).actions,
+						"action-available": Gn,
+						"default-action": Hn,
+						"preview-action": Un,
+						"modified-action": Wn,
+						"sort-by": s(F).sortBy,
+						"sort-direction": s(F).sortDirection,
+						"sort-fields": s(F).presentation.sortFields,
+						"ordering-field": s(F).presentation.orderingField,
+						columns: Lt.value,
+						"grid-fields": s(F).presentation.gridFields,
+						t: We,
+						onSelect: s(Be),
+						onFocus: s(ze),
+						onSelectAll: s(Ve),
+						onOpen: s(z),
+						onActivate: Kn,
+						onAction: qn,
+						onSort: Qn
+					}, {
+						end: a(() => [s(F).loadingMode === "smart" ? (l(), p(Vt, {
+							key: 0,
+							enabled: !!s(F).pagination?.hasMore && !s(F).loading && !s(F).loadingMore && !s(F).loadingAll && !s(F).error,
+							"request-key": `${s(F).navigationRevision}:${s(F).pagination?.nextOffset}`,
+							onLoad: n[10] ||= (e) => s(r).loadMore()
+						}, null, 8, ["enabled", "request-key"])) : y("", !0)]),
+						_: 1
+					}, 40, [
+						"resources",
+						"selected-ids",
+						"focused-id",
+						"all-selected",
+						"options",
+						"selection-controls",
+						"actions",
 						"sort-by",
 						"sort-direction",
 						"sort-fields",
 						"ordering-field",
-						"views",
-						"active-view",
-						"grid-size",
-						"details-thumbnails",
-						"details-date-mode",
 						"columns",
-						"hidden-columns",
-						"shown-columns",
-						"show-info",
-						"multiple",
-						"can-invert",
-						"reorder-visible",
-						"reorder-enabled",
-						"onInvertSelection"
-					]),
-					f("div", {
-						class: E(["resource-browser", {
-							loading: Ot.value,
-							"is-dragging": Rt.value,
-							"info-open": gt.value,
-							"usage-open": pt.value
-						}]),
-						"aria-busy": Ot.value,
-						onDragenter: n[12] ||= b((e) => Rt.value = un.value, ["prevent"]),
-						onDragover: n[13] ||= b(() => {}, ["prevent"]),
-						onDragleave: n[14] ||= b((e) => Rt.value = !1, ["self"]),
-						onDrop: b(tr, ["prevent"])
-					}, [
-						Ot.value ? (l(), v("div", an, [n[18] ||= f("span", {
-							class: "spinner-border",
-							"aria-hidden": "true"
-						}, null, -1), f("span", null, u(U("COM_SMARTBROWSER_LOADING")), 1)])) : s(L).length ? (l(), p(o(Et.value.component), {
-							key: 2,
-							resources: Pt.value,
-							"selected-ids": s(I).selectedIds,
-							"focused-id": s(I).focusedId,
-							"all-selected": s(Le).length > 0 && s(Le).every((e) => s(I).selectedIds.includes(s(M)(e))),
-							options: s(I).viewOptions,
-							"selection-controls": !s(V) || s(d).multiple !== !1,
-							actions: s(I).actions,
-							"action-available": Gn,
-							"default-action": Hn,
-							"preview-action": Un,
-							"modified-action": Wn,
-							"sort-by": s(I).sortBy,
-							"sort-direction": s(I).sortDirection,
-							"sort-fields": s(I).presentation.sortFields,
-							"ordering-field": s(I).presentation.orderingField,
-							columns: It.value,
-							"grid-fields": s(I).presentation.gridFields,
-							t: Ue,
-							onSelect: s(ze),
-							onFocus: s(Re),
-							onSelectAll: s(Be),
-							onOpen: s(B),
-							onActivate: Kn,
-							onAction: qn,
-							onSort: Qn
-						}, {
-							end: a(() => [s(I).loadingMode === "smart" ? (l(), p(Bt, {
-								key: 0,
-								enabled: !!s(I).pagination?.hasMore && !s(I).loading && !s(I).loadingMore && !s(I).loadingAll && !s(I).error,
-								"request-key": `${s(I).navigationRevision}:${s(I).pagination?.nextOffset}`,
-								onLoad: n[10] ||= (e) => s(r).loadMore()
-							}, null, 8, ["enabled", "request-key"])) : y("", !0)]),
-							_: 1
-						}, 40, [
-							"resources",
-							"selected-ids",
-							"focused-id",
-							"all-selected",
-							"options",
-							"selection-controls",
-							"actions",
-							"sort-by",
-							"sort-direction",
-							"sort-fields",
-							"ordering-field",
-							"columns",
-							"grid-fields",
-							"onSelect",
-							"onFocus",
-							"onSelectAll",
-							"onOpen"
-						])) : (l(), v("div", on, [f("span", {
-							class: E(s(I).search ? "fas fa-search" : un.value ? "fas fa-cloud-upload-alt" : In.value),
-							"aria-hidden": "true"
-						}, null, 2), f("p", null, u(s(I).search ? U("COM_SMARTBROWSER_NO_RESULTS") : un.value ? U("COM_SMARTBROWSER_DROP_UPLOAD") : U("COM_SMARTBROWSER_EMPTY_STATE")), 1)])),
-						un.value && Rt.value ? (l(), v("div", sn, [n[19] ||= f("span", { class: "fas fa-cloud-upload-alt" }, null, -1), h(u(U("COM_SMARTBROWSER_DROP_UPLOAD")), 1)])) : y("", !0),
-						gt.value ? (l(), v("div", cn, [m(Se, {
-							resource: s(z),
-							fields: s(z)?.collectionPresentation?.infoFields || s(I).presentation.infoFields,
-							t: U,
-							"usage-definitions": dt.value,
-							"usage-values": ft.value,
-							"usage-errors": lt.value[s(M)(s(z))] || {},
-							"usage-editors": s(V)?.editors,
-							"resolve-reference": rt,
-							"usage-revision": ct.value,
-							"preview-actions": wt.value,
-							"preview-context": xt.value,
-							"can-preview": !!Un(s(z)) && Ke(s(z)).canPreview(s(z)) && !s(I).busy,
-							onPreview: n[11] ||= (e) => qn(Un(s(z)), s(z)),
-							onUsageChange: bt
-						}, null, 8, [
-							"resource",
-							"fields",
-							"usage-definitions",
-							"usage-values",
-							"usage-errors",
-							"usage-editors",
-							"usage-revision",
-							"preview-actions",
-							"preview-context",
-							"can-preview"
-						])])) : y("", !0)
-					], 42, rn),
-					m(zt, {
-						page: s(I).pagination,
-						total: s(L).length,
-						smart: s(I).loadingMode === "smart",
-						loaded: s(I).loadedCount,
-						busy: s(I).loading || s(I).loadingMore || s(I).loadingAll,
-						t: U,
-						onPage: se,
-						onMore: n[15] ||= (e) => s(r).loadMore(),
-						onAll: n[16] ||= (e) => s(r).loadAll()
+						"grid-fields",
+						"onSelect",
+						"onFocus",
+						"onSelectAll",
+						"onOpen"
+					])) : (l(), v("div", ln, [f("span", {
+						class: E(s(F).search ? "fas fa-search" : Xt.value ? "fas fa-cloud-upload-alt" : In.value),
+						"aria-hidden": "true"
+					}, null, 2), f("p", null, u(s(F).search ? H("COM_SMARTBROWSER_NO_RESULTS") : Xt.value ? H("COM_SMARTBROWSER_DROP_UPLOAD") : H("COM_SMARTBROWSER_EMPTY_STATE")), 1)])),
+					Xt.value && zt.value ? (l(), v("div", un, [n[19] ||= f("span", { class: "fas fa-cloud-upload-alt" }, null, -1), h(u(H("COM_SMARTBROWSER_DROP_UPLOAD")), 1)])) : y("", !0),
+					_t.value ? (l(), v("div", dn, [m(Se, {
+						resource: s(R),
+						fields: s(R)?.collectionPresentation?.infoFields || s(F).presentation.infoFields,
+						t: H,
+						"usage-definitions": ft.value,
+						"usage-values": pt.value,
+						"usage-errors": ut.value[s(M)(s(R))] || {},
+						"usage-editors": s(B)?.editors,
+						"resolve-reference": it,
+						"usage-revision": lt.value,
+						"preview-actions": Tt.value,
+						"preview-context": St.value,
+						"can-preview": !!Un(s(R)) && qe(s(R)).canPreview(s(R)) && !s(F).busy,
+						onPreview: n[11] ||= (e) => qn(Un(s(R)), s(R)),
+						onUsageChange: xt
 					}, null, 8, [
-						"page",
-						"total",
-						"smart",
-						"loaded",
-						"busy"
-					])
-				])
+						"resource",
+						"fields",
+						"usage-definitions",
+						"usage-values",
+						"usage-errors",
+						"usage-editors",
+						"usage-revision",
+						"preview-actions",
+						"preview-context",
+						"can-preview"
+					])])) : y("", !0)
+				], 42, sn)])
 			], 2),
-			s(He) ? (l(), v("div", {
+			m(Bt, {
+				page: s(F).pagination,
+				total: s(I).length,
+				smart: s(F).loadingMode === "smart",
+				loaded: s(F).loadedCount,
+				busy: s(F).loading || s(F).loadingMore || s(F).loadingAll,
+				t: H,
+				onPage: se,
+				onMore: n[15] ||= (e) => s(r).loadMore(),
+				onAll: n[16] ||= (e) => s(r).loadAll()
+			}, null, 8, [
+				"page",
+				"total",
+				"smart",
+				"loaded",
+				"busy"
+			]),
+			s(Ue) ? (l(), v("div", {
 				key: 1,
 				ref_key: "messagesElement",
 				ref: ge,
 				class: "sb-browser-messages"
 			}, null, 512)) : y("", !0),
-			s(He) ? (l(), v("details", {
+			s(Ue) ? (l(), v("details", {
 				key: 2,
 				ref_key: "pickerFooter",
 				ref: ve,
@@ -2313,37 +2327,37 @@ var Xt = {
 					class: "fas fa-chevron-up resource-picker-collection-chevron",
 					"aria-hidden": "true"
 				}, null, -1),
-				h(u(U("COM_SMARTBROWSER_COLLECTION_TITLE")) + ": ", 1),
-				f("span", null, u(s(I).selectedIds.length), 1)
-			]), f("div", ln, [s(W) ? (l(), p(pe, {
+				h(u(H("COM_SMARTBROWSER_COLLECTION_TITLE")) + ": ", 1),
+				f("span", null, u(s(F).selectedIds.length), 1)
+			]), f("div", fn, [s(U) ? (l(), p(pe, {
 				key: 0,
-				model: s(W),
-				api: s(F),
-				config: tt,
-				t: U
+				model: s(U),
+				api: s(P),
+				config: nt,
+				t: H
 			}, null, 8, ["model", "api"])) : y("", !0)])], 512)) : y("", !0)
 		], 6));
 	}
-}, dn = "supjx.smartbrowser.preferencesResetToken";
-function fn(e, t) {
-	if (!t || e.getItem(dn) === t) return !1;
+}, mn = "supjx.smartbrowser.preferencesResetToken";
+function hn(e, t) {
+	if (!t || e.getItem(mn) === t) return !1;
 	let n = [];
 	for (let t = 0; t < e.length; t++) {
 		let r = e.key(t);
-		r?.startsWith("supjx.smartbrowser.") && r !== dn && r !== "supjx.smartbrowser.editorReturn" && n.push(r);
+		r?.startsWith("supjx.smartbrowser.") && r !== mn && r !== "supjx.smartbrowser.editorReturn" && n.push(r);
 	}
-	return n.forEach((t) => e.removeItem(t)), e.setItem(dn, t), !0;
+	return n.forEach((t) => e.removeItem(t)), e.setItem(mn, t), !0;
 }
 //#endregion
 //#region resources/js/core/resetSessionNavigation.js
-var pn = "supjx.smartbrowser.";
-function mn(e, t, n) {
+var X = "supjx.smartbrowser.";
+function Z(e, t, n) {
 	if (!n) return !1;
-	let r = `${pn}session.${t}`, i = e.getItem(r);
+	let r = `${X}session.${t}`, i = e.getItem(r);
 	if (e.setItem(r, n), !i || i === n) return !1;
 	for (let t = 0; t < e.length; t++) {
 		let n = e.key(t);
-		if (!(!n?.startsWith(pn) || n.startsWith(`${pn}ui.`) || n.startsWith(`${pn}session.`))) try {
+		if (!(!n?.startsWith(X) || n.startsWith(`${X}ui.`) || n.startsWith(`${X}session.`))) try {
 			let t = JSON.parse(e.getItem(n));
 			if (!t || typeof t != "object" || Array.isArray(t) || !("selectedNode" in t) && !("filters" in t)) continue;
 			delete t.selectedNode, delete t.filters, e.setItem(n, JSON.stringify(t));
@@ -2351,7 +2365,7 @@ function mn(e, t, n) {
 	}
 	return !0;
 }
-function Z(e) {
+function gn(e) {
 	let t = new URL(e);
 	if (t.searchParams.delete("node"), t.searchParams.has("flatFromAdapter")) {
 		let e = t.searchParams.get("flatFromBrowseRoot");
@@ -2361,18 +2375,18 @@ function Z(e) {
 }
 //#endregion
 //#region resources/js/main.js
-var Q = Joomla.getOptions("com_smartbrowser", {}), hn = k(), gn = A(hn, Q.adapter);
-gn !== "inherit" && (Q.showContextResources = gn === "show"), hn.editorMode !== "inherit" && (Q.editorMode = hn.editorMode);
-var _n = null;
+var Q = Joomla.getOptions("com_smartbrowser", {}), _n = k(), vn = A(_n, Q.adapter);
+vn !== "inherit" && (Q.showContextResources = vn === "show"), _n.editorMode !== "inherit" && (Q.editorMode = _n.editorMode);
+var yn = null;
 try {
-	_n = window.parent !== window && Q.pickerInstance ? window.parent.SmartBrowserPicker?.context(Q.pickerInstance, window) : null;
+	yn = window.parent !== window && Q.pickerInstance ? window.parent.SmartBrowserPicker?.context(Q.pickerInstance, window) : null;
 } catch {}
-Q.pickerContext = _n, fn(window.sessionStorage, Q.preferencesResetToken);
-var vn = mn(window.sessionStorage, Q.application, Q.csrfToken) ? Z(window.location.href) : window.location.href;
-if (vn !== window.location.href) window.location.replace(vn);
+Q.pickerContext = yn, hn(window.sessionStorage, Q.preferencesResetToken);
+var $ = Z(window.sessionStorage, Q.application, Q.csrfToken) ? gn(window.location.href) : window.location.href;
+if ($ !== window.location.href) window.location.replace($);
 else {
-	let e = new ce(Q), t = Kt(Q), n = new X(D(), t, Q);
-	_n && (Q.pickerRememberedInfo = n.load({}).showInfo);
+	let e = new ce(Q), t = Jt(Q), n = new Yt(D(), t, Q);
+	yn && (Q.pickerRememberedInfo = n.load({}).showInfo);
 	let r = ge().register({
 		id: "grid",
 		label: "COM_SMARTBROWSER_GRID",
@@ -2405,6 +2419,6 @@ else {
 			window.location.href = `${Q.returnUrl}&adapter=${encodeURIComponent(e.adapter || Q.adapter)}&mode=${encodeURIComponent(e.mode || "select")}&multiple=${+!!e.multiple}&selectionTarget=${encodeURIComponent(e.selectionTarget || "item")}&showContextResources=${+!!t}${n}${r}${i}${a}`;
 		},
 		registerView: (e) => r.register(e)
-	}, x(un).provide("browser", i).provide("persistence", n).provide("resourceApi", e).provide("smartBrowserOptions", Q).provide("viewRegistry", r).provide("actionDriver", a).mount("#smartbrowser-app");
+	}, x(pn).provide("browser", i).provide("persistence", n).provide("resourceApi", e).provide("smartBrowserOptions", Q).provide("viewRegistry", r).provide("actionDriver", a).mount("#smartbrowser-app");
 }
 //#endregion

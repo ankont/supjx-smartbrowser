@@ -1,5 +1,31 @@
 # Changelog
 
+## 6.0.5 - 2026-11-15
+
+- Preserve single-tag SEF identifiers when opening the integrated frontend tag editor.
+
+## 6.0.4 - 2026-11-15
+
+- Hide the empty availability-field row in Resource Editors settings.
+
+## 6.0.3 - 2026-11-15
+
+- Integrate the optional SmartTag frontend tag editor with SmartBrowser editor replacement and native fallback.
+- Correct Joomla switcher option ordering for editor-button integrations.
+
+## 6.0.2 - 2026-11-14
+
+- Keep scoped menu browsers on the requested menu when restoring flat mode, avoiding stale locations from other menus.
+- Prevent the SmartBrowser dashboard menu from also appearing active in integrated administrator browsers.
+- Constrain external toolbar buttons to their own bounds.
+
+## 6.0.1 - 2026-11-10
+
+- Extend the result-count bar across the browser, including its navigation tree.
+- Show icon-only loading actions on portrait phones while retaining accessible names and tooltips.
+- Recheck smart-loading sentinels on nested scrolling and mobile viewport changes, with animation-frame throttling and lifecycle cleanup.
+- Refine the Greek personal page-size label.
+
 ## 6.0.0 - 2026-11-08
 
 - Release unified pagination and smart loading across built-in adapters, retaining native defaults and selections across batches.

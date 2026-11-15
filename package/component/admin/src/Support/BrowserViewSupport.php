@@ -139,8 +139,8 @@ final class BrowserViewSupport
             'apiBaseUrl' => Uri::base() . 'index.php?option=com_smartbrowser&format=json',
             'csrfToken' => Session::getFormToken(),
             'initialNode' => $adapter instanceof BrowseRootAwareInterface ? $adapter->getInitialNode() : ($adapter->getRoots()[0]['id'] ?? ''),
-            'currentNode' => $input->getString('node') && $adapter instanceof BrowseRootAwareInterface
-                ? $adapter->getInitialNode($input->getString('node')) : $input->getString('node'),
+            'currentNode' => ($input->getString('node') || ($adapterId === 'menus' && $browseRoot)) && $adapter instanceof BrowseRootAwareInterface
+                ? $adapter->getInitialNode($input->getString('node') ?: $browseRoot) : $input->getString('node'),
             'initialResource' => $adapterId === 'media' ? $input->getString('initialResource') : '',
             'roots' => $adapter->getRoots(), 'actions' => $mode === 'readonly' ? [] : $adapter->getActions([]),
             'maxUploadSizeMb' => (float) ComponentHelper::getParams('com_media')->get('upload_maxsize', 0),

@@ -22,12 +22,27 @@ const check = () => {
   const viewport = root?.getBoundingClientRect() || { top: 0, bottom: innerHeight };
   if (rect.top <= viewport.bottom + 180 && rect.bottom >= viewport.top) { requested = props.requestKey; emit('load'); }
 };
+const schedule = () => {
+  cancelAnimationFrame(frame);
+  frame = requestAnimationFrame(check);
+};
 onMounted(() => {
   connect();
+  // Nested scrollers and mobile viewport changes can change the effective root
+  // without crossing an IntersectionObserver threshold.
+  document.addEventListener('scroll', schedule, { capture: true, passive: true });
+  window.addEventListener('resize', schedule, { passive: true });
+  window.visualViewport?.addEventListener('resize', schedule, { passive: true });
+  schedule();
 });
 watch(() => [props.enabled, props.requestKey], async () => {
   await nextTick(); if (disposed) return;
   cancelAnimationFrame(frame); frame = requestAnimationFrame(check);
 });
-onBeforeUnmount(() => { disposed = true; observer?.disconnect(); cancelAnimationFrame(frame); });
+onBeforeUnmount(() => {
+  disposed = true; observer?.disconnect(); cancelAnimationFrame(frame);
+  document.removeEventListener('scroll', schedule, true);
+  window.removeEventListener('resize', schedule);
+  window.visualViewport?.removeEventListener('resize', schedule);
+});
 </script>
