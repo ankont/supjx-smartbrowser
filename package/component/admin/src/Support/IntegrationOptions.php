@@ -28,11 +28,18 @@ final class IntegrationOptions
 
     public static function editorKey(string $type, bool $site): ?string
     {
-        if ($site) return $type === 'article' ? 'replace_editor_article_site' : null;
+        if ($site) return match ($type) { 'article' => 'replace_editor_article_site', 'tag' => self::smartTagFrontendEditor() ? 'replace_editor_tag_site' : null, default => null };
         return match ($type) {
             'article' => 'replace_editor_article_admin', 'category' => 'replace_editor_category_admin',
             'tag' => 'replace_editor_tag_admin', 'menu-item' => 'replace_editor_menu_admin',
             'user' => 'replace_editor_user_admin', default => null,
         };
+    }
+
+    public static function smartTagFrontendEditor(): bool
+    {
+        if (!PluginHelper::isEnabled('system', 'smarttagenhancements')) return false;
+        $plugin = PluginHelper::getPlugin('system', 'smarttagenhancements');
+        return (int) (new \Joomla\Registry\Registry($plugin->params ?? ''))->get('enable_frontend_editing', 1) === 1;
     }
 }

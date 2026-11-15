@@ -37,7 +37,7 @@ $native = match ($this->resourceType) {
     'tag' => 'com_tags&task=tag.edit', 'menu-item' => 'com_menus&task=item.edit',
     'user' => 'com_users&task=user.edit', default => null,
 };
-$nativeUrl = $native && ($administrator || $this->resourceType === 'article')
+$nativeUrl = $native && ($administrator || $this->resourceType === 'article' || ($this->resourceType === 'tag' && $this->resourceId > 0 && \SuperSoft\Component\Smartbrowser\Administrator\Support\IntegrationOptions::smartTagFrontendEditor()))
     ? Route::_('index.php?option=' . ($this->resourceId > 0 ? $native : str_replace('.edit', '.add', $native)) . '&id=' . $this->resourceId . '&sbNative=1'
         . ($this->resourceType === 'article' ? '&catid=' . (int) $form->getValue('catid') : '')
         . (!$input->getBool('sbpage') ? '&tmpl=component&layout=modal' : ''), false) : null;
@@ -61,6 +61,7 @@ if ($nativeUrl) {
     $origin = strlen($encodedReturn) <= 4096 ? base64_decode($encodedReturn, true) : false;
     if ($origin && \Joomla\CMS\Uri\Uri::isInternal($origin)) {
         $nativeUrl .= (str_contains($nativeUrl, '?') ? '&' : '?') . 'sbReturn=' . rawurlencode($encodedReturn);
+        if (!$administrator && $this->resourceType === 'tag') $nativeUrl .= '&return=' . rawurlencode($encodedReturn);
     }
 }
 $editorLink = static function (string $url) use ($contextualArticle, $form, $input): string {

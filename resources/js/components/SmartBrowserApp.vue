@@ -149,9 +149,9 @@
             :preview-actions="previewActions" :preview-context="previewContext" :can-preview="Boolean(resourcePreview(focusedResource)) && driverFor(focusedResource).canPreview(focusedResource) && !state.busy" @preview="runItemAction(resourcePreview(focusedResource), focusedResource)" @usage-change="setUsage" />
           </div>
         </div>
-        <ResourcePagination :page="state.pagination" :total="resources.length" :smart="state.loadingMode === 'smart'" :loaded="state.loadedCount" :busy="state.loading || state.loadingMore || state.loadingAll" :t="t" @page="changePage" @more="browser.loadMore()" @all="browser.loadAll()" />
       </main>
     </div>
+    <ResourcePagination :page="state.pagination" :total="resources.length" :smart="state.loadingMode === 'smart'" :loaded="state.loadedCount" :busy="state.loading || state.loadingMore || state.loadingAll" :t="t" @page="changePage" @more="browser.loadMore()" @all="browser.loadAll()" />
     <div v-if="pickerMode" ref="messagesElement" class="sb-browser-messages" />
     <details v-if="pickerMode" ref="pickerFooter" class="resource-picker-collection">
       <summary><span class="fas fa-chevron-up resource-picker-collection-chevron" aria-hidden="true" />{{ t('COM_SMARTBROWSER_COLLECTION_TITLE') }}: <span>{{ state.selectedIds.length }}</span></summary>

@@ -1,6 +1,7 @@
 <?php
 namespace Joomla\Event { interface SubscriberInterface {} }
-namespace Joomla\CMS\Plugin { class CMSPlugin { public object $app; protected function getApplication() { return $this->app; } } }
+namespace Joomla\CMS\Plugin { class CMSPlugin { public object $app; protected function getApplication() { return $this->app; } } class PluginHelper { public static bool $enabled = false; public static function isEnabled($group, $name) { return self::$enabled; } public static function getPlugin($group, $name) { return (object) ['params' => '{}']; } } }
+namespace Joomla\Registry { class Registry { public function __construct($values = '') {} public function get($key, $default = null) { return $default; } } }
 namespace Joomla\CMS\Component { class ComponentHelper { public static array $values = []; public static function getParams($name) { return new class { public function get($key, $default = null) { return ComponentHelper::$values[$key] ?? $default; } }; } } }
 namespace Joomla\CMS\Router { class Route { public static function _($url, ...$args) { return $url; } } }
 namespace Joomla\CMS\Session { class Session { public static bool $valid = true; public static function checkToken(...$args) { return self::$valid; } } }
@@ -33,6 +34,19 @@ namespace {
     };
     $plugin = new \SuperSoft\Plugin\System\Smartbrowserintegration\Extension\Smartbrowserintegration(); $plugin->app = $app;
     $check = static function ($value, $message) { if (!$value) throw new \RuntimeException($message); };
+    $app->site = true; $input->values = ['option'=>'com_tags', 'task'=>'tag.edit', 'id'=>42];
+    \Joomla\CMS\Component\ComponentHelper::$values = ['replace_editor_tag_site'=>1];
+    $app->redirect = null; $plugin->replaceNativeEditor(); $check($app->redirect === null, 'Unavailable SmartTag editor was replaced');
+    \Joomla\CMS\Plugin\PluginHelper::$enabled = true;
+    $app->redirect = null; $plugin->replaceNativeEditor(); $check(str_contains($app->redirect ?? '', 'type=tag'), 'SmartTag editor was not replaced');
+    $input->values = ['option'=>'com_tags', 'view'=>'tag', 'id'=>42]; $app->redirect = null;
+    $plugin->replaceNativeEditor(); $check($app->redirect === null, 'Public tag view was replaced');
+    foreach ([[42], ['42:thematic']] as $routedId) {
+        $input->values = ['option'=>'com_tags', 'task'=>'tag.edit', 'id'=>$routedId];
+        $app->redirect = null; $plugin->replaceNativeEditor();
+        $check(str_contains($app->redirect ?? '', '&id=42'), 'SEF tag identifier was lost');
+    }
+    $app->site = false; \Joomla\CMS\Plugin\PluginHelper::$enabled = false;
     foreach ([['com_content','article','article_admin'],['com_categories','category','category_admin'],['com_tags','tag','tag_admin'],['com_menus','item','menu_admin'],['com_users','user','user_admin']] as [$component,$task,$key]) {
         $input->values = ['option'=>$component,'task'=>$task.'.edit','id'=>42];
         $app->states=[]; $app->redirect=null;
@@ -142,6 +156,16 @@ namespace {
     $input->method='GET';
     \Joomla\CMS\Component\ComponentHelper::$values = ['replace_articles'=>'1', 'replace_menus'=>'1', 'hide_component_menu'=>'1'];
     $rewrite = new \ReflectionMethod($plugin, 'rewrite');
+    $input->values = ['option'=>'com_smartbrowser', 'view'=>'browser', 'adapter'=>'menus', 'browseRoot'=>'menu:main'];
+    $component = new class {
+        public bool $active = true;
+        public string $link = 'index.php?option=com_smartbrowser';
+    };
+    $componentItems = [$component];
+    \Joomla\CMS\Component\ComponentHelper::$values['hide_component_menu'] = '0';
+    $rewrite->invokeArgs($plugin, [&$componentItems]);
+    $check(!$component->active && $component->link === 'index.php?option=com_smartbrowser&view=dashboard', 'Component dashboard must not prefix-match integrated browsers');
+    \Joomla\CMS\Component\ComponentHelper::$values['hide_component_menu'] = '1';
     foreach ([['articles', '', 'articles'], ['menus', 'menu:main', 'main'], ['flat-menus', 'menu:main', 'main']] as [$adapter, $scope, $expected]) {
         $input->values = ['option'=>'com_smartbrowser', 'view'=>'browser', 'adapter'=>$adapter, 'browseRoot'=>$scope, 'integrated'=>1];
         $make = static fn ($id, $link) => new class($id, $link) {

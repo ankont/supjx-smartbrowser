@@ -140,7 +140,13 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
             'com_content' => 'article', 'com_categories' => 'category', 'com_tags' => 'tag',
             'com_menus' => 'menu-item', 'com_users' => 'user', default => null,
         };
-        $id = $input->getInt('id', $input->getInt('a_id'));
+        if ($site && $type === 'tag') {
+            // com_tags SEF routes supply a single-element ID array, possibly id:alias.
+            $rawId = $input->get('id', null, 'raw');
+            if (is_array($rawId)) $rawId = count($rawId) === 1 ? reset($rawId) : null;
+            $rawId = is_scalar($rawId) ? explode(':', (string) $rawId, 2)[0] : '';
+            $id = ctype_digit($rawId) ? (int) $rawId : 0;
+        } else $id = $input->getInt('id', $input->getInt('a_id'));
         $requestedTask = $input->getCmd('task', '');
         $creating = $type && $requestedTask === ($type === 'menu-item' ? 'item' : $type) . '.add';
         if ($site && $type === 'article') $id = $input->getInt('a_id');
@@ -160,6 +166,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
         $taskPrefix = $type === 'menu-item' ? 'item' : ($type ?? '');
         $entry = in_array($task, [$taskPrefix . '.edit', $taskPrefix . '.add'], true)
             || ($task === '' && $editView !== '' && $view === $editView);
+        if ($site && $type === 'tag') $entry = $task === 'tag.edit' && $id > 0;
         if ($task === '' && $entry && $id > 0 && $app->getUserState($stateKey) === [$option, 0]) {
             // Native Apply can assign a new record ID while staying in the fallback editor.
             $app->setUserState($stateKey, [$option, $id]);
@@ -179,7 +186,7 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
             $value = $input->getString($name, '');
             if ($value !== '') $url .= '&' . $name . '=' . rawurlencode($value);
         }
-        $return = $site ? ($id > 0 ? 'index.php?option=com_content&view=article&id=' . $id : 'index.php') : 'index.php?option=com_smartbrowser&view=dashboard';
+        $return = $site ? ($id > 0 && $type === 'article' ? 'index.php?option=com_content&view=article&id=' . $id : 'index.php') : 'index.php?option=com_smartbrowser&view=dashboard';
         $encoded = $input->getString('return', '');
         $requested = strlen($encoded) <= 4096 ? base64_decode($encoded, true) : false;
         if ($requested && Uri::isInternal($requested)) $return = $requested;
@@ -401,6 +408,15 @@ final class Smartbrowserintegration extends CMSPlugin implements SubscriberInter
     {
         $params = ComponentHelper::getParams('com_smartbrowser');
         foreach ($items as $item) {
+            if ($this->isComponentMenu((string) ($item->link ?? '')) && $this->getApplication()->getInput()->getCmd('option') === 'com_smartbrowser'
+                && $this->getApplication()->getInput()->getCmd('view') === 'browser'
+                && $this->managerAdapter('index.php?option=com_' . match (preg_replace('/^flat-/', '', $this->getApplication()->getInput()->getCmd('adapter'))) {
+                    'articles' => 'content&view=articles', 'categories' => 'categories&view=categories', 'tags' => 'tags&view=tags',
+                    'menus' => 'menus&view=items', 'users' => 'users&view=users', 'media' => 'media', default => '',
+                })) {
+                $item->active = false;
+                if (!str_contains((string) $item->link, 'view=')) $item->link .= '&view=dashboard';
+            }
             if (IntegrationOptions::enabled('hide_component_menu', $params) && $this->isComponentMenu((string) ($item->link ?? ''))) {
                 $item->getParams()->set('menu_show', 0);
                 continue;

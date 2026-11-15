@@ -4,7 +4,7 @@ SmartBrowser is a unified resource browser, picker and selection-field package f
 Manage and select articles, categories, tags, menus, users, media and direct links through
 one consistent interface, while retaining Joomla's native data, permissions and editors.
 
-**Current version: 6.0.0** · Joomla 5/6 · GPL-2.0-or-later
+**Current version: 6.0.5** · Joomla 5/6 · GPL-2.0-or-later
 
 ## What's new in 6.0
 
@@ -80,7 +80,7 @@ See the [changelog](CHANGELOG.md) for the full history.
 ## Installation and upgrading
 
 Download the installable package from [GitHub Releases](https://github.com/ankont/supjx-smartbrowser/releases)
-and upload **the outer `pkg_smartbrowser-v6.0.0.zip`** through Joomla's extension installer.
+and upload **the outer `pkg_smartbrowser-v6.0.5.zip`** through Joomla's extension installer.
 The package includes the component, the Fields picker plugin and the System integration plugin.
 
 Open **SupJx SmartBrowser** in the administrator menu, or configure individual/global native

@@ -1,4 +1,4 @@
-import { n as e, t } from "./visual-runtime-ColRqePX.js?v=6.0.0";
+import { n as e, t } from "./visual-runtime-B3ARVu49.js?v=6.0.5";
 //#region resources/js/core/articleAnchors.js
 function n(e, t = "none") {
 	if (!["anchors", "all"].includes(t)) return [];

@@ -1,5 +1,6 @@
 async page => {
-  const p = await page.context().newPage(), errors = [], checked = [];
+  const context = await page.context().browser().newContext();
+  const p = await context.newPage(), errors = [], checked = [];
   const check = (value, message) => { if (!value) throw Error(message); };
   p.on('pageerror', error => errors.push(error.message));
   try {
@@ -59,5 +60,5 @@ async page => {
     checked.push('Arbitrary size, full loading and global size apply immediately in the same Picker');
     check(!errors.length, errors.join('\n'));
     return { checked, errors };
-  } finally { await p.close(); }
+  } finally { await context.close(); }
 }
