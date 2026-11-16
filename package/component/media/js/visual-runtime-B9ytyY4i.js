@@ -1,4 +1,4 @@
-import { t as e } from "./visual-runtime-9kQymmoE.js?v=6.0.5";
+import { t as e } from "./visual-runtime-9kQymmoE.js?v=6.1.1";
 //#region resources/js/core/personalPreferences.js
 var t = "supjx.smartbrowser.personal", n = [
 	"categories",

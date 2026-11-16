@@ -323,7 +323,7 @@ async function resolveUsageReference(reference, constraint = {}) {
   const result = await referenceApis.get(key).collection([reference.id]);
   return result.resources[0];
 }
-const usage = createSelectionUsage({ profile: pickerContext?.selectionProfile || {}, initialUsage: pickerContext?.initialUsage || {}, editors: pickerContext?.editors || {}, resolveReference: resolveUsageReference });
+const usage = createSelectionUsage({ consumer: pickerContext?.consumer, usageCapabilities: pickerContext?.usageCapabilities, profile: pickerContext?.selectionProfile || {}, initialUsage: pickerContext?.initialUsage || {}, editors: pickerContext?.editors || {}, resolveReference: resolveUsageReference });
 const collectionItems = () => state.selectedIds.flatMap(key => {
   const resource = selection.value.find(resource => resourceKey(resource) === key);
   if (resource) return [{ selection: resourceReference(resource, options.adapter.replace(/^flat-/, '')), usage: usage.get(resource) }];

@@ -1,11 +1,11 @@
-import { B as e, C as t, D as n, E as r, I as i, M as a, O as o, R as s, S as c, T as l, V as u, c as d, d as f, f as p, g as m, h, j as g, l as _, m as v, p as y, s as b, t as x, u as S, v as C, w, x as T, z as E } from "./visual-runtime-CJIQlqNK.js?v=6.0.5";
-import { t as D } from "./visual-runtime-9kQymmoE.js?v=6.0.5";
-import { a as O, i as k, n as ee, r as A } from "./visual-runtime-B91GxeME.js?v=6.0.5";
-import { t as te } from "./visual-runtime-w5tRYetL.js?v=6.0.5";
-import { C as ne, S as re, T as ie, _ as ae, a as oe, b as se, c as ce, d as le, f as ue, g as de, h as fe, i as pe, l as me, m as he, n as ge, p as _e, r as ve, t as ye, u as be, v as xe, x as Se, y as j } from "./visual-runtime-XWyKrf96.js?v=6.0.5";
-import { a as M, i as Ce, o as we } from "./visual-runtime-Dq3mkt99.js?v=6.0.5";
-import { t as Te } from "./visual-runtime-WZ_FYdjB.js?v=6.0.5";
-import { t as Ee } from "./visual-runtime-05AZpB6i.js?v=6.0.5";
+import { B as e, C as t, D as n, E as r, I as i, M as a, O as o, R as s, S as c, T as l, V as u, c as d, d as f, f as p, g as m, h, j as g, l as _, m as v, p as y, s as b, t as x, u as S, v as C, w, x as T, z as E } from "./visual-runtime-CJIQlqNK.js?v=6.1.1";
+import { t as D } from "./visual-runtime-9kQymmoE.js?v=6.1.1";
+import { a as O, i as k, n as ee, r as A } from "./visual-runtime-B9ytyY4i.js?v=6.1.1";
+import { t as te } from "./visual-runtime-BqETOILh.js?v=6.1.1";
+import { C as ne, S as re, T as ie, _ as ae, a as oe, b as se, c as ce, d as le, f as ue, g as de, h as fe, i as pe, l as me, m as he, n as ge, p as _e, r as ve, t as ye, u as be, v as xe, x as Se, y as j } from "./visual-runtime-B4kb2mPq.js?v=6.1.1";
+import { a as M, i as Ce, o as we } from "./visual-runtime-Dv5MmWZZ.js?v=6.1.1";
+import { t as Te } from "./visual-runtime-BKRW7ywW.js?v=6.1.1";
+import { t as Ee } from "./visual-runtime-MIew6i3G.js?v=6.1.1";
 //#region resources/js/core/pickerViewport.js
 function De(e) {
 	let t = e.ownerDocument.defaultView, n = t.innerHeight, r = 0, i = !1;
@@ -1567,6 +1567,8 @@ var $t = {
 			})), (await rt.get(n).collection([e.id])).resources[0];
 		}
 		let W = ne({
+			consumer: B?.consumer,
+			usageCapabilities: B?.usageCapabilities,
 			profile: B?.selectionProfile || {},
 			initialUsage: B?.initialUsage || {},
 			editors: B?.editors || {},

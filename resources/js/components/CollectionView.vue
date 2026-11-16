@@ -285,7 +285,7 @@ const storedUsage = resource => {
 };
 const usage = computed(() => {
   props.model.revision?.value;
-  return createSelectionUsage({ profile: props.config.selectionProfile || {}, initialUsage: Object.fromEntries(props.model.resources.value.map(resource => [resourceKey(resource), storedUsage(resource)])), editors: extensions.editors, resolveReference });
+  return createSelectionUsage({ consumer: props.config.consumer, usageCapabilities: props.config.usageCapabilities, profile: props.config.selectionProfile || {}, initialUsage: Object.fromEntries(props.model.resources.value.map(resource => [resourceKey(resource), storedUsage(resource)])), editors: extensions.editors, resolveReference });
 });
 const thumbnailImages = ref({}), thumbnailResources = ref({});
 const resources = computed(() => {

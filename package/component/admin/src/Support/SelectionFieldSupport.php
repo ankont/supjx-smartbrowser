@@ -122,7 +122,18 @@ final class SelectionFieldSupport
     public static function usageValues(array $resource, array $values, array $config, ?callable $resolver = null): array
     {
         $profile = json_decode(json_encode($config['selectionProfile'], JSON_THROW_ON_ERROR), true, 32, JSON_THROW_ON_ERROR);
-        return SelectionUsageValidation::values(ResourceDescriptor::complete($resource), $profile, $values, static fn ($reference, $picker) => self::resolve($reference, [...$config, 'browseRoot' => $picker['browseRoot'] ?? ''], $resolver));
+        $resource = ResourceDescriptor::complete($resource);
+        if (!empty($config['consumer'])) {
+            $consumer = (string) $config['consumer'];
+            $resource = ConsumerUsage::resource($resource, $consumer);
+            $allowed = array_column($resource['selectionCapabilities'] ?? [], 'key');
+            foreach ($values as $key => $value) {
+                if (str_starts_with($key, 'ext.' . $consumer . '.') && (!in_array($key, $allowed, true) || !array_key_exists($key, $profile) || $profile[$key] === false)) {
+                    throw new \InvalidArgumentException('Unsupported consumer usage property.');
+                }
+            }
+        }
+        return SelectionUsageValidation::values($resource, $profile, $values, static fn ($reference, $picker) => self::resolve($reference, [...$config, 'browseRoot' => $picker['browseRoot'] ?? ''], $resolver));
     }
 
     private static function image(array $resource): ?string

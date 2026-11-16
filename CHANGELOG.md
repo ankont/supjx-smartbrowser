@@ -1,5 +1,14 @@
 # Changelog
 
+## 6.1.1 - 2026-11-16
+
+- Clear optional Usage selects with an explicit null value so Default persists in Collection View.
+
+## 6.1.0 - 2026-11-16
+
+- Add consumer-scoped extension Usage definitions for Collection View and shared Pickers, with trusted PHP registration and existing validation/editors.
+- Support definition-level primary/secondary presentation with profile overrides.
+
 ## 6.0.5 - 2026-11-15
 
 - Preserve single-tag SEF identifiers when opening the integrated frontend tag editor.

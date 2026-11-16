@@ -6,7 +6,7 @@
     <label v-else-if="definition.editor === 'boolean'" class="resource-usage-check">
       <input :id="fieldId" class="form-check-input" type="checkbox" :checked="value === true" @change="change($event.target.checked)"><span v-if="definition.key !== 'media.decorative'" :class="iconForUsage(definition)" aria-hidden="true" />{{ t(definition.label) }}
     </label>
-    <select v-else-if="definition.editor === 'select'" :id="fieldId" class="form-select" :value="value ?? ''" :aria-invalid="Boolean(error)" @change="change(definition.options.find(option => String(option.value) === $event.target.value)?.value)">
+    <select v-else-if="definition.editor === 'select'" :id="fieldId" class="form-select" :value="value ?? ''" :aria-invalid="Boolean(error)" @change="change(definition.options.find(option => String(option.value) === $event.target.value)?.value ?? null)">
       <option v-if="!definition.required && !definition.options?.some(option => option.value === '')" value="">{{ t(definition.key === 'visual.presentation' ? 'COM_SMARTBROWSER_USAGE_DEFAULT' : 'COM_SMARTBROWSER_USAGE_CHOOSE') }}</option>
       <option v-for="option in definition.options" :key="String(option.value)" :value="option.value">{{ t(option.label) }}</option>
     </select>

@@ -70,7 +70,7 @@ class ApiController extends BaseController
                         try {
                             if (!empty($resources[$index]['unavailable']) || ($resources[$index]['selectable'] ?? true) === false) throw new \RuntimeException('Unavailable or disallowed resource.', 403);
                             \SuperSoft\Component\Smartbrowser\Administrator\Support\SelectionFieldSupport::usageValues($resources[$index], $entry['usage'], [
-                                'selectionProfile' => $profile, 'adapter' => $entry['selection']['adapter'],
+                                'selectionProfile' => $profile, 'consumer' => is_string($body['consumer'] ?? null) ? $body['consumer'] : '', 'adapter' => $entry['selection']['adapter'],
                                 'browseRoot' => $entry['selection']['adapter'] === $this->input->getCmd('adapter') ? $this->input->getString('browseRoot') : '',
                             ]);
                         } catch (\Throwable $error) { $errors[] = ['index' => $index, 'message' => $error->getMessage()]; }

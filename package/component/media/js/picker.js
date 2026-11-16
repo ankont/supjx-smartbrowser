@@ -195,7 +195,7 @@
         const url = new URL(buildUrl(config.url || Joomla.getOptions('com_smartbrowser.picker', {}).url || 'index.php?option=com_smartbrowser', config));
         url.searchParams.set('pickerInstance', instanceId);
         instances.set(instanceId, { frame, snapshot, constraints, close, context: clone({
-          selectionProfile: config.selectionProfile || {}, initialUsage: config.initialUsage || {},
+          consumer: config.consumer, usageCapabilities: config.usageCapabilities || [], selectionProfile: config.selectionProfile || {}, initialUsage: config.initialUsage || {},
           title: typeof config.title === 'string' ? config.title : '', subtitle: typeof config.subtitle === 'string' ? config.subtitle : '', confirmLabel: typeof config.confirmLabel === 'string' ? config.confirmLabel : '',
           selectionEditorContext: config.selectionEditorContext || {},
           initialSelection: config.initialSelection || [],

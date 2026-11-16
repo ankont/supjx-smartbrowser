@@ -110,7 +110,7 @@ export default function createSelectionAddressService({ api, config, contract = 
           const metadata = { format: address.format, ...(properties.length ? { properties } : {}), ...(Object.keys(decoded.compounds).length ? { compounds: decoded.compounds } : {}) };
           if (!config.nativeImage) usage['ext.selectionAddress'] = metadata;
           if (config.nativeImage && (Object.keys(decoded.compounds).length || Object.keys(usage).some(key => !['ext.address', ...(config.nativeUsageKeys || [])].includes(key)))) throw new TypeError('This image field cannot store these selection properties.');
-          const state = createSelectionUsage({ profile, initialUsage: { [referenceKey(reference)]: usage }, resolveReference, editors: globalThis.SmartBrowserPicker?.extensions?.().editors || {} });
+          const state = createSelectionUsage({ consumer: config.consumer, usageCapabilities: config.usageCapabilities, profile, initialUsage: { [referenceKey(reference)]: usage }, resolveReference, editors: globalThis.SmartBrowserPicker?.extensions?.().editors || {} });
           const identified = { ...resource, selectionKey: referenceKey(reference) };
           const validation = await state.validate([identified]);
           if (!validation.valid) throw new TypeError(`Invalid selection properties: ${Object.keys(validation.errors[referenceKey(reference)] || {}).join(', ')}`);
@@ -123,7 +123,7 @@ export default function createSelectionAddressService({ api, config, contract = 
       // Server validation uses the same capability/profile validator as form saves.
       const imported = collectionEntries(entries, constraints);
       const sourceLines = imported.map(entry => addresses[entries.findIndex(source => referenceKey(source.selection) === referenceKey(entry.selection))]?.line);
-      const result = await api.collection(imported, { referenceItems: true, operation: 'validate', selectionProfile: profile });
+      const result = await api.collection(imported, { referenceItems: true, operation: 'validate', consumer: config.consumer, selectionProfile: profile });
       if (result.errors?.length) throw new TypeError(result.errors.map(error => `Line ${sourceLines[error.index] || '?'}: ${error.message}`).join('\n'));
       if (!result.resources || result.resources.some(resource => resource.unavailable || resource.selectable === false)) throw new TypeError('Resource is no longer available.');
       return { items: normalized, resources: [...resolved, ...result.resources] };

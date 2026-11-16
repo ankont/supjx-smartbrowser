@@ -4,6 +4,7 @@ const copy = value => value === undefined ? undefined : JSON.parse(JSON.stringif
 const empty = value => value === null || value === undefined || typeof value === 'string' && !value.trim();
 const builtinEditors = new Set(['text', 'textarea', 'boolean', 'select', 'number', 'resource']);
 import { normalizeReference, resourceKey } from './selectionIdentity.js';
+import { consumerCapabilities } from './consumerUsage.js';
 import { extensionKey, extensionValues, metadataValue } from './extensionMetadata.js';
 export { normalizeReference } from './selectionIdentity.js';
 
@@ -19,7 +20,7 @@ export function applicableCapabilities(resource, profile = {}) {
       || seen.has(key) || !own(profile, key) || profile[key] === false) return [];
     seen.add(key);
     const policy = profile[key] && typeof profile[key] === 'object' ? profile[key] : {};
-    return [{ ...definition, policy, presentation: ['secondary', 'hidden'].includes(policy.presentation) ? policy.presentation : 'primary',
+    return [{ ...definition, policy, presentation: ['secondary', 'hidden'].includes(policy.presentation ?? definition.presentation) ? (policy.presentation ?? definition.presentation) : 'primary',
       default: own(policy, 'default') ? policy.default : definition.default,
       required: policy.required === true,
     }];
@@ -49,9 +50,9 @@ export function valueError(definition, value) {
   return null;
 }
 
-export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveReference, editors = {} } = {}) {
+export function createSelectionUsage({ profile = {}, initialUsage = {}, resolveReference, editors = {}, consumer, usageCapabilities = [] } = {}) {
   const values = new Map();
-  const definitions = resource => applicableCapabilities(resource, profile);
+  const definitions = resource => applicableCapabilities(resource && { ...resource, selectionCapabilities: [...(resource.selectionCapabilities || []), ...consumerCapabilities(resource, consumer, usageCapabilities)] }, profile);
   function get(resource) {
     if (!resource) return {};
     const key = resourceKey(resource);
